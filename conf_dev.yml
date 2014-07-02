@@ -1,0 +1,40 @@
+repositories:
+  path: "../tmp/repositories"
+
+sql:
+  database: 
+    adapter: "postgresql" 
+    classname: "org.postgresl.Driver"
+    database: "cider_ci_dev"
+    pool: 10 
+    subname: "localhost:5432"
+    subprotocol: "postgresql"
+
+web:
+  host: "127.0.0.1"
+  port: 8881
+  context: "/cider-ci"
+
+
+nrepl:
+  port: 7881
+  bind: "127.0.0.1"
+  enabled: false
+
+messaging: 
+
+  connection: 
+    vhost: cider-ci-dev 
+    username: user
+    password: user
+    host: 192.168.0.102
+
+  default_message_expiration: 1
+
+  exchanges:
+    - name: branch_event_topic
+      type: topic
+      durable: true
+
+
+
