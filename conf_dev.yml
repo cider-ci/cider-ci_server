@@ -1,0 +1,48 @@
+repositories:
+  path: "../../tmp/repositories"
+
+web: 
+  host: "127.0.0.1"
+  port: 8883
+
+http_server:
+  host: "127.0.0.1"
+  port: 8883
+  context: '/cider-ci'
+
+repositories_server: "http://127.0.0.1:8881/cider-ci"
+
+database: 
+  db_spec: 
+    adapter: "postgresql" 
+    classname: "org.postgresl.Driver"
+    subname: "//localhost:5432/cider_ci_dev"
+    subprotocol: "postgresql"
+    max_pool_size: 10 
+    user: thomas
+    password: thomas
+
+
+messaging: 
+
+  connection: 
+    vhost: cider-ci-dev 
+    username: user
+    password: user
+    host: 192.168.0.102
+
+  default_message_expiration: 1
+
+  exchanges:
+
+    - name: branch_event_topic
+      type: topic
+      durable: true
+
+    - name: trial_event_topic
+      type: topic
+      durable: true
+
+
+
+
