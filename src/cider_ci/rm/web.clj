@@ -57,7 +57,7 @@
     (logging/debug [log-handler request])
     (handler request)))
 
-(def main-handler
+(defn build-main-handler []
   ( -> (cpj.handler/api (build-routes (:context (:web @conf))))
        (log-handler)
        (ring.middleware.json/wrap-json-params)))
@@ -76,7 +76,7 @@
                           (select-keys (:web @conf) [:port :host]))]
     (if server (stop-server)) 
     (logging/info "starting server " server-conf)
-    (def server (jetty/run-jetty main-handler server-conf))))
+    (def server (jetty/run-jetty (build-main-handler) server-conf))))
 
 (defn initialize [new-conf]
   (reset! conf new-conf)
