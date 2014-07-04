@@ -215,7 +215,7 @@
             (loop []
               (Thread/sleep 1000)
               (when-not @update-service-done-atom
-                (with/logging-and-suppress 
+                (with/logging-and-suppress :warn
                   (update-repositories))
                 (recur))))))
 
@@ -225,6 +225,5 @@
   (when-let [update-service-future @update-service-future-atom]
     (deref update-service-future)
     (reset! update-service-future-atom nil)))
-
 
 

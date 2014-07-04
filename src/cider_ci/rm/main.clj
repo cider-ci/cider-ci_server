@@ -6,7 +6,7 @@
     [cider-ci.messaging.core :as messaging]
     [cider-ci.sql.core :as sql]
     [clojure.tools.logging :as logging]
-    [drtom.config-loader :as config-loader]
+    [cider-ci.utils.config-loader :as config-loader]
     ))
 
 
@@ -29,6 +29,7 @@
 
 (defn read-config []
   (config-loader/read-and-merge
-    [conf]
-    ["/etc/cider-ci/rm/conf" "conf"]))
+    conf ["conf_default.yml" 
+          "/etc/cider-ci/repository-manager/conf.yml" 
+          "conf.yml"]))
 

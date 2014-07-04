@@ -18,11 +18,11 @@
        (clj-logging/error (exception/stringify e#))
        (throw e#))))
 
-(defmacro logging-and-suppress [& expressions]
+(defmacro logging-and-suppress [level & expressions]
   `(try
      ~@expressions
      (catch Throwable e#
-       (clj-logging/error (exception/stringify e#))
+       (clj-logging/log ~level (exception/stringify e#))
        nil)))
 
 

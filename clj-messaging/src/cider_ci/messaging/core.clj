@@ -70,12 +70,8 @@
   (logging/debug [connect conn-conf])
   (reset! conn 
           (rmq/connect
-            {:executor (Executors/newFixedThreadPool 4)
-             :vhost (:vhost conn-conf)
-             :host (:host conn-conf)
-             :username (:username conn-conf)
-             :password (:password conn-conf)
-             }))
+            (conj {:executor (Executors/newFixedThreadPool 4)}
+                  (:connection @conf))))
   (reset! ch
           (lch/open @conn)
           ))
@@ -102,7 +98,7 @@
   (lcons/subscribe 
     (get-channel) queue-name
     (fn [ch metadata ^bytes payload]
-      (with/logging-and-suppress
+      (with/logging-and-suppress :warn
         (logging/info "EVENT" 
                       (select-keys metadata [:type :exchange])
                       (String. payload "UTF-8"))
