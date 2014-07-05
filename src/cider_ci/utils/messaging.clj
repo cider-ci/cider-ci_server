@@ -1,0 +1,115 @@
+; Copyright (C) 2013, 2014 Dr. Thomas Schank  (DrTom@schank.ch, Thomas.Schank@algocon.ch)
+; Licensed under the terms of the GNU Affero General Public License v3.
+; See the "LICENSE.txt" file provided with this software.
+
+
+(ns cider-ci.utils.messaging
+  (:require 
+    [clj-logging-config.log4j :as  logging-config]
+    [clojure.data.json :as json]
+    [clojure.tools.logging :as logging]
+    [langohr.basic :as lb]
+    [langohr.channel :as lch]
+    [langohr.consumers :as lcons]
+    [langohr.core :as rmq]
+    [langohr.exchange :as le]
+    [langohr.queue :as lq]
+    [cider-ci.utils.with :as with]
+    [cider-ci.utils.json-protocol]
+    ) 
+  (:import 
+    [java.util.concurrent Executors]
+    )) 
+
+
+;(logging-config/set-logger! :level :debug)
+;(logging-config/set-logger! :level :info)
+
+
+(declare 
+  ch
+  connect
+  )
+
+
+; ### exchange and topic names  #############################################
+
+(def settings-events-topic-name "settings.events")
+(def settings-events-routing-name settings-events-topic-name)
+
+(def branch-topic-name "branch.events")
+(def branch-routing-name branch-topic-name)
+
+
+; ### initialization and configuration ######################################
+
+(def conf (atom {}))
+
+(defn initialize [new-conf]
+  (logging/info [initialize new-conf])
+  (reset! conf new-conf)
+  (with/logging
+
+    (connect (:connection @conf))
+
+    (doseq [exchange (:exchanges @conf)]
+      (le/declare @ch (:name exchange)  
+                  (:type exchange) 
+                  :durable (:durable exchange)))
+
+    (logging/info "messaging initialized")
+    ))
+
+
+;### connection handling ######################################################
+
+(defonce conn (atom nil))
+(defonce ch (atom nil))
+
+(defn get-channel []
+  (or @ch
+      (throw (IllegalStateException. 
+               "Messaging channel ist not initialized."))))
+
+(defn connect [conn-conf]
+  (logging/debug [connect conn-conf])
+  (reset! conn 
+          (rmq/connect
+            (conj {:executor (Executors/newFixedThreadPool 4)}
+                  (:connection @conf))))
+  (reset! ch
+          (lch/open @conn)
+          ))
+
+
+;### utils ####################################################################
+
+(defonce publish-event-last-args (atom nil))
+(defn publish-event [exchange-name routing-key event]
+  (let [args [exchange-name routing-key event]]
+    (logging/debug publish-event args)
+    (reset! publish-event-last-args  args)
+    (with/logging 
+      (lb/publish @ch exchange-name routing-key
+                  (json/write-str event)
+                  :content-type "application/json"
+                  :persistent true
+                  ))))
+;(apply publish-event @publish-event-last-args)
+
+
+(defn subscribe-to-queue [queue-name handler]
+  (logging/debug [subscribe-to-queue queue-name handler])
+  (lcons/subscribe 
+    (get-channel) queue-name
+    (fn [ch metadata ^bytes payload]
+      (with/suppress-and-log-warn
+        (logging/info "EVENT" 
+                      (select-keys metadata [:type :exchange])
+                      (String. payload "UTF-8"))
+        (let [message (clojure.walk/keywordize-keys 
+                        (json/read-str (String. payload "UTF-8")))]
+          (handler metadata message))))
+    :auto-ack true))
+
+
