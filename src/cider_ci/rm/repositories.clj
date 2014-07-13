@@ -35,7 +35,7 @@
 (defn initialize [new-conf]
   (logging/info initialize [new-conf])
   (reset! conf new-conf)
-  (git.repositories/initialize {:path (:repositories @conf)})
+  (git.repositories/initialize (:repositories @conf))
   (update-service-stop)
   (update-service-start))
 
