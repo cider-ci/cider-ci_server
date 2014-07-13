@@ -33,19 +33,6 @@
 ;(apply update-trial @_update-trial)
 
 
-(defn build-routes []
-  (cpj/routes 
-    (cpj/context "/cider-ci" []
-
-                 (cpj/PATCH "/trials/:id" 
-                            {{id :id} :params json-params :json-params} 
-                            (update-trial id json-params))
-
-                 (cpj/GET "/" [] "OK")
-
-                 )))
-
-
 ; /cider-ci/executors_api_v1/trials/85bcbb1e-3f15-415b-9d59-3d87ae7bdd62
 
 
@@ -61,7 +48,7 @@
 
 (defn build-routes [context]
   (cpj/routes 
-    (cpj/context (str context "/executors_api_v1") []
+    (cpj/context context []
 
                  (cpj/PATCH "/trials/:id" 
                             {{id :id} :params json-params :json-params} 
