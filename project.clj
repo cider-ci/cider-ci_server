@@ -27,14 +27,11 @@
                  [robert/hooke "1.3.0"]
                  ]
 
-  :source-paths ["clj-messaging/src"
-                 "clj-nrepl/src"
-                 "clj-sql/src"
-                 "clj-utils/src"
+  :source-paths ["clj-utils/src"
                  "src"]
   :profiles {
              :dev { :resource-paths ["resources_dev"] }
-             :production { :resource-paths [ "/etc/cider-ci/rm" ] }}
+             :production { :resource-paths [ "/etc/repository-manager" ] }}
   :aot [cider-ci.rm.main] 
   :main cider-ci.rm.main 
   )

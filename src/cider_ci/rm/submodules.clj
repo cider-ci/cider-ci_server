@@ -4,7 +4,6 @@
 
 (ns cider-ci.rm.submodules
   (:require 
-    [cider-ci.sql.core :as sql] 
     [cider-ci.utils.exception :as exception]
     [cider-ci.utils.system :as system]
     [cider-ci.utils.with :as with]
@@ -24,6 +23,8 @@
 ;(logging-config/set-logger! :level :info)
 
 
+(def conf (atom {}))
+
 (defn submodules-for-config [gitmodules-config]
   (let [jgit-config  (BlobBasedConfig. (Config.) (.getBytes gitmodules-config))]
     (map 
@@ -40,7 +41,7 @@
 
 (defn repository-id-for-commit [commit-id]
   (:repository_id (first (jdbc/query 
-           (sql/get-ds) 
+           (:ds @conf)
            ["SELECT  repositories.id as repository_id 
             FROM commits
             INNER JOIN branches_commits ON branches_commits.commit_id = commits.id
@@ -54,7 +55,7 @@
 
 (defn repository-and-branch-for-commit-id [commit-id]
   (first (jdbc/query 
-           (sql/get-ds) 
+           (:ds @conf)
            ["SELECT  
             branches.id as branch_id,
             branches.name as branch_name,
@@ -139,4 +140,9 @@
 ; (submodules-for-commit "ae143af1aa9b5b4f598d58412f2b9fc60388984d")
 
  
+
+;### initialize ###############################################################
+
+(defn initialize [new-conf]
+  (reset! conf new-conf))
 

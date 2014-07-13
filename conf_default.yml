@@ -1,14 +1,13 @@
 repositories:
   path: "../tmp/repositories"
 
-sql:
-  database: 
+database: 
+  db_spec: 
     adapter: "postgresql" 
     classname: "org.postgresl.Driver"
-    database: "cider_ci_dev"
-    pool: 10 
-    subname: "127.0.0.1:5432"
+    subname: "//localhost:5432/cider_ci_dev"
     subprotocol: "postgresql"
+    max_pool_size: 10 
 
 web:
   host: "127.0.0.1"

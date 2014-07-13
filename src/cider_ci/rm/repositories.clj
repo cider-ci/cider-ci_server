@@ -7,15 +7,20 @@
     [cider-ci.rm.branches :as branches] 
     [cider-ci.rm.git.repositories :as git.repositories] 
     [cider-ci.rm.sql.branches :as sql.branches] 
-    [cider-ci.messaging.core :as messaging]
-    [cider-ci.sql.core :as sql] 
     [cider-ci.utils.exception :as exception]
+    [cider-ci.utils.messaging :as messaging]
     [cider-ci.utils.system :as system]
     [cider-ci.utils.with :as with]
+    [clj-logging-config.log4j :as logging-config]
     [clj-time.core :as time]
     [clojure.java.jdbc :as jdbc]
     [clojure.tools.logging :as logging]
     ))
+
+;(logging-config/set-logger! :level :debug)
+;(logging-config/set-logger! :level :info)
+
+
 
 (declare 
   update-service-start
@@ -25,11 +30,12 @@
 
 ;### config and initialization ################################################
 (defonce conf (atom {}))
+
 ; TODO problematic when called multiple times; wrap in agent? 
 (defn initialize [new-conf]
   (logging/info initialize [new-conf])
   (reset! conf new-conf)
-  (git.repositories/initialize (select-keys new-conf [:path])) 
+  (git.repositories/initialize {:path (:repositories @conf)})
   (update-service-stop)
   (update-service-start))
 
@@ -81,6 +87,9 @@
   (let [repository-path (git.repositories/path repository)
         git-branches (get-git-branches repository-path)
         canonic-id (git.repositories/canonic-id repository)]
+    (logging/debug update-or-create-branches {:repository-path repository-path
+                                              :git-branches git-branches
+                                              :canonic-id canonic-id})
     (sql.branches/delete-removed ds git-branches canonic-id)
     (let [created (branches/create-new ds git-branches canonic-id repository-path)
           updated (branches/update-outdated ds git-branches canonic-id repository-path)]
@@ -114,7 +123,7 @@
   (with/logging
     (logging/debug git-update [repository])
     (let [updated-branches (atom nil)]
-      (jdbc/with-db-transaction [tx (sql/get-ds)]
+      (jdbc/with-db-transaction [tx (:ds @conf)]
         (let [dir (git.repositories/path repository)
               sid (str (git.repositories/canonic-id repository))]
           (update-git-server-info repository)
@@ -138,7 +147,7 @@
           repository-file (clojure.java.io/file repository-path) ] 
       (logging/debug {:repository-path repository-path :id id :repository-file repository-file})
       (if (and (.exists repository-file) (.isDirectory repository-file))
-        (do (system/exec ["git" "fetch" "origin" "-p" "+refs/heads/*:refs/heads/*"] 
+        (do (system/exec ["git" "fetch" (:origin_uri repository) "-p" "+refs/heads/*:refs/heads/*"] 
                          {:watchdog (* 10 60 1000), 
                           :dir repository-path, 
                           :env {"TERM" "VT-100"}}))
@@ -196,8 +205,9 @@
 ;### update-repositories ######################################################
 (defn update-repositories []
   ;(logging/debug update-repositories)
-  (doseq [repository (jdbc/query (sql/get-ds) ["SELECT * from repositories"])]
+  (doseq [repository (jdbc/query (:ds @conf) ["SELECT * from repositories"])]
     (let [repository-processor (get-or-create-repository-processor repository)]
+      ;(logging/debug "check for git-fetch-is-due?" {:repository repository :repository-processor repository-processor})
       (if (git-fetch-is-due? repository repository-processor)
         (submit-git-fetch-and-update repository repository-processor)
         (when (git-update-is-due? repository repository-processor)
@@ -215,7 +225,7 @@
             (loop []
               (Thread/sleep 1000)
               (when-not @update-service-done-atom
-                (with/logging-and-suppress :warn
+                (with/suppress-and-log-warn
                   (update-repositories))
                 (recur))))))
 

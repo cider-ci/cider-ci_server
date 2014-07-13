@@ -4,7 +4,7 @@
 
 (ns cider-ci.rm.sql.branches
   (:require 
-    [cider-ci.sql.core :as sql]
+    [cider-ci.utils.sql :as sql]
     [clojure.tools.logging :as logging]
     [clojure.java.jdbc :as jdbc]
   ))

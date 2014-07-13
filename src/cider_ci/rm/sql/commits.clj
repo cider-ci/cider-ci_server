@@ -5,7 +5,6 @@
 (ns cider-ci.rm.sql.commits
   (:refer-clojure :exclude [find])
   (:require 
-    [cider-ci.sql.core :as sql]
     [clojure.tools.logging :as logging]
     [clojure.java.jdbc :as jdbc]
     ))

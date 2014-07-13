@@ -1,11 +1,12 @@
 (ns cider-ci.rm.web
   (:require 
+    [cider-ci.rm.submodules :as submodules]
+    [cider-ci.utils.exception :as utils.execption]
+    [cider-ci.utils.http-server :as http-server]
     [clj-logging-config.log4j :as logging-config]
     [clj-time.core :as time]
     [clojure.data :as data]
     [clojure.data.json :as json]
-    [cider-ci.rm.submodules :as submodules]
-    [cider-ci.utils.exception :as utils.execption]
     [clojure.tools.logging :as logging]
     [compojure.core :as cpj]
     [compojure.handler :as cpj.handler]
@@ -62,22 +63,11 @@
        (log-handler)
        (ring.middleware.json/wrap-json-params)))
 
-(defonce server nil)
 
-(defn stop-server []
-  (logging/info "stopping server")
-  (. server stop)
-  (def server nil))
-
-(defn start-server []
-  "Starts (or stops and then starts) the webserver"
-  (let [server-conf (conj {:ssl? false
-                           :join? false} 
-                          (select-keys (:web @conf) [:port :host]))]
-    (if server (stop-server)) 
-    (logging/info "starting server " server-conf)
-    (def server (jetty/run-jetty (build-main-handler) server-conf))))
+;#### the server ##############################################################
 
 (defn initialize [new-conf]
   (reset! conf new-conf)
-  (start-server))
+  (http-server/start @conf (build-main-handler)))
+
+
