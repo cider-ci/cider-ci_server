@@ -35,7 +35,7 @@
 
 (defn build-routes []
   (cpj/routes 
-    (cpj/context "/cider-ci/executors_api_v1" []
+    (cpj/context "/cider-ci" []
 
                  (cpj/PATCH "/trials/:id" 
                             {{id :id} :params json-params :json-params} 

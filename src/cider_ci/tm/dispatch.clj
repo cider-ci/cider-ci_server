@@ -109,7 +109,7 @@
 (defn patch-url [executor trial-id]
   (route-url-for-executor 
     executor 
-    (str "/executors_api_v1/trials/" trial-id )))
+    (str "/trials/" trial-id )))
   
 
 (defn submodules-dispatch-data [submodules executor]
