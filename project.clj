@@ -10,7 +10,6 @@
                  [clj-yaml "0.3.1"]
                  [com.novemberain/langohr "2.11.0"]
                  [compojure "1.1.8"]
-                 [drtoms-config-loader "0.1.1"]
                  [joda-time "2.1"]
                  [log4j/log4j "1.2.17" :exclusions [javax.mail/mail javax.jms/jms com.sun.jdmk/jmxtools com.sun.jmx/jmxri]]
                  [org.clojars.hozumi/clj-commons-exec "1.0.6"]
@@ -27,9 +26,7 @@
                  [ring/ring-json "0.3.1"]
                  [robert/hooke "1.3.0"]
                  ]
-  :source-paths ["clj-messaging/src"
-                 "clj-rdbms/src"
-                 "clj-utils/src"
+  :source-paths ["clj-utils/src"
                  "src"]
   :profiles {
              :dev { :resource-paths ["resources_dev"] }
