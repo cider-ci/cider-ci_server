@@ -1,0 +1,3 @@
+[submodule "clj-utils"]
+	path = clj-utils
+	url = https://github.com/cider-ci/cider-ci_clj-utils.git

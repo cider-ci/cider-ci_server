@@ -5,6 +5,7 @@
 (ns cider-ci.tm.web
   (:require 
     [cider-ci.tm.trial :as trial]
+    [cider-ci.utils.http-server :as http-server]
     [clj-logging-config.log4j :as logging-config]
     [clojure.data :as data]
     [clojure.data.json :as json]
@@ -48,33 +49,41 @@
 ; /cider-ci/executors_api_v1/trials/85bcbb1e-3f15-415b-9d59-3d87ae7bdd62
 
 
-(defn log-handler [handler]
+;##### routes and handlers #################################################### 
+
+(defn log-handler [handler level]
   (fn [request]
-    (logging/debug [log-handler request])
-    (handler request)))
+    (logging/debug "log-handler " level " request: " request)
+    (let [response (handler request)]
+      (logging/debug  "log-handler " level " response: " response)
+      response)))
 
-(def main-handler
-  ( -> (cpj.handler/site (build-routes))
-       (log-handler)
+
+(defn build-routes [context]
+  (cpj/routes 
+    (cpj/context (str context "/executors_api_v1") []
+
+                 (cpj/PATCH "/trials/:id" 
+                            {{id :id} :params json-params :json-params} 
+                            (update-trial id json-params))
+
+                 (cpj/GET "/" [] "OK")
+
+                 )))
+
+(defn build-main-handler []
+  ( -> (cpj.handler/api (build-routes (:context (:web @conf))))
+       (log-handler 1)
        (ring.middleware.json/wrap-json-params)
-       (log-handler)
-       ))
+       (log-handler 0)))
 
-(defonce server nil)
 
-(defn stop-server []
-  (logging/info "stopping server")
-  (. server stop)
-  (def server nil))
-
-(defn start-server []
-  "Starts (or stops and then starts) the webserver"
-  (let [server-conf (conj {:ssl? false
-                           :join? false} @conf)]
-    (if server (stop-server)) 
-    (logging/info "starting server " server-conf)
-    (def server (jetty/run-jetty main-handler server-conf))))
+;#### the server ##############################################################
 
 (defn initialize [new-conf]
   (reset! conf new-conf)
-  (start-server))
+  (http-server/start @conf (build-main-handler))
+  )
+
+
+

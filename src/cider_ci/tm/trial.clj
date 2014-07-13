@@ -4,9 +4,9 @@
 
 (ns cider-ci.tm.trial
   (:require
+    [cider-ci.utils.messaging :as messaging]
+    [cider-ci.utils.rdbms.conversion :as rdbms.conversion]
     [cider-ci.utils.with :as with]
-    [cider-ci.messaging.core :as messaging]
-    [cider-ci.rdbms.conversion :as rdbms.conversion]
     [clj-logging-config.log4j :as logging-config]
     [clojure.java.jdbc :as jdbc]
     [clojure.tools.logging :as logging]

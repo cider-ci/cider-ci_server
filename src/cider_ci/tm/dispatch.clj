@@ -11,7 +11,7 @@
     [clojure.tools.logging :as logging]
     [robert.hooke :as hooke]
     [cider-ci.utils.with :as with]
-    [cider-ci.rdbms.json]
+    [cider-ci.utils.rdbms.json]
     ))
 
 (declare 
@@ -84,14 +84,27 @@
      ORDER BY executions.priority DESC, executions.created_at ASC, tasks.priority DESC, tasks.created_at ASC"]
     ))
 
-(defn git-url [executor repository-id]
-  (str (:repositories_server @conf)
-       "/repositories/" repository-id "/git"))
+(defn build-url [config path]
+  (let [ protocol (if (or (:server_ssl config) (:ssl config)) "https" "http")
+        host (or (:server_host config) (:host config))
+        port (or (:server_port config) (:port config))
+        context (:context config)
+        ]
+    (str protocol "://" host  ":" port context path)))
 
+(defn git-url [executor repository-id]
+  ; TODO test TODO dedup
+  (let [config (if (:server_overwrite executor) 
+                 executor 
+                 (:repository_manager_server @conf))]
+    (build-url config (str "/repositories/" repository-id "/git")  )))
+
+; TODO test TODO dedup
 (defn attachments-url [executor trial-id]
-  (route-url-for-executor 
-    executor 
-    (str "/executors_api_v1/trials/" trial-id "/attachments/")))
+  (let [config (if (:server_overwrite executor) 
+                 executor 
+                 (:storage_manager_server @conf))]
+    (build-url config (str "/attachments/trials/" trial-id "/") )))
 
 (defn patch-url [executor trial-id]
   (route-url-for-executor 
@@ -155,14 +168,10 @@
             ORDER BY branches.updated_at DESC" execution-id])))
 
 (defn route-url-for-executor [executor path]
-  (let [config (if  (:server_overwrite executor) executor (:http_server @conf))
-        protocol (if (or (:server_ssl config) (:ssl config)) "https" "http")
-        host (or (:server_host config) (:host config))
-        port (or (:server_port config) (:port config))
-        context (:context config)
-        ]
-    (str protocol "://" host  ":" port context path)))
-
+  (let [config (if (:server_overwrite executor) 
+                 executor 
+                 (:trial_manager_server @conf))]
+    (build-url config path))) 
 
 ;#### daemon ##################################################################
 
@@ -175,7 +184,7 @@
     (loop []
       (Thread/sleep 1000)
       (when-not @done
-        (with/logging-and-suppress
+        (with/suppress-and-log-error
           (dispatch-trials))
         (recur)))))
 

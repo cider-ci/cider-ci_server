@@ -4,17 +4,18 @@
 
 (ns cider-ci.tm.main
   (:require 
-    [cider-ci.messaging.core :as messaging]
-    [cider-ci.rdbms.core :as rdbms]
     [cider-ci.tm.dispatch :as dispatch]
     [cider-ci.tm.ping :as ping]
-    [cider-ci.tm.sync-trials :as sync-trials]
     [cider-ci.tm.sweep :as sweep]
+    [cider-ci.tm.sync-trials :as sync-trials]
     [cider-ci.tm.trial :as trial]
     [cider-ci.tm.web :as web]
+    [cider-ci.utils.config-loader :as config-loader]
+    [cider-ci.utils.messaging :as messaging]
+    [cider-ci.utils.nrepl :as nrepl]
+    [cider-ci.utils.rdbms :as rdbms]
     [clojure.java.jdbc :as jdbc]
     [clojure.tools.logging :as logging]
-    [drtom.config-loader :as config-loader]
     ))
 
 
@@ -23,8 +24,10 @@
 
 (defn read-config []
   (config-loader/read-and-merge
-    [conf]
-    ["/etc/cider-ci/executors-service/conf" "conf"]))
+    conf ["conf_default.yml" 
+          "/etc/trial-manager/conf.yml" 
+          "conf.yml"]))
+
 
 (defn get-db-spec []
   (-> @conf (:database) (:db_spec) ))
@@ -38,16 +41,19 @@
 (defn -main [& args]
   (logging/debug [-main args]) 
   (read-config)
+  (nrepl/initialize (:nrepl @conf))
   (let [ds (rdbms/create-ds (get-db-spec))]
     (reset! rdbms-ds ds) 
     (messaging/initialize (:messaging @conf))
     (ping/initialize {:ds @rdbms-ds})
     (trial/initialize {:ds @rdbms-ds})
     (sync-trials/initialize {:ds @rdbms-ds})
-    (web/initialize (:web @conf))
+    (web/initialize (select-keys @conf [:web]))
     (dispatch/initialize (conj {:ds @rdbms-ds} 
-                               (select-keys @conf [:http_server 
-                                                   :repositories_server])))
+                               (select-keys @conf [:trial_manager_server
+                                                   :repository_manager_server
+                                                   :storage_manager_server
+                                                   ])))
     (sweep/initialize {:ds @rdbms-ds})
 
     ))

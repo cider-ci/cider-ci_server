@@ -38,7 +38,7 @@
                            " AND " trial/sql-in-dispatch-timeout)])
                   (map #(:id %)))]
     (logging/debug "set failed due to dispatch timeout " id)
-    (trial/update id {:state "failed"}) ; TODO -> aborted
+    (trial/update id {:state "failed" :error "dispatch timeout"}) ; TODO -> aborted
     ))
 
 (defn sweep-in-end-state-timeout []
@@ -76,7 +76,7 @@
                        (loop []
                          (Thread/sleep 1000)
                          (when-not @done
-                           (with/logging-and-suppress
+                           (with/suppress-and-log-error
                              (logging/debug "looping")
                              (sweep-scripts)
                              (sweep-in-dispatch-timeout)
