@@ -28,5 +28,5 @@
   (logging/debug [-main args])
   (read-config)
   (let [ds (rdbms/create-ds (get-db-spec))]
-    (web/initialize (conj (select-keys @conf [:web])
+    (web/initialize (conj (select-keys @conf [:web :attachments])
                           {:ds ds}))))

@@ -21,10 +21,13 @@
 
 (defonce conf (atom {}))
 
+(defn attachments-dir-path []
+  (:path (:attachments @conf)))
+
 (defn put-attachment [request]
   (logging/debug put-attachment [request])
   (let [id (java.util.UUID/randomUUID)
-        file (io/file (str "tmp/" id))
+        file (io/file (str (attachments-dir-path) "/" id))
         {content-type :content-type content-length :content-length} request
         {{trial-id :trial_id path :*} :route-params}  request ]
     (with-open [in (io/input-stream (:body request))
@@ -46,7 +49,7 @@
                                          ["SELECT * FROM attachments 
                                           WHERE trial_id = ?::UUID 
                                           AND path = ?" trial-id path]))]
-    (let [path (str "tmp/" (:id attachment))]
+    (let [path (str (attachments-dir-path) "/" (:id attachment))]
       (-> (ring.util.response/file-response path)
           (ring.util.response/header "X-Sendfile" path)
           (ring.util.response/header "content-type" (:content_type attachment))))
@@ -80,6 +83,6 @@
 
 (defn initialize [new-conf]
   (reset! conf new-conf)
-  (http-server/start @conf (build-main-handler))
-  )
+  (.mkdirs (io/file (attachments-dir-path)))
+  (http-server/start @conf (build-main-handler)))
 
