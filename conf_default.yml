@@ -1,5 +1,9 @@
-attachments:
-  path: "./tmp/storage/attachments"
+
+stores: 
+  - url_path_prefix: "/attachments"
+    file_path: "./tmp/storage/attachments"
+    default_retention_time_days: 10
+    db_table: storage_attachments
 
 database: 
   db_spec: 

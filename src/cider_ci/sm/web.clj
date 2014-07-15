@@ -5,6 +5,7 @@
 (ns cider-ci.sm.web
   (:require 
     [cider-ci.utils.http-server :as http-server]
+    [cider-ci.utils.with :as with]
     [clj-logging-config.log4j :as logging-config]
     [clojure.java.io :as io]
     [clojure.java.jdbc :as jdbc]
@@ -21,39 +22,70 @@
 
 (defonce conf (atom {}))
 
-(defn attachments-dir-path []
-  (:path (:attachments @conf)))
+(defn without-prefix 
+  "Returns the reminder of the string s without the prefix p. 
+  Returns nil if p is not a prefix of s."
+  [s p]
+  (let [length-s (count s)
+        length-p (count p)]
+    (when (>= length-s length-p)
+      (let [ s-prefix (clojure.string/join (take length-p s))
+            s-postix (clojure.string/join (drop length-p s))]
+        (when (= s-prefix )
+          s-postix)))))
 
-(defn put-attachment [request]
-  (logging/debug put-attachment [request])
-  (let [id (java.util.UUID/randomUUID)
-        file (io/file (str (attachments-dir-path) "/" id))
-        {content-type :content-type content-length :content-length} request
-        {{trial-id :trial_id path :*} :route-params}  request ]
-    (with-open [in (io/input-stream (:body request))
-                out (io/output-stream file)]
-      (clojure.java.io/copy in out))
-    (jdbc/insert! (:ds @conf) 
-                  :attachments
-                  {:id id 
-                   :path path
-                   :content_length content-length
-                   :content_type (or content-type "application/octet-stream")
-                   :trial_id (java.util.UUID/fromString trial-id) })
 
-    {:status 204})) 
+;(without-prefix "/abc/" "/abc/")
+;(clojure.string/blank? "")
+;(clojure.string/blank? nil)
 
-(defn get-attachment [{{trial-id :trial_id path :*} :route-params}]
-  (logging/debug get-attachment [trial-id path])
-  (if-let [attachment (first (jdbc/query (:ds @conf)
-                                         ["SELECT * FROM attachments 
-                                          WHERE trial_id = ?::UUID 
-                                          AND path = ?" trial-id path]))]
-    (let [path (str (attachments-dir-path) "/" (:id attachment))]
-      (-> (ring.util.response/file-response path)
-          (ring.util.response/header "X-Sendfile" path)
-          (ring.util.response/header "content-type" (:content_type attachment))))
-    {:status 404}))
+
+(defn first-matching-store [url-path]
+  (->> (:stores @conf)
+       (some (fn [store]
+               (let [url-path-prefix (:url_path_prefix store)
+                     path (without-prefix url-path url-path-prefix)]
+                 (when (not (clojure.string/blank? path))
+                   store))))))
+
+(defn put-file [request]
+  (logging/debug put-file [request])
+  (let [url-path (:* (:route-params request))]
+    (logging/debug {:url-path url-path})
+    (when-let [store (first-matching-store url-path)]
+      (logging/debug "PUT FILE!")
+      (let [id (java.util.UUID/randomUUID)
+            file-path (str (:file_path store) "/" id)
+            file (io/file file-path)
+            {content-type :content-type content-length :content-length} request]
+        (jdbc/with-db-transaction [tx (:ds @conf)]
+          (with-open [in (io/input-stream (:body request))
+                      out (io/output-stream file)]
+            (jdbc/insert! tx (:db_table store)
+                          {:id id 
+                           :path (without-prefix url-path (:url_path_prefix store))
+                           :content_length content-length
+                           :content_type (or content-type "application/octet-stream")})
+            (clojure.java.io/copy in out)))
+        (logging/debug "DONE!")
+        {:status 204}))))
+
+(defn get-file [request]
+  (logging/debug get-file [request])
+  (with/suppress-and-log-warn 
+
+    (let [url-path (:* (:route-params request))]
+      (logging/debug {:url-path url-path})
+      (when-let [store (first-matching-store url-path)]
+        (let [query-str (str "SELECT * FROM " (:db_table store) " WHERE path = ? ")
+              path (without-prefix url-path (:url_path_prefix store))]
+          (logging/debug {:query-str query-str})
+          (when-let [storage-row (first (jdbc/query (:ds @conf) [query-str path]))]
+            (let [file-path (str (:file_path store) "/" (:id storage-row))]
+              (-> (ring.util.response/file-response file-path) 
+                  (ring.util.response/header "X-Sendfile" file-path)
+                  (ring.util.response/header "content-type" (:content_type storage-row))))
+            ))))))
 
 (defn log-handler [handler level]
   (fn [request]
@@ -66,23 +98,24 @@
 (defn build-routes [context]
   (cpj/routes 
     (cpj/context context []
-                 (cpj/GET "/attachments/trials/:trial_id/*" request
-                          (get-attachment request)) 
-                 (cpj/PUT "/attachments/trials/:trial_id/*" request
-                          (put-attachment request)) 
+                 (cpj/GET "*" request
+                          (get-file request)) 
+                 (cpj/PUT "*" request
+                          (put-file request)) 
                  )))
 
 (defn build-main-handler []
   ( -> (cpj.handler/api (build-routes (:context (:web @conf))))
        (log-handler 1)
        (ring.middleware.json/wrap-json-params)
-       (log-handler 0)))
+       (log-handler 0)
+       ))
 
 
 ;#### the server ##############################################################
 
 (defn initialize [new-conf]
   (reset! conf new-conf)
-  (.mkdirs (io/file (attachments-dir-path)))
+  ;(.mkdirs (io/file (attachments-dir-path)))
   (http-server/start @conf (build-main-handler)))
 
