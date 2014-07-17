@@ -5,6 +5,7 @@
 (ns cider-ci.tm.sweep
   (:require
     [cider-ci.tm.trial :as trial]
+    [cider-ci.utils.daemon :as daemon]
     [cider-ci.utils.with :as with]
     [clj-logging-config.log4j :as logging-config]
     [clojure.data.json :as json]
@@ -21,13 +22,13 @@
 (defonce conf (atom {}))
 
 
-
 (defn sweep-scripts []
   (logging/debug sweep-scripts)
-  (jdbc/execute! 
-    (:ds @conf)
-    [ (str "UPDATE trials SET scripts = '[]'
-           WHERE " trial/sql-script-sweep-pending) ]))
+  (with/suppress-and-log-error
+    (jdbc/execute! 
+      (:ds @conf)
+      [ (str "UPDATE trials SET scripts = '[]'
+             WHERE " trial/sql-script-sweep-pending) ])))
 
 (defn sweep-in-dispatch-timeout []
   (logging/debug sweep-in-dispatch-timeout)
@@ -37,9 +38,10 @@
                            WHERE " trial/sql-to-be-dispatched
                            " AND " trial/sql-in-dispatch-timeout)])
                   (map #(:id %)))]
-    (logging/debug "set failed due to dispatch timeout " id)
-    (trial/update id {:state "failed" :error "dispatch timeout"}) ; TODO -> aborted
-    ))
+    (with/suppress-and-log-error
+      (logging/debug "set failed due to dispatch timeout " id)
+      (trial/update id {:state "failed" :error "dispatch timeout"}) ; TODO -> aborted
+      )))
 
 (defn sweep-in-end-state-timeout []
   (logging/debug sweep-in-end-state-timeout)
@@ -49,50 +51,44 @@
                            WHERE " trial/sql-not-finished
                            " AND " trial/sql-in-end-state-timeout)])
                   (map #(:id %)))]
-    (logging/debug "set failed due to dispatch timeout " id)
-    (trial/update id {:state "failed"}) ; TODO -> aborted
-    ))
+    (with/suppress-and-log-error 
+      (logging/debug "set failed due to dispatch timeout " id)
+      (trial/update id {:state "failed"}) ; TODO -> aborted
+      )))
 
 
-;#### daemon ##################################################################
+;#### daemons ##################################################################
 
 
-(defonce _stop (atom (fn [])))
+(daemon/define "scripts-sweeper" 
+  start-scripts-sweeper 
+  stop-scripts-sweeper 
+  (* 5 60)
+  (logging/debug "scripts-sweeper")
+  (sweep-scripts))
 
+(daemon/define "end-state-timeout-sweeper" 
+  start-end-state-timeout-sweeper 
+  stop-end-state-timeout-sweeper 
+  1
+  (logging/debug "end-state-timeout-sweeper")
+  (sweep-in-end-state-timeout))
 
-(defn stop []
-  "Stops the daemonized runner.
-  Will block until the runner is done. 
-  No-op if the runner was never started."
-  (@_stop)
-  )
-
-(defn start []
-  "Starts a new daemonized runner.
-   Calls stop before!"
-  (stop)
-  (let [done (atom false)
-        runner (future (logging/debug "start looping")
-                       (loop []
-                         (Thread/sleep 1000)
-                         (when-not @done
-                           (with/suppress-and-log-error
-                             (logging/debug "looping")
-                             (sweep-scripts)
-                             (sweep-in-dispatch-timeout)
-                             (sweep-in-end-state-timeout))
-                           (recur))))]
-    (reset! _stop (fn []
-                   (logging/debug "stopping")
-                   (reset! done true)
-                   @runner))))
+(daemon/define "dispatch-timeout-sweeper" 
+  start-dispatch-timeout-sweeper 
+  stop-dispatch-timeout-sweeper 
+  1
+  (logging/debug "dispatch-timeout-sweeper")
+  (sweep-in-dispatch-timeout))
 
 
 ;#### initialize ##############################################################
 
 (defn initialize [new-conf]
   (reset! conf new-conf)
-  (start)
+  (start-dispatch-timeout-sweeper)
+  (start-end-state-timeout-sweeper)
+  (start-scripts-sweeper)
   )
 
 
