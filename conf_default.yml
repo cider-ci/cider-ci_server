@@ -1,9 +1,9 @@
 
 stores: 
-  - url_path_prefix: "/attachments"
-    file_path: "./tmp/storage/attachments"
+  - url_path_prefix: "/storage/trial-attachments"
+    file_path: "./tmp/storage/trial-attachments"
     retention_time_days: 1
-    db_table: storage_attachments
+    db_table: trial_attachments
 
 database: 
   db_spec: 
