@@ -22,7 +22,7 @@
        (defn ~start-fn []
          (~stop-fn)
          (let [done# (atom false)
-               runner# (future (logging/debug "daemon " ~daemon-name " started")
+               runner# (future (logging/info "daemon " ~daemon-name " started")
                                ;(Thread/sleep (* ~secs-pause 1000))
                                (loop []
                                  (when-not @done#
@@ -34,7 +34,7 @@
                            (reset! done# true)
                            (future-cancel runner#)
                            ;@runner#
-                           (logging/debug "daemon " ~daemon-name "stopped")
+                           (logging/info "daemon " ~daemon-name "stopped")
                            ))))
        )))
 
