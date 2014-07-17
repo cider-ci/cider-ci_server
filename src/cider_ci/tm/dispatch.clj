@@ -104,7 +104,7 @@
   (let [config (if (:server_overwrite executor) 
                  executor 
                  (:storage_manager_server @conf))]
-    (build-url config (str "/attachments/trials/" trial-id "/") )))
+    (build-url config (str "/storage/trial-attachments/" trial-id "/") )))
 
 (defn patch-url [executor trial-id]
   (route-url-for-executor 
