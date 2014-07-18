@@ -8,6 +8,7 @@
     [cider-ci.sm.web :as web]
     [cider-ci.utils.config-loader :as config-loader]
     [cider-ci.utils.messaging :as messaging]
+    [cider-ci.utils.nrepl :as nrepl]
     [cider-ci.utils.rdbms :as rdbms]
     [cider-ci.utils.with :as with]
     [clojure.tools.logging :as logging]
@@ -37,6 +38,7 @@
 (defn -main [& args]
   (logging/debug [-main args])
   (read-config)
+  (nrepl/initialize (:nrepl @conf))
   (create-dirs (:stores @conf))
   (let [ds (rdbms/create-ds (get-db-spec))]
     (web/initialize (conj (select-keys @conf [:web :stores])
