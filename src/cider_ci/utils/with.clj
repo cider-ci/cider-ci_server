@@ -39,3 +39,13 @@
 
 
 ;(macroexpand '(suppress-and-log-warn (println "hello world")))
+
+
+(defmacro log-debug-result [& expressions]
+  `(let [res# (do ~@expressions)]
+     (logging/debug {:result res#})
+     res#))
+
+
+;(macroexpand-1 '(log-debug-result(+ 1 2)))
+
