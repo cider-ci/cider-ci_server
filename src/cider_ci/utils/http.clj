@@ -13,14 +13,18 @@
 
 (defonce conf (atom nil))
 
-(defn post [url params]
-  (logging/debug post [url params])
+
+;### Http request #############################################################
+
+(defn- request [method url params]
+  (logging/debug [method url params])
   (let [basic-auth (:basic_auth @conf)]
     (with/logging
       (logging/debug "http/post" {:url url :basic-auth basic-auth})
-      (http-client/post 
-        url
+      (http-client/request
         (conj {:basic-auth [(:user basic-auth) (:secret basic-auth)]
+               :url url 
+               :method method
                :insecure? true
                :content-type :json
                :accept :json 
@@ -28,43 +32,17 @@
                :conn-timeout 1000 }
               params)))))
 
-; TODO dry-up
+(defn post [url params]
+  (logging/debug post [url params])
+  (request :post url params))
+
 (defn put [url params]
-  (logging/debug post [url params])
-  (let [basic-auth (:basic_auth @conf)]
-    (with/logging
-      (logging/debug "http/put" {:url url :basic-auth basic-auth})
-      (http-client/put
-        url
-        (conj {:basic-auth [(:user basic-auth) (:secret basic-auth)]
-               :insecure? true
-               :content-type :json
-               :accept :json 
-               :socket-timeout 1000  
-               :conn-timeout 1000 }
-              params)))))
+  (logging/debug put [url params])
+  (request :put url params))
 
-; TODO dry-up
 (defn patch [url params]
-  (logging/debug post [url params])
-  (let [basic-auth (:basic_auth @conf)]
-    (with/logging
-      (logging/debug "http/patch" {:url url :basic-auth basic-auth})
-      (http-client/patch
-        url
-        (conj {:basic-auth [(:user basic-auth) (:secret basic-auth)]
-               :insecure? true
-               :content-type :json
-               :accept :json 
-               :socket-timeout 1000  
-               :conn-timeout 1000 }
-              params)))))
-
-
-
-
-(defn initialize [new-conf]
-  (reset! conf new-conf))
+  (logging/debug patch [url params])
+   (request :patch url params))
 
 
 ;### Http Basic Authentication ################################################
@@ -76,8 +54,15 @@
        (-> @conf (:basic_auth) (:secret)))
     (keyword application)))
 
-
 (defn authenticate [handler]
    (wrap-basic-authentication handler authenticated?))
+
+
+;### Initialize ###############################################################
+
+
+(defn initialize [new-conf]
+  (reset! conf new-conf))
+
 
 
