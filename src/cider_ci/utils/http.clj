@@ -44,6 +44,23 @@
                :conn-timeout 1000 }
               params)))))
 
+; TODO dry-up
+(defn patch [url params]
+  (logging/debug post [url params])
+  (let [basic-auth (:basic_auth @conf)]
+    (with/logging
+      (logging/debug "http/patch" {:url url :basic-auth basic-auth})
+      (http-client/patch
+        url
+        (conj {:basic-auth [(:user basic-auth) (:secret basic-auth)]
+               :insecure? true
+               :content-type :json
+               :accept :json 
+               :socket-timeout 1000  
+               :conn-timeout 1000 }
+              params)))))
+
+
 
 
 (defn initialize [new-conf]
