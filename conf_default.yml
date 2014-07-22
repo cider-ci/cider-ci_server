@@ -1,4 +1,3 @@
-
 stores: 
   - url_path_prefix: "/storage/trial-attachments"
     file_path: "./tmp/storage/trial-attachments"
@@ -12,6 +11,10 @@ database:
     subname: "//localhost:5432/cider_ci_dev"
     subprotocol: "postgresql"
     max_pool_size: 10 
+
+basic_auth:
+  user: storage-manager
+  secret: secret
 
 web:
   host: "127.0.0.1"

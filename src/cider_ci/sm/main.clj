@@ -7,6 +7,7 @@
     [cider-ci.sm.sweeper :as sweeper]
     [cider-ci.sm.web :as web]
     [cider-ci.utils.config-loader :as config-loader]
+    [cider-ci.utils.http :as http]
     [cider-ci.utils.messaging :as messaging]
     [cider-ci.utils.nrepl :as nrepl]
     [cider-ci.utils.rdbms :as rdbms]
@@ -39,6 +40,7 @@
   (logging/debug [-main args])
   (read-config)
   (nrepl/initialize (:nrepl @conf))
+  (http/initialize (select-keys @conf [:basic_auth]))
   (create-dirs (:stores @conf))
   (let [ds (rdbms/create-ds (get-db-spec))]
     (web/initialize (conj (select-keys @conf [:web :stores])

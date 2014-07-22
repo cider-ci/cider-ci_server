@@ -4,6 +4,7 @@
 
 (ns cider-ci.sm.web
   (:require 
+    [cider-ci.utils.http :as http]
     [cider-ci.utils.http-server :as http-server]
     [cider-ci.utils.with :as with]
     [clj-logging-config.log4j :as logging-config]
@@ -104,10 +105,19 @@
                           (put-file request)) 
                  )))
 
+(defn authenticate [handler]
+  (fn [request]
+    (logging/debug "authenticate handler" {:request request})
+    (if (= (:request-method request) :get)
+      (handler request)
+      ((http/authenticate handler) request))))
+
 (defn build-main-handler []
   ( -> (cpj.handler/api (build-routes (:context (:web @conf))))
-       (log-handler 1)
+       (log-handler 2)
        (ring.middleware.json/wrap-json-params)
+       (log-handler 1)
+       (authenticate)
        (log-handler 0)
        ))
 
