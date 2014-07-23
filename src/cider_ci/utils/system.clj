@@ -10,13 +10,22 @@
     ))
 
 
-(defn exec [& args]
-  (logging/debug exec [args])
-  (let [res @(apply commons-exec/sh args)]
-    (if (not= 0 (:exit res))
-      (throw (IllegalStateException. (str "Unsuccessful shell execution" 
-                                          args
-                                          (:err res)
-                                          (:out res)))) 
-      res)))
+(defn exec 
+  ([command]
+   (exec command {}))
+  ([command opts]
+   (let [options (conj {:watchdog 1000} opts)
+         res @(commons-exec/sh command options)]
+     (logging/debug exec {:res res})
 
+     (if (not= 0 (:exit res))
+       (throw (IllegalStateException. (str "Unsuccessful shell execution" 
+                                           command
+                                           options
+                                           {:result res}))) 
+       res)
+     )))
+
+
+;(exec ["ls" "-lah"]{:dir "/tmp"})
+;(exec ["sleep" "1"])
