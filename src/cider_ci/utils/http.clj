@@ -1,4 +1,6 @@
 (ns cider-ci.utils.http
+  (:refer-clojure 
+    :exclude [get])
   (:require
     [cider-ci.utils.with :as with]
     [clj-http.client :as http-client]
@@ -31,6 +33,10 @@
                :socket-timeout 1000  
                :conn-timeout 1000 }
               params)))))
+
+(defn get [url params]
+  (logging/debug get [url params])
+  (request :get url params))
 
 (defn post [url params]
   (logging/debug post [url params])
