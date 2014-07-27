@@ -7,25 +7,31 @@
   (:require 
     [clj-commons-exec :as commons-exec]
     [clojure.tools.logging :as logging]
+    [clj-logging-config.log4j :as logging-config]
     ))
+
+  ;(logging-config/set-logger! :level :debug)
 
 
 (defn exec 
   ([command]
    (exec command {}))
   ([command opts]
-   (let [options (conj {:watchdog 1000} opts)
-         res @(commons-exec/sh command options)]
-     (logging/debug exec {:res res})
+   (let [options (conj {:watchdog 1000} 
+                       opts)]
+     @(commons-exec/sh command options))))
+     
 
-     (if (not= 0 (:exit res))
-       (throw (IllegalStateException. (str "Unsuccessful shell execution" 
-                                           command
-                                           options
-                                           {:result res}))) 
-       res)
-     )))
+(defn exec-with-success-or-throw [& args]
+  (let [res (apply exec args)]
+    (if (= 0 (:exit res))
+      res
+      (throw (IllegalStateException. 
+               (str "Unsuccessful shell execution" 
+                    [args]
+                    {:result res}))))))
 
 
-;(exec ["ls" "-lah"]{:dir "/tmp"})
-;(exec ["sleep" "1"])
+(defn exec-with-success? [& args]
+  (= 0 (:exit (apply exec args)))) 
+
