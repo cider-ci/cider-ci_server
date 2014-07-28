@@ -21,11 +21,13 @@
   (let [wrapper-fn (fn [f & args]
                      (logging/log (-> target-var meta :ns) 
                                   :debug nil 
-                                  [(symbol (str (-> target-var meta :name))){:args args}])
+                                  [(symbol (str (-> target-var meta :name))) 
+                                   "invoked" {:args args}])
                      (let [res (apply f args)]
                        (logging/log (-> target-var meta :ns) 
                                     :debug nil 
-                                    [(symbol (str (-> target-var meta :name))){:res res}]) 
+                                    [(symbol (str (-> target-var meta :name))) 
+                                     "returns" {:res res}]) 
                        res))]
     (hooke/add-hook target-var wrapper-fn)))
 
