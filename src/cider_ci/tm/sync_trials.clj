@@ -4,17 +4,16 @@
 
 (ns cider-ci.tm.sync-trials
   (:require
+    [cider-ci.tm.executor :as executor-entity]
     [cider-ci.tm.trial :as trial-entity]
-    [clj-http.client :as http-client]
+    [cider-ci.utils.daemon :as daemon]
+    [cider-ci.utils.debug :as debug]
+    [cider-ci.utils.http :as http]
     [clj-logging-config.log4j :as logging-config]
     [clojure.data.json :as json]
     [clojure.java.jdbc :as jdbc]
     [clojure.tools.logging :as logging]
-    [cider-ci.tm.executor :as executor-entity]
     ))
-
-;(logging-config/set-logger! :level :debug)
-;(logging-config/set-logger! :level :info)
 
 (def conf (atom nil))
 
@@ -37,7 +36,7 @@
       (try 
         (let [executor (get-executor (:executor_id trial))
               url (trial-request-url executor trial)
-              response (http-client/get
+              response (http/get
                          url
                          {:insecure? true
                           :accept :json
@@ -53,25 +52,24 @@
                               :error "The trial was lost on the executor."}]
             (trial-entity/update trial-update)))))))
 
-; ############ 
 
-(def done (atom false))
+;#### service #################################################################
+(daemon/define "check-trials" 
+  start-check-trials
+  stop-check-trials
+  60
+  (check-trials))
 
-(defn start []
-  (logging/info "starting executor.check-trials service")
-  (reset! done false)
-  (future 
-    (loop []
-      (Thread/sleep (* 60 1000))
-      (when-not @done
-        (check-trials)
-        (recur)))))
 
-(defn stop []
-  (logging/info "stopping executor.check-trials service")
-  (reset! done true))
-
+;#### initialize ##############################################################
 (defn initialize [new-conf]
   (reset! conf new-conf)
-  (start))
+  (start-check-trials))
+
+
+;#### debug ###################################################################
+;(debug/debug-ns *ns*)
+;(logging-config/set-logger! :level :debug)
+;(logging-config/set-logger! :level :info)
+
 

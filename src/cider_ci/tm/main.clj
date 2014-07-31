@@ -11,6 +11,7 @@
     [cider-ci.tm.trial :as trial]
     [cider-ci.tm.web :as web]
     [cider-ci.utils.config-loader :as config-loader]
+    [cider-ci.utils.http :as http]
     [cider-ci.utils.messaging :as messaging]
     [cider-ci.utils.nrepl :as nrepl]
     [cider-ci.utils.rdbms :as rdbms]
@@ -32,30 +33,21 @@
 (defn get-db-spec []
   (-> @conf (:database) (:db_spec) ))
 
-;(rdbms/get-columns-metadata "trials" (get-db-spec))
-;(rdbms/get-table-metadata (get-db-spec))
-;(jdbc/with-db-metadata [md (get-db-spec)] (jdbc/metadata-result (.getTables md nil nil nil (into-array ["TABLE" "VIEW"]))))
-;(jdbc/with-db-metadata [md (get-db-spec)] (jdbc/metadata-result (.getColumns md nil nil "trials" "")))
-;(jdbc/query (get-db-spec) ["SELECT * FROM executors"])
 
 (defn -main [& args]
-  (logging/debug [-main args]) 
   (read-config)
   (nrepl/initialize (:nrepl @conf))
   (let [ds (rdbms/create-ds (get-db-spec))]
     (reset! rdbms-ds ds) 
     (messaging/initialize (:messaging @conf))
+    (http/initialize (select-keys @conf [:basic_auth]))
     (ping/initialize {:ds @rdbms-ds})
     (trial/initialize {:ds @rdbms-ds})
     (sync-trials/initialize {:ds @rdbms-ds})
-    (web/initialize (select-keys @conf [:web]))
+    (web/initialize (select-keys @conf [:web :basic_auth]))
     (dispatch/initialize (conj {:ds @rdbms-ds} 
-                               (select-keys @conf [:trial_manager_server
-                                                   :repository_manager_server
+                               (select-keys @conf [:repository_manager_server
                                                    :storage_manager_server
-                                                   ])))
-    (sweep/initialize {:ds @rdbms-ds})
+                                                   :trial_manager_server])))
+    (sweep/initialize {:ds @rdbms-ds})))
 
-    ))
-
-;(jdbc/query @rdbms-ds ["SELECT * FROM executors"])

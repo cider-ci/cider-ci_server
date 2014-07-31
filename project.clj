@@ -21,6 +21,7 @@
                  [org.postgresql/postgresql "9.3-1100-jdbc4"]
                  [org.slf4j/slf4j-log4j12 "1.7.7"]
                  [ring "1.3.0"] 
+                 [ring-basic-authentication "1.0.5"]
                  [ring/ring-jetty-adapter "1.3.0"]
                  [ring/ring-json "0.3.1"]
                  [robert/hooke "1.3.0"]

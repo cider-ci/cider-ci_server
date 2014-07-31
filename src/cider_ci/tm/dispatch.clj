@@ -4,14 +4,16 @@
 
 (ns cider-ci.tm.dispatch
   (:require
-    [clj-http.client :as http-client]
+    [cider-ci.utils.daemon :as daemon]
+    [cider-ci.utils.debug :as debug]
+    [cider-ci.utils.http :as http]
+    [cider-ci.utils.rdbms.json]
+    [cider-ci.utils.with :as with]
     [clj-logging-config.log4j :as logging-config]
     [clojure.data.json :as json]
     [clojure.java.jdbc :as jdbc]
     [clojure.tools.logging :as logging]
     [robert.hooke :as hooke]
-    [cider-ci.utils.with :as with]
-    [cider-ci.utils.rdbms.json]
     ))
 
 (declare 
@@ -25,15 +27,11 @@
   )
 
 
-;(logging-config/set-logger! :level :debug)
-;(logging-config/set-logger! :level :info)
-
 
 (defonce conf (atom nil))
  
 (defn dispatch [trial executor]
   (try
-    (logging/debug "dispatching: " trial executor)
     (with/logging 
       (let [data (build-dispatch-data trial executor)
             protocol (if (:ssl executor) "https" "http")
@@ -42,14 +40,7 @@
         (jdbc/update! (:ds @conf) :trials 
                       {:state "dispatching" :executor_id (:id executor)} 
                       ["id = ?" (:id trial)])
-        (http-client/post
-          url
-          {:insecure? true
-           :content-type :json
-           :accept :json 
-           :body (json/write-str data)
-           :socket-timeout 1000  
-           :conn-timeout 1000 })))
+        (http/post url {:body (json/write-str data)})))
     (catch Exception e
       (jdbc/update! (:ds @conf) :trials 
                     {:state "pending" :executor_id nil} ["id = ?" (:id trial)])
@@ -84,22 +75,21 @@
      ORDER BY executions.priority DESC, executions.created_at ASC, tasks.priority DESC, tasks.created_at ASC"]
     ))
 
+
 (defn build-url [config path]
   (let [ protocol (if (or (:server_ssl config) (:ssl config)) "https" "http")
         host (or (:server_host config) (:host config))
         port (or (:server_port config) (:port config))
         context (:context config)
         ]
-    (str protocol "://" host  ":" port context path)))
+    (str protocol "://" host (when port ":" port) context path)))
 
 (defn git-url [executor repository-id]
-  ; TODO test TODO dedup
   (let [config (if (:server_overwrite executor) 
                  executor 
                  (:repository_manager_server @conf))]
     (build-url config (str "/repositories/" repository-id "/git")  )))
 
-; TODO test TODO dedup
 (defn attachments-url [executor trial-id]
   (let [config (if (:server_overwrite executor) 
                  executor 
@@ -111,7 +101,6 @@
     executor 
     (str "/trials/" trial-id )))
   
-
 (defn submodules-dispatch-data [submodules executor]
   (map 
     (fn [submodule]
@@ -128,7 +117,7 @@
 
 (defn build-dispatch-data [trial executor]
   (let [task (first (jdbc/query (:ds @conf)
-                      ["SELECT * FROM tasks WHERE tasks.id = ?" (:task_id trial)]))
+                                ["SELECT * FROM tasks WHERE tasks.id = ?" (:task_id trial)]))
         execution-id (:execution_id task)
         branch (branch-and-commit execution-id)
         repository-id (:repository_id branch)
@@ -153,10 +142,7 @@
               :ports (:ports task-data)
               :repository_id repository-id
               :scripts (:scripts trial) }]
-    (logging/debug data)
-    data
-    ))
-
+    data))
 
 (defn branch-and-commit [execution-id] 
   (first (jdbc/query (:ds @conf)
@@ -173,42 +159,22 @@
                  (:trial_manager_server @conf))]
     (build-url config path))) 
 
-;#### daemon ##################################################################
 
-(def done (atom false))
+;#### dispatch service ########################################################
+(daemon/define "dispatch-service" 
+  start-dispatch-service 
+  stop-dispatch-service 
+  1
+  (logging/debug "dispatch-service")
+  (dispatch-trials))
 
-(defn start []
-  (logging/info "tm started")
-  (reset! done false)
-  (future 
-    (loop []
-      (Thread/sleep 1000)
-      (when-not @done
-        (with/suppress-and-log-error
-          (dispatch-trials))
-        (recur)))))
-
-(defn stop []
-  (logging/info "tm stoped")
-  (reset! done true))
-
+;#### initialize ##############################################################
 (defn initialize [new-conf]
   (reset! conf new-conf)
-  (start))
+  (start-dispatch-service))
 
 
-; ################################################
-
-(defn logit [f & args]
-  (logging/debug f " ARGS: " args)
-  (let [res (apply f args)]
-    (logging/debug f " RESULT: " res)
-    res ))
-
-
-;(hooke/add-hook #'gsm/submodules-for-commit #'logit)
-;(hooke/add-hook #'executors-to-dispatch-to #'logit)
-;(hooke/add-hook #'build-dispatch-data #'logit)
-;(hooke/add-hook #'route-url-for-executor #'logit)
-
-
+;#### debug ###################################################################
+; (debug/debug-ns *ns*)
+;(logging-config/set-logger! :level :debug)
+;(logging-config/set-logger! :level :info)

@@ -4,6 +4,7 @@
 
 (ns cider-ci.tm.trial
   (:require
+    [cider-ci.utils.debug :as debug]
     [cider-ci.utils.messaging :as messaging]
     [cider-ci.utils.rdbms.conversion :as rdbms.conversion]
     [cider-ci.utils.with :as with]
@@ -12,28 +13,15 @@
     [clojure.tools.logging :as logging]
     ))
 
-;(logging-config/set-logger! :level :debug)
-;(logging-config/set-logger! :level :info)
-
-
 (defonce conf (atom nil))
 
-
-;(jdbc/db-connection (:ds conf))
-
-;(jdbc/metadata-result (.getTables (:ds @conf) nil nil nil (into-array ["TABLE" "VIEW"])))
-
-
+;#### update trial ############################################################
 (defn send-update-notification [id]
   (messaging/publish-event 
     "trial_event_topic" 
     "update" {:id id}))
 
-
-(defonce _update (atom nil))
 (defn update [id params]
-  (logging/debug update [id params])
-  (reset! _update [id params])
   (with/logging 
     (let [table-metadata (-> @conf (:ds) (:table-metadata) (:trials))
           update-params (rdbms.conversion/convert-parameters 
@@ -45,31 +33,25 @@
       (jdbc/update! (:ds @conf)
                     :trials update-params
                     ["id = ?::UUID" id])
-      (send-update-notification id)
-      )))
-;(apply update @_update)
+      (send-update-notification id))))
 
-(defn initialize [new-conf]
-  (reset! conf new-conf))
 
+;#### sql helpers #############################################################
 (def sql-script-sweep-pending
   " json_array_length(scripts) > 0
   AND trials.created_at < (SELECT now() - 
   (SELECT max(trial_scripts_retention_time_days) FROM timeout_settings) 
   * interval '1 day') ")
 
-
-
 (def sql-in-dispatch-timeout 
   " trials.created_at < (SELECT now() - 
   (SELECT max(trial_dispatch_timeout_minutes)  FROM timeout_settings) 
   * interval '1 Minute') ")
 
-(def sql-in-end-state-timeout 
+(def sql-in-terminal-state-timeout 
   " trials.created_at < (SELECT now() - 
   (SELECT max(trial_end_state_timeout_minutes)  FROM timeout_settings) 
   * interval '1 Minute') ")
-
 
 (def sql-not-finished
   " state NOT IN ('aborted','success','failed') ")
@@ -77,6 +59,15 @@
 (def sql-to-be-dispatched
   " state = 'pending' ")
 
-;(update {:id "a6deda0f-d881-4611-a034-a926c0470da8", :state "asdfax" :scripts [1]})
-;(jdbc/update! (:ds @conf) :trials {:error "blah" :scripts (cider-ci.rdbms.conversion/convert-to-json []) } ["id = ?::UUID","a6deda0f-d881-4611-a034-a926c0470da8"])
-;(first (jdbc/query (:ds @conf) ["select * from trials"]))
+
+;#### initialize ##############################################################
+(defn initialize [new-conf]
+  (reset! conf new-conf))
+
+
+;#### debug ###################################################################
+; (debug/debug-ns *ns*)
+;(logging-config/set-logger! :level :debug)
+;(logging-config/set-logger! :level :info)
+
+

@@ -1,6 +1,10 @@
+
 repositories:
   path: "../../tmp/repositories"
 
+basic_auth:
+  user: trial-manager
+  secret: secret
 
 # repository_manager_server as seen from the 'outside'
 # in dev mode we just use the local host binding

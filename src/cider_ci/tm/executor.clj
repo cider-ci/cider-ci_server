@@ -3,7 +3,11 @@
 ; See the "LICENSE.txt" file provided with this software.
 
 (ns cider-ci.tm.executor
-  )
+  (:require
+    [cider-ci.utils.debug :as debug]
+    [clj-logging-config.log4j :as logging-config]
+    [clojure.tools.logging :as logging]
+    ))
 
 
 (defn base-url [executor]
@@ -13,4 +17,9 @@
 (defn ping-url [executor]
   (str (base-url executor) "/ping"))
 
+
+;#### debug ###################################################################
+; (debug/debug-ns *ns*)
+;(logging-config/set-logger! :level :debug)
+;(logging-config/set-logger! :level :info)
 
