@@ -3,6 +3,7 @@
     [cider-ci.rm.submodules :as submodules]
     [cider-ci.utils.exception :as utils.execption]
     [cider-ci.utils.http-server :as http-server]
+    [cider-ci.utils.http :as http]
     [clj-logging-config.log4j :as logging-config]
     [clj-time.core :as time]
     [clojure.data :as data]
@@ -53,15 +54,19 @@
                  )))
 
                     
-(defn log-handler [handler]
+(defn log-handler [handler level]
   (fn [request]
-    (logging/debug [log-handler request])
-    (handler request)))
+    (logging/debug "log-handler " level " request: " request)
+    (let [response (handler request)]
+      (logging/debug  "log-handler " level " response: " response)
+      response)))
 
 (defn build-main-handler []
   ( -> (cpj.handler/api (build-routes (:context (:web @conf))))
-       (log-handler)
-       (ring.middleware.json/wrap-json-params)))
+       (log-handler 1)
+       (ring.middleware.json/wrap-json-params)
+       (log-handler 0)
+       (http/authenticate)))
 
 
 ;#### the server ##############################################################

@@ -9,6 +9,10 @@ database:
     subprotocol: "postgresql"
     max_pool_size: 10 
 
+basic_auth:
+  user: storage-manager
+  secret: secret
+
 web:
   host: "127.0.0.1"
   port: 8881
