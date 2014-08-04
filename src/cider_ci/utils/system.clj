@@ -5,12 +5,11 @@
 
 (ns cider-ci.utils.system
   (:require 
+    [cider-ci.utils.debug :as debug]
     [clj-commons-exec :as commons-exec]
-    [clojure.tools.logging :as logging]
     [clj-logging-config.log4j :as logging-config]
+    [clojure.tools.logging :as logging]
     ))
-
-  ;(logging-config/set-logger! :level :debug)
 
 
 (defn exec 
@@ -35,3 +34,8 @@
 (defn exec-with-success? [& args]
   (= 0 (:exit (apply exec args)))) 
 
+
+;### Debug #####################################################################
+;(debug/debug-ns *ns*)
+;(logging-config/set-logger! :level :debug)
+;(logging-config/set-logger! :level :info)
