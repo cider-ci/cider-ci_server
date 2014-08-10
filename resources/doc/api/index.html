@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="generator" content="pandoc" />
+  <meta name="author" content="Thomas Schank DrTom@Schank.ch" />
+  <meta name="date" content="2014-08-09" />
+  <title>Cider-CI API Documentation</title>
+  <style type="text/css">code{white-space: pre;}</style>
+  <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+  <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css">
+</head>
+<body>
+    <div class="navbar navbar-static-top">
+    <div class="navbar-inner">
+      <div class="container">
+        <span class="doc-title">Cider-CI API Documentation</span>
+        <ul class="nav pull-right doc-info">
+                    <li><p class="navbar-text">Thomas Schank <script type="text/javascript">
+                                               <!--
+                                               h='&#x73;&#x63;&#104;&#x61;&#110;&#x6b;&#46;&#x63;&#104;';a='&#64;';n='&#100;&#114;&#116;&#x6f;&#x6d;';e=n+a+h;
+                                               document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'">'+'DrTom@Schank.ch'+'<\/'+'a'+'>');
+                                               // -->
+                                               </script><noscript>&#68;&#114;&#84;&#x6f;&#x6d;&#64;&#x53;&#x63;&#104;&#x61;&#110;&#x6b;&#46;&#x63;&#104;&#32;&#40;&#100;&#114;&#116;&#x6f;&#x6d;&#32;&#x61;&#116;&#32;&#x73;&#x63;&#104;&#x61;&#110;&#x6b;&#32;&#100;&#x6f;&#116;&#32;&#x63;&#104;&#x29;</noscript></p></li>
+                                        <li><p class="navbar-text">2014-08-09</p></li>
+                  </ul>
+      </div>
+    </div>
+  </div>
+    <div class="container">
+    <div class="row">
+            <div id="TOC" class="span3">
+        <div class="well toc">
+        <ul>
+          <li class="nav-header">Table of Contents</li>
+        </ul>
+        <ul>
+        <li><a href="#cider-ci-api-documentation">Cider-CI API Documentation</a><ul>
+        <li><a href="#authentication">Authentication</a><ul>
+        <li><a href="#session-cookie">Session-Cookie</a></li>
+        <li><a href="#basic-auth">Basic-Auth</a></li>
+        </ul></li>
+        <li><a href="#resources">Resources</a><ul>
+        <li><a href="#execution">Execution</a><ul>
+        <li><a href="#get-executionsid">GET <code>/executions/:id</code></a></li>
+        </ul></li>
+        <li><a href="#execution-stats">Execution-Stats</a><ul>
+        <li><a href="#get-executionsidstats">GET <code>/executions/:id/stats</code></a></li>
+        </ul></li>
+        <li><a href="#executions">Executions</a><ul>
+        <li><a href="#get-executions">GET <code>/executions</code></a><ul>
+        <li><a href="#query-parameters">Query Parameters</a><ul>
+        <li><a href="#branch-name">branch-name</a></li>
+        <li><a href="#branch-heads-only">branch-heads-only</a></li>
+        <li><a href="#page">page</a></li>
+        <li><a href="#repository-name">repository-name</a></li>
+        <li><a href="#state">state</a></li>
+        </ul></li>
+        </ul></li>
+        </ul></li>
+        <li><a href="#root">Root</a><ul>
+        <li><a href="#get">GET <code>/</code></a></li>
+        </ul></li>
+        <li><a href="#task">Task</a><ul>
+        <li><a href="#get-taskid">GET <code>/task/:id</code></a></li>
+        </ul></li>
+        <li><a href="#tasks">Tasks</a><ul>
+        <li><a href="#get-executionsexecution_idtasks">GET <code>/executions/:execution_id/tasks</code></a><ul>
+        <li><a href="#query-parameters-1">Query Parameters</a><ul>
+        <li><a href="#state-1">state</a></li>
+        </ul></li>
+        </ul></li>
+        </ul></li>
+        </ul></li>
+        </ul></li>
+        </ul>
+        </div>
+      </div>
+            <div class="span9">
+            <h1 id="cider-ci-api-documentation"><a href="#TOC">Cider-CI API Documentation</a></h1>
+            <p>Visit the <a href="https://github.com/cider-ci/cider-ci">Cider-CI Project</a> for more information on Cider-CI.</p>
+            <p>The <a href="https://rawgit.com/cider-ci/cider-ci/master/doc/entities.svg">entities diagram</a> is helpful to understand relations between resources.</p>
+            <h2 id="authentication"><a href="#TOC">Authentication</a></h2>
+            <h3 id="session-cookie"><a href="#TOC">Session-Cookie</a></h3>
+            <p>The API accepts the <code>cider-ci_services-session</code> cookie set on sing-in from the browser interfaces.</p>
+            <h3 id="basic-auth"><a href="#TOC">Basic-Auth</a></h3>
+            <p>If no session cookie was found (or validation of the cookie failed) <em>HTTP Basic authentication</em> is used with the same user and password as used with the browser interface.</p>
+            <h2 id="resources"><a href="#TOC">Resources</a></h2>
+            <h3 id="execution"><a href="#TOC">Execution</a></h3>
+            <h4 id="get-executionsid"><a href="#TOC">GET <code>/executions/:id</code></a></h4>
+            <p>Returns the properties of the execution.</p>
+            <h3 id="execution-stats"><a href="#TOC">Execution-Stats</a></h3>
+            <h4 id="get-executionsidstats"><a href="#TOC">GET <code>/executions/:id/stats</code></a></h4>
+            <p>Returns the aggregated count of the number of tasks belonging to an execution with respect to their state.</p>
+            <h3 id="executions"><a href="#TOC">Executions</a></h3>
+            <h4 id="get-executions"><a href="#TOC">GET <code>/executions</code></a></h4>
+            <p>Returns a list of links each pointing to an execution. Order is descending by the <code>created_at</code> time-stamp.</p>
+            <h5 id="query-parameters"><a href="#TOC">Query Parameters</a></h5>
+            <h6 id="branch-name"><a href="#TOC">branch-name</a></h6>
+            <p>Filters executions within branches with the name equal to the value of the parameter.</p>
+            <p>Query string example: <code>?repository-name=Madek&amp;branch-heads-only&amp;branch-name=next</code></p>
+            <h6 id="branch-heads-only"><a href="#TOC">branch-heads-only</a></h6>
+            <p>Filters only executions wich are on a current head of a branch. Effective if and only if the key is present.</p>
+            <p>Query string example: <code>?repository-name=Madek&amp;branch-heads-only&amp;branch-name=next</code></p>
+            <h6 id="page"><a href="#TOC">page</a></h6>
+            <p>Used for pagination. Do not set this value. Use the <code>next</code> and <code>previous</code> links to iterate over paginated results.</p>
+            <h6 id="repository-name"><a href="#TOC">repository-name</a></h6>
+            <p>Filters executions within repositories with the name equal to the value of the parameter.</p>
+            <p>Query string example: <code>?repository-name=Madek&amp;branch-heads-only&amp;branch-name=next</code></p>
+            <h6 id="state"><a href="#TOC">state</a></h6>
+            <p>Filters executions with state equal to the value of the parameter.</p>
+            <p>Query string example: <code>?branch-name=master&amp;repository-name=leihs&amp;state=success</code></p>
+            <h3 id="root"><a href="#TOC">Root</a></h3>
+            <h4 id="get"><a href="#TOC">GET <code>/</code></a></h4>
+            <p>The entry-point.</p>
+            <h3 id="task"><a href="#TOC">Task</a></h3>
+            <h4 id="get-taskid"><a href="#TOC">GET <code>/task/:id</code></a></h4>
+            <p>Returns the properties of the task.</p>
+            <h3 id="tasks"><a href="#TOC">Tasks</a></h3>
+            <h4 id="get-executionsexecution_idtasks"><a href="#TOC">GET <code>/executions/:execution_id/tasks</code></a></h4>
+            <p>Returns a list of links each pointing to a tasks where the tasks belongs to the execution with the id <code>:execution_id</code>. Order is ascending with respect to the <code>name</code> property.</p>
+            <h5 id="query-parameters-1"><a href="#TOC">Query Parameters</a></h5>
+            <h6 id="state-1"><a href="#TOC">state</a></h6>
+            <p>Filters tasks with state equal to the value of the parameter.</p>
+            <p>Query string example: <code>?page=0&amp;state=failed</code></p>
+            </div>
+    </div>
+  </div>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+  <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+</body>
+</html>

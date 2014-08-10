@@ -1,3 +1,12 @@
 [submodule "clj-utils"]
 	path = clj-utils
 	url = https://github.com/cider-ci/cider-ci_clj-utils.git
+[submodule "resources/hal-browser"]
+	path = resources/hal-browser
+	url = https://github.com/cider-ci/hal-browser.git
+[submodule "api-browser"]
+	path = resources/api-browser
+	url = https://github.com/cider-ci/api-browser.git
+[submodule "bcrypt-ruby"]
+	path = lib/bcrypt-ruby
+	url = https://github.com/codahale/bcrypt-ruby.git

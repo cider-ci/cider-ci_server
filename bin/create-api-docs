@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+
+pandoc --template lib/doc/template.html \
+  --toc \
+  -o resources/doc/api/index.html  \
+  doc/api/**/*md
+
