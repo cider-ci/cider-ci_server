@@ -2,6 +2,7 @@
   (:refer-clojure 
     :exclude [get])
   (:require
+    [cider-ci.utils.debug :as debug]
     [cider-ci.utils.with :as with]
     [clj-http.client :as http-client]
     [clj-logging-config.log4j :as logging-config]
@@ -9,11 +10,37 @@
     [ring.middleware.basic-authentication :refer [wrap-basic-authentication]]
     ))
 
-;(logging-config/set-logger! :level :debug)
-;(logging-config/set-logger! :level :info)
-
 
 (defonce conf (atom nil))
+
+;### build url ##################################################################
+
+(defn sanitize-query-params [params]
+  (into {} (sort (for [[k v] params] 
+                   [(-> k name clojure.string/trim
+                        clojure.string/lower-case
+                        (clojure.string/replace " " "-")
+                        (clojure.string/replace "_" "-")
+                        (clojure.string/replace #"-+" "-")
+                        keyword)
+                    v]))))
+
+(defn build-url-query-string [params]
+  (-> params sanitize-query-params 
+      http-client/generate-query-string))
+
+(defn build-url 
+
+  ([config path]
+   (let [ protocol (if (or (:server_ssl config) (:ssl config)) "https" "http")
+         host (or (:server_host config) (:host config))
+         port (or (:server_port config) (:port config))
+         context (:context config) ]
+     (str protocol "://" host (when port (str ":" port)) context path)))
+
+  ([config path query-params]
+   (str (build-url config path) 
+        "?" (build-url-query-string query-params))))
 
 
 ;### Http request #############################################################
@@ -66,9 +93,13 @@
 
 ;### Initialize ###############################################################
 
-
 (defn initialize [new-conf]
   (reset! conf new-conf))
 
+
+;### Debug ####################################################################
+;(debug/debug-ns *ns*)
+;(logging-config/set-logger! :level :debug)
+;(logging-config/set-logger! :level :info)
 
 
