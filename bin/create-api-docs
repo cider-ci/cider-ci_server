@@ -3,6 +3,7 @@
 
 pandoc --template lib/doc/template.html \
   --toc \
+  --toc-depth 4 \
   -o resources/doc/api/index.html  \
   doc/api/**/*md
 

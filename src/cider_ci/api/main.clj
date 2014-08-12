@@ -37,7 +37,7 @@
     (web/initialize (select-keys @conf [:web :basic_auth]))
     (session-auth/initialize {:ds ds}) 
     (basic-auth/initialize {:ds ds}) 
-    (resources/initialize (assoc (select-keys @conf [:web]) :ds ds) )
+    (resources/initialize (assoc (select-keys @conf [:web :storage_manager_server]) :ds ds) )
     ))
 
 

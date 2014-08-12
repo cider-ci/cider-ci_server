@@ -1,6 +1,6 @@
 % Cider-CI API Documentation 
 % Thomas Schank <DrTom@Schank.ch>
-% 2014-08-09
+% 2014-08-12
 
 
 Cider-CI API Documentation 
@@ -21,6 +21,6 @@ from the browser interfaces.
 
 If no session cookie was found (or validation of the cookie failed)
 *HTTP Basic authentication* is used with the same user and password as
-used with the browser interface.
+used in the browser interface.
 
 ## Resources

@@ -1,13 +1,13 @@
 
 ### Execution
 
-#### GET `/executions/:id`
+#### GET `/execution/:id`
 
 Returns the properties of the execution.
 
 ### Execution-Stats
 
-#### GET `/executions/:id/stats`
+#### GET `/execution/:id/stats`
 
 Returns the aggregated count of the number of tasks belonging to an execution
 with respect to their state. 

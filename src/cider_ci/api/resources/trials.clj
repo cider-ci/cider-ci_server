@@ -1,4 +1,4 @@
-(ns cider-ci.api.resources.tasks
+(ns cider-ci.api.resources.trials
   (:require 
     [cider-ci.utils.debug :as debug]
     [cider-ci.utils.http :as http]
@@ -23,45 +23,46 @@
     [sqlingvo.core]
     ))
 
+
 (defonce conf (atom nil))
 
-;### get tasks ##################################################################
-(defn build-tasks-base-query [execution-id]
-  (select (distinct [:tasks.id :tasks.name :tasks.updated_at])
-          (from :tasks)
-          (where `(= :execution_id ~(uuid execution-id)) :and)
-          (order-by (asc :tasks.name))
+;### get-trials #################################################################
+(defn build-trials-base-query [task-id]
+  (select (distinct [:trials.id :trials.updated_at])
+          (from :trials)
+          (where `(= :task_id ~(uuid task-id)) :and)
+          (order-by (desc :trials.updated_at))
           (limit 10)))
 
 (defn filter-by-state [query params]
   (if-let [state (:state params)]
-    (compose query (where `(= :tasks.state ~state) :and))
+    (compose query (where `(= :trials.state ~state) :and))
     query))
 
-(defn tasks-data [execution-id query-params]
-  (let [query (-> (build-tasks-base-query execution-id)
+(defn trials-data [task-id query-params]
+  (let [query (-> (build-trials-base-query task-id)
                   (filter-by-state query-params)
                   (add-offset query-params)
                   sql)
-        task-ids (map :id (jdbc/query (:ds @conf) query))]
-    {:_links (conj {:self {:href (str (tasks-path execution-id) "?"
+        trial-ids (map :id (jdbc/query (:ds @conf) query))]
+    {:_links (conj {:self {:href (str (trials-path task-id) "?"
                                       (http/build-url-query-string query-params))}
-                    :cider-ci_api-docs:task (map task-link task-ids)}
-                   (next-and-previous-link-map (tasks-path execution-id)  
-                                               query-params (seq task-ids))
-                   (execution-link-map execution-id)
+                    :cider-ci_api-docs:trial (map trial-link trial-ids)}
+                   (next-and-previous-link-map (trials-path task-id)
+                                               query-params (seq trial-ids))
+                   (task-link-map task-id)
                    (curies-link-map)
                    )}))
-  
-(defn get-tasks [request] 
-  {:hal_json_data (tasks-data (-> request :params :execution_id)
-                              (-> request :query-params))})
+
+(defn get-trials  [request]
+  {:hal_json_data (trials-data (-> request :route-params :task_id)
+                               (-> request :query-params))})
 
 
 ;### routes #####################################################################
 (def routes 
   (cpj/routes
-    (cpj/GET "/execution/:execution_id/tasks" request (get-tasks request))
+    (cpj/GET "/task/:task_id/trials" request (get-trials request))
     ))
 
 
@@ -70,10 +71,12 @@
   (reset! conf new-conf))
 
 
+
 ;### Debug ####################################################################
 ;(debug/debug-ns *ns*)
 ;(logging-config/set-logger! :level :debug)
 ;(logging-config/set-logger! :level :info)
+
 
 
 

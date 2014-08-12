@@ -8,11 +8,11 @@ Returns the properties of the task.
 
 ### Tasks
 
-#### GET `/executions/:execution_id/tasks` 
+#### GET `/execution/:execution_id/tasks` 
 
-Returns a list of links each pointing to a tasks where the tasks belongs to the
-execution with the id `:execution_id`. Order is ascending with respect to the
-`name` property.
+Returns a list of links each pointing to a task which belongs to
+execution with the id `:execution_id`. Order is ascending with respect
+to the `name` property.
 
 ##### Query Parameters 
 

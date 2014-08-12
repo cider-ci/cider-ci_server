@@ -29,3 +29,10 @@ messaging:
     password: guest
 
 
+storage_manager_server: 
+  host: "127.0.0.1"
+  port: 8883
+  context: '/cider-ci'
+  ssl: false
+
+

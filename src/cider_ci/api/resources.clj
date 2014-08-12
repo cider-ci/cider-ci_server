@@ -1,11 +1,17 @@
 (ns cider-ci.api.resources
   (:require 
+    [cider-ci.api.resources.execution :as execution]
     [cider-ci.api.resources.executions :as executions]
     [cider-ci.api.resources.root :as resources.root]
     [cider-ci.api.resources.shared :as shared]
+    [cider-ci.api.resources.task :as task]
     [cider-ci.api.resources.tasks :as tasks]
+    [cider-ci.api.resources.trial :as trial]
+    [cider-ci.api.resources.trial-attachments :as trial-attachments]
+    [cider-ci.api.resources.trials :as trials]
     [cider-ci.utils.debug :as debug]
     [cider-ci.utils.exception :as exception]
+    [cider-ci.utils.http :as http]
     [cider-ci.utils.with :as with]
     [clj-logging-config.log4j :as logging-config]
     [clojure.data.json :as json]
@@ -62,15 +68,25 @@
 
 (defn sanitize-request-params [request]
   (assoc request
-         :query-params (-> request :query-params shared/sanitize-query-params)
+         :query-params (-> request :query-params http/sanitize-query-params)
          ))
 
 (defn build-routes-handler []
   (let [routes-handler (cpj/routes 
                          (cpj/GET "/" request (resources.root/get request))
-                         (cpj/ANY "/executions/:id/tasks*" [] (tasks/routes))
-                         (cpj/ANY "/tasks*" [] (tasks/routes))
-                         (cpj/ANY "/executions*" [] (executions/routes))
+
+                         (cpj/ANY "/executions*" [] executions/routes)
+                         (cpj/ANY "/execution/:id*" [] execution/routes)
+
+                         (cpj/ANY "/execution/:id/tasks*" [] tasks/routes)
+                         (cpj/ANY "/task*" [] task/routes)
+
+                         (cpj/ANY "/task/:id/trials" [] trials/routes)
+                         (cpj/ANY "/trial/:id" [] trial/routes)
+
+                         (cpj/ANY "/trial/:id/attachments*" [] trial-attachments/routes)
+                         (cpj/ANY "/trial-attachment*" [] trial-attachments/routes)
+
                          (cpj/ANY "*" request {:status 404})
                          )]
     (fn [request]
@@ -81,10 +97,14 @@
 
 (defn initialize [new-conf]
   (reset! conf new-conf)
-  (tasks/initialize new-conf)
   (executions/initialize new-conf)
+  (execution/initialize new-conf)
   (shared/initialize new-conf)
-  )
+  (tasks/initialize new-conf)
+  (task/initialize new-conf)
+  (trials/initialize new-conf)
+  (trial/initialize new-conf)
+  (trial-attachments/initialize new-conf))
 
 
 ;### Debug ####################################################################

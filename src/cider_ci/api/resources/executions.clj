@@ -1,6 +1,7 @@
 (ns cider-ci.api.resources.executions
   (:require 
     [cider-ci.utils.debug :as debug]
+    [cider-ci.utils.http :as http]
     [cider-ci.utils.http-server :as http-server]
     [clj-http.client :as http-client]
     [clj-logging-config.log4j :as logging-config]
@@ -69,75 +70,23 @@
                   sql)
         _ (logging/debug "GET /executions " {:query query})
         execution-ids (map :id (jdbc/query (:ds @conf) query))]
-    {:_links (conj { :self {:href (str (executions-path) "?" 
-                                       (build-url-query-string params))}}
+    {:_links (conj {:self {:href (str (executions-path) "?" 
+                                       (http/build-url-query-string params))}}
                    (curies-link-map)
-
-                   (when (seq execution-ids)
-                     {:next {:href (str (executions-path) "?" 
-                                        (build-url-query-string 
-                                          (next-page-query-params params)))}})
-
-                   (when-let [pp (previous-page-query-params params)]
-                     {:previous {:href (str (executions-path) "?" 
-                                            (build-url-query-string pp))}})
-
-                   {:cider-ci_api-docs:execution (map execution-link execution-ids)}
-
+                   (next-and-previous-link-map (executions-path) 
+                                               params (seq execution-ids))
                    (root-link-map)
-
+                   {:cider-ci_api-docs:execution (map execution-link execution-ids)}
                    )}))
 
 (defn get-index [request] 
   {:hal_json_data (executions-data (:query-params request) )})
 
-
-;### get-execution-stats ########################################################
-
-(defn get-execution-stats [request]
-  (let [id (-> request :params :id)
-        data (first (jdbc/query 
-                      (:ds @conf) ["SELECT * from execution_stats 
-                                   WHERE execution_id = ?::uuid" id]))
-        links {:_links 
-               (conj {}
-                     (curies-link-map)
-                     (execution-link-map id)
-                     (root-link-map))}]
-    {:hal_json_data (conj data links)}))
-
-
-;### get-execution ##############################################################
-
-(defn query-exeuction [id]
-  (first (jdbc/query (:ds @conf) 
-                     ["SELECT * from executions
-                      WHERE id = ?::UUID" id])))
-
-(defn execution-data [params]
-  (let [id (:id params)
-        execution (query-exeuction id)]
-    (assoc 
-      (dissoc execution :substituted_specification_data :tree_id :specification_id)
-      :_links (conj 
-                { :self (execution-link id)}
-                (execution-stats-link-map id)
-                (tasks-link-map id)
-                (root-link-map)
-                (curies-link-map)
-                ))))
-
-(defn get-execution [request] 
-  {:hal_json_data  (execution-data (:params request))})
-
-
 ;### routes #####################################################################
 
-(defn routes []
+(def routes
   (cpj/routes
-    (cpj/GET "/executions" request (get-index request))
-    (cpj/GET "/executions/:id" request (get-execution request))
-    (cpj/GET "/executions/:id/stats" request (get-execution-stats request))))
+    (cpj/GET "/executions" request (get-index request))))
 
 
 ;### init #####################################################################
