@@ -78,19 +78,6 @@
    (request :patch url params))
 
 
-;### Http Basic Authentication ################################################
-
-(defn authenticated? [application password]
-  (logging/debug authenticated? [application password])
-  (and 
-    (= password
-       (-> @conf (:basic_auth) (:secret)))
-    (keyword application)))
-
-(defn authenticate [handler]
-   (wrap-basic-authentication handler authenticated?))
-
-
 ;### Initialize ###############################################################
 
 (defn initialize [new-conf]
