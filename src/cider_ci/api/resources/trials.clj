@@ -1,3 +1,7 @@
+; Copyright (C) 2013, 2014 Dr. Thomas Schank  (DrTom@schank.ch, Thomas.Schank@algocon.ch)
+; Licensed under the terms of the GNU Affero General Public License v3.
+; See the "LICENSE.txt" file provided with this software.
+
 (ns cider-ci.api.resources.trials
   (:require 
     [cider-ci.utils.debug :as debug]
@@ -47,7 +51,7 @@
         trial-ids (map :id (jdbc/query (:ds @conf) query))]
     {:_links (conj {:self {:href (str (trials-path task-id) "?"
                                       (http/build-url-query-string query-params))}
-                    :cider-ci_api-docs:trial (map trial-link trial-ids)}
+                    :cici:trial (map trial-link trial-ids)}
                    (next-and-previous-link-map (trials-path task-id)
                                                query-params (seq trial-ids))
                    (task-link-map task-id)
@@ -73,10 +77,6 @@
 
 
 ;### Debug ####################################################################
-;(debug/debug-ns *ns*)
 ;(logging-config/set-logger! :level :debug)
 ;(logging-config/set-logger! :level :info)
-
-
-
-
+;(debug/debug-ns *ns*)

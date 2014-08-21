@@ -1,3 +1,8 @@
+; Copyright (C) 2013, 2014 Dr. Thomas Schank  (DrTom@schank.ch, Thomas.Schank@algocon.ch)
+; Licensed under the terms of the GNU Affero General Public License v3.
+; See the "LICENSE.txt" file provided with this software.
+
+
 (ns cider-ci.api.resources.execution
   (:require 
     [cider-ci.utils.debug :as debug]
@@ -52,12 +57,13 @@
   (let [id (:id params)
         execution (query-exeuction id)]
     (assoc 
-      (dissoc execution :substituted_specification_data :tree_id :specification_id)
+      (dissoc execution :substituted_specification_data :specification_id)
       :_links (conj 
                 { :self (execution-link id)}
                 (execution-stats-link-map id)
                 (tasks-link-map id)
                 (root-link-map)
+                (tree-attachments-link-map id)
                 (curies-link-map)
                 ))))
 
@@ -80,8 +86,6 @@
 
 
 ;### Debug ####################################################################
-;(debug/debug-ns *ns*)
 ;(logging-config/set-logger! :level :debug)
 ;(logging-config/set-logger! :level :info)
-
-
+;(debug/debug-ns *ns*)

@@ -1,3 +1,8 @@
+; Copyright (C) 2013, 2014 Dr. Thomas Schank  (DrTom@schank.ch, Thomas.Schank@algocon.ch)
+; Licensed under the terms of the GNU Affero General Public License v3.
+; See the "LICENSE.txt" file provided with this software.
+
+
 (ns cider-ci.api.resources
   (:require 
     [cider-ci.api.resources.execution :as execution]
@@ -8,6 +13,7 @@
     [cider-ci.api.resources.tasks :as tasks]
     [cider-ci.api.resources.trial :as trial]
     [cider-ci.api.resources.trial-attachments :as trial-attachments]
+    [cider-ci.api.resources.tree-attachments :as tree-attachments]
     [cider-ci.api.resources.trials :as trials]
     [cider-ci.utils.debug :as debug]
     [cider-ci.utils.exception :as exception]
@@ -29,19 +35,6 @@
 
 (defonce conf (atom nil))
 (def context (atom nil))
-
-
-(defn prefix-links [data]
-  (clojure.walk/prewalk
-    (fn [el]
-      (condp = (type el)
-        clojure.lang.MapEntry (if (and (= :href (key el))
-                                       (not (re-matches #"^http.*" (val el))))
-                                ; TODO fix hard coded context
-                                [:href (str "/cider-ci/api_v1" (val el))]
-                                el)
-        el))
-    data))
 
 (defn sort-map [m]
   (into {} (sort m)))
@@ -84,8 +77,11 @@
                          (cpj/ANY "/task/:id/trials" [] trials/routes)
                          (cpj/ANY "/trial/:id" [] trial/routes)
 
-                         (cpj/ANY "/trial/:id/attachments*" [] trial-attachments/routes)
+                         (cpj/ANY "/trial/:id/trial-attachments*" [] trial-attachments/routes)
                          (cpj/ANY "/trial-attachment*" [] trial-attachments/routes)
+
+                         (cpj/ANY "/execution/:id/tree-attachments*" [] tree-attachments/routes)
+                         (cpj/ANY "/tree-attachment*" [] tree-attachments/routes)
 
                          (cpj/ANY "*" request {:status 404})
                          )]
@@ -97,20 +93,20 @@
 
 (defn initialize [new-conf]
   (reset! conf new-conf)
-  (executions/initialize new-conf)
   (execution/initialize new-conf)
+  (executions/initialize new-conf)
   (shared/initialize new-conf)
-  (tasks/initialize new-conf)
   (task/initialize new-conf)
-  (trials/initialize new-conf)
+  (tasks/initialize new-conf)
+  (tree-attachments/initialize new-conf)
+  (trial-attachments/initialize new-conf)
   (trial/initialize new-conf)
-  (trial-attachments/initialize new-conf))
+  (trials/initialize new-conf)
+  )
 
 
 ;### Debug ####################################################################
-;(debug/debug-ns *ns*)
-;(debug/debug-ns 'clojure.java.jdbc)
 ;(logging-config/set-logger! :level :debug)
 ;(logging-config/set-logger! :level :info)
-
-
+;(debug/debug-ns 'clojure.java.jdbc)
+;(debug/debug-ns *ns*)

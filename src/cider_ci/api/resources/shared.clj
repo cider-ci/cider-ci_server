@@ -1,3 +1,7 @@
+; Copyright (C) 2013, 2014 Dr. Thomas Schank  (DrTom@schank.ch, Thomas.Schank@algocon.ch)
+; Licensed under the terms of the GNU Affero General Public License v3.
+; See the "LICENSE.txt" file provided with this software.
+
 (ns cider-ci.api.resources.shared
   (:require 
     [cider-ci.utils.debug :as debug]
@@ -33,11 +37,10 @@
 
 ;### url ######################################################################
 (defn prefix []
-  (str (-> @conf :web :context) "/api_v1"))
+  (str (-> @conf :web :context) (-> @conf :web :sub_path)))
 
 (defn curies-link-map []
-  {:curies [{:name "cider-ci_api-docs"
-            :href (str (prefix) "/doc/api/index.html#{rel}")
+  {:curies [{:name "cici" :href (str (prefix) "/doc/api/index.html#{rel}")
             :templated true}]})
 
 ;### offset ###################################################################
@@ -84,12 +87,12 @@
    })
 
 (defn execution-link-map [id]
-  {:cider-ci_api-docs:execution
+  {:cici:execution
    (execution-link id)})
 
 ;##############################################################################
 (defn execution-stats-link-map [id]
-  {:cider-ci_api-docs:execution-stats
+  {:cici:execution-stats
    {:href (str (execution-path id) "/stats")
     :title "Execution-Stats"}})
     
@@ -102,7 +105,7 @@
    :title "Executions"} )
 
 (defn executions-link-map []
-  {:cider-ci_api-docs:executions
+  {:cici:executions
    (executions-link) })
 
 ;##############################################################################
@@ -110,7 +113,7 @@
   (str (prefix) "/execution/" execution-id "/tasks"))
 
 (defn tasks-link-map [execution-id]
-  {:cider-ci_api-docs:tasks
+  {:cici:tasks
     {:title "Tasks" 
      :href (tasks-path execution-id)}})
 
@@ -119,7 +122,7 @@
    :title "Task"})
 
 (defn task-link-map [task-id]
-  {:cider-ci_api-docs:task
+  {:cici:task
    (task-link task-id)})
 
 ;##############################################################################
@@ -127,7 +130,7 @@
   (str (prefix) "/task/" task-id "/trials"))
 
 (defn trials-link-map [tasks-id]
-  {:cider-ci_api-docs:trials
+  {:cici:trials
     {:title "Trials" 
      :href (trials-path tasks-id)}})
 
@@ -136,7 +139,7 @@
    :title "Trial"})
 
 (defn trial-link-map [trial-id]
-  {:cider-ci_api-docs:trial 
+  {:cici:trial 
     (trial-link trial-id)})
 
 ;##############################################################################
@@ -148,7 +151,7 @@
    :href (trial-attachments-path trial-id)})
 
 (defn trial-attachments-link-map [trial-id]
-  {:cider-ci_api-docs:trial-attachments
+  {:cici:trial-attachments
    (trial-attachments-link trial-id)})
 
 ;##############################################################################
@@ -160,15 +163,41 @@
    :href (trial-attachment-path path)})
 
 (defn trial-attachment-link-map [path]
-  {:cider-ci_api-docs:trial-attachment
+  {:cici:trial-attachment
    (trial-attachment-link path)}) 
+
+;##############################################################################
+(defn tree-attachments-path [execution-id]
+  (str (prefix) "/execution/" execution-id "/tree-attachments"))
+
+(defn tree-attachments-link [execution-id]
+  {:title "Tree-Attachments" 
+   :href (tree-attachments-path execution-id)})
+
+(defn tree-attachments-link-map [execution-id]
+  {:cici:tree-attachments
+   (tree-attachments-link execution-id)})
+
+;##############################################################################
+(defn tree-attachment-path [path]
+  (str (prefix) "/tree-attachment" path))
+
+(defn tree-attachment-link [path]
+  {:title "Tree-Attachment" 
+   :href (tree-attachment-path path)})
+
+(defn tree-attachment-link-map [path]
+  {:cici:tree-attachment
+   (tree-attachment-link path)}) 
+
+
 
 ;##############################################################################
 (defn root-link []
   {:href  (prefix) :title "API-Root"}) 
 
 (defn root-link-map []
-  {:cider-ci_api-docs:root (root-link)})
+  {:cici:root (root-link)})
 
 
 ;### init #####################################################################
@@ -177,8 +206,6 @@
 
 
 ;### Debug ####################################################################
-;(debug/debug-ns *ns*)
 ;(logging-config/set-logger! :level :debug)
 ;(logging-config/set-logger! :level :info)
-
-
+;(debug/debug-ns *ns*)

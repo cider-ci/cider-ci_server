@@ -2,7 +2,7 @@
 
 #### GET `/trial-attachment*` 
 
-Returns the properties of a trial-attachments wich path equals the
+Returns the properties of a trial-attachment which path equals the
 postfix denoted by the `*` in the route above.
 
 This does not return the data-stream of the attachment itself. A link to

@@ -1,3 +1,7 @@
+; Copyright (C) 2013, 2014 Dr. Thomas Schank  (DrTom@schank.ch, Thomas.Schank@algocon.ch)
+; Licensed under the terms of the GNU Affero General Public License v3.
+; See the "LICENSE.txt" file provided with this software.
+
 (ns cider-ci.api.resources.tasks
   (:require 
     [cider-ci.utils.debug :as debug]
@@ -46,7 +50,7 @@
         task-ids (map :id (jdbc/query (:ds @conf) query))]
     {:_links (conj {:self {:href (str (tasks-path execution-id) "?"
                                       (http/build-url-query-string query-params))}
-                    :cider-ci_api-docs:task (map task-link task-ids)}
+                    :cici:task (map task-link task-ids)}
                    (next-and-previous-link-map (tasks-path execution-id)  
                                                query-params (seq task-ids))
                    (execution-link-map execution-id)
@@ -71,9 +75,6 @@
 
 
 ;### Debug ####################################################################
-;(debug/debug-ns *ns*)
 ;(logging-config/set-logger! :level :debug)
 ;(logging-config/set-logger! :level :info)
-
-
-
+;(debug/debug-ns *ns*)

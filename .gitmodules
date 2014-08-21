@@ -7,6 +7,3 @@
 [submodule "api-browser"]
 	path = resources/api-browser
 	url = https://github.com/cider-ci/api-browser.git
-[submodule "bcrypt-ruby"]
-	path = lib/bcrypt-ruby
-	url = https://github.com/codahale/bcrypt-ruby.git

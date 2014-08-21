@@ -7,7 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="generator" content="pandoc" />
   <meta name="author" content="Thomas Schank DrTom@Schank.ch" />
-  <meta name="date" content="2014-08-12" />
+  <meta name="date" content="2014-08-16" />
   <title>Cider-CI API Documentation</title>
   <style type="text/css">code{white-space: pre;}</style>
   <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
@@ -25,7 +25,7 @@ h='&#x53;&#x63;&#104;&#x61;&#110;&#x6b;&#46;&#x63;&#104;';a='&#64;';n='&#68;&#11
 document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'">'+e+'<\/'+'a'+'>');
 // -->
 </script><noscript>&#68;&#114;&#84;&#x6f;&#x6d;&#32;&#x61;&#116;&#32;&#x53;&#x63;&#104;&#x61;&#110;&#x6b;&#32;&#100;&#x6f;&#116;&#32;&#x63;&#104;</noscript></p></li>
-                              <li><p class="navbar-text">2014-08-12</p></li>
+                              <li><p class="navbar-text">2014-08-16</p></li>
                   </ul>
       </div>
     </div>
@@ -43,7 +43,8 @@ document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'">'+e+'<\/'+'a'+'>');
         <li><a href="#session-cookie">Session-Cookie</a></li>
         <li><a href="#basic-auth">Basic-Auth</a></li>
         </ul></li>
-        <li><a href="#resources">Resources</a><ul>
+        <li><a href="#json-data-resources">JSON-Data-Resources</a><ul>
+        <li><a href="#uploading">Uploading</a></li>
         <li><a href="#execution">Execution</a><ul>
         <li><a href="#get-executionid">GET <code>/execution/:id</code></a></li>
         </ul></li>
@@ -62,6 +63,12 @@ document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'">'+e+'<\/'+'a'+'>');
         <li><a href="#tasks">Tasks</a><ul>
         <li><a href="#get-executionexecution_idtasks">GET <code>/execution/:execution_id/tasks</code></a></li>
         </ul></li>
+        <li><a href="#tree-attachment">Tree-Attachment</a><ul>
+        <li><a href="#get-tree-attachment">GET <code>/tree-attachment*</code></a></li>
+        </ul></li>
+        <li><a href="#tree-attachments">Tree-Attachments</a><ul>
+        <li><a href="#get-executionexecution_idattachments">GET <code>/execution/:execution_id/attachments</code></a></li>
+        </ul></li>
         <li><a href="#trial-attachment">Trial-Attachment</a><ul>
         <li><a href="#get-trial-attachment">GET <code>/trial-attachment*</code></a></li>
         </ul></li>
@@ -73,6 +80,22 @@ document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'">'+e+'<\/'+'a'+'>');
         </ul></li>
         <li><a href="#trials">Trials</a><ul>
         <li><a href="#get-tasktask_idtrials">GET <code>/task/:task_id/trials</code></a></li>
+        </ul></li>
+        </ul></li>
+        <li><a href="#storage-resources">Storage-Resources</a><ul>
+        <li><a href="#general-properties">General Properties</a><ul>
+        <li><a href="#uploading-1">Uploading</a></li>
+        <li><a href="#retention-time">Retention Time</a></li>
+        </ul></li>
+        <li><a href="#trial-attachments-1">Trial-Attachments</a><ul>
+        <li><a href="#get-tree-attachmentstrial_id">GET <code>/tree-attachments/:trial_id/*</code></a></li>
+        <li><a href="#put-tree-attachmentstrial_id">PUT <code>/tree-attachments/:trial_id/*</code></a></li>
+        <li><a href="#delete-tree-attachmentstrial_id">DELETE <code>/tree-attachments/:trial_id/*</code></a></li>
+        </ul></li>
+        <li><a href="#tree-attachments-1">Tree-Attachments</a><ul>
+        <li><a href="#get-tree-attachmentstree_id">GET <code>/tree-attachments/:tree_id/*</code></a></li>
+        <li><a href="#put-tree-attachmentstree_id">PUT <code>/tree-attachments/:tree_id/*</code></a></li>
+        <li><a href="#delete-tree-attachmentstree_id">DELETE <code>/tree-attachments/:tree_id/*</code></a></li>
         </ul></li>
         </ul></li>
         </ul></li>
@@ -88,7 +111,10 @@ document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'">'+e+'<\/'+'a'+'>');
 <p>The API accepts the <code>cider-ci_services-session</code> cookie set on sing-in from the browser interfaces.</p>
 <h3 id="basic-auth">Basic-Auth</h3>
 <p>If no session cookie was found (or validation of the cookie failed) <em>HTTP Basic authentication</em> is used with the same user and password as used in the browser interface.</p>
-<h2 id="resources">Resources</h2>
+<h2 id="json-data-resources">JSON-Data-Resources</h2>
+<p>All of the resources in this section are prefixed with <code>/cider-ci/api/v1</code>. This prefix is omitted for brevity in the following.</p>
+<p>All <code>GET</code> requests return a <code>content-type</code> header of <code>application/hal+json</code>.</p>
+<h3 id="uploading">Uploading</h3>
 <h3 id="execution">Execution</h3>
 <h4 id="get-executionid">GET <code>/execution/:id</code></h4>
 <p>Returns the properties of the execution.</p>
@@ -126,9 +152,16 @@ document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'">'+e+'<\/'+'a'+'>');
 <h6 id="state-1">state</h6>
 <p>Filters tasks with state equal to the value of the parameter.</p>
 <p>Query string example: <code>?page=0&amp;state=failed</code></p>
+<h3 id="tree-attachment">Tree-Attachment</h3>
+<h4 id="get-tree-attachment">GET <code>/tree-attachment*</code></h4>
+<p>Returns the properties of a tree-attachment which path equals the postfix denoted by the <code>*</code> in the route above.</p>
+<p>This does not return the data-stream of the attachment itself. A link to the latter is included in the <code>_links</code> property.</p>
+<h3 id="tree-attachments">Tree-Attachments</h3>
+<h4 id="get-executionexecution_idattachments">GET <code>/execution/:execution_id/attachments</code></h4>
+<p>Returns a list of links each pointing to a Tree-Attachment which belongs to the execution with the id <code>:execution_id</code>. Order is ascending with respect to the <code>path</code> property.</p>
 <h3 id="trial-attachment">Trial-Attachment</h3>
 <h4 id="get-trial-attachment">GET <code>/trial-attachment*</code></h4>
-<p>Returns the properties of a trial-attachments wich path equals the postfix denoted by the <code>*</code> in the route above.</p>
+<p>Returns the properties of a trial-attachment which path equals the postfix denoted by the <code>*</code> in the route above.</p>
 <p>This does not return the data-stream of the attachment itself. A link to the latter is included in the <code>_links</code> property.</p>
 <h3 id="trial-attachments">Trial-Attachments</h3>
 <h4 id="get-trialtrial_idattachments">GET <code>/trial/:trial_id/attachments</code></h4>
@@ -143,6 +176,27 @@ document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'">'+e+'<\/'+'a'+'>');
 <h6 id="state-2">state</h6>
 <p>Filters trials with state equal to the value of the parameter.</p>
 <p>Query string example: <code>?page=0&amp;state=failed</code></p>
+<h2 id="storage-resources">Storage-Resources</h2>
+<p>All of the resources in this section are prefixed with <code>/cider-ci/storage</code>. This prefix is omitted for brevity in the following.</p>
+<h3 id="general-properties">General Properties</h3>
+<h4 id="uploading-1">Uploading</h4>
+<p>Uploading is preformed via http <code>PUT</code>. A <code>PUT</code> request performed on an existing path will not replace the existing resource but result with a <code>409 Conflict</code> error .</p>
+<p>Every storage artifact has an associated content-type. This content-type is set from the content-type header of the <code>PUT</code> request and therefore should be set properly. If not specified the content-type <code>application/octet-stream</code> will be used.</p>
+<h4 id="retention-time">Retention Time</h4>
+<p>Uploaded artifacts will be automatically deleted after a retention time has been reached.</p>
+<h3 id="trial-attachments-1">Trial-Attachments</h3>
+<p>Trial-Attachments will be listed in the user-interface with the matching trial. The default retention time is 10 days.</p>
+<p>The <code>:trial_id</code> should be an existing id of a trial. This is however not enforced.</p>
+<p>The <code>*</code> postfix can be an arbitrary url-path in accordance with the http path specification, e.g. <code>screenshots/image01.png</code>. Query parameters will be ignored.</p>
+<h4 id="get-tree-attachmentstrial_id">GET <code>/tree-attachments/:trial_id/*</code></h4>
+<h4 id="put-tree-attachmentstrial_id">PUT <code>/tree-attachments/:trial_id/*</code></h4>
+<h4 id="delete-tree-attachmentstrial_id">DELETE <code>/tree-attachments/:trial_id/*</code></h4>
+<h3 id="tree-attachments-1">Tree-Attachments</h3>
+<p>Tree-Attachments will be listed in the user-interface with the matching execution. The default retention time is 90 days.</p>
+<p>Similar restrictions as with the Trial-Attachments apply.</p>
+<h4 id="get-tree-attachmentstree_id">GET <code>/tree-attachments/:tree_id/*</code></h4>
+<h4 id="put-tree-attachmentstree_id">PUT <code>/tree-attachments/:tree_id/*</code></h4>
+<h4 id="delete-tree-attachmentstree_id">DELETE <code>/tree-attachments/:tree_id/*</code></h4>
             </div>
     </div>
   </div>

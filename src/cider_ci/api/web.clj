@@ -1,9 +1,13 @@
+; Copyright (C) 2013, 2014 Dr. Thomas Schank  (DrTom@schank.ch, Thomas.Schank@algocon.ch)
+; Licensed under the terms of the GNU Affero General Public License v3.
+; See the "LICENSE.txt" file provided with this software.
+
 (ns cider-ci.api.web
   (:require 
+    [cider-ci.auth.http-basic :as http-basic]
+    [cider-ci.auth.session :as session]
     [cider-ci.utils.with :as with]
     [cider-ci.api.resources :as resources]
-    [cider-ci.api.session-auth :as session-auth]
-    [cider-ci.api.basic-auth :as basic-auth]
     [cider-ci.utils.debug :as debug]
     [cider-ci.utils.http-server :as http-server]
     [clj-logging-config.log4j :as logging-config]
@@ -20,16 +24,26 @@
 (defonce conf (atom nil))
 
 
-;##### authentication ######################################################### 
 
-(defn chain-auth [request default-handler] 
-  (if-let [user (session-auth/authenticate-session-cookie request)]
-    (default-handler (conj request {:user user}))
-    ((basic-auth/authenticate-wrapper default-handler) request)))
+;##### non public resources authentication #################################### 
 
-(defn auth-wrapper [handler]
+(defn return-authenticate! [request]
+  {:status 401
+   :headers 
+   {"WWW-Authenticate" 
+    "Basic realm=\"Cider-CI; sign in or provide credentials\""}
+   })
+
+(defn authenticate-non-public [request handler] 
+  (cond
+    (:authenticated-user request) (handler request)
+    (:authenticated-application request) (handler request) 
+    :else (return-authenticate! request)))
+
+    
+(defn wrap-authenticate-non-public [handler]
   (fn [request]
-    (chain-auth request handler)))
+    (authenticate-non-public request handler)))
 
 
 ;##### static resources ####################################################### 
@@ -71,37 +85,38 @@
     (cpj/ANY "*" [] {:status 404})))
 
 (defn build-main-handler [context]
-  (let [prefix (str context "/api_v1")]
-    ( -> (resources/build-routes-handler)
-         (wrap-debug-logging)
-         (ring.middleware.json/wrap-json-params)
-         (wrap-debug-logging)
-         (ring.middleware.params/wrap-params)
-         (wrap-debug-logging)
-         (auth-wrapper)
-         (wrap-debug-logging)
-         (cookies/wrap-cookies)
-         (wrap-debug-logging)
-         (wrap-static-resources-dispatch)
-         (wrap-debug-logging)
-         (wrap-prefix prefix)
-         (wrap-debug-logging)
-         (wrap-catch-exception)
-         )))
+  ( -> (resources/build-routes-handler)
+       (wrap-debug-logging)
+       (ring.middleware.json/wrap-json-params)
+       (wrap-debug-logging)
+       (ring.middleware.params/wrap-params)
+       (wrap-debug-logging)
+       (wrap-authenticate-non-public)
+       (wrap-debug-logging)
+       (http-basic/wrap)
+       (wrap-debug-logging)
+       (session/wrap)
+       (wrap-debug-logging)
+       (cookies/wrap-cookies)
+       (wrap-debug-logging)
+       (wrap-static-resources-dispatch)
+       (wrap-debug-logging)
+       (wrap-prefix context)
+       (wrap-debug-logging)
+       (wrap-catch-exception)))
 
 
 ;#### the server ##############################################################
 
 (defn initialize [new-conf]
   (reset! conf new-conf)
-  (let [context (:context (:web @conf))]
+  (let [context (str (:context (:web @conf)) (:sub_path (:web @conf)))]
     (http-server/start @conf (build-main-handler context))))
 
 
 ;### Debug ####################################################################
-;(debug/debug-ns *ns*)
-;(debug/debug-ns 'ring.middleware.resource)
 ;(logging-config/set-logger! :level :debug)
 ;(logging-config/set-logger! :level :info)
-
-
+;(debug/debug-ns 'ring.middleware.resource)
+;(debug/debug-ns 'cider-ci.auth.session)
+;(debug/debug-ns *ns*)

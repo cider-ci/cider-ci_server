@@ -2,13 +2,17 @@ basic_auth:
   user: api
   secret: secret
 
+session:
+  secret: "secret"
+
 web: 
   host: "127.0.0.1"
   port: 8885
   context: '/cider-ci'
+  sub_path: '/api/v1'
 
 nrepl:
-  port: 7882
+  port: 7885
   bind: "127.0.0.1"
   enabled: false
 
