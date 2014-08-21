@@ -1,8 +1,14 @@
 stores: 
-  - url_path_prefix: "/storage/trial-attachments"
+
+  - url_path_prefix: "/trial-attachments"
     file_path: "./tmp/storage/trial-attachments"
     retention_time_days: 1
     db_table: trial_attachments
+
+  - url_path_prefix: "/tree-attachments"
+    file_path: "./tmp/storage/tree-attachments"
+    retention_time_days: 1
+    db_table: tree_attachments
 
 database: 
   db_spec: 
@@ -16,10 +22,14 @@ basic_auth:
   user: storage-manager
   secret: secret
 
+session:
+  secret: "secret"
+
 web:
   host: "127.0.0.1"
   port: 8883
   context: "/cider-ci"
+  subcontext: "/storage"
 
 nrepl:
   port: 7883

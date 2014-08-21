@@ -5,35 +5,22 @@
 (ns cider-ci.sm.sweeper
   (:require 
     [cider-ci.utils.daemon :as daemon]
+    [cider-ci.utils.debug :as debug]
     [cider-ci.utils.with :as with]
     [clj-logging-config.log4j :as logging-config]
     [clojure.java.io :as io]
     [clojure.java.jdbc :as jdbc]
     [clojure.tools.logging :as logging]
     [me.raynes.fs :as fsutils]
+    )
+  (:use 
+    [cider-ci.sm.shared :only [delete-file delete-row delete-file-and-row]]
     ))
-
-;(logging-config/set-logger! :level :debug)
-;(logging-config/set-logger! :level :info)
 
 
 (defonce conf (atom {}))
 
-(defn delete-file [path]
-  (logging/debug delete-file [path])
-  (with/suppress-and-log-error
-    (fsutils/delete path)))
-
-(defn delete-row [table id]
-  (logging/debug delete-row [table id])
-  (with/suppress-and-log-error
-    (jdbc/delete! (:ds @conf) table ["id = ?::uuid" id])))
-
-(defn delete-file-and-row [store file-row]
-  (logging/debug delete-file-and-row [store file-row])
-  (let [path (str (:file_path store) "/" (:id file-row))]
-    (delete-file path)
-    (delete-row (:db_table store) (:id file-row))))
+;##############################################################################
 
 (defn delete-expired []
   (doseq [store (:stores @conf)]
@@ -51,8 +38,6 @@
 
 (defn string-is-uuid? [string]
   (re-matches #"[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}" string))
-
-;(string-is-uuid? "e96e4ef8-ef49-468b-be28-76ad02c5f911")
 
 (defn delete-file-orphans []
   (logging/debug delete-file-orphans [])
@@ -74,7 +59,6 @@
                 (when (.isDirectory file)
                   (fsutils/delete-dir abs-path))))))))
 
-
 (defn delete-row-orphans []
   (logging/debug delete-row-orphans [])
   (doseq [store (:stores @conf)]
@@ -94,8 +78,18 @@
   (delete-row-orphans)
   (delete-file-orphans))
 
+
+;### initialize ###############################################################
+
 (defn initialize [new-conf]
   (reset! conf new-conf)
   (start-delete-expired)
   (start-delete-orphans))
+
+
+;### Debug ####################################################################
+;(debug/debug-ns *ns*)
+;(logging-config/set-logger! :level :debug)
+;(logging-config/set-logger! :level :info)
+
 

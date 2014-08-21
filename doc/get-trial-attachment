@@ -1,0 +1,2 @@
+curl --user ci:secret -I \
+http://127.0.0.1:8883/cider-ci/storage/trial-attachments/da70a231-62c9-42bf-ad1a-ce34af5433c3/image.png

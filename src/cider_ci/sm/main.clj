@@ -4,9 +4,12 @@
 
 (ns cider-ci.sm.main
   (:require 
+    [cider-ci.auth.core :as auth]
+    [cider-ci.sm.shared :as shared]
     [cider-ci.sm.sweeper :as sweeper]
     [cider-ci.sm.web :as web]
     [cider-ci.utils.config-loader :as config-loader]
+    [cider-ci.utils.debug :as debug]
     [cider-ci.utils.http :as http]
     [cider-ci.utils.messaging :as messaging]
     [cider-ci.utils.nrepl :as nrepl]
@@ -43,8 +46,19 @@
   (http/initialize (select-keys @conf [:basic_auth]))
   (create-dirs (:stores @conf))
   (let [ds (rdbms/create-ds (get-db-spec))]
+    (auth/initialize (assoc (select-keys @conf [:session :basic_auth]) 
+                            :ds ds))
+    (shared/initialize {:ds ds})
     (web/initialize (conj (select-keys @conf [:web :stores])
                           {:ds ds}))
     (sweeper/initialize (conj (select-keys @conf [:web :stores])
                           {:ds ds}))
     ))
+
+
+;### Debug ####################################################################
+;(debug/debug-ns *ns*)
+;(logging-config/set-logger! :level :debug)
+;(logging-config/set-logger! :level :info)
+
+
