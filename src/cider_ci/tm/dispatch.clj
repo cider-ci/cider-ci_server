@@ -76,25 +76,17 @@
     ))
 
 
-(defn build-url [config path]
-  (let [ protocol (if (or (:server_ssl config) (:ssl config)) "https" "http")
-        host (or (:server_host config) (:host config))
-        port (or (:server_port config) (:port config))
-        context (:context config)
-        ]
-    (str protocol "://" host (when port ":" port) context path)))
-
 (defn git-url [executor repository-id]
   (let [config (if (:server_overwrite executor) 
                  executor 
                  (:repository_manager_server @conf))]
-    (build-url config (str "/repositories/" repository-id "/git")  )))
+    (http/build-url config (str "/repositories/" repository-id "/git")  )))
 
 (defn attachments-url [executor trial-id]
   (let [config (if (:server_overwrite executor) 
                  executor 
                  (:storage_manager_server @conf))]
-    (build-url config (str "/storage/trial-attachments/" trial-id "/") )))
+    (http/build-url config (str "/storage/trial-attachments/" trial-id "/") )))
 
 (defn patch-url [executor trial-id]
   (route-url-for-executor 
@@ -157,7 +149,7 @@
   (let [config (if (:server_overwrite executor) 
                  executor 
                  (:trial_manager_server @conf))]
-    (build-url config path))) 
+    (http/build-url config path))) 
 
 
 ;#### dispatch service ########################################################
@@ -175,6 +167,6 @@
 
 
 ;#### debug ###################################################################
-; (debug/debug-ns *ns*)
+;(debug/debug-ns *ns*)
 ;(logging-config/set-logger! :level :debug)
 ;(logging-config/set-logger! :level :info)
