@@ -7,6 +7,8 @@
     [cider-ci.rm.branches :as branches] 
     [cider-ci.rm.git.repositories :as git.repositories] 
     [cider-ci.rm.sql.branches :as sql.branches] 
+    [cider-ci.utils.daemon :as daemon]
+    [cider-ci.utils.debug :as debug]
     [cider-ci.utils.exception :as exception]
     [cider-ci.utils.messaging :as messaging]
     [cider-ci.utils.system :as system]
@@ -17,29 +19,21 @@
     [clojure.tools.logging :as logging]
     ))
 
-;(logging-config/set-logger! :level :debug)
-;(logging-config/set-logger! :level :info)
-
-
-
-(declare 
-  update-service-start
-  update-service-stop
-  )
-
 
 ;### config and initialization ################################################
 (defonce conf (atom {}))
 
-; TODO problematic when called multiple times; wrap in agent? 
-(defn initialize [new-conf]
-  (logging/info initialize [new-conf])
-  (reset! conf new-conf)
-  (git.repositories/initialize (:repositories @conf))
-  (update-service-stop)
-  (update-service-start))
 
+;### helpers ##################################################################
 
+(defn directory-exists? [path]
+  (let [file (clojure.java.io/file path)] 
+    (and (.exists file) 
+         (.isDirectory file))))
+
+(defn assert-directory-exists! [path]
+  (when-not (directory-exists? path)
+    (throw (IllegalStateException. "Directory does not exist."))))
 
 
 ;### repositories processors ##################################################
@@ -68,7 +62,7 @@
 ;### branches #################################################################
 
 (defn get-git-branches [repository-path]
-  (let [res (system/exec
+  (let [res (system/exec-with-success-or-throw
               ["git" "branch" "--no-abbrev" "--no-color" "-v"] 
               {:watchdog (* 1 60 1000), :dir repository-path, :env {"TERM" "VT-100"}})
         out (:out res)
@@ -104,7 +98,7 @@
   (logging/debug update-git-server-info [repository])
   (let [repository-path (git.repositories/path repository)
         id (git.repositories/canonic-id repository) ]
-    (system/exec ["git" "update-server-info"] 
+    (system/exec-with-success-or-throw ["git" "update-server-info"] 
                  {:watchdog (* 10 60 1000), :dir repository-path, :env {"TERM" "VT-100"}})))
 
 ;# TODO check sensible name for routing-key (amqp convention?) 
@@ -121,38 +115,35 @@
 
 (defn git-update [repository]
   (with/logging
-    (logging/debug git-update [repository])
-    (let [updated-branches (atom nil)]
+    (let [updated-branches (atom nil)
+          dir (git.repositories/path repository)
+          sid (str (git.repositories/canonic-id repository))]
+      (assert-directory-exists! dir)
       (jdbc/with-db-transaction [tx (:ds @conf)]
-        (let [dir (git.repositories/path repository)
-              sid (str (git.repositories/canonic-id repository))]
-          (update-git-server-info repository)
-          (reset! updated-branches (update-or-create-branches tx repository))
-          ))
+        (update-git-server-info repository)
+        (reset! updated-branches (update-or-create-branches tx repository)))
       (send-branch-update-notifications @updated-branches))))
 
 (defn git-initialize [repository]
   (with/logging
-    (logging/debug git-initialize [repository])
     (let [dir (git.repositories/path repository)
           sid (str (git.repositories/canonic-id repository))]
-      (system/exec ["rm" "-rf" dir])
-      (system/exec ["git" "clone" "--mirror" (:origin_uri repository) dir]))))
+      (system/exec-with-success-or-throw ["rm" "-rf" dir])
+      (system/exec-with-success-or-throw 
+        ["git" "clone" "--mirror" (:origin_uri repository) dir]
+        {:watchdog (* 5 60 1000)}))))
 
-(defn git-fetch [repository]
-  (with/logging
-    (logging/debug git-fetch [repository])
-    (let [repository-path (git.repositories/path repository)
-          id (git.repositories/canonic-id repository)
-          repository-file (clojure.java.io/file repository-path) ] 
-      (logging/debug {:repository-path repository-path :id id :repository-file repository-file})
-      (if (and (.exists repository-file) (.isDirectory repository-file))
-        (do (system/exec ["git" "fetch" (:origin_uri repository) "-p" "+refs/heads/*:refs/heads/*"] 
-                         {:watchdog (* 10 60 1000), 
-                          :dir repository-path, 
-                          :env {"TERM" "VT-100"}}))
-        (git-initialize repository)))))
-
+(defn git-fetch-or-initialize [repository]
+  (try (with/logging 
+         (let [repository-path (git.repositories/path repository)
+               id (git.repositories/canonic-id repository)] 
+           (system/exec-with-success-or-throw 
+             ["git" "fetch" (:origin_uri repository) "--force" "--tags" "--prune"  "+*:*"]
+             {:watchdog (* 10 60 1000), 
+              :dir repository-path, 
+              :env {"TERM" "VT-100"}})))
+       (catch Exception _
+         (git-initialize repository))))
 
 
 ;### Submit actions through agent #############################################
@@ -186,7 +177,7 @@
             (fn [state repository git-repository] 
               ; possibly skip overflow of the queue 
               (if (git-fetch-is-due? repository git-repository)
-                (do (git-fetch repository)
+                (do (git-fetch-or-initialize repository)
                   (git-update repository)
                   (conj state {:git_fetched_at (time/now)}))
                 state))
@@ -196,7 +187,7 @@
   (send-off (:agent git-repository)
             (fn [state repository] 
               (git-initialize repository)
-              (git-fetch repository)
+              (git-fetch-or-initialize repository)
               (git-update repository)
               (conj state {:git-initialized-at (time/now)}))
             repository))
@@ -214,26 +205,25 @@
           (submit-git-update repository repository-processor))))))
 
 
-(defonce update-service-done-atom (atom true))
-(defonce update-service-future-atom (atom nil))
+(daemon/define "update-repositories" 
+  start-update-repositories
+  stop-update-repositories
+  1
+  (update-repositories))
 
-(defn update-service-start []
-  (logging/info update-service-start)
-  (reset! update-service-done-atom false)
-  (reset! update-service-future-atom 
-          (future 
-            (loop []
-              (Thread/sleep 1000)
-              (when-not @update-service-done-atom
-                (with/suppress-and-log-warn
-                  (update-repositories))
-                (recur))))))
 
-(defn update-service-stop []
-  (logging/info update-service-stop)
-  (reset! update-service-done-atom true)
-  (when-let [update-service-future @update-service-future-atom]
-    (deref update-service-future)
-    (reset! update-service-future-atom nil)))
+;### update-repositories ######################################################
 
+(defn initialize [new-conf]
+  (logging/info initialize [new-conf])
+  (reset! conf new-conf)
+  (git.repositories/initialize (:repositories @conf))
+  (start-update-repositories)
+  )
+
+
+;#### debug ###################################################################
+;(logging-config/set-logger! :level :debug)
+;(logging-config/set-logger! :level :info)
+;(debug/debug-ns *ns*)
 

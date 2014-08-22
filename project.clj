@@ -4,6 +4,7 @@
             :url "http://www.gnu.org/licenses/agpl-3.0.html"}
   :dependencies [
                  [c3p0/c3p0 "0.9.1.2"]
+                 [cider-ci/clj-auth "0.1.4"]
                  [clj-http "0.9.2"]
                  [clj-jgit "0.7.3"]
                  [clj-logging-config "1.9.10"]
