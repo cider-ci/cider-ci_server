@@ -30,11 +30,15 @@
 
 ;(trace-string-seq (IllegalStateException. "asdfa"))
 
+(def ^:dynamic *ns-filter-regex* #".*cider[-_]ci.*")
+
+(defn reset-ns-filter-regex [regex]
+  (def ^:dynamic *ns-filter-regex* regex))
+
 (defn filter-trace-string-seq [ex-seq]
   (filter 
-    #(re-matches #".*cider[-_]ci.*" %)
+    #(re-matches *ns-filter-regex* %)
     ex-seq))
-
 
 
 ;(filter-trace-string-seq (trace-string-seq (IllegalStateException. "asdfa")))
