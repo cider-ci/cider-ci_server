@@ -47,5 +47,27 @@
      res#))
 
 
+(defmacro catch-and-fail-state 
+  "Takes as the first argument the state-container, a hash wrapped inside 
+  an atom. Executes the body and catches any exception thrown therein. 
+  In the latter case, sets the :state property of the state-container 
+  to \"failed\" and also populates the :error and :errors property.
+  Returns the state-container."
+  [state-container & body]
+  `(try
+     ~@body
+     (catch Exception e#
+       (let [error-msg# (exception/stringify e#)
+             swap-fun# (fn [curr#]
+                         (conj curr# {:state "failed", 
+                                      :error error-msg#
+                                      :errors (conj (or (:errors curr#) [])
+                                                    error-msg#)}))]
+         (clj-logging/error error-msg#)
+         (swap! ~state-container swap-fun#)))
+     (finally ~state-container)))
+
+
+;(catch-and-fail-state (atom {}) (throw (IllegalStateException. "Blah")))
 ;(macroexpand-1 '(log-debug-result(+ 1 2)))
 
