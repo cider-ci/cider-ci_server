@@ -1,4 +1,4 @@
-(defproject cider-ci/clj-utils "1.7.0"
+(defproject cider-ci/clj-utils "1.7.0.1"
   :description "Shared Clojure Utils for Cider-CI"
   :url "https://github.com/cider-ci/cider-ci_clj-utils"
   :license {:name "GNU AFFERO GENERAL PUBLIC LICENSE Version 3"
