@@ -10,7 +10,6 @@
     [cider-ci.utils.exception :as exception]
     ))
 
-
 (defmacro logging [& expressions]
   `(try
      ~@expressions

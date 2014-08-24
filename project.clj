@@ -1,4 +1,4 @@
-(defproject cider-ci/clj-utils "1.7.0.1"
+(defproject cider-ci/clj-utils "1.7.1-beta.1"
   :description "Shared Clojure Utils for Cider-CI"
   :url "https://github.com/cider-ci/cider-ci_clj-utils"
   :license {:name "GNU AFFERO GENERAL PUBLIC LICENSE Version 3"
@@ -17,7 +17,7 @@
                  [org.clojure/data.json "0.2.5"]
                  [org.clojure/java.jdbc "0.3.5"]
                  [org.clojure/tools.logging "0.3.0"]
-                 [org.clojure/tools.nrepl "0.2.3"]
+                 [org.clojure/tools.nrepl "0.2.4"]
                  [org.postgresql/postgresql "9.3-1100-jdbc4"]
                  [org.slf4j/slf4j-log4j12 "1.7.7"]
                  [ring "1.3.0"] 
@@ -26,5 +26,5 @@
                  [robert/hooke "1.3.0"]
 
                  ; explicit transient deps to force conflict resolution
-                 [com.fasterxml.jackson.core/jackson-core "2.3.2"]
+                 [com.fasterxml.jackson.core/jackson-core "2.4.2"]
                  ])
