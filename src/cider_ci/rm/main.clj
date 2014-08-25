@@ -1,5 +1,6 @@
 (ns cider-ci.rm.main
   (:require 
+    [cider-ci.auth.core :as auth]
     [cider-ci.rm.repositories :as repositories]
     [cider-ci.rm.submodules :as submodules]
     [cider-ci.rm.web :as web]
@@ -30,6 +31,8 @@
   (http/initialize (select-keys @conf [:basic_auth]))
   (messaging/initialize (:messaging @conf))
   (let [ds (rdbms/create-ds (get-db-spec))]
+    (auth/initialize (assoc (select-keys @conf [:session :basic_auth]) 
+                            :ds ds))
     (repositories/initialize (conj (select-keys @conf [:repositories])
                                    {:ds ds}))
     (submodules/initialize {:ds ds}))
