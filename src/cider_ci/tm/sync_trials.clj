@@ -20,7 +20,7 @@
 (defn trials-to-be-synced []
   (jdbc/query (:ds @conf)
     ["SELECT * FROM trials
-        WHERE state NOT IN ('pending','success','failed')
+        WHERE state IN ('executing')
         AND trials.executor_id IS NOT NULL"]))
 
 (defn trial-request-url [executor-db trial-db]

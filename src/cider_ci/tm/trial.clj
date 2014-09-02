@@ -54,7 +54,7 @@
   * interval '1 Minute') ")
 
 (def sql-not-finished
-  " state NOT IN ('aborted','success','failed') ")
+  " state IN ('pending','dispatching','executing') ")
 
 (def sql-to-be-dispatched
   " state = 'pending' ")
