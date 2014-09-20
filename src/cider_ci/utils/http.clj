@@ -7,7 +7,6 @@
     [clj-http.client :as http-client]
     [clj-logging-config.log4j :as logging-config]
     [clojure.tools.logging :as logging]
-    [ring.middleware.basic-authentication :refer [wrap-basic-authentication]]
     ))
 
 
