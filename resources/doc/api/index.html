@@ -7,7 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="generator" content="pandoc" />
   <meta name="author" content="Thomas Schank DrTom@Schank.ch" />
-  <meta name="date" content="2014-08-16" />
+  <meta name="date" content="2014-10-07" />
   <title>Cider-CI API Documentation</title>
   <style type="text/css">code{white-space: pre;}</style>
   <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
@@ -25,7 +25,7 @@ h='&#x53;&#x63;&#104;&#x61;&#110;&#x6b;&#46;&#x63;&#104;';a='&#64;';n='&#68;&#11
 document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'">'+e+'<\/'+'a'+'>');
 // -->
 </script><noscript>&#68;&#114;&#84;&#x6f;&#x6d;&#32;&#x61;&#116;&#32;&#x53;&#x63;&#104;&#x61;&#110;&#x6b;&#32;&#100;&#x6f;&#116;&#32;&#x63;&#104;</noscript></p></li>
-                              <li><p class="navbar-text">2014-08-16</p></li>
+                              <li><p class="navbar-text">2014-10-07</p></li>
                   </ul>
       </div>
     </div>
@@ -73,7 +73,7 @@ document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'">'+e+'<\/'+'a'+'>');
         <li><a href="#get-trial-attachment">GET <code>/trial-attachment*</code></a></li>
         </ul></li>
         <li><a href="#trial-attachments">Trial-Attachments</a><ul>
-        <li><a href="#get-trialtrial_idattachments">GET <code>/trial/:trial_id/attachments</code></a></li>
+        <li><a href="#get-trialtrial_idtrial-attachments">GET <code>/trial/:trial_id/trial-attachments</code></a></li>
         </ul></li>
         <li><a href="#trial">Trial</a><ul>
         <li><a href="#get-trialid">GET <code>/trial/:id</code></a></li>
@@ -162,9 +162,9 @@ document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'">'+e+'<\/'+'a'+'>');
 <h3 id="trial-attachment">Trial-Attachment</h3>
 <h4 id="get-trial-attachment">GET <code>/trial-attachment*</code></h4>
 <p>Returns the properties of a trial-attachment which path equals the postfix denoted by the <code>*</code> in the route above.</p>
-<p>This does not return the data-stream of the attachment itself. A link to the latter is included in the <code>_links</code> property.</p>
+<p>This does not return the data-stream of the attachment itself (no matter what the path extension might suggest). A link to the latter is included in the <code>_links</code> property.</p>
 <h3 id="trial-attachments">Trial-Attachments</h3>
-<h4 id="get-trialtrial_idattachments">GET <code>/trial/:trial_id/attachments</code></h4>
+<h4 id="get-trialtrial_idtrial-attachments">GET <code>/trial/:trial_id/trial-attachments</code></h4>
 <p>Returns a list of links each pointing to a trial-attachment which belongs to the trial with the id <code>:trial_id</code>. Order is ascending with respect to the <code>path</code> property.</p>
 <h3 id="trial">Trial</h3>
 <h4 id="get-trialid">GET <code>/trial/:id</code></h4>

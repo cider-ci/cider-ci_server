@@ -144,7 +144,7 @@
 
 ;##############################################################################
 (defn trial-attachments-path [trial-id]
-  (str (prefix) "/trial/" trial-id "/attachments"))
+  (str (prefix) "/trial/" trial-id "/trial-attachments"))
 
 (defn trial-attachments-link [trial-id]
   {:title "Trial-Attachments" 
