@@ -1,0 +1,7 @@
+
+_cider-ci_include-path: "cider-ci_v2/test_execution_spec.yml" 
+
+
+tasks_spec: "_cider-ci_substitute-path: cider-ci_v2/test_tasks_spec.yml"
+
+

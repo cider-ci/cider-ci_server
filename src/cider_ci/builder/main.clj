@@ -2,8 +2,12 @@
 ; Licensed under the terms of the GNU Affero General Public License v3.
 ; See the "LICENSE.txt" file provided with this software.
 
-(ns cider-ci.em.main
+(ns cider-ci.builder.main
   (:require 
+    [cider-ci.auth.core :as auth]
+    [cider-ci.builder.expansion :as expansion]
+    [cider-ci.builder.tasks :as tasks]
+    [cider-ci.builder.web :as web]
     [cider-ci.utils.config-loader :as config-loader]
     [cider-ci.utils.debug :as debug]
     [cider-ci.utils.messaging :as messaging]
@@ -20,7 +24,6 @@
 (defn read-config []
   (config-loader/read-and-merge
     conf ["conf_default.yml" 
-          "/etc/execution-manager/conf.yml" 
           "conf.yml"]))
 
 
@@ -31,8 +34,19 @@
 (defn -main [& args]
   (read-config)
   (nrepl/initialize (:nrepl @conf))
-  (let [ds (rdbms/create-ds (get-db-spec))]
-    (reset! rdbms-ds ds) 
-    (messaging/initialize (:messaging @conf))
-    ))
+  (rdbms/initialize (get-db-spec))
+  (messaging/initialize (:messaging @conf))
+  (tasks/initialize)
+  (auth/initialize (select-keys @conf [:session :basic_auth]))
+  (web/initialize (select-keys @conf [:http_server]))
+  (expansion/initialize 
+    (select-keys @conf [:repository_service
+                        :basic_auth]))
 
+  nil)
+
+
+;### Debug ####################################################################
+;(logging-config/set-logger! :level :debug)
+;(logging-config/set-logger! :level :info)
+;(debug/debug-ns *ns*)

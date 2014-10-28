@@ -1,9 +1,7 @@
-# Cider-CI Execution-Manager
-
+# Cider-CI Builder
 
 Part of [Cider-CI](https://github.com/cider-ci/cider-ci). This component 
 manages execution (chaining etc.) and builds tasks from execution specs.
-
 
 ## License
 

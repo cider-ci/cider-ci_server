@@ -1,0 +1,57 @@
+---
+
+- name: L1
+
+  task_defaults: 
+    default_task_val_L1: 
+      x: 5
+
+  tasks: 
+    - name: Task in L1
+      a: 1 
+
+  subcontexts: 
+
+    - name: L1.1
+
+      task_defaults:
+        td_l0.1:
+          y: 5
+    
+      tasks: 
+        - name: Task in L1.1
+      
+    - name: L1.2
+
+      task_defaults: 
+        x: 7
+        z: 10
+
+      script_defaults:
+        environment_variables:
+          e: 7
+
+
+      tasks: 
+        - name: Task 1 in L1.2
+
+        - name: Task 2 in L1.2
+
+      subcontexts: 
+
+        - name: L1.2.3
+
+          tasks: 
+
+           - name: Task in L1.2.3
+             scripts:
+               main: {}
+  
+      
+- name: L2
+
+  tasks: 
+
+  - name: Task in L2
+    a: 1
+

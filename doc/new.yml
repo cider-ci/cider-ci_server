@@ -1,0 +1,110 @@
+---
+
+
+name: Rails Demo Project for Cider-CI
+
+
+task_defaults: 
+
+  auto_trials: 2
+
+  eager_trials: 1
+
+  matrix: 
+    ruby_version: 
+      - "jruby-1.7"
+      - "ruby-2.1"
+      - "rbenv"
+
+  traits: 
+    linux: True
+    jruby-1.7: True
+    ruby-2.1: True
+
+  scripts: 
+    prepare: 
+      order: 1
+      body: 
+        bundle exec cider_ci/bin/prepare
+
+script_defaults: 
+
+  attachments:
+    logs:
+      glob: log/*.log
+      content-type: text/plain
+
+  environment_variables:
+    RAILS_ENV: test
+
+
+tasks: 
+  - name: "Hello World!" 
+    scripts: 
+      hello_world:
+        body:  
+
+sub_contexts: 
+  - name: "Feature (browser) tests"
+
+    script_defaults: {}
+
+    task_defaults: 
+
+      traits: 
+
+        google_chrome: True
+        firefox: True
+        phantomjs: True
+
+      ports: 
+
+        xvnc_port: 
+          min: 5900
+          max: 5999
+
+      matrix: 
+        browser: 
+          - "google_chrome"
+          - "firefox"
+          - "firefox_nojs"
+
+      scripts: 
+        prepare: Null
+        bundle: 
+          timeout: 500
+          order: 1
+          type: prepare_executor
+          body: bundle
+        configer_db:
+          order: 2
+          body: cider-ci/bin/create_db_config_file.rb
+        setup_database:
+          order: 3
+          body: bundle exec rake db:reset 
+        setup_madek:
+          order: 4
+          body: bundle exec rake madek:setup:dirs 
+        startx:
+          order: 4
+          body: tightvncserver ":$XVNC_PORT"  -geometry 1024x768 -rfbport "$XVNC_PORT" -interface 127.0.0.1
+        rspec: 
+          order: 5
+        drop_test_db: 
+          order: 8
+          type: post_process
+          body: bundle exec rake db:drop
+        stopx: 
+          order: 9
+          type: post_process
+          body: tightvncserver -kill ":$XVNC_PORT" -clean
+
+
+    tasks: 
+      - name: some test
+        scripts: 
+          rspec: >
+            export DISPLAY=":$XVNC_PORT" \
+            && bundle exec rspec spec/features/todo_spec.rb
+
+
