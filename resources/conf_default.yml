@@ -1,0 +1,50 @@
+database: 
+  db_spec: 
+    adapter: "postgresql" 
+    classname: "org.postgresl.Driver"
+    subname: "//localhost:5432/cider_ci_dev"
+    subprotocol: "postgresql"
+    max_pool_size: 10 
+
+messaging: 
+  connection: 
+    vhost: cider-ci
+    host: 127.0.0.1
+    username: guest
+    password: guest
+
+nrepl:
+  port: 7885
+  bind: "127.0.0.1"
+  enabled: false
+
+basic_auth:
+  username: api
+  password: secret
+
+http_server: 
+  host: 127.0.0.1
+  port: 8885
+  context: /cider-ci
+  sub_context: /api/v2
+  ssl: false
+
+api_service: 
+  host: 127.0.0.1
+  port: 8885
+  context: /cider-ci
+  sub_context: /api/v2
+  ssl: false
+
+storage_service: 
+  host: 127.0.0.1
+  port: 8883
+  context: /cider-ci
+  sub_context: /storage
+  ssl: false
+
+
+session:
+  secret: "secret"
+
+

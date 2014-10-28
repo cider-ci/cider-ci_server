@@ -6,7 +6,7 @@
   (:require 
     [cider-ci.utils.debug :as debug]
     [cider-ci.utils.http-server :as http-server]
-    [cider-ci.utils.rdbms.json]
+    [cider-ci.utils.rdbms :as rdbms]
     [clj-http.client :as http-client]
     [clj-logging-config.log4j :as logging-config]
     [clojure.data.json :as json]
@@ -33,7 +33,7 @@
 (defn get-task [request]
   (logging/debug request)
   (let [uuid (-> request :params :id uuid)
-        task (first (jdbc/query (:ds @conf) ["SELECT * from tasks WHERE id = ?" uuid]))]
+        task (first (jdbc/query (rdbms/get-ds) ["SELECT * from tasks WHERE id = ?" uuid]))]
     (logging/debug uuid task)
     (when task 
       {:hal_json_data (conj task

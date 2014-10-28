@@ -7,7 +7,7 @@
     [cider-ci.utils.debug :as debug]
     [cider-ci.utils.http :as http]
     [cider-ci.utils.http-server :as http-server]
-    [cider-ci.utils.rdbms.json]
+    [cider-ci.utils.rdbms :as rdbms]
     [clj-http.client :as http-client]
     [clj-logging-config.log4j :as logging-config]
     [clojure.data.json :as json]
@@ -48,7 +48,7 @@
                   (filter-by-state query-params)
                   (add-offset query-params)
                   sql)
-        trial-ids (map :id (jdbc/query (:ds @conf) query))]
+        trial-ids (map :id (jdbc/query (rdbms/get-ds) query))]
     {:_links (conj {:self {:href (str (trials-path task-id) "?"
                                       (http/build-url-query-string query-params))}
                     :cici:trial (map trial-link trial-ids)}

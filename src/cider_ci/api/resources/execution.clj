@@ -7,6 +7,7 @@
   (:require 
     [cider-ci.utils.debug :as debug]
     [cider-ci.utils.http-server :as http-server]
+    [cider-ci.utils.rdbms :as rdbms]
     [clj-http.client :as http-client]
     [clj-logging-config.log4j :as logging-config]
     [clojure.data.json :as json]
@@ -36,7 +37,7 @@
 (defn get-execution-stats [request]
   (let [id (-> request :params :id)
         data (first (jdbc/query 
-                      (:ds @conf) ["SELECT * from execution_stats 
+                      (rdbms/get-ds) ["SELECT * from execution_stats 
                                    WHERE execution_id = ?::uuid" id]))
         links {:_links 
                (conj {}
@@ -49,7 +50,7 @@
 ;### get-execution ##############################################################
 
 (defn query-exeuction [id]
-  (first (jdbc/query (:ds @conf) 
+  (first (jdbc/query (rdbms/get-ds) 
                      ["SELECT * from executions
                       WHERE id = ?::UUID" id])))
 
@@ -89,3 +90,5 @@
 ;(logging-config/set-logger! :level :debug)
 ;(logging-config/set-logger! :level :info)
 ;(debug/debug-ns *ns*)
+
+

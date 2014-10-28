@@ -7,7 +7,7 @@
     [cider-ci.utils.debug :as debug]
     [cider-ci.utils.http :as http]
     [cider-ci.utils.http-server :as http-server]
-    [cider-ci.utils.rdbms.json]
+    [cider-ci.utils.rdbms :as rdbms]
     [clj-http.client :as http-client]
     [clj-logging-config.log4j :as logging-config]
     [clojure.data.json :as json]
@@ -32,7 +32,7 @@
 
 ;### get-attachments ############################################################
 (defn build-attachments-base-query [execution-id]
-  (let [tree-id (:tree_id (first (jdbc/query (:ds @conf) ["SELECT tree_id FROM executions WHERE id = ?" execution-id])))]
+  (let [tree-id (:tree_id (first (jdbc/query (rdbms/get-ds) ["SELECT tree_id FROM executions WHERE id = ?" execution-id])))]
     (select [:id :path]
             (from :tree_attachments)
             (where `(like :path ~(str "/"tree-id"/%")))
@@ -43,7 +43,7 @@
                   (add-offset query-params)
                   sql)
         _ (logging/debug query)
-        attachment-paths (map :path (jdbc/query (:ds @conf) query)) ]
+        attachment-paths (map :path (jdbc/query (rdbms/get-ds) query)) ]
     {:_links (conj {:self (tree-attachments-link execution-id)}
                    (curies-link-map)
                    (execution-link-map execution-id)
@@ -63,14 +63,14 @@
   (let [path (-> request :route-params :*)
         tree-id (second (re-matches #"/([^\/]+)/.*" path))
         attachment (first (jdbc/query 
-                            (:ds @conf) 
+                            (rdbms/get-ds) 
                             ["SELECT * from tree_attachments WHERE path = ?" path]))]
     {:hal_json_data (conj attachment
                           {:_links (conj {:self (tree-attachment-link path)}
                                          (curies-link-map)
                                          {:data-stream 
-                                          {:href (http/build-url (:storage_manager_server @conf)
-                                                                 (str "/storage/tree-attachments" path))
+                                          {:href (http/build-url (:storage_service @conf)
+                                                                 (str "/tree-attachments" path))
                                            :title "Data-Stream"}}
                                          )})}))
 

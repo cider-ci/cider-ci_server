@@ -37,7 +37,7 @@
 
 ;### url ######################################################################
 (defn prefix []
-  (str (-> @conf :web :context) (-> @conf :web :sub_path)))
+  (str (-> @conf :api_service :context) (-> @conf :api_service :sub_context)))
 
 (defn curies-link-map []
   {:curies [{:name "cici" :href (str (prefix) "/doc/api/index.html#{rel}")

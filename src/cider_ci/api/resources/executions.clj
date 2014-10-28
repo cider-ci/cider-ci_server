@@ -7,6 +7,7 @@
     [cider-ci.utils.debug :as debug]
     [cider-ci.utils.http :as http]
     [cider-ci.utils.http-server :as http-server]
+    [cider-ci.utils.rdbms :as rdbms]
     [clj-http.client :as http-client]
     [clj-logging-config.log4j :as logging-config]
     [clojure.data.json :as json]
@@ -73,7 +74,7 @@
                   (filer-branch-heads params)
                   sql)
         _ (logging/debug "GET /executions " {:query query})
-        execution-ids (map :id (jdbc/query (:ds @conf) query))]
+        execution-ids (map :id (jdbc/query (rdbms/get-ds) query))]
     {:_links (conj {:self {:href (str (executions-path) "?" 
                                        (http/build-url-query-string params))}}
                    (curies-link-map)

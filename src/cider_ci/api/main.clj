@@ -4,6 +4,7 @@
 
 
 (ns cider-ci.api.main
+  (:gen-class)
   (:require 
     [cider-ci.api.web :as web]
     [cider-ci.auth.core :as auth]
@@ -14,6 +15,7 @@
     [cider-ci.utils.messaging :as messaging]
     [cider-ci.utils.nrepl :as nrepl]
     [cider-ci.utils.rdbms :as rdbms]
+    [cider-ci.utils.with :as with]
     [clojure.tools.logging :as logging]
     )
   (:import 
@@ -26,7 +28,6 @@
 (defn read-config []
   (config-loader/read-and-merge
     conf ["conf_default.yml" 
-          "/etc/api-v1/conf.yml" 
           "conf.yml"]))
 
 
@@ -37,14 +38,15 @@
 (defn -main
   [& args]
   (read-config)
-  (let [ds (rdbms/create-ds (get-db-spec))]
+  (with/logging 
+    (rdbms/initialize (get-db-spec))
+    (messaging/initialize (:messaging @conf))
     (nrepl/initialize (:nrepl @conf))
-    (auth/initialize (assoc (select-keys @conf [:session :basic_auth]) 
-                            :ds ds))
-    (web/initialize (select-keys @conf [:web :basic_auth]))
-    (resources/initialize (assoc (select-keys @conf [:web :storage_manager_server]) :ds ds) )
-    ))
-
+    (auth/initialize (select-keys @conf [:session :basic_auth]))
+    (web/initialize (select-keys @conf [:http_server :basic_auth]))
+    (resources/initialize (select-keys @conf [:api_service :storage_service]))
+    )
+  nil)
 
 
 ;### Debug ####################################################################

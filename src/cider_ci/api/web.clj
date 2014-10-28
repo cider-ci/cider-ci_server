@@ -4,12 +4,16 @@
 
 (ns cider-ci.api.web
   (:require 
+    [cider-ci.api.resources :as resources]
+    [cider-ci.auth.core :as auth]
     [cider-ci.auth.http-basic :as http-basic]
     [cider-ci.auth.session :as session]
-    [cider-ci.utils.with :as with]
-    [cider-ci.api.resources :as resources]
     [cider-ci.utils.debug :as debug]
     [cider-ci.utils.http-server :as http-server]
+    [cider-ci.utils.messaging :as messaging]
+    [cider-ci.utils.rdbms :as rdbms]
+    [cider-ci.utils.routing :as routing]
+    [cider-ci.utils.with :as with]
     [clj-logging-config.log4j :as logging-config]
     [clojure.data.json :as json]
     [clojure.tools.logging :as logging]
@@ -22,28 +26,6 @@
     ))
 
 (defonce conf (atom nil))
-
-
-
-;##### non public resources authentication #################################### 
-
-(defn return-authenticate! [request]
-  {:status 401
-   :headers 
-   {"WWW-Authenticate" 
-    "Basic realm=\"Cider-CI; sign in or provide credentials\""}
-   })
-
-(defn authenticate-non-public [request handler] 
-  (cond
-    (:authenticated-user request) (handler request)
-    (:authenticated-application request) (handler request) 
-    :else (return-authenticate! request)))
-
-    
-(defn wrap-authenticate-non-public [handler]
-  (fn [request]
-    (authenticate-non-public request handler)))
 
 
 ;##### static resources ####################################################### 
@@ -62,56 +44,59 @@
     (cpj/ANY "/api-browser*" request static-resources-handler)
     (cpj/ANY "*" request default-handler)))
 
+;##### status dispatch ######################################################## 
+
+(defn status-handler [request]
+  (let [stati {:rdbms (rdbms/check-connection)
+               :messaging (messaging/check-connection)
+               }]
+    (if (every? identity (vals stati))
+      {:status 200
+       :body (json/write-str stati)
+       :headers {"content-type" "application/json;charset=utf-8"} }
+      {:status 511
+       :body (json/write-str stati)
+       :headers {"content-type" "application/json;charset=utf-8"} })))
+
+(defn wrap-status-dispatch [default-handler]
+  (cpj/routes
+    (cpj/GET "/status" request #'status-handler)
+    (cpj/ANY "*" request default-handler)))
 
 ;##### routes and wrappers #################################################### 
 
-(defn wrap-debug-logging [handler]
-  (fn [request]
-    (let [wrap-debug-logging-level (or (:wrap-debug-logging-level request) 0 )]
-      (logging/debug "wrap-debug-logging " wrap-debug-logging-level " request: " request)
-      (let [response (handler (assoc request :wrap-debug-logging-level (+ wrap-debug-logging-level 1)))]
-        (logging/debug  "wrap-debug-logging " wrap-debug-logging-level " response: " response)
-        response))))
-
-(defn wrap-catch-exception [handler]
-  (fn [request]
-    (with/logging
-      (handler request))))
-
-(defn wrap-prefix [default-handler prefix]
-  (cpj/routes
-    (cpj/context prefix []
-                 (cpj/ANY "*" request default-handler))
-    (cpj/ANY "*" [] {:status 404})))
-
 (defn build-main-handler [context]
   ( -> (resources/build-routes-handler)
-       (wrap-debug-logging)
+       (routing/wrap-debug-logging 'cider-ci.api.web)
        (ring.middleware.json/wrap-json-params)
-       (wrap-debug-logging)
+       (routing/wrap-debug-logging 'cider-ci.api.web)
        (ring.middleware.params/wrap-params)
-       (wrap-debug-logging)
-       (wrap-authenticate-non-public)
-       (wrap-debug-logging)
+       (routing/wrap-debug-logging 'cider-ci.api.web)
+       (wrap-status-dispatch)
+       (routing/wrap-debug-logging 'cider-ci.api.web)
+       (auth/wrap-authenticate-and-authorize-service-or-user)
+       (routing/wrap-debug-logging 'cider-ci.api.web)
        (http-basic/wrap)
-       (wrap-debug-logging)
+       (routing/wrap-debug-logging 'cider-ci.api.web)
        (session/wrap)
-       (wrap-debug-logging)
+       (routing/wrap-debug-logging 'cider-ci.api.web)
        (cookies/wrap-cookies)
-       (wrap-debug-logging)
+       (routing/wrap-debug-logging 'cider-ci.api.web)
        (wrap-static-resources-dispatch)
-       (wrap-debug-logging)
-       (wrap-prefix context)
-       (wrap-debug-logging)
-       (wrap-catch-exception)))
+       (routing/wrap-debug-logging 'cider-ci.api.web)
+       (routing/wrap-prefix context)
+       (routing/wrap-debug-logging 'cider-ci.api.web)
+       (routing/wrap-log-exception)
+       ))
 
 
 ;#### the server ##############################################################
 
 (defn initialize [new-conf]
   (reset! conf new-conf)
-  (let [context (str (:context (:web @conf)) (:sub_path (:web @conf)))]
-    (http-server/start @conf (build-main-handler context))))
+  (let [http-conf (-> @conf :http_server)
+        context (str (:context http-conf) (:sub_context http-conf))]
+    (http-server/start http-conf (build-main-handler context))))
 
 
 ;### Debug ####################################################################
