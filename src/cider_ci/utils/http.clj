@@ -29,14 +29,17 @@
       http-client/generate-query-string))
 
 (defn build-url 
-
   ([config path]
    (let [ protocol (if (or (:server_ssl config) (:ssl config)) "https" "http")
          host (or (:server_host config) (:host config))
          port (or (:server_port config) (:port config))
-         context (:context config) ]
-     (str protocol "://" host (when port (str ":" port)) context path)))
-
+         context (:context config) 
+         sub-context (:sub_context config)
+         ]
+     (str protocol "://" 
+          host 
+          (when port (str ":" port)) 
+          context sub-context path)))
   ([config path query-params]
    (str (build-url config path) 
         "?" (build-url-query-string query-params))))
@@ -48,9 +51,9 @@
   (logging/debug [method url params])
   (let [basic-auth (:basic_auth @conf)]
     (with/logging
-      (logging/debug "http/post" {:url url :basic-auth basic-auth})
+      (logging/debug ("http/" method) {:url url :basic-auth basic-auth})
       (http-client/request
-        (conj {:basic-auth [(:user basic-auth) (:secret basic-auth)]
+        (conj {:basic-auth [(:username basic-auth) (:password basic-auth)]
                :url url 
                :method method
                :insecure? true

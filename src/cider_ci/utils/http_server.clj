@@ -25,7 +25,7 @@
   "Starts (or stops and then starts) the webserver"
   (let [server-conf (conj {:ssl? false
                            :join? false} 
-                          (select-keys (:web conf) [:port :host]))]
+                          (select-keys conf [:port :host]))]
     (stop)
     (logging/info "starting server " server-conf)
     (reset! _server (jetty/run-jetty main-handler server-conf))))

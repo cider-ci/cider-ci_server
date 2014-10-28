@@ -5,19 +5,20 @@
 
 (ns cider-ci.utils.rdbms.conversion
   (:require
+    [cider-ci.utils.debug :as debug]
     [clj-logging-config.log4j :as logging-config]
-    [clojure.java.jdbc :as jdbc]
-    [clojure.tools.logging :as logging]
     [clj-time.coerce :as time-coerce]
     [clj-time.core :as time-core]
     [clj-time.format :as time-format]
     [clojure.data.json :as json]
+    [clojure.java.jdbc :as jdbc]
+    [clojure.tools.logging :as logging]
     )
   (:import org.postgresql.util.PGobject)
   )   
 
-;(logging-config/set-logger! :level :debug)
-;(logging-config/set-logger! :level :info)
+
+(defonce ^:dynamic *tables-metadata* nil)
 
 
 (defn convert-to-uuid [value]
@@ -41,12 +42,8 @@
     (convert-to-json (json/write-str value))))
 
 ;(convert-to-json {:x 5})
-   
 
-(defonce _convert-to-type  (atom nil))
 (defn convert-to-type [type-name value]
-  (reset! _convert-to-type [type-name value])
-  (logging/debug convert-to-type [type-name value])
   (let [res
         (case type-name
           "uuid" (convert-to-uuid value)
@@ -71,13 +68,35 @@
     [k (convert-to-type type-name v)]
     ))
 
-(defonce _convert-parameters (atom nil))
-(defn convert-parameters [table-metadata params]
-  (reset! _convert-parameters [table-metadata params])
-  (into {} 
-        (map 
-          (fn [pair] 
-            (logging/debug pair)
-            (let [[k v] pair]
-              (convert-pair table-metadata k v)
-              )) params)))
+(defn convert-parameters [table-name params]
+  (let [table-metadata (*tables-metadata* table-name)]
+    (into {} 
+          (map 
+            (fn [pair] 
+              (logging/debug pair)
+              (let [[k v] pair]
+                (convert-pair table-metadata k v)
+                )) params))))
+
+
+
+(defn filter-parameters [table-name params]
+  (let [table-metadata (*tables-metadata* table-name)
+        ks (set (keys (:columns table-metadata))) ]
+    (select-keys params ks)
+    ))
+
+
+(defn initialize [tables-metadata]
+  (def ^:dynamic *tables-metadata* tables-metadata))
+
+
+
+
+
+;#### debug ###################################################################
+;(debug/debug-ns *ns*)
+;(logging-config/set-logger! :level :debug)
+;(logging-config/set-logger! :level :info)
+
+

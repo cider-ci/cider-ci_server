@@ -12,14 +12,17 @@
 
 
 (defn read-and-merge [conf-atom filenames]
-  (doseq [filepath filenames]
-    (let [file (clojure.java.io/as-file filepath)]
-      (when (and (.exists file) (.isFile file))
-        (logging/info "trying to read config: " filepath)
+  (doseq [filename filenames]
+    (logging/info "looking for " filename " config resource")
+    (if-let [config-resource (clojure.java.io/resource filename)]
+      (do
+        (logging/info "trying to read, parse and merge " config-resource)
         (with/suppress-and-log-warn 
-          (let [config-string (slurp filepath)
+          (let [config-string (slurp config-resource)
                 config (yaml/parse-string config-string)
                 merge-fun #(conj % config)]
-            (logging/debug config-string config)
+            (logging/debug "read config" config)
             (swap! conf-atom merge-fun)
-            (logging/info "merged config from " filepath)))))))
+            (logging/info "merged config from " filename))))
+      (logging/info filename " config not found, skipping")))
+  (logging/info "read-and-merge done, result: " @conf-atom))

@@ -14,6 +14,7 @@
     [langohr.core :as rmq]
     [langohr.exchange :as le]
     [langohr.queue :as lq]
+    [cider-ci.utils.debug :as debug]
     [cider-ci.utils.with :as with]
     [cider-ci.utils.json-protocol]
     ) 
@@ -22,29 +23,167 @@
     )) 
 
 
-;(logging-config/set-logger! :level :debug)
-;(logging-config/set-logger! :level :info)
-
-
-(declare 
-  ch
-  connect
-  )
-
-
-; ### exchange and topic names  #############################################
-
-(def settings-events-topic-name "settings.events")
-(def settings-events-routing-name settings-events-topic-name)
-
-(def branch-topic-name "branch.events")
-(def branch-routing-name branch-topic-name)
-
-
-; ### initialization and configuration ######################################
-
 (def conf (atom {}))
 
+;### connection handling ######################################################
+(defonce ^:private conn (atom nil))
+(defonce ^:private ch (atom nil))
+(defn- connect 
+  ([]
+   (connect {}))
+  ([conn-conf]
+   (logging/debug [connect conn-conf])
+   (reset! conn 
+           (rmq/connect
+             (conj {:executor (Executors/newFixedThreadPool 4)
+                    :automatically-recover true}
+                   (:connection @conf))))))
+
+(defn disconnect []
+  (with/suppress-and-log-warn (rmq/close @ch))
+  (with/suppress-and-log-warn (rmq/close @conn))
+  (reset! ch nil)
+  (reset! conn nil)
+  )
+
+(defmacro with-channel [ch-sym & body]
+  `(let [~ch-sym (lch/open @conn)]
+     (try 
+       ~@body
+       (finally 
+         (when (lch/open? ~ch-sym)
+           (lch/close ~ch-sym))))))
+
+  ;(macroexpand-1 '(with-channel x (println x)))
+(defn- get-channel []
+  (when-not @ch 
+    (reset! ch (lch/open @conn)))
+  (when-not (lch/open?  @ch)
+    (reset! ch (lch/open @conn)))
+  @ch)
+
+
+;### logging ##################################################################
+(defonce ^:private logging-queue (atom nil))
+(defn- logging-receiver [ch metadata ^bytes payload]
+  (let [message (try 
+                  (clojure.walk/keywordize-keys 
+                    (json/read-str (String. payload "UTF-8")))
+                  (catch Exception _
+                    "message decode failed")) ]
+    (logging/info ["MESSAGE LOGGING" {:metadata metadata 
+                              :payload payload 
+                              :message message}])))
+(defn- bind-to-logging-queue [exchange-name]
+  (lq/bind (get-channel) (:queue @logging-queue) exchange-name {:routing-key "#"}))
+
+
+;### utils (low level) ########################################################
+(defn- exchange? [name]
+  (with-channel ch 
+    (try
+      (le/declare-passive ch name)
+      true
+      (catch java.io.IOException e
+        false))))
+
+(defn- create-handler [message-receiver]
+  (fn [ch metadata ^bytes payload]
+    (with/suppress-and-log-warn
+      (logging/debug {:message (conj 
+                                 (select-keys metadata [:type :exchange])
+                                 {:payload (String. payload "UTF-8")})})
+      (let [message (clojure.walk/keywordize-keys 
+                      (json/read-str (String. payload "UTF-8")))]
+        (message-receiver message)))))
+
+(defn- create-exchange 
+  ([exchange-name]
+   (create-exchange exchange-name "topic" {}))
+  ([exchange-name exchange-type options]
+   (with-channel _ch
+     (le/declare _ch exchange-name exchange-type
+                 (conj {:durable true
+                        :auto-delete false 
+                        :internal false}
+                       options)))
+   (bind-to-logging-queue exchange-name)))
+
+(defn- create-queue [queue-name options]
+  (lq/declare @ch queue-name
+              (conj 
+                {:durable false :exclusive true :auto-delete true}
+                options)))
+
+
+;### publish helper ##########################################################
+(defonce ^:private memoized-created-topics (atom #{}))
+(defn- memoized-create-exchange [name]
+  (let [hkey (str name "_" (.hashCode @conn) )]
+    (when-not (get hkey @memoized-created-topics)
+      (create-exchange name)
+      (swap! memoized-created-topics 
+             (fn [curr hkey] (conj curr hkey))
+             hkey))))
+
+
+;### high level api / dsl #####################################################
+(defn publish 
+  "Publish a (ad hoc) message in json format. Message must be convertible  by
+  json/write-str. Creates an topic exchange with default parameters for the
+  given name. The topic is only created once for a given connection and name.
+  Uses name as the routing key if no routing-key is given."
+  ([name message]
+   (publish name message {} name))
+  ([name message options]
+   (publish name message options name))
+  ([exchange-name message options routing-key]
+   (with/logging
+     (memoized-create-exchange exchange-name)
+     (logging/debug {:publish {:message message 
+                               :exchange exchange-name :routing-key routing-key}})
+     (lb/publish (get-channel) exchange-name routing-key
+                 (json/write-str message)
+                 (conj 
+                   {:persistent true}
+                   options
+                   {:content-type "application/json"})))))
+
+(defn listen
+  "Listen to the message with (the routing key) name  usually in ad hoc
+  fashion.  Listener is a function that takes one argument, the message. The
+  message is a json compatible object.  The variant without specifying the
+  queue name creates a temporary, exclusive and auto deleted queue. The variant
+  specifying the queue name creates a durable queue."
+  ([name receiver]
+   (listen name receiver "" {:durable false :exclusive true :auto-delete true}))
+  ([exchange-name receiver queue-name]
+   (listen exchange-name receiver queue-name {}))
+  ([exchange-name receiver qname options]
+   (with/logging
+     (create-exchange exchange-name)
+     (let [queue-name (:queue 
+                        (lq/declare (get-channel)
+                                    qname 
+                                    (conj
+                                      {:durable true :exclusive false :auto-delete false}
+                                      options)))]
+       (lq/bind (get-channel) queue-name exchange-name {:routing-key "#"})
+       (future
+         (logging/debug "subscribe: "  queue-name " to " receiver)
+         (lcons/subscribe (get-channel) queue-name 
+                          (create-handler receiver) 
+                          {:auto-ack true}))))))
+
+(defn check-connection 
+  "Checks if the internal channel is open and returns true in case."
+  []
+  (try 
+    (with/logging (rmq/open? (get-channel)))
+    (catch Exception _ false)
+    ))
+
+;### initialize ###############################################################
 (defn initialize [new-conf]
   (logging/info [initialize new-conf])
   (reset! conf new-conf)
@@ -52,64 +191,17 @@
 
     (connect (:connection @conf))
 
-    (doseq [exchange (:exchanges @conf)]
-      (le/declare @ch (:name exchange)  
-                  (:type exchange) 
-                  :durable (:durable exchange)))
-
+    (reset! logging-queue (lq/declare (get-channel)))
+    (future 
+      (lcons/subscribe (get-channel) (:queue @logging-queue) 
+                       logging-receiver {:auto-ack false}))
     (logging/info "messaging initialized")
     ))
 
 
-;### connection handling ######################################################
 
-(defonce conn (atom nil))
-(defonce ch (atom nil))
-
-(defn get-channel []
-  (or @ch
-      (throw (IllegalStateException. 
-               "Messaging channel ist not initialized."))))
-
-(defn connect [conn-conf]
-  (logging/debug [connect conn-conf])
-  (reset! conn 
-          (rmq/connect
-            (conj {:executor (Executors/newFixedThreadPool 4)}
-                  (:connection @conf))))
-  (reset! ch
-          (lch/open @conn)
-          ))
-
-
-;### utils ####################################################################
-
-(defonce publish-event-last-args (atom nil))
-(defn publish-event [exchange-name routing-key event]
-  (let [args [exchange-name routing-key event]]
-    (logging/debug publish-event args)
-    (reset! publish-event-last-args  args)
-    (with/logging 
-      (lb/publish @ch exchange-name routing-key
-                  (json/write-str event)
-                  :content-type "application/json"
-                  :persistent true
-                  ))))
-;(apply publish-event @publish-event-last-args)
-
-
-(defn subscribe-to-queue [queue-name handler]
-  (logging/debug [subscribe-to-queue queue-name handler])
-  (lcons/subscribe 
-    (get-channel) queue-name
-    (fn [ch metadata ^bytes payload]
-      (with/suppress-and-log-warn
-        (logging/info "EVENT" 
-                      (select-keys metadata [:type :exchange])
-                      (String. payload "UTF-8"))
-        (let [message (clojure.walk/keywordize-keys 
-                        (json/read-str (String. payload "UTF-8")))]
-          (handler metadata message))))
-    :auto-ack true))
-
+;### Debug ####################################################################
+;(debug/debug-ns *ns*)
+;(logging-config/set-logger! :level :debug)
+;(logging-config/set-logger! :level :info)
 
