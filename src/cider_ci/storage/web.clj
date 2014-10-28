@@ -2,15 +2,20 @@
 ; Licensed under the terms of the GNU Affero General Public License v3.
 ; See the "LICENSE.txt" file provided with this software.
 
-(ns cider-ci.sm.web
+(ns cider-ci.storage.web
   (:require 
+    [cider-ci.auth.core :as auth]
     [cider-ci.auth.http-basic :as http-basic]
     [cider-ci.auth.session :as session]
     [cider-ci.utils.debug :as debug]
     [cider-ci.utils.http :as http]
     [cider-ci.utils.http-server :as http-server]
+    [cider-ci.utils.rdbms :as rdbms]
+    [cider-ci.utils.rdbms :as rdbms]
+    [cider-ci.utils.routing :as routing]
     [cider-ci.utils.with :as with]
     [clj-logging-config.log4j :as logging-config]
+    [clojure.data.json :as json]
     [clojure.java.io :as io]
     [clojure.java.jdbc :as jdbc]
     [clojure.tools.logging :as logging]
@@ -20,7 +25,7 @@
     [ring.util.response]
     )
   (:use 
-    [cider-ci.sm.shared :only [delete-file delete-row delete-file-and-row]]
+    [cider-ci.storage.shared :only [delete-file delete-row delete-file-and-row]]
     )
   )
 
@@ -58,14 +63,14 @@
   (let [query-str (str "SELECT * FROM " (:db_table store) " WHERE path = ? ")
         path (without-prefix url-path (:url_path_prefix store))]
     (logging/debug {:query-str query-str})
-    (first (jdbc/query (:ds @conf) [query-str path]))))
+    (first (jdbc/query (rdbms/get-ds) [query-str path]))))
 
 (defn save-file-and-presist-row [request store url-path]
   (let [id (java.util.UUID/randomUUID)
         file-path (str (:file_path store) "/" id)
         file (io/file file-path)
         {content-type :content-type content-length :content-length} request]
-    (jdbc/with-db-transaction [tx (:ds @conf)]
+    (jdbc/with-db-transaction [tx (rdbms/get-ds)]
       (with-open [in (io/input-stream (:body request))
                   out (io/output-stream file)]
         (clojure.java.io/copy in out))
@@ -80,11 +85,11 @@
 (defn put-file [request]
   (logging/debug put-file [request])
   (if-let [[store url-path] (store-and-url-path request)]
-    (if (get-row store url-path)
-      {:status 409
-       :body "An artifact with this path exists already. Did you meant to replace it? Use DELETE and try again!"}
-      (and (save-file-and-presist-row request store url-path) 
-           {:status 204}))
+    (do (when-let [row (get-row store url-path)]
+          (delete-file-and-row store row))
+      (if (save-file-and-presist-row request store url-path) 
+        {:status 204}
+        {:status 500 :body "Save failed"}))
     {:status 422
      :body "The store for this path could not be found!"}))
 
@@ -107,66 +112,70 @@
     {:status 422
      :body "The store for this path could not be found!"}))
 
-(defn build-routes [context]
+(defn build-routes []
   (cpj/routes 
-    (cpj/context context []
-                 (cpj/GET "*" request
-                          (get-file request)) 
-                 (cpj/PUT "*" request
-                          (put-file request)) 
-                 (cpj/DELETE "*" request
-                             (delete request))
-                 )))
+    (cpj/GET "*" request
+             (get-file request)) 
+    (cpj/PUT "*" request
+             (put-file request)) 
+    (cpj/DELETE "*" request
+                (delete request))
+    ))
 
 
-;##### require ci or user ######################################################
-(defn return-authenticate! [request]
-  {:status 401
-   :headers 
-   {"WWW-Authenticate" 
-    "Basic realm=\"Cider-CI; sign in or provide credentials\""}
-   })
+;##### status dispatch ######################################################## 
 
-(defn require-ci-or-user [request handler] 
-  (cond
-    (:authenticated-user request) (handler request)
-    (:authenticated-application request) (handler request) 
-    :else (return-authenticate! request)))
+(defn status-handler [request]
+  (let [stati {:rdbms (rdbms/check-connection)
+               }]
+    (if (every? identity (vals stati))
+      {:status 200
+       :body (json/write-str stati)
+       :headers {"content-type" "application/json;charset=utf-8"} }
+      {:status 511
+       :body (json/write-str stati)
+       :headers {"content-type" "application/json;charset=utf-8"} })))
 
-(defn wrap-auth-require-ci-or-user [handler]
-  (fn [request]
-    (require-ci-or-user request handler)))
+(defn wrap-status-dispatch [default-handler]
+  (cpj/routes
+    (cpj/GET "/status" request #'status-handler)
+    (cpj/ANY "*" request default-handler)))
 
 
-;#### main handler ################################################################
-(defn wrap-debug-logging [handler]
-  (fn [request]
-    (let [wrap-debug-logging-level (or (:wrap-debug-logging-level request) 0 )]
-      (logging/debug "wrap-debug-logging " wrap-debug-logging-level " request: " request)
-      (let [response (handler (assoc request :wrap-debug-logging-level (+ wrap-debug-logging-level 1)))]
-        (logging/debug  "wrap-debug-logging " wrap-debug-logging-level " response: " response)
-        response))))
 
-(defn build-main-handler []
-  ( -> (cpj.handler/api (build-routes (str (:context (:web @conf))
-                                           (:subcontext (:web @conf)))))
-       (wrap-debug-logging)
-       (wrap-auth-require-ci-or-user)
-       (wrap-debug-logging)
+;#### routing #################################################################
+
+(defn build-main-handler [context]
+  ( -> (cpj.handler/api (build-routes ))
+       (routing/wrap-debug-logging 'cider-ci.storage.web)
+
+       (wrap-status-dispatch)
+       (routing/wrap-debug-logging 'cider-ci.storage.web)
+
+       (routing/wrap-prefix context)
+       (routing/wrap-debug-logging 'cider-ci.storage.web)
+
+       (auth/wrap-authenticate-and-authorize-service-or-user)
+       (routing/wrap-debug-logging 'cider-ci.storage.web)
        (http-basic/wrap)
-       (wrap-debug-logging)
+       (routing/wrap-debug-logging 'cider-ci.storage.web)
+
        (session/wrap)
-       (wrap-debug-logging)
+       (routing/wrap-debug-logging 'cider-ci.storage.web)
        (cookies/wrap-cookies)
-       (wrap-debug-logging)
+       (routing/wrap-debug-logging 'cider-ci.storage.web)
+       (routing/wrap-log-exception)
        ))
 
 
-;#### init ####################################################################
+;#### the server ##############################################################
+
 (defn initialize [new-conf]
   (reset! conf new-conf)
-  ;(.mkdirs (io/file (attachments-dir-path)))
-  (http-server/start @conf (build-main-handler)))
+  (let [http-conf (-> @conf :http_server)
+        context (str (:context http-conf) (:sub_context http-conf))]
+    (http-server/start http-conf (build-main-handler context))))
+
 
 
 ;### Debug ####################################################################

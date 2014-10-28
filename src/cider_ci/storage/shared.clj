@@ -2,8 +2,9 @@
 ; Licensed under the terms of the GNU Affero General Public License v3.
 ; See the "LICENSE.txt" file provided with this software.
 
-(ns cider-ci.sm.shared
+(ns cider-ci.storage.shared
   (:require 
+    [cider-ci.utils.rdbms :as rdbms]
     [cider-ci.utils.debug :as debug]
     [cider-ci.utils.with :as with]
     [clj-logging-config.log4j :as logging-config]
@@ -25,7 +26,7 @@
 (defn delete-row [table id]
   (logging/debug delete-row [table id])
   (with/suppress-and-log-error
-    (jdbc/delete! (:ds @conf) table ["id = ?::uuid" id])))
+    (jdbc/delete! (rdbms/get-ds) table ["id = ?::uuid" id])))
 
 (defn delete-file-and-row [store file-row]
   (logging/debug delete-file-and-row [store file-row])
@@ -39,4 +40,9 @@
 (defn initialize [new-conf]
   (reset! conf new-conf))
 
+
+;### Debug ####################################################################
+;(debug/debug-ns *ns*)
+;(logging-config/set-logger! :level :debug)
+;(logging-config/set-logger! :level :info)
 

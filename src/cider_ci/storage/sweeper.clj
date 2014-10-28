@@ -2,10 +2,11 @@
 ; Licensed under the terms of the GNU Affero General Public License v3.
 ; See the "LICENSE.txt" file provided with this software.
 
-(ns cider-ci.sm.sweeper
+(ns cider-ci.storage.sweeper
   (:require 
     [cider-ci.utils.daemon :as daemon]
     [cider-ci.utils.debug :as debug]
+    [cider-ci.utils.rdbms :as rdbms]
     [cider-ci.utils.with :as with]
     [clj-logging-config.log4j :as logging-config]
     [clojure.java.io :as io]
@@ -14,7 +15,7 @@
     [me.raynes.fs :as fsutils]
     )
   (:use 
-    [cider-ci.sm.shared :only [delete-file delete-row delete-file-and-row]]
+    [cider-ci.storage.shared :only [delete-file delete-row delete-file-and-row]]
     ))
 
 
@@ -25,13 +26,13 @@
 (defn delete-expired []
   (doseq [store (:stores @conf)]
     (logging/info "cleaning rows without to_be_retained_before not set in " store)
-    (doseq [file-row (jdbc/query (:ds @conf) [ (str "SELECT * FROM " (:db_table store)
+    (doseq [file-row (jdbc/query (rdbms/get-ds) [ (str "SELECT * FROM " (:db_table store)
                                                     " WHERE to_be_retained_before IS NULL "
                                                     " AND created_at < now() - interval '"
                                                     (:retention_time_days store) "  Day' ")])]
       (delete-file-and-row store file-row))
     (logging/info "cleaning rows without to_be_retained_before set in " store)
-    (doseq [file-row (jdbc/query (:ds @conf) [ (str "SELECT * FROM " (:db_table store)
+    (doseq [file-row (jdbc/query (rdbms/get-ds) [ (str "SELECT * FROM " (:db_table store)
                                                    " WHERE to_be_retained_before IS NOT NULL "
                                                    " AND to_be_retained_before < now() ")])]
       (delete-file-and-row store file-row))))
@@ -52,7 +53,7 @@
                 (when (.isFile file)
                   (if-not (string-is-uuid? file-name)
                     (delete-file abs-path)
-                    (if-not (first (jdbc/query (:ds @conf) 
+                    (if-not (first (jdbc/query (rdbms/get-ds) 
                                                [ (str "SELECT * FROM " (:db_table store)
                                                       " WHERE id = ?::uuid " ) file-name]))
                       (delete-file abs-path))))
@@ -63,7 +64,7 @@
   (logging/debug delete-row-orphans [])
   (doseq [store (:stores @conf)]
     (let [table-name (:db_table store)]
-      (doseq [{id :id} (jdbc/query (:ds @conf) [(str "SELECT id FROM " table-name)])]
+      (doseq [{id :id} (jdbc/query (rdbms/get-ds) [(str "SELECT id FROM " table-name)])]
         (logging/debug "check if row is orphan " (str id))
         (when-not (fsutils/exists? (str (:file_path store) "/" id))
           (logging/debug "file not found, deleting row ...")

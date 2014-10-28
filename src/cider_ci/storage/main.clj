@@ -2,16 +2,15 @@
 ; Licensed under the terms of the GNU Affero General Public License v3.
 ; See the "LICENSE.txt" file provided with this software.
 
-(ns cider-ci.sm.main
+(ns cider-ci.storage.main
   (:require 
     [cider-ci.auth.core :as auth]
-    [cider-ci.sm.shared :as shared]
-    [cider-ci.sm.sweeper :as sweeper]
-    [cider-ci.sm.web :as web]
+    [cider-ci.storage.shared :as shared]
+    [cider-ci.storage.sweeper :as sweeper]
+    [cider-ci.storage.web :as web]
     [cider-ci.utils.config-loader :as config-loader]
     [cider-ci.utils.debug :as debug]
     [cider-ci.utils.http :as http]
-    [cider-ci.utils.messaging :as messaging]
     [cider-ci.utils.nrepl :as nrepl]
     [cider-ci.utils.rdbms :as rdbms]
     [cider-ci.utils.with :as with]
@@ -21,7 +20,6 @@
 
 
 (defonce conf (atom {}))
-(defonce rdbms-ds (atom {}))
 
 (defn get-db-spec []
   (-> @conf (:database) (:db_spec) ))
@@ -29,7 +27,6 @@
 (defn read-config []
   (config-loader/read-and-merge
     conf ["conf_default.yml" 
-          "/etc/storage-manager/conf.yml" 
           "conf.yml"]))
 
 (defn create-dirs [stores]
@@ -40,19 +37,16 @@
         (fsutils/mkdirs directory-path)))))
 
 (defn -main [& args]
-  (logging/debug [-main args])
-  (read-config)
-  (nrepl/initialize (:nrepl @conf))
-  (http/initialize (select-keys @conf [:basic_auth]))
-  (create-dirs (:stores @conf))
-  (let [ds (rdbms/create-ds (get-db-spec))]
-    (auth/initialize (assoc (select-keys @conf [:session :basic_auth]) 
-                            :ds ds))
-    (shared/initialize {:ds ds})
-    (web/initialize (conj (select-keys @conf [:web :stores])
-                          {:ds ds}))
-    (sweeper/initialize (conj (select-keys @conf [:web :stores])
-                          {:ds ds}))
+  (with/logging
+    (read-config)
+    (nrepl/initialize (:nrepl @conf))
+    (http/initialize (select-keys @conf [:basic_auth]))
+    (create-dirs (:stores @conf))
+    (rdbms/initialize (get-db-spec))
+    (auth/initialize (select-keys @conf [:session :basic_auth]))
+    (shared/initialize {})
+    (web/initialize (select-keys @conf [:http_server :stores]))
+    (sweeper/initialize (select-keys @conf [:stores]))
     ))
 
 
