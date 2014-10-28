@@ -2,12 +2,13 @@
 ; Licensed under the terms of the GNU Affero General Public License v3.
 ; See the "LICENSE.txt" file provided with this software.
 
-(ns cider-ci.tm.ping
+(ns cider-ci.dispatcher.ping
   (:require
-    [cider-ci.tm.executor :as executor-entity]
+    [cider-ci.dispatcher.executor :as executor-entity]
     [cider-ci.utils.daemon :as daemon]
     [cider-ci.utils.debug :as debug]
     [cider-ci.utils.http :as http]
+    [cider-ci.utils.rdbms :as rdbms]
     [cider-ci.utils.with :as with]
     [clj-logging-config.log4j :as logging-config]
     [clojure.data.json :as json]
@@ -22,7 +23,7 @@
 ;#### ping ####################################################################
 
 (defn to-be-pinged []
-  (jdbc/query (:ds @conf)
+  (jdbc/query (rdbms/get-ds)
               ["SELECT * FROM executors 
                WHERE enabled = 't' 
                AND ( last_ping_at < (now() - interval '30 Seconds') OR last_ping_at IS NULL)"]))
@@ -32,7 +33,7 @@
     (let [response (http/post 
                      (executor-entity/ping-url executor)
                      {:body (json/write-str {})})]
-      (jdbc/execute! (:ds @conf)
+      (jdbc/execute! (rdbms/get-ds)
                      ["UPDATE executors SET last_ping_at = now() WHERE executors.id = ?" (:id executor)]))))
 
 (defn ping-executors []
@@ -57,7 +58,7 @@
 
 
 ;#### debug ###################################################################
-; (debug/debug-ns *ns*)
+;(debug/debug-ns *ns*)
 ;(logging-config/set-logger! :level :debug)
 ;(logging-config/set-logger! :level :info)
 

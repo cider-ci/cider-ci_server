@@ -2,13 +2,14 @@
 ; Licensed under the terms of the GNU Affero General Public License v3.
 ; See the "LICENSE.txt" file provided with this software.
 
-(ns cider-ci.tm.sync-trials
+(ns cider-ci.dispatcher.sync-trials
   (:require
-    [cider-ci.tm.executor :as executor-entity]
-    [cider-ci.tm.trial :as trial-entity]
+    [cider-ci.dispatcher.executor :as executor-entity]
+    [cider-ci.dispatcher.trial :as trial-entity]
     [cider-ci.utils.daemon :as daemon]
     [cider-ci.utils.debug :as debug]
     [cider-ci.utils.http :as http]
+    [cider-ci.utils.rdbms :as rdbms]
     [clj-logging-config.log4j :as logging-config]
     [clojure.data.json :as json]
     [clojure.java.jdbc :as jdbc]
@@ -18,7 +19,7 @@
 (def conf (atom nil))
 
 (defn trials-to-be-synced []
-  (jdbc/query (:ds @conf)
+  (jdbc/query (rdbms/get-ds)
     ["SELECT * FROM trials
         WHERE state IN ('executing')
         AND trials.executor_id IS NOT NULL"]))
@@ -27,7 +28,7 @@
   (str (executor-entity/base-url executor-db) "/trials/" (:id trial-db)))
 
 (defn get-executor [id]
-  (first (jdbc/query (:ds @conf)
+  (first (jdbc/query (rdbms/get-ds)
     ["SELECT * from executors WHERE id = ?" id])))
 
 (defn check-trials []

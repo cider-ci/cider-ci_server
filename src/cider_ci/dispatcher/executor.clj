@@ -2,7 +2,7 @@
 ; Licensed under the terms of the GNU Affero General Public License v3.
 ; See the "LICENSE.txt" file provided with this software.
 
-(ns cider-ci.tm.executor
+(ns cider-ci.dispatcher.executor
   (:require
     [cider-ci.utils.debug :as debug]
     [clj-logging-config.log4j :as logging-config]
@@ -19,7 +19,7 @@
 
 
 ;#### debug ###################################################################
-; (debug/debug-ns *ns*)
+;(debug/debug-ns *ns*)
 ;(logging-config/set-logger! :level :debug)
 ;(logging-config/set-logger! :level :info)
 

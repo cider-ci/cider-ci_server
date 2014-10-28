@@ -2,11 +2,12 @@
 ; Licensed under the terms of the GNU Affero General Public License v3.
 ; See the "LICENSE.txt" file provided with this software.
 
-(ns cider-ci.tm.sweep
+(ns cider-ci.dispatcher.sweep
   (:require
-    [cider-ci.tm.trial :as trial]
+    [cider-ci.dispatcher.trial :as trial]
     [cider-ci.utils.daemon :as daemon]
     [cider-ci.utils.debug :as debug]
+    [cider-ci.utils.rdbms :as rdbms]
     [cider-ci.utils.with :as with]
     [clj-logging-config.log4j :as logging-config]
     [clojure.data.json :as json]
@@ -22,30 +23,30 @@
 (defn sweep-scripts []
   (with/suppress-and-log-error
     (jdbc/execute! 
-      (:ds @conf)
+      (rdbms/get-ds)
       [ (str "UPDATE trials SET scripts = '[]'
              WHERE " trial/sql-script-sweep-pending) ])))
 
 (defn sweep-in-dispatch-timeout []
   (doseq [id (->> (jdbc/query 
-                    (:ds @conf)
+                    (rdbms/get-ds)
                     [ (str "SELECT id FROM trials
                            WHERE " trial/sql-to-be-dispatched
                            " AND " trial/sql-in-dispatch-timeout)])
                   (map #(:id %)))]
     (with/suppress-and-log-error
-      (trial/update id {:state "failed" :error "dispatch timeout"}) ; TODO -> aborted
+      (trial/update {:id id :state "failed" :error "dispatch timeout"}) ; TODO -> aborted
       )))
 
 (defn sweep-in-terminal-state-timeout []
   (doseq [id (->> (jdbc/query 
-                    (:ds @conf)
+                    (rdbms/get-ds)
                     [ (str "SELECT id FROM trials
                            WHERE " trial/sql-not-finished
                            " AND " trial/sql-in-terminal-state-timeout)])
                   (map #(:id %)))]
     (with/suppress-and-log-error 
-      (trial/update id {:state "failed" :error "terminal-state timeout"}) ; TODO -> aborted
+      (trial/update {:id id :state "failed" :error "terminal-state timeout"}) ; TODO -> aborted
       )))
 
 

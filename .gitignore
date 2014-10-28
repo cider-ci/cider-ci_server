@@ -4,6 +4,7 @@
 /.nrepl-port
 /checkouts
 /classes
+/log
 /target
 /tmp
 conf.yml

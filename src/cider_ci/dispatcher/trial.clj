@@ -2,10 +2,13 @@
 ; Licensed under the terms of the GNU Affero General Public License v3.
 ; See the "LICENSE.txt" file provided with this software.
 
-(ns cider-ci.tm.trial
+(ns cider-ci.dispatcher.trial
   (:require
+    [cider-ci.dispatcher.task :as task]
     [cider-ci.utils.debug :as debug]
+    [cider-ci.utils.exception :as exception]
     [cider-ci.utils.messaging :as messaging]
+    [cider-ci.utils.rdbms :as rdbms]
     [cider-ci.utils.rdbms.conversion :as rdbms.conversion]
     [cider-ci.utils.with :as with]
     [clj-logging-config.log4j :as logging-config]
@@ -15,30 +18,46 @@
 
 (defonce conf (atom nil))
 
-;#### update trial ############################################################
-(defn send-update-notification [id]
-  (messaging/publish-event 
-    "trial_event_topic" 
-    "update" {:id id}))
+(defonce terminal-states #{"aborted" "failed" "success"})
 
-(defn update [id params]
-  (with/logging 
-    (let [table-metadata (-> @conf (:ds) (:table-metadata) (:trials))
-          update-params (rdbms.conversion/convert-parameters 
-                          table-metadata
-                          (select-keys 
-                            params
-                            [:state :started_at :finished_at :error :scripts]))]
-      (logging/debug update-params)
-      (jdbc/update! (:ds @conf)
-                    :trials update-params
-                    ["id = ?::UUID" id])
-      (send-update-notification id))))
+;#### utils ###################################################################
+(defn get-trial [id]
+  (first (jdbc/query (rdbms/get-ds) 
+                     ["SELECT * FROM trials WHERE id = ?::UUID" id])))
+
+;#### update trial ############################################################
+(defn dispatch-update [trial]
+  (let [task-id (or (:task_id trial)
+                    (:task_id (get-trial (:id trial))))]
+    (assert task-id)
+    (task/evaluate-and-create-trials {:id task-id})))
+
+(defn update [params]
+  (with/suppress-and-log-warn
+    (let [id (:id params)]
+      (try 
+        (assert id)
+        (let [update-params (select-keys params
+                                         [:state :started_at :finished_at :error :scripts])
+              converted-params (rdbms.conversion/convert-parameters :trials update-params)]
+          (logging/debug {:params params :update-params update-params 
+                          :converted-params converted-params})
+          (jdbc/update! (rdbms/get-ds)
+                        :trials converted-params
+                        ["id = ?::UUID" id])
+          (dispatch-update (select-keys params [:id :task_id])))
+        (catch Exception e
+          (jdbc/update! (rdbms/get-ds)
+                        :trials 
+                        {:state "failed" 
+                         :error (exception/stringify e)}
+                        ["id = ?::UUID" id])
+          (dispatch-update (select-keys params [:id :task_id])))))))
 
 
 ;#### sql helpers #############################################################
 (def sql-script-sweep-pending
-  " json_array_length(scripts) > 0
+  " scripts IS NOT NULL
   AND trials.created_at < (SELECT now() - 
   (SELECT max(trial_scripts_retention_time_days) FROM timeout_settings) 
   * interval '1 day') ")
@@ -66,7 +85,7 @@
 
 
 ;#### debug ###################################################################
-; (debug/debug-ns *ns*)
+;(debug/debug-ns *ns*)
 ;(logging-config/set-logger! :level :debug)
 ;(logging-config/set-logger! :level :info)
 

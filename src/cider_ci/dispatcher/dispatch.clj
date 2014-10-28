@@ -2,12 +2,13 @@
 ; Licensed under the terms of the GNU Affero General Public License v3.
 ; See the "LICENSE.txt" file provided with this software.
 
-(ns cider-ci.tm.dispatch
+(ns cider-ci.dispatcher.dispatch
   (:require
+    [cider-ci.dispatcher.task :as task]
     [cider-ci.utils.daemon :as daemon]
     [cider-ci.utils.debug :as debug]
     [cider-ci.utils.http :as http]
-    [cider-ci.utils.rdbms.json]
+    [cider-ci.utils.rdbms :as rdbms]
     [cider-ci.utils.with :as with]
     [clj-logging-config.log4j :as logging-config]
     [clojure.data.json :as json]
@@ -15,6 +16,7 @@
     [clojure.tools.logging :as logging]
     [robert.hooke :as hooke]
     ))
+
 
 (declare 
   branch-and-commit  
@@ -29,6 +31,38 @@
 
 
 (defonce conf (atom nil))
+
+;### build urls ###############################################################
+
+(defn- get-repository-http-config [executor]
+  (if (:server_overwrite executor) 
+    executor 
+    (:repository_service @conf)))
+
+(defn- get-storage-http-config [executor]
+  (if (:server_overwrite executor) 
+    executor 
+    (:storage_service @conf)))
+
+(defn- git-url [executor repository-id]
+  (let [config (get-repository-http-config executor)]
+    (http/build-url config (str "/" repository-id "/git"))))
+
+(defn- trial-attachments-url [executor trial-id]
+  (let [config (get-storage-http-config executor)]
+    (http/build-url config (str "/trial-attachments/" trial-id "/"))))
+
+(defn- tree-attachments-url [executor tree-id]
+  (let [config (get-storage-http-config executor)]
+    (http/build-url config (str "/tree-attachments/" tree-id "/"))))
+
+(defn- patch-url [executor trial-id]
+  (route-url-for-executor 
+    executor 
+    (str "/trials/" trial-id )))
+
+
+;### build urls ###############################################################
  
 (defn dispatch [trial executor]
   (try
@@ -37,12 +71,12 @@
             protocol (if (:ssl executor) "https" "http")
             url (str protocol "://" (:host executor) 
                      ":" (:port executor) "/execute")]
-        (jdbc/update! (:ds @conf) :trials 
+        (jdbc/update! (rdbms/get-ds) :trials 
                       {:state "dispatching" :executor_id (:id executor)} 
                       ["id = ?" (:id trial)])
         (http/post url {:body (json/write-str data)})))
     (catch Exception e
-      (jdbc/update! (:ds @conf) :trials 
+      (jdbc/update! (rdbms/get-ds) :trials 
                     {:state "pending" :executor_id nil} ["id = ?" (:id trial)])
       false)))
 
@@ -54,7 +88,7 @@
           (recur (rest executors)))))))
 
 (defn executors-to-dispatch-to [trial-id]
-  (jdbc/query (:ds @conf)
+  (jdbc/query (rdbms/get-ds)
     ["SELECT executors_with_load.*
      FROM executors_with_load,
      tasks
@@ -67,7 +101,7 @@
      ORDER BY executors_with_load.relative_load ASC " trial-id]))
 
 (defn to-be-dispatched-trials []
-  (jdbc/query (:ds @conf)
+  (jdbc/query (rdbms/get-ds)
     ["SELECT trials.* FROM trials 
      INNER JOIN tasks ON tasks.id = trials.task_id 
      INNER JOIN executions ON executions.id = tasks.execution_id 
@@ -76,22 +110,6 @@
     ))
 
 
-(defn git-url [executor repository-id]
-  (let [config (if (:server_overwrite executor) 
-                 executor 
-                 (:repository_manager_server @conf))]
-    (http/build-url config (str "/repositories/" repository-id "/git")  )))
-
-(defn attachments-url [executor trial-id]
-  (let [config (if (:server_overwrite executor) 
-                 executor 
-                 (:storage_manager_server @conf))]
-    (http/build-url config (str "/storage/trial-attachments/" trial-id "/") )))
-
-(defn patch-url [executor trial-id]
-  (route-url-for-executor 
-    executor 
-    (str "/trials/" trial-id )))
   
 (defn submodules-dispatch-data [submodules executor]
   (map 
@@ -108,37 +126,43 @@
   [])
 
 (defn build-dispatch-data [trial executor]
-  (let [task (first (jdbc/query (:ds @conf)
+  (let [task (first (jdbc/query (rdbms/get-ds)
                                 ["SELECT * FROM tasks WHERE tasks.id = ?" (:task_id trial)]))
+        task-spec (task/get-task-spec (:id task))
         execution-id (:execution_id task)
         branch (branch-and-commit execution-id)
+        tree-id (:tree_id branch)
         repository-id (:repository_id branch)
         submodules (get-submodule-definitions (:git_commit_id branch))
         trial-id (:id trial)
-        task-data (clojure.walk/keywordize-keys (:data task))
-        environment-variables (conj (or (:environment_variables task-data) {})
+        environment-variables (conj (or (:environment_variables task-spec) {})
                                     {:cider_ci_execution_id execution-id
                                      :cider_ci_task_id (:task_id trial)
                                      :cider_ci_trial_id trial-id})
-        data {:attachments (:attachments task-data)
-              :attachments_url (attachments-url executor trial-id)
+        data {:trial_attachments (:trial_attachments task-spec)
+              :tree_attachments (:tree_attachments task-spec)
+              :trial_attachments_url (trial-attachments-url executor trial-id)
+              :tree_attachments_url (tree-attachments-url executor tree-id)
               :execution_id execution-id
               :task_id (:task_id trial)
               :trial_id trial-id
               :environment_variables environment-variables
               :git_branch_name (:name branch)
+              :git_tree_id (:tree_id branch)
               :git_commit_id (:git_commit_id branch)
               :git_url (git-url executor repository-id)
               :git_submodules (submodules-dispatch-data submodules executor)
               :patch_url (patch-url executor trial-id)
-              :ports (:ports task-data)
+              :ports (:ports task-spec)
               :repository_id repository-id
               :scripts (:scripts trial) }]
     data))
 
 (defn branch-and-commit [execution-id] 
-  (first (jdbc/query (:ds @conf)
-           ["SELECT branches.name, branches.repository_id, commits.id as git_commit_id FROM branches 
+  (first (jdbc/query (rdbms/get-ds)
+           ["SELECT branches.name, branches.repository_id, 
+              commits.tree_id as tree_id,
+              commits.id as git_commit_id FROM branches 
             INNER JOIN branches_commits ON branches.id = branches_commits.branch_id 
             INNER JOIN commits ON branches_commits.commit_id = commits.id 
             INNER JOIN executions ON commits.tree_id = executions.tree_id
@@ -148,7 +172,7 @@
 (defn route-url-for-executor [executor path]
   (let [config (if (:server_overwrite executor) 
                  executor 
-                 (:trial_manager_server @conf))]
+                 (:dispatcher_service @conf))]
     (http/build-url config path))) 
 
 
