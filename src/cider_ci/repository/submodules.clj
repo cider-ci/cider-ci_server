@@ -2,12 +2,14 @@
 ; Licensed under the terms of the GNU Affero General Public License v3.
 ; See the "LICENSE.txt" file provided with this software.
 
-(ns cider-ci.rm.submodules
+(ns cider-ci.repository.submodules
   (:require 
+    [cider-ci.repository.git.repositories :as git.repositories]
+    [cider-ci.utils.debug :as debug]
     [cider-ci.utils.exception :as exception]
+    [cider-ci.utils.rdbms :as rdbms]
     [cider-ci.utils.system :as system]
     [cider-ci.utils.with :as with]
-    [cider-ci.rm.git.repositories :as git.repositories]
     [clj-logging-config.log4j :as logging-config]
     [clojure.java.jdbc :as jdbc]
     [clojure.tools.logging :as logging]
@@ -18,10 +20,6 @@
     [org.eclipse.jgit.submodule SubmoduleWalk]
     [org.eclipse.jgit.lib BlobBasedConfig Config ConfigConstants]
     ))
-
-;(logging-config/set-logger! :level :debug)
-;(logging-config/set-logger! :level :info)
-
 
 (def conf (atom {}))
 
@@ -37,11 +35,9 @@
                           subsection, ConfigConstants/CONFIG_KEY_URL)})
       (.getSubsections jgit-config ConfigConstants/CONFIG_SUBMODULE_SECTION))))
 
-
-
 (defn repository-id-for-commit [commit-id]
   (:repository_id (first (jdbc/query 
-           (:ds @conf)
+           (rdbms/get-ds)
            ["SELECT  repositories.id as repository_id 
             FROM commits
             INNER JOIN branches_commits ON branches_commits.commit_id = commits.id
@@ -52,10 +48,9 @@
             LIMIT 1
             " commit-id]))))
 
-
 (defn repository-and-branch-for-commit-id [commit-id]
   (first (jdbc/query 
-           (:ds @conf)
+           (rdbms/get-ds)
            ["SELECT  
             branches.id as branch_id,
             branches.name as branch_name,
@@ -70,7 +65,6 @@
             " commit-id])))
  ; (repository-and-branch-for-commit-id "cf7d4ea6e663b127097a51768a470ad38892cacd")
 
-
 (defn commit-id-for-submodule [commit-of-parent path-spec repository-path]
   (logging/debug commit-id-for-submodule [commit-of-parent path-spec repository-path])
   (nth (clojure.string/split (:out (system/exec 
@@ -80,13 +74,11 @@
        2))
 
 ;git ls-tree master:<path-to-directory-containing-submodule
-
 (defn add-commit-ids-to-submodules-fn [commit-id repository-path]
   (fn [submodule]
     (let [path (:path submodule)
           commit-id (commit-id-for-submodule commit-id path repository-path)]
       (conj submodule {:commit_id commit-id}))))
-
 
 (defn add-repository-id-fn []
   (fn [submodule]
@@ -94,12 +86,9 @@
           repository-id (repository-id-for-commit commit-id)]
       (conj submodule {:repository_id repository-id}))))
 
-
-
 (defn extend-path-fn [path]
   (fn [submodule]
     (conj submodule {:path (conj path (:path submodule))})))
-
 
 (defn submodules-config [commit-id repository-path]
   (try 
@@ -109,7 +98,6 @@
     (catch Exception e
       (logging/debug "no submodules-config found for " [commit-id repository-path])
       false)))
-
 
 (defn submodules-for-commit 
 
@@ -146,3 +134,7 @@
 (defn initialize [new-conf]
   (reset! conf new-conf))
 
+;#### debug ###################################################################
+;(debug/debug-ns *ns*)
+;(logging-config/set-logger! :level :debug)
+;(logging-config/set-logger! :level :info)

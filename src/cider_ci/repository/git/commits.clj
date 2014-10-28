@@ -3,7 +3,7 @@
 ; See the "LICENSE.txt" file provided with this software.
 
 
-(ns cider-ci.rm.git.commits
+(ns cider-ci.repository.git.commits
   (:refer-clojure :exclude [get])
   (:require
     [clj-commons-exec :as commons-exec]

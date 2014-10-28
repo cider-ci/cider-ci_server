@@ -2,12 +2,12 @@
 ; Licensed under the terms of the GNU Affero General Public License v3.
 ; See the "LICENSE.txt" file provided with this software.
 
-(ns cider-ci.rm.branches
+(ns cider-ci.repository.branches
   (:require
     [clj-logging-config.log4j :as logging-config]
     [clojure.tools.logging :as logging]
-    [cider-ci.rm.commits :as commits]
-    [cider-ci.rm.sql.branches :as sql.branches]
+    [cider-ci.repository.commits :as commits]
+    [cider-ci.repository.sql.branches :as sql.branches]
     [clojure.java.jdbc :as jdbc]
     ))
 

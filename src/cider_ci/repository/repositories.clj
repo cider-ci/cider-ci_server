@@ -2,15 +2,16 @@
 ; Licensed under the terms of the GNU Affero General Public License v3.
 ; See the "LICENSE.txt" file provided with this software.
 
-(ns cider-ci.rm.repositories
+(ns cider-ci.repository.repositories
   (:require 
-    [cider-ci.rm.branches :as branches] 
-    [cider-ci.rm.git.repositories :as git.repositories] 
-    [cider-ci.rm.sql.branches :as sql.branches] 
+    [cider-ci.repository.branches :as branches] 
+    [cider-ci.repository.git.repositories :as git.repositories] 
+    [cider-ci.repository.sql.branches :as sql.branches] 
     [cider-ci.utils.daemon :as daemon]
     [cider-ci.utils.debug :as debug]
     [cider-ci.utils.exception :as exception]
     [cider-ci.utils.messaging :as messaging]
+    [cider-ci.utils.rdbms :as rdbms]
     [cider-ci.utils.system :as system]
     [cider-ci.utils.with :as with]
     [clj-logging-config.log4j :as logging-config]
@@ -25,7 +26,6 @@
 
 
 ;### helpers ##################################################################
-
 (defn directory-exists? [path]
   (let [file (clojure.java.io/file path)] 
     (and (.exists file) 
@@ -60,7 +60,6 @@
 
 
 ;### branches #################################################################
-
 (defn get-git-branches [repository-path]
   (let [res (system/exec-with-success-or-throw
               ["git" "branch" "--no-abbrev" "--no-color" "-v"] 
@@ -93,7 +92,6 @@
 
 
 ;### GIT Stuff ################################################################
-
 (defn update-git-server-info [repository]
   (logging/debug update-git-server-info [repository])
   (let [repository-path (git.repositories/path repository)
@@ -101,17 +99,11 @@
     (system/exec-with-success-or-throw ["git" "update-server-info"] 
                  {:watchdog (* 10 60 1000), :dir repository-path, :env {"TERM" "VT-100"}})))
 
-;# TODO check sensible name for routing-key (amqp convention?) 
-;# TODO check parameters of branches
 (defn send-branch-update-notifications [branches]
   (with/logging
     (logging/debug send-branch-update-notifications [branches])
     (doseq [branch branches]
-      (messaging/publish-event
-        "branch_event_topic"
-        "update"
-        branch
-        ))))
+      (messaging/publish "branch.updated" branch))))
 
 (defn git-update [repository]
   (with/logging
@@ -119,7 +111,7 @@
           dir (git.repositories/path repository)
           sid (str (git.repositories/canonic-id repository))]
       (assert-directory-exists! dir)
-      (jdbc/with-db-transaction [tx (:ds @conf)]
+      (jdbc/with-db-transaction [tx (rdbms/get-ds)]
         (update-git-server-info repository)
         (reset! updated-branches (update-or-create-branches tx repository)))
       (send-branch-update-notifications @updated-branches))))
@@ -159,7 +151,6 @@
       (time/after? (time/now) (time/plus git-fetched-at (time/seconds interval-value)))
       true)))
 
-
 (defn submit-git-update [repository git-repository]
   (logging/debug submit-git-update [repository git-repository])
   (send-off (:agent git-repository)
@@ -196,7 +187,7 @@
 ;### update-repositories ######################################################
 (defn update-repositories []
   ;(logging/debug update-repositories)
-  (doseq [repository (jdbc/query (:ds @conf) ["SELECT * from repositories"])]
+  (doseq [repository (jdbc/query (rdbms/get-ds) ["SELECT * from repositories"])]
     (let [repository-processor (get-or-create-repository-processor repository)]
       ;(logging/debug "check for git-fetch-is-due?" {:repository repository :repository-processor repository-processor})
       (if (git-fetch-is-due? repository repository-processor)

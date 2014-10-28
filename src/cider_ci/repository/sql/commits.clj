@@ -2,7 +2,7 @@
 ; Licensed under the terms of the GNU Affero General Public License v3.
 ; See the "LICENSE.txt" file provided with this software.
 
-(ns cider-ci.rm.sql.commits
+(ns cider-ci.repository.sql.commits
   (:refer-clojure :exclude [find])
   (:require 
     [clojure.tools.logging :as logging]

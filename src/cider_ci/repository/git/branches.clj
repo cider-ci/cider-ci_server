@@ -2,7 +2,7 @@
 ; Licensed under the terms of the GNU Affero General Public License v3.
 ; See the "LICENSE.txt" file provided with this software.
 
-(ns cider-ci.rm.git.branches
+(ns cider-ci.repository.git.branches
   (:require 
     [cider-ci.utils.exception :as exception]
     [cider-ci.utils.system :as system]

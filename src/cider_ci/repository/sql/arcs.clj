@@ -2,7 +2,7 @@
 ; Licensed under the terms of the GNU Affero General Public License v3.
 ; See the "LICENSE.txt" file provided with this software.
 
-(ns cider-ci.rm.sql.arcs
+(ns cider-ci.repository.sql.arcs
   (:refer-clojure :exclude [find])
   (:require
     [clojure.java.jdbc :as jdbc]

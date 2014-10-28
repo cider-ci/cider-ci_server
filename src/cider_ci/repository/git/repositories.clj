@@ -3,9 +3,12 @@
 ; See the "LICENSE.txt" file provided with this software.
 
 
-(ns cider-ci.rm.git.repositories
+(ns cider-ci.repository.git.repositories
   (:require 
     [clojure.tools.logging :as logging]
+    [cider-ci.utils.debug :as debug]
+    [cider-ci.utils.system :as system]
+    [cider-ci.utils.with :as with]
     ))
 
 
@@ -29,7 +32,7 @@
 
 
 (defn path 
-  ;"Retuns the base path" 
+  ;"Returns the base path" 
   ;[]
   ;(:path @conf)
   "Returns the absolute path to the (git-)repository.
@@ -42,3 +45,17 @@
       (throw (IllegalStateException. (str "Not a valid repository-path: " path "for args:" _repository))))))
 
 
+(defn get-path-contents 
+  "Returns the content of the path or nil if not applicable."
+  [repository id file-path]
+  (let [git-dir-path (path repository)]
+    (:out (with/suppress-and-log-warn
+            (system/exec-with-success-or-throw  
+              ["git" "show" (str id ":" file-path)]
+              {:dir git-dir-path})))))
+
+
+;#### debug ###################################################################
+;(debug/debug-ns *ns*)
+;(logging-config/set-logger! :level :debug)
+;(logging-config/set-logger! :level :info)

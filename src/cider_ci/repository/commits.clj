@@ -2,14 +2,14 @@
 ; Licensed under the terms of the GNU Affero General Public License v3.
 ; See the "LICENSE.txt" file provided with this software.
 
-(ns cider-ci.rm.commits
+(ns cider-ci.repository.commits
   (:refer-clojure :exclude [import])
   (:require
     [clj-logging-config.log4j :as logging-config]
     [clojure.tools.logging :as logging]
-    [cider-ci.rm.git.commits :as git-commits]
-    [cider-ci.rm.sql.arcs :as sql.arcs]
-    [cider-ci.rm.sql.commits :as sql.commits]
+    [cider-ci.repository.git.commits :as git-commits]
+    [cider-ci.repository.sql.arcs :as sql.arcs]
+    [cider-ci.repository.sql.commits :as sql.commits]
     ))
 
 (defn- import [ds id repository-path]
