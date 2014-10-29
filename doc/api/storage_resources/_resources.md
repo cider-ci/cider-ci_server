@@ -8,14 +8,12 @@ prefix is omitted for brevity in the following.
 
 #### Uploading 
 
-Uploading is preformed via http `PUT`. A `PUT` request performed on an
-existing path will not replace the existing resource but result with a
-`409 Conflict` error .
+Uploading is preformed via http `PUT`. 
 
-Every storage artifact has an associated content-type. This content-type
-is set from the content-type header of the `PUT` request and therefore
-should be set properly. If not specified the content-type
-`application/octet-stream` will be used.
+Every storage artifact has an associated content-type. This content-type is set
+from the content-type header of the `PUT` request and therefore should be set
+properly. If not specified, the content-type `application/octet-stream` will be
+used.
 
 
 #### Retention Time

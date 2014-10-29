@@ -7,7 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="generator" content="pandoc" />
   <meta name="author" content="Thomas Schank DrTom@Schank.ch" />
-  <meta name="date" content="2014-10-07" />
+  <meta name="date" content="2014-10-29" />
   <title>Cider-CI API Documentation</title>
   <style type="text/css">code{white-space: pre;}</style>
   <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
@@ -25,7 +25,7 @@ h='&#x53;&#x63;&#104;&#x61;&#110;&#x6b;&#46;&#x63;&#104;';a='&#64;';n='&#68;&#11
 document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'">'+e+'<\/'+'a'+'>');
 // -->
 </script><noscript>&#68;&#114;&#84;&#x6f;&#x6d;&#32;&#x61;&#116;&#32;&#x53;&#x63;&#104;&#x61;&#110;&#x6b;&#32;&#100;&#x6f;&#116;&#32;&#x63;&#104;</noscript></p></li>
-                              <li><p class="navbar-text">2014-10-07</p></li>
+                              <li><p class="navbar-text">2014-10-29</p></li>
                   </ul>
       </div>
     </div>
@@ -180,8 +180,8 @@ document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'">'+e+'<\/'+'a'+'>');
 <p>All of the resources in this section are prefixed with <code>/cider-ci/storage</code>. This prefix is omitted for brevity in the following.</p>
 <h3 id="general-properties">General Properties</h3>
 <h4 id="uploading-1">Uploading</h4>
-<p>Uploading is preformed via http <code>PUT</code>. A <code>PUT</code> request performed on an existing path will not replace the existing resource but result with a <code>409 Conflict</code> error .</p>
-<p>Every storage artifact has an associated content-type. This content-type is set from the content-type header of the <code>PUT</code> request and therefore should be set properly. If not specified the content-type <code>application/octet-stream</code> will be used.</p>
+<p>Uploading is preformed via http <code>PUT</code>.</p>
+<p>Every storage artifact has an associated content-type. This content-type is set from the content-type header of the <code>PUT</code> request and therefore should be set properly. If not specified, the content-type <code>application/octet-stream</code> will be used.</p>
 <h4 id="retention-time">Retention Time</h4>
 <p>Uploaded artifacts will be automatically deleted after a retention time has been reached.</p>
 <h3 id="trial-attachments-1">Trial-Attachments</h3>
