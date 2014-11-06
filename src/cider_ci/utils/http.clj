@@ -30,13 +30,18 @@
 
 (defn build-url 
   ([config path]
-   (let [ protocol (if (or (:server_ssl config) (:ssl config)) "https" "http")
+   (let [ protocol (cond 
+                     (= true (:server_ssl config)) "https" 
+                     (= true (:ssl config)) "https"
+                     (= false (:server_ssl config)) "http"
+                     (= false (:ssl config)) "http"
+                     :else nil)
          host (or (:server_host config) (:host config))
          port (or (:server_port config) (:port config))
          context (:context config) 
          sub-context (:sub_context config)
          ]
-     (str protocol "://" 
+     (str (when protocol (str protocol "://" ))
           host 
           (when port (str ":" port)) 
           context sub-context path)))
