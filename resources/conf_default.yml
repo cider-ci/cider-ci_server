@@ -30,14 +30,14 @@ http_server:
   ssl: false
 
 api_service: 
-  host: 127.0.0.1
+  host: localhost
   port: 8885
   context: /cider-ci
   sub_context: /api/v2
   ssl: false
 
 storage_service: 
-  host: 127.0.0.1
+  host: localhost
   port: 8883
   context: /cider-ci
   sub_context: /storage

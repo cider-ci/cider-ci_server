@@ -5,7 +5,7 @@
             :url "http://www.gnu.org/licenses/agpl-3.0.html"}
   :dependencies [
                  [cider-ci/clj-auth "2.0.1"]
-                 [cider-ci/clj-utils "2.0.0"]
+                 [cider-ci/clj-utils "2.0.1-rc.1"]
                  [org.clojure/tools.nrepl "0.2.3"]
                  [org.jruby/jruby-complete "1.7.13"]
                  [sqlingvo "0.6.5"]
