@@ -7,7 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="generator" content="pandoc" />
   <meta name="author" content="Thomas Schank DrTom@Schank.ch" />
-  <meta name="date" content="2014-10-29" />
+  <meta name="date" content="2014-11-17" />
   <title>Cider-CI API Documentation</title>
   <style type="text/css">code{white-space: pre;}</style>
   <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
@@ -25,7 +25,7 @@ h='&#x53;&#x63;&#104;&#x61;&#110;&#x6b;&#46;&#x63;&#104;';a='&#64;';n='&#68;&#11
 document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'">'+e+'<\/'+'a'+'>');
 // -->
 </script><noscript>&#68;&#114;&#84;&#x6f;&#x6d;&#32;&#x61;&#116;&#32;&#x53;&#x63;&#104;&#x61;&#110;&#x6b;&#32;&#100;&#x6f;&#116;&#32;&#x63;&#104;</noscript></p></li>
-                              <li><p class="navbar-text">2014-10-29</p></li>
+                              <li><p class="navbar-text">2014-11-17</p></li>
                   </ul>
       </div>
     </div>
@@ -39,12 +39,15 @@ document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'">'+e+'<\/'+'a'+'>');
         </ul>
         <ul>
         <li><a href="#cider-ci-api-documentation">Cider-CI API Documentation</a><ul>
+        <li><a href="#state-of-the-api">State of the API</a></li>
         <li><a href="#authentication">Authentication</a><ul>
         <li><a href="#session-cookie">Session-Cookie</a></li>
         <li><a href="#basic-auth">Basic-Auth</a></li>
         </ul></li>
-        <li><a href="#json-data-resources">JSON-Data-Resources</a><ul>
-        <li><a href="#uploading">Uploading</a></li>
+        <li><a href="#core-api-resources">Core API Resources</a><ul>
+        <li><a href="#general-properties">General Properties</a><ul>
+        <li><a href="#content-types">Content Types</a></li>
+        </ul></li>
         <li><a href="#execution">Execution</a><ul>
         <li><a href="#get-executionid">GET <code>/execution/:id</code></a></li>
         </ul></li>
@@ -64,13 +67,13 @@ document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'">'+e+'<\/'+'a'+'>');
         <li><a href="#get-executionexecution_idtasks">GET <code>/execution/:execution_id/tasks</code></a></li>
         </ul></li>
         <li><a href="#tree-attachment">Tree-Attachment</a><ul>
-        <li><a href="#get-tree-attachment">GET <code>/tree-attachment*</code></a></li>
+        <li><a href="#get-tree-attachmentid">GET <code>/tree-attachment/:id</code></a></li>
         </ul></li>
         <li><a href="#tree-attachments">Tree-Attachments</a><ul>
         <li><a href="#get-executionexecution_idattachments">GET <code>/execution/:execution_id/attachments</code></a></li>
         </ul></li>
         <li><a href="#trial-attachment">Trial-Attachment</a><ul>
-        <li><a href="#get-trial-attachment">GET <code>/trial-attachment*</code></a></li>
+        <li><a href="#get-trial-attachmentid">GET <code>/trial-attachment/:id</code></a></li>
         </ul></li>
         <li><a href="#trial-attachments">Trial-Attachments</a><ul>
         <li><a href="#get-trialtrial_idtrial-attachments">GET <code>/trial/:trial_id/trial-attachments</code></a></li>
@@ -83,8 +86,8 @@ document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'">'+e+'<\/'+'a'+'>');
         </ul></li>
         </ul></li>
         <li><a href="#storage-resources">Storage-Resources</a><ul>
-        <li><a href="#general-properties">General Properties</a><ul>
-        <li><a href="#uploading-1">Uploading</a></li>
+        <li><a href="#general-properties-1">General Properties</a><ul>
+        <li><a href="#uploading">Uploading</a></li>
         <li><a href="#retention-time">Retention Time</a></li>
         </ul></li>
         <li><a href="#trial-attachments-1">Trial-Attachments</a><ul>
@@ -106,66 +109,70 @@ document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'">'+e+'<\/'+'a'+'>');
             <h1 id="cider-ci-api-documentation">Cider-CI API Documentation</h1>
 <p>Visit the <a href="https://github.com/cider-ci/cider-ci">Cider-CI Project</a> for more information on Cider-CI.</p>
 <p>The <a href="https://rawgit.com/cider-ci/cider-ci/master/doc/entities.svg">entities diagram</a> is helpful to understand relations between resources.</p>
+<h2 id="state-of-the-api">State of the API</h2>
+<p>This Cider-CI API and in particular the responses of type <code>application/json-roa+json</code> are work in progress. Breaking changes in the of the <a href="https://github.com/json-roa">JSON-ROA</a> part of the API do not necessarily increase the major number of the API and certainly not those of Cider-CI itself.</p>
+<p>The current major release number of the API itself is <code>2</code>. This is reflected in the prefix <code>/api/v2</code> prefix. The major number was lifted during the migration from <a href="http://stateless.co/hal_specification.html">HAL</a> to <a href="https://github.com/json-roa">JSON-ROA</a>.</p>
 <h2 id="authentication">Authentication</h2>
 <h3 id="session-cookie">Session-Cookie</h3>
 <p>The API accepts the <code>cider-ci_services-session</code> cookie set on sing-in from the browser interfaces.</p>
 <h3 id="basic-auth">Basic-Auth</h3>
 <p>If no session cookie was found (or validation of the cookie failed) <em>HTTP Basic authentication</em> is used with the same user and password as used in the browser interface.</p>
-<h2 id="json-data-resources">JSON-Data-Resources</h2>
-<p>All of the resources in this section are prefixed with <code>/cider-ci/api/v1</code>. This prefix is omitted for brevity in the following.</p>
-<p>All <code>GET</code> requests return a <code>content-type</code> header of <code>application/hal+json</code>.</p>
-<h3 id="uploading">Uploading</h3>
+<h2 id="core-api-resources">Core API Resources</h2>
+<p>All of the resources in this section are prefixed with <code>/cider-ci/api/v2</code>. This prefix is omitted for brevity in the following.</p>
+<h3 id="general-properties">General Properties</h3>
+<h4 id="content-types">Content Types</h4>
+<p>The core API supports the content types <code>application/json-roa+json</code> and <code>application/json</code> for <code>GET</code> requests to all resources. The former includes hyperlinks to related resources and to this api documentation.</p>
+<p>The API evaluates the accept header including the <code>q</code> parameter, see <a href="http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html">Section 14 of RFC 2616</a> . The content type <code>application/json-roa+json</code> as a higher quality of service and is thus proffered. If no matching accept header is supplied the content-type <code>application/json-roa+json</code> will be used.</p>
+<p>All data requests containing a body like <code>PUT</code>, <code>PATCH</code>, and <code>POST</code> support the content type <code>application/json</code></p>
 <h3 id="execution">Execution</h3>
 <h4 id="get-executionid">GET <code>/execution/:id</code></h4>
-<p>Returns the properties of the execution.</p>
+<p>Returns the properties of the corresponding <em>Execution</em>.</p>
 <h3 id="execution-stats">Execution-Stats</h3>
 <h4 id="get-executionidstats">GET <code>/execution/:id/stats</code></h4>
-<p>Returns the aggregated count of the number of tasks belonging to an execution with respect to their state.</p>
+<p>Returns the aggregated count of the number of tasks belonging to an <em>Execution</em> with respect to their state.</p>
 <h3 id="executions">Executions</h3>
 <h4 id="get-executions">GET <code>/executions</code></h4>
-<p>Returns a list of links each pointing to an execution. Order is descending by the <code>created_at</code> time-stamp.</p>
+<p>Returns a list of links each pointing to an <code>Execution</code>. Order is descending by the <code>created_at</code> time-stamp.</p>
 <h5 id="query-parameters">Query Parameters</h5>
 <h6 id="branch-name">branch-name</h6>
-<p>Filters executions within branches with the name equal to the value of the parameter.</p>
+<p>Filters <em>Executions</em> within branches with the name equal to the value of the parameter.</p>
 <p>Query string example: <code>?repository-name=Madek&amp;branch-heads-only&amp;branch-name=next</code></p>
 <h6 id="branch-heads-only">branch-heads-only</h6>
-<p>Filters only executions wich are on a current head of a branch. Effective if and only if the key is present.</p>
+<p>Filters only <em>Executions</em> wich are on a current head of a branch. Effective if and only if the key is present.</p>
 <p>Query string example: <code>?repository-name=Madek&amp;branch-heads-only&amp;branch-name=next</code></p>
-<h6 id="page">page</h6>
-<p>Used for pagination. Do not set this value. Use the <code>next</code> and <code>previous</code> links to iterate over paginated results.</p>
 <h6 id="repository-name">repository-name</h6>
-<p>Filters executions within repositories with the name equal to the value of the parameter.</p>
+<p>Filters <em>Executions</em> within repositories with the name equal to the value of the parameter.</p>
 <p>Query string example: <code>?repository-name=Madek&amp;branch-heads-only&amp;branch-name=next</code></p>
 <h6 id="state">state</h6>
-<p>Filters executions with state equal to the value of the parameter.</p>
+<p>Filters <em>Executions</em> with state equal to the value of the parameter.</p>
 <p>Query string example: <code>?branch-name=master&amp;repository-name=leihs&amp;state=success</code></p>
 <h3 id="root">Root</h3>
 <h4 id="get">GET <code>/</code></h4>
 <p>The entry-point.</p>
 <h3 id="task">Task</h3>
 <h4 id="get-taskid">GET <code>/task/:id</code></h4>
-<p>Returns the properties of the task.</p>
+<p>Returns the properties of the corresponding <code>Task</code>.</p>
 <h3 id="tasks">Tasks</h3>
 <h4 id="get-executionexecution_idtasks">GET <code>/execution/:execution_id/tasks</code></h4>
-<p>Returns a list of links each pointing to a task which belongs to execution with the id <code>:execution_id</code>. Order is ascending with respect to the <code>name</code> property.</p>
+<p>Returns a list of links each pointing to a <code>Task</code> which belongs to <code>Execution</code> with the id <code>:execution_id</code>. Order is ascending with respect to the <code>name</code> property.</p>
 <h5 id="query-parameters-1">Query Parameters</h5>
 <h6 id="state-1">state</h6>
-<p>Filters tasks with state equal to the value of the parameter.</p>
+<p>Filters <code>Tasks</code> with state equal to the value of the parameter.</p>
 <p>Query string example: <code>?page=0&amp;state=failed</code></p>
 <h3 id="tree-attachment">Tree-Attachment</h3>
-<h4 id="get-tree-attachment">GET <code>/tree-attachment*</code></h4>
-<p>Returns the properties of a tree-attachment which path equals the postfix denoted by the <code>*</code> in the route above.</p>
-<p>This does not return the data-stream of the attachment itself. A link to the latter is included in the <code>_links</code> property.</p>
+<h4 id="get-tree-attachmentid">GET <code>/tree-attachment/:id</code></h4>
+<p>Returns the properties of a <em>Tree-Attachment</em>.</p>
+<p>This does not return the data-stream of the attachment itself. A hyperlink to the latter is included in <code>application/json-roa+json</code> response types, see <a href="#content-types">Content Types</a>.</p>
 <h3 id="tree-attachments">Tree-Attachments</h3>
 <h4 id="get-executionexecution_idattachments">GET <code>/execution/:execution_id/attachments</code></h4>
-<p>Returns a list of links each pointing to a Tree-Attachment which belongs to the execution with the id <code>:execution_id</code>. Order is ascending with respect to the <code>path</code> property.</p>
+<p>Returns a list of ids each belonging to a <em>Tree-Attachment</em> which belongs to the <em>Execution</em> with the id <code>:execution_id</code>. Note, the <code>tree_id</code> is a inherent property of every <em>Execution</em>. Order is ascending with respect to the <code>path</code> property.</p>
 <h3 id="trial-attachment">Trial-Attachment</h3>
-<h4 id="get-trial-attachment">GET <code>/trial-attachment*</code></h4>
-<p>Returns the properties of a trial-attachment which path equals the postfix denoted by the <code>*</code> in the route above.</p>
-<p>This does not return the data-stream of the attachment itself (no matter what the path extension might suggest). A link to the latter is included in the <code>_links</code> property.</p>
+<h4 id="get-trial-attachmentid">GET <code>/trial-attachment/:id</code></h4>
+<p>Returns the properties of a <em>Trial-Attachment</em>.</p>
+<p>This does not return the data-stream of the attachment itself. A hyperlink to the latter is included in <code>application/json-roa+json</code> response types, see <a href="#content-types">Content Types</a>.</p>
 <h3 id="trial-attachments">Trial-Attachments</h3>
 <h4 id="get-trialtrial_idtrial-attachments">GET <code>/trial/:trial_id/trial-attachments</code></h4>
-<p>Returns a list of links each pointing to a trial-attachment which belongs to the trial with the id <code>:trial_id</code>. Order is ascending with respect to the <code>path</code> property.</p>
+<p>Returns a list of ids. Each belongs to a <em>Trial-Attachment</em> which belongs to the trial with the id <code>:trial_id</code>. Order is ascending with respect to the <code>path</code> property.</p>
 <h3 id="trial">Trial</h3>
 <h4 id="get-trialid">GET <code>/trial/:id</code></h4>
 <p>Returns the properties of the trial with the id <code>:id</code>.</p>
@@ -178,8 +185,8 @@ document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'">'+e+'<\/'+'a'+'>');
 <p>Query string example: <code>?page=0&amp;state=failed</code></p>
 <h2 id="storage-resources">Storage-Resources</h2>
 <p>All of the resources in this section are prefixed with <code>/cider-ci/storage</code>. This prefix is omitted for brevity in the following.</p>
-<h3 id="general-properties">General Properties</h3>
-<h4 id="uploading-1">Uploading</h4>
+<h3 id="general-properties-1">General Properties</h3>
+<h4 id="uploading">Uploading</h4>
 <p>Uploading is preformed via http <code>PUT</code>.</p>
 <p>Every storage artifact has an associated content-type. This content-type is set from the content-type header of the <code>PUT</code> request and therefore should be set properly. If not specified, the content-type <code>application/octet-stream</code> will be used.</p>
 <h4 id="retention-time">Retention Time</h4>

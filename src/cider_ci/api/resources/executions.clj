@@ -4,6 +4,7 @@
 
 (ns cider-ci.api.resources.executions
   (:require 
+    [cider-ci.api.pagination :as pagination]
     [cider-ci.utils.debug :as debug]
     [cider-ci.utils.http :as http]
     [cider-ci.utils.http-server :as http-server]
@@ -23,7 +24,6 @@
     ) 
   (:refer-clojure :exclude [distinct group-by])
   (:use 
-    [cider-ci.api.resources.shared :exclude [initialize]]
     [clojure.walk :only [keywordize-keys]]
     [sqlingvo.core]
     ))
@@ -64,34 +64,24 @@
     (compose query (where '(= :branches.current_commit_id :commits.id) :and))
     query))
 
-
-(defn executions-data [params]
+(defn ids [query-params]
   (let [query (-> (build-executions-base-query) 
-                  (add-offset params)
-                  (filter-by-branch-name params)
-                  (filter-by-repository-name params)
-                  (filter-by-state params)
-                  (filer-branch-heads params)
+                  (pagination/add-offset query-params)
+                  (filter-by-branch-name query-params)
+                  (filter-by-repository-name query-params)
+                  (filter-by-state query-params)
+                  (filer-branch-heads query-params)
                   sql)
-        _ (logging/debug "GET /executions " {:query query})
-        execution-ids (map :id (jdbc/query (rdbms/get-ds) query))]
-    {:_links (conj {:self {:href (str (executions-path) "?" 
-                                       (http/build-url-query-string params))}}
-                   (curies-link-map)
-                   (next-and-previous-link-map (executions-path) 
-                                               params (seq execution-ids))
-                   (root-link-map)
-                   {:cici:execution (map execution-link execution-ids)}
-                   )}))
+        _ (logging/debug "GET /executions " {:query query})]
+    (map :id (jdbc/query (rdbms/get-ds) query))))
 
 (defn get-index [request] 
-  {:hal_json_data (executions-data (:query-params request) )})
+  {:body {:execution_ids (ids (:query-params request))}})
 
 ;### routes #####################################################################
-
 (def routes
   (cpj/routes
-    (cpj/GET "/executions" request (get-index request))))
+    (cpj/GET "/executions/" request (get-index request))))
 
 
 ;### init #####################################################################

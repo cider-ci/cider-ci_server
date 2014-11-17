@@ -3,13 +3,13 @@
 
 #### GET `/execution/:id`
 
-Returns the properties of the execution.
+Returns the properties of the corresponding _Execution_.
 
 ### Execution-Stats
 
 #### GET `/execution/:id/stats`
 
-Returns the aggregated count of the number of tasks belonging to an execution
+Returns the aggregated count of the number of tasks belonging to an _Execution_
 with respect to their state. 
 
 
@@ -17,40 +17,35 @@ with respect to their state.
 
 #### GET `/executions` 
 
-Returns a list of links each pointing to an execution. Order is
+Returns a list of links each pointing to an `Execution`. Order is
 descending by the `created_at` time-stamp.
 
 ##### Query Parameters 
 
 ###### branch-name
 
-Filters executions within branches with the name equal to the value of
+Filters _Executions_ within branches with the name equal to the value of
 the parameter.
 
 Query string example: `?repository-name=Madek&branch-heads-only&branch-name=next` 
 
 ###### branch-heads-only
 
-Filters only executions wich are on a current head of a branch.
+Filters only _Executions_ wich are on a current head of a branch.
 Effective if and only if the key is present. 
 
 Query string example: `?repository-name=Madek&branch-heads-only&branch-name=next` 
 
-###### page 
-
-Used for pagination. Do not set this value. Use the `next` and
-`previous` links to iterate over paginated results.
-
 ###### repository-name
 
-Filters executions within repositories with the name equal to the value
+Filters _Executions_ within repositories with the name equal to the value
 of the parameter.
 
 Query string example: `?repository-name=Madek&branch-heads-only&branch-name=next` 
 
 ###### state 
 
-Filters executions with state equal to the value of the parameter.
+Filters _Executions_ with state equal to the value of the parameter.
 
 Query string example: `?branch-name=master&repository-name=leihs&state=success`
 

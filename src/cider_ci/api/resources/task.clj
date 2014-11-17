@@ -4,6 +4,7 @@
 
 (ns cider-ci.api.resources.task
   (:require 
+    [cider-ci.api.util :as util]
     [cider-ci.utils.debug :as debug]
     [cider-ci.utils.http-server :as http-server]
     [cider-ci.utils.rdbms :as rdbms]
@@ -22,7 +23,6 @@
     ) 
   (:refer-clojure :exclude [distinct group-by])
   (:use 
-    [cider-ci.api.resources.shared :exclude [initialize]]
     [sqlingvo.core]
     ))
 
@@ -31,19 +31,10 @@
 ;### get task ###################################################################
 
 (defn get-task [request]
-  (logging/debug request)
-  (let [uuid (-> request :params :id uuid)
+  (let [uuid (-> request :params :id util/uuid)
         task (first (jdbc/query (rdbms/get-ds) ["SELECT * from tasks WHERE id = ?" uuid]))]
-    (logging/debug uuid task)
-    (when task 
-      {:hal_json_data (conj task
-                            {:_links 
-                             (conj {:self (task-link uuid)}
-                                   (root-link-map)
-                                   (execution-link-map (:execution_id task))
-                                   (curies-link-map)
-                                   (trials-link-map uuid))})})))
-
+    (when task
+      {:body task})))
 
 ;### routes #####################################################################
 

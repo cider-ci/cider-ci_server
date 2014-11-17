@@ -23,7 +23,6 @@
     ) 
   (:refer-clojure :exclude [distinct group-by])
   (:use 
-    [cider-ci.api.resources.shared :exclude [initialize]]
     [clojure.walk :only [keywordize-keys]]
     [sqlingvo.core]
     ))
@@ -38,13 +37,8 @@
   (let [id (-> request :params :id)
         data (first (jdbc/query 
                       (rdbms/get-ds) ["SELECT * from execution_stats 
-                                   WHERE execution_id = ?::uuid" id]))
-        links {:_links 
-               (conj {}
-                     (curies-link-map)
-                     (execution-link-map id)
-                     (root-link-map))}]
-    {:hal_json_data (conj data links)}))
+                                      WHERE execution_id = ?::uuid" id]))]
+    {:data data}))
 
 
 ;### get-execution ##############################################################
@@ -57,20 +51,14 @@
 (defn execution-data [params]
   (let [id (:id params)
         execution (query-exeuction id)]
-    (assoc 
-      (dissoc execution :substituted_specification_data :specification_id)
-      :_links (conj 
-                { :self (execution-link id)}
-                (execution-stats-link-map id)
-                (tasks-link-map id)
-                (root-link-map)
-                (tree-attachments-link-map id)
-                (curies-link-map)
-                ))))
+    (dissoc execution 
+            :expanded_specification_id
+            :specification_id
+            )))
 
 (defn get-execution [request] 
-  {:hal_json_data  (execution-data (:params request))})
-
+  {:body (execution-data (:params request))
+   })
 
 ;### routes #####################################################################
 

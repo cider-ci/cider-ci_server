@@ -4,6 +4,8 @@
 
 (ns cider-ci.api.resources.trials
   (:require 
+    [cider-ci.api.pagination :as pagination]
+    [cider-ci.api.util :as util]
     [cider-ci.utils.debug :as debug]
     [cider-ci.utils.http :as http]
     [cider-ci.utils.http-server :as http-server]
@@ -23,7 +25,6 @@
     ) 
   (:refer-clojure :exclude [distinct group-by])
   (:use 
-    [cider-ci.api.resources.shared :exclude [initialize]]
     [sqlingvo.core]
     ))
 
@@ -34,7 +35,7 @@
 (defn build-trials-base-query [task-id]
   (select (distinct [:trials.id :trials.updated_at])
           (from :trials)
-          (where `(= :task_id ~(uuid task-id)) :and)
+          (where `(= :task_id ~(util/uuid task-id)) :and)
           (order-by (desc :trials.updated_at))
           (limit 10)))
 
@@ -46,27 +47,21 @@
 (defn trials-data [task-id query-params]
   (let [query (-> (build-trials-base-query task-id)
                   (filter-by-state query-params)
-                  (add-offset query-params)
-                  sql)
-        trial-ids (map :id (jdbc/query (rdbms/get-ds) query))]
-    {:_links (conj {:self {:href (str (trials-path task-id) "?"
-                                      (http/build-url-query-string query-params))}
-                    :cici:trial (map trial-link trial-ids)}
-                   (next-and-previous-link-map (trials-path task-id)
-                                               query-params (seq trial-ids))
-                   (task-link-map task-id)
-                   (curies-link-map)
-                   )}))
+                  (pagination/add-offset query-params)
+                  sql)]
+    (jdbc/query (rdbms/get-ds) query)
+    ))
 
 (defn get-trials  [request]
-  {:hal_json_data (trials-data (-> request :route-params :task_id)
-                               (-> request :query-params))})
+  {:body {:trial_ids 
+          (map :id  (trials-data (-> request :route-params :task_id)
+                                 (-> request :query-params)))}})
 
 
 ;### routes #####################################################################
 (def routes 
   (cpj/routes
-    (cpj/GET "/task/:task_id/trials" request (get-trials request))
+    (cpj/GET "/task/:task_id/trials/" request (get-trials request))
     ))
 
 

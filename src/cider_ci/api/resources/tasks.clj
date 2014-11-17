@@ -4,6 +4,8 @@
 
 (ns cider-ci.api.resources.tasks
   (:require 
+    [cider-ci.api.pagination :as pagination]
+    [cider-ci.api.util :as util]
     [cider-ci.utils.debug :as debug]
     [cider-ci.utils.http :as http]
     [cider-ci.utils.http-server :as http-server]
@@ -23,7 +25,6 @@
     ) 
   (:refer-clojure :exclude [distinct group-by])
   (:use 
-    [cider-ci.api.resources.shared :exclude [initialize]]
     [sqlingvo.core]
     ))
 
@@ -33,7 +34,7 @@
 (defn build-tasks-base-query [execution-id]
   (select (distinct [:tasks.id :tasks.name :tasks.updated_at])
           (from :tasks)
-          (where `(= :execution_id ~(uuid execution-id)) :and)
+          (where `(= :execution_id ~(util/uuid execution-id)) :and)
           (order-by (asc :tasks.name))
           (limit 10)))
 
@@ -45,27 +46,23 @@
 (defn tasks-data [execution-id query-params]
   (let [query (-> (build-tasks-base-query execution-id)
                   (filter-by-state query-params)
-                  (add-offset query-params)
-                  sql)
-        task-ids (map :id (jdbc/query (rdbms/get-ds) query))]
-    {:_links (conj {:self {:href (str (tasks-path execution-id) "?"
-                                      (http/build-url-query-string query-params))}
-                    :cici:task (map task-link task-ids)}
-                   (next-and-previous-link-map (tasks-path execution-id)  
-                                               query-params (seq task-ids))
-                   (execution-link-map execution-id)
-                   (curies-link-map)
-                   )}))
+                  (pagination/add-offset query-params)
+                  sql)]
+    (jdbc/query (rdbms/get-ds) query)
+    ))
   
 (defn get-tasks [request] 
-  {:hal_json_data (tasks-data (-> request :params :execution_id)
-                              (-> request :query-params))})
+  {:body 
+   {:task_ids
+    (map :id 
+         (tasks-data (-> request :params :execution_id)
+                     (-> request :query-params)))}})
 
 
 ;### routes #####################################################################
 (def routes 
   (cpj/routes
-    (cpj/GET "/execution/:execution_id/tasks" request (get-tasks request))
+    (cpj/GET "/execution/:execution_id/tasks/" request (get-tasks request))
     ))
 
 

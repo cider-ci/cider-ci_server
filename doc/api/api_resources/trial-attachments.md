@@ -1,20 +1,18 @@
 ### Trial-Attachment
 
-#### GET `/trial-attachment*` 
+#### GET `/trial-attachment/:id`
 
-Returns the properties of a trial-attachment which path equals the
-postfix denoted by the `*` in the route above.
+Returns the properties of a  _Trial-Attachment_.
 
-This does not return the data-stream of the attachment itself (no matter
-what the path extension might suggest). A link to the latter is included
-in the `_links` property.
-
+This does not return the data-stream of the attachment itself. A
+hyperlink to the latter is included in `application/json-roa+json`
+response types, see [Content Types][].
 
 ### Trial-Attachments
 
 #### GET `/trial/:trial_id/trial-attachments` 
 
-Returns a list of links each pointing to a trial-attachment which
-belongs to the trial with the id `:trial_id`. Order is ascending with
-respect to the `path` property.
+Returns a list of ids. Each belongs to a _Trial-Attachment_ which belongs to the
+trial with the id `:trial_id`. Order is ascending with respect to the `path`
+property.
 

@@ -4,6 +4,7 @@
 
 (ns cider-ci.api.resources.trial
   (:require 
+    [cider-ci.api.util :as util]
     [cider-ci.utils.debug :as debug]
     [cider-ci.utils.http-server :as http-server]
     [cider-ci.utils.rdbms :as rdbms]
@@ -22,7 +23,6 @@
     ) 
   (:refer-clojure :exclude [distinct group-by])
   (:use 
-    [cider-ci.api.resources.shared :exclude [initialize]]
     [sqlingvo.core]
     ))
 
@@ -33,17 +33,10 @@
 
 (defn get-trial [request]
   (logging/debug request)
-  (let [trial-uuid (-> request :params :id uuid)
+  (let [trial-uuid (-> request :params :id util/uuid)
         trial (first (jdbc/query (rdbms/get-ds) ["SELECT * from trials WHERE id = ?" trial-uuid]))]
-    {:hal_json_data (conj trial
-                          {:_links 
-                           (conj {:self (trial-link trial-uuid)}
-                                 (root-link-map)
-                                 (task-link-map (:task_id trial))
-                                 (curies-link-map)
-                                 (trials-link-map (:task_id trial))
-                                 (trial-attachments-link-map trial-uuid)
-                                 )})}))
+    (when trial
+      {:body trial})))
 
 
 
