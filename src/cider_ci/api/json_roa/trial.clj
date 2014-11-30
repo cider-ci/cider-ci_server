@@ -15,11 +15,13 @@
   (let [context (:context request)
         query-params (:query-prarams request)
         id (-> response :body :id)]
-    {:relations
-     {:self (links/trial context id)
-      :trial-attachments (links/trial-attachments context id)
+    {:name "Trial"
+     :self-relation (links/trial context id)
+     :relations
+     {:trial-attachments (links/trial-attachments context id)
+      :trials (links/trials context (-> response :body :task_id))
       :task (links/task context (-> response :body :task_id))
-      :root (links/root context)}}))
+      }}))
 
 
 ;### Debug ####################################################################

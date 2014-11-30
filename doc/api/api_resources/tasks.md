@@ -8,7 +8,7 @@ Returns the properties of the corresponding `Task`.
 
 ### Tasks
 
-#### GET `/execution/:execution_id/tasks` 
+#### GET `/execution/:execution_id/tasks/` 
 
 Returns a list of links each pointing to a `Task` which belongs to
 `Execution` with the id `:execution_id`. Order is ascending with respect

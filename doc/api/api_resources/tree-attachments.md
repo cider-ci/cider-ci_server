@@ -11,7 +11,7 @@ response types, see [Content Types][].
 
 ### Tree-Attachments
 
-#### GET `/execution/:execution_id/attachments` 
+#### GET `/execution/:execution_id/attachments/` 
 
 Returns a list of ids each belonging to a _Tree-Attachment_ which belongs
 to the _Execution_ with the id `:execution_id`. Note, the `tree_id` is a

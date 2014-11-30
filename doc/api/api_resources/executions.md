@@ -15,33 +15,51 @@ with respect to their state.
 
 ### Executions 
 
-#### GET `/executions` 
+#### GET `/executions/` 
 
 Returns a list of links each pointing to an `Execution`. Order is
 descending by the `created_at` time-stamp.
 
 ##### Query Parameters 
 
-###### branch-name
+###### branch
 
-Filters _Executions_ within branches with the name equal to the value of
-the parameter.
+Filters *Executions* of commits which are directly referenced by the given
+branch with name equal to the given value where the matching is case
+insensitive.
 
-Query string example: `?repository-name=Madek&branch-heads-only&branch-name=next` 
+Query string example: `?branch=master` 
 
-###### branch-heads-only
+Note: this filter is case insensitive with respect to _branch-name_.
 
-Filters only _Executions_ wich are on a current head of a branch.
-Effective if and only if the key is present. 
+###### branchdescendants
 
-Query string example: `?repository-name=Madek&branch-heads-only&branch-name=next` 
+Similar as above, however it will also include all descendants
+of the commit referenced by the given branch name.
 
-###### repository-name
+Examples: 
 
-Filters _Executions_ within repositories with the name equal to the value
-of the parameter.
+1.  Descendants of the branch master: `?branch=master`
 
-Query string example: `?repository-name=Madek&branch-heads-only&branch-name=next` 
+2.  A combination of `branch` and `branchdescendants` can make sense:
+    `?branchdescendants=next&branch=master`, read: give me the
+    executions of the commit where the branch master points to and which
+    are descendants of the branch next.
+
+###### repository
+
+Filters *Executions* related to commits within repositories with the
+name equal to the value of the parameter.
+
+This filter is also case insensitive. 
+
+Examples: 
+
+1. executions for the _Madek_ repository: `?repository=madek` 
+2. for the _Madek_ repository and for the master branch: `?repository=madek&branch=master`
+3. including descendants: `?repository=madek&branchdescendants=master`
+4. composing even more: `?repository=madek&branchdescendants=next&branch=master`
+
 
 ###### state 
 

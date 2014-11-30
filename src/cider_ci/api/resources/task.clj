@@ -19,11 +19,6 @@
     [ring.middleware.cookies :as cookies]
     [ring.middleware.json]
     [ring.util.response :as response]
-    [sqlingvo.core :as sqling]
-    ) 
-  (:refer-clojure :exclude [distinct group-by])
-  (:use 
-    [sqlingvo.core]
     ))
 
 (defonce conf (atom nil))

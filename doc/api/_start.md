@@ -1,6 +1,6 @@
 % Cider-CI API Documentation 
 % Thomas Schank <DrTom@Schank.ch>
-% 2014-11-17
+% 2014-11-18
 
 
 Cider-CI API Documentation 
@@ -13,8 +13,10 @@ The [entities diagram](https://rawgit.com/cider-ci/cider-ci/master/doc/entities.
 
 ## State of the API 
 
+**The Cider-CI API is beta.**
+
 This Cider-CI API and in particular the responses of type
-`application/json-roa+json` are work in progress. Breaking changes in the of
+`application/json-roa+json` is work in progress. Breaking changes in the of
 the [JSON-ROA] part of the API do not necessarily increase the major number of
 the API and certainly not those of Cider-CI itself.  
 

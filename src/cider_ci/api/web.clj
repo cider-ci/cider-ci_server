@@ -6,6 +6,7 @@
   (:require 
     [cider-ci.api.resources :as resources]
     [cider-ci.auth.core :as auth]
+    [cider-ci.auth.cors :as cors]
     [cider-ci.auth.http-basic :as http-basic]
     [cider-ci.auth.session :as session]
     [cider-ci.utils.debug :as debug]
@@ -23,6 +24,11 @@
     [ring.middleware.cookies :as cookies]
     [ring.middleware.json]
     [ring.middleware.resource :as resource]
+    [ring.middleware.content-type :as content-type]
+    [ring.util.response :as response]
+    )
+  (:use 
+    [clojure.walk :only [keywordize-keys]]
     ))
 
 (defonce conf (atom nil))
@@ -63,26 +69,31 @@
     (cpj/GET "/status" request #'status-handler)
     (cpj/ANY "*" request default-handler)))
 
+
 ;##### routes and wrappers #################################################### 
 
 (defn build-main-handler [context]
   ( -> (resources/build-routes-handler)
        (routing/wrap-debug-logging 'cider-ci.api.web)
-       (ring.middleware.json/wrap-json-params)
+       ring.middleware.json/wrap-json-params
        (routing/wrap-debug-logging 'cider-ci.api.web)
        (ring.middleware.params/wrap-params)
        (routing/wrap-debug-logging 'cider-ci.api.web)
-       (wrap-status-dispatch)
+       wrap-status-dispatch
        (routing/wrap-debug-logging 'cider-ci.api.web)
        (auth/wrap-authenticate-and-authorize-service-or-user)
        (routing/wrap-debug-logging 'cider-ci.api.web)
-       (http-basic/wrap)
+       http-basic/wrap
        (routing/wrap-debug-logging 'cider-ci.api.web)
-       (session/wrap)
+       session/wrap
        (routing/wrap-debug-logging 'cider-ci.api.web)
-       (cookies/wrap-cookies)
+       cookies/wrap-cookies
        (routing/wrap-debug-logging 'cider-ci.api.web)
-       (wrap-static-resources-dispatch)
+       wrap-static-resources-dispatch
+       (routing/wrap-debug-logging 'cider-ci.api.web)
+       content-type/wrap-content-type
+       (routing/wrap-debug-logging 'cider-ci.api.web)
+       cors/wrap
        (routing/wrap-debug-logging 'cider-ci.api.web)
        (routing/wrap-prefix context)
        (routing/wrap-debug-logging 'cider-ci.api.web)

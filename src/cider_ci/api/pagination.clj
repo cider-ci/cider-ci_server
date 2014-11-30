@@ -10,7 +10,8 @@
     [clj-logging-config.log4j :as logging-config]
     [clojure.tools.logging :as logging]
     [compojure.core :as cpj]
-    [sqlingvo.core :as sqlingvo]
+    [honeysql.core :as hc]
+    [honeysql.helpers :as hh]
     ))
 
 
@@ -23,11 +24,11 @@
   (let [page (page-number params)]
     (* 10 page)))
 
-(defn add-offset [query params]
+(defn add-offset-for-honeysql [query params]
   (let [off (compute-offset params)]
-    (sqlingvo/compose query 
-                      (sqlingvo/offset off) 
-                      (sqlingvo/limit 10))))
+    (-> query
+        (hh/offset off)
+        (hh/limit 10))))  
 
 (defn next-page-query-query-params [query-params]
   (let [i-page (page-number query-params)]

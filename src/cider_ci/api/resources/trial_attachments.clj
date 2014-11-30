@@ -14,36 +14,41 @@
     [clojure.java.jdbc :as jdbc]
     [clojure.tools.logging :as logging]
     [compojure.core :as cpj]
+    [honeysql.core :as hc]
+    [honeysql.helpers :as hh]
     [ring.util.response :as response]
-    [sqlingvo.core :as sqling]
-    ) 
-  (:refer-clojure :exclude [distinct group-by])
-  (:use 
-    [sqlingvo.core]
     ))
 
 
 
 ;### get-attachments ############################################################
 (defn build-attachments-base-query  [trial-id]
-  (select [:id :path]
-          (from :trial_attachments)
-          (where `(like :path ~(str "/" trial-id "%")))
-          (order-by (asc :path))))
+  (-> (hh/from :trial_attachments)
+      (hh/select :id :path)
+      (hh/where [:like :path (str "/"trial-id"/%")])
+      (hh/order-by [:path :asc])))
+
+
+(defn filter-by-path-segment [query trial-id query-params]
+  (if-let [pathsegment (:pathsegment query-params)]
+    (-> query
+        (hh/merge-where [:like :path (str "/" trial-id "/%" pathsegment "%")]))
+    query))
 
 (defn attachments-data [trial-id query-params]
   (let [query (-> (build-attachments-base-query trial-id)
-                  (pagination/add-offset query-params)
-                  sql)
-        _ (logging/debug query)]
+                  (filter-by-path-segment trial-id query-params)
+                  (pagination/add-offset-for-honeysql query-params)
+                  hc/format)]
+    (logging/debug {:query query})
     (jdbc/query (rdbms/get-ds) query)))
 
 (defn get-attachments [request]
   (let [trial-id (-> request :route-params :trial_id util/uuid)
         query-params (-> request :query-params)]
     {:body 
-     {:trial_attachment_ids 
-      (map :id (attachments-data trial-id query-params))}}))
+     {:trial_attachments
+      (attachments-data trial-id query-params)}}))
 
 
 ;### routes #####################################################################

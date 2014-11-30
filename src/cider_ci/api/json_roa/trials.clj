@@ -5,6 +5,7 @@
 (ns cider-ci.api.json-roa.trials
   (:require
     [cider-ci.api.json-roa.links :as links]
+    [cider-ci.api.pagination :as pagination]
     [cider-ci.utils.debug :as debug]
     [clj-logging-config.log4j :as logging-config]
     [clojure.tools.logging :as logging])
@@ -15,21 +16,24 @@
   (let [context (:context request)
         query-params (:query-prarams request)
         task-id (-> request :params :id)
-        ids (-> response :body :trial_ids)]
-    {:relations
-     {
-      :self (links/trials context task-id  query-params)
-      :root (links/root context)
-      :task (links/task context task-id)
+        ids (->> response :body :trials (map :id))]
+    {:name "Trials"
+     :self-relation (links/trials context task-id  query-params)
+     :relations
+     {:task (links/task context task-id)
       }
      :collection
      (conj
-       {:relations (into {} (map (fn [id]
-                                   [id (links/trial context id)])
-                                 ids))}
+       {:relations 
+        (into {} 
+              (map-indexed 
+                (fn [i id]
+                  [(+ 1 i (pagination/compute-offset query-params))
+                   (links/trial context id)                    ])
+                ids))}
        (when (seq ids)
-         (links/next-link 
-           (links/trials-path context task-id) 
+         (links/next-rel
+           #(links/trials-path context task-id %)
            query-params)))}))
 
 

@@ -10,7 +10,7 @@ response types, see [Content Types][].
 
 ### Trial-Attachments
 
-#### GET `/trial/:trial_id/trial-attachments` 
+#### GET `/trial/:trial_id/trial-attachments/` 
 
 Returns a list of ids. Each belongs to a _Trial-Attachment_ which belongs to the
 trial with the id `:trial_id`. Order is ascending with respect to the `path`

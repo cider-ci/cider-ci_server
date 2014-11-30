@@ -15,10 +15,11 @@
   (let [context (:context request)
         query-params (:query-prarams request)
         id (-> response :body :id)]
-    {:relations
-     {:self (links/execution context id)
-      :root (links/root context)
-      :tree-attachments (links/tree-attachments context id)
+    {:name "Execution"
+     :self-relation (links/execution context id)
+     :relations
+     {:tree-attachments (links/tree-attachments context id)
+      :executions (links/executions context)
       :tasks (links/tasks context id)}}))
 
 

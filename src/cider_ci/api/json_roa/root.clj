@@ -11,13 +11,15 @@
 
 (defn build [request]
   (let [context (:context request)]
-    {:relations 
-     {:self (json-roa.links/root context)
-      :executions (json-roa.links/executions context)
+    {:name "Root"
+     :self-relation (json-roa.links/root context)
+     :relations 
+     {:executions (json-roa.links/executions context)
       :execution (json-roa.links/execution context)
       :task (json-roa.links/task context)
       :trial (json-roa.links/trial context)
-      }}))
+      } 
+     }))
 
 
 

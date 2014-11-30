@@ -14,28 +14,36 @@
     [clojure.java.jdbc :as jdbc]
     [clojure.tools.logging :as logging]
     [compojure.core :as cpj]
+    [honeysql.core :as hc]
+    [honeysql.helpers :as hh]
     [ring.util.response :as response]
-    [sqlingvo.core :as sqling]
-    ) 
-  (:refer-clojure :exclude [distinct group-by])
-  (:use 
-    [sqlingvo.core]
     ))
 
 
 ;### get-attachments ############################################################
-(defn build-attachments-base-query [execution-id]
-  (let [tree-id (:tree_id (first (jdbc/query (rdbms/get-ds) ["SELECT tree_id FROM executions WHERE id = ?" execution-id])))]
-    (select [:id :path]
-            (from :tree_attachments)
-            (where `(like :path ~(str "/"tree-id"/%")))
-            (order-by (asc :path)))))
+(defn build-attachments-base-query [tree-id]
+  (-> (hh/from :tree_attachments)
+      (hh/select :id :path)
+      (hh/where [:like :path (str "/"tree-id"/%")])
+      (hh/order-by [:path :asc])))
+
+(defn filter-by-path-segment [query tree-id query-params]
+  (if-let [pathsegment (:pathsegment query-params)]
+    (-> query
+        (hh/merge-where [:like :path (str "/" tree-id "/%" pathsegment "%")]))
+    query))
 
 (defn attachments-data [execution-id query-params]
-  (let [query (-> (build-attachments-base-query execution-id)
-                  (pagination/add-offset query-params)
-                  sql)
-        _ (logging/debug query)]
+  (let [ tree-id (:tree_id 
+                   (first (jdbc/query 
+                            (rdbms/get-ds) 
+                            ["SELECT tree_id FROM executions WHERE id = ?" 
+                             execution-id])))
+        query (-> (build-attachments-base-query tree-id)
+                  (filter-by-path-segment tree-id query-params)
+                  (pagination/add-offset-for-honeysql  query-params)
+                  hc/format)]
+    (logging/debug {:query query})
     (jdbc/query (rdbms/get-ds) query)))
 
 
@@ -43,8 +51,8 @@
   (let [execution-id (-> request :route-params :execution_id util/uuid)
         query-params (-> request :query-params)]
     {:body 
-     {:tree_attachment_ids 
-      (map :id (attachments-data execution-id query-params))}}))
+     {:tree_attachments
+      (attachments-data execution-id query-params)}}))
 
 ;### routes #####################################################################
 (def routes 

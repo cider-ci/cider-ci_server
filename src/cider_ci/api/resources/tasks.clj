@@ -17,46 +17,44 @@
     [clojure.tools.logging :as logging]
     [compojure.core :as cpj]
     [compojure.handler :as cpj.handler]
+    [honeysql.core :as hc]
+    [honeysql.helpers :as hh]
     [ring.adapter.jetty :as jetty]
     [ring.middleware.cookies :as cookies]
     [ring.middleware.json]
     [ring.util.response :as response]
-    [sqlingvo.core :as sqling]
-    ) 
-  (:refer-clojure :exclude [distinct group-by])
-  (:use 
-    [sqlingvo.core]
     ))
 
 (defonce conf (atom nil))
 
 ;### get tasks ##################################################################
 (defn build-tasks-base-query [execution-id]
-  (select (distinct [:tasks.id :tasks.name :tasks.updated_at])
-          (from :tasks)
-          (where `(= :execution_id ~(util/uuid execution-id)) :and)
-          (order-by (asc :tasks.name))
-          (limit 10)))
+  (-> (hh/select :tasks.id :tasks.name)
+      (hh/modifiers :distinct)
+      (hh/from :tasks)
+      (hh/where [:= :tasks.execution_id (util/uuid execution-id)])
+      (hh/order-by [:tasks.name :desc] [:tasks.id :desc])))
+
 
 (defn filter-by-state [query params]
   (if-let [state (:state params)]
-    (compose query (where `(= :tasks.state ~state) :and))
+    (-> query
+        (hh/merge-where [:= :tasks.state state]))
     query))
 
 (defn tasks-data [execution-id query-params]
   (let [query (-> (build-tasks-base-query execution-id)
                   (filter-by-state query-params)
-                  (pagination/add-offset query-params)
-                  sql)]
-    (jdbc/query (rdbms/get-ds) query)
-    ))
-  
+                  (pagination/add-offset-for-honeysql query-params)
+                  hc/format)]
+    (logging/debug {:query query})
+    (jdbc/query (rdbms/get-ds) query)))
+
 (defn get-tasks [request] 
   {:body 
-   {:task_ids
-    (map :id 
-         (tasks-data (-> request :params :execution_id)
-                     (-> request :query-params)))}})
+   {:tasks
+    (tasks-data (-> request :params :execution_id)
+                (-> request :query-params))}})
 
 
 ;### routes #####################################################################

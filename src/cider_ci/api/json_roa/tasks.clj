@@ -5,6 +5,7 @@
 (ns cider-ci.api.json-roa.tasks
   (:require
     [cider-ci.api.json-roa.links :as links]
+    [cider-ci.api.pagination :as pagination]
     [cider-ci.utils.debug :as debug]
     [clj-logging-config.log4j :as logging-config]
     [clojure.tools.logging :as logging])
@@ -17,21 +18,24 @@
         execution-id (-> request :params :id)
         ]
     (logging/debug build {:context context :execution-id execution-id :query-prarams query-params})
-    (let [ids (-> response :body :task_ids)]
-      {:relations
-       {
-        :self (links/tasks context execution-id query-params)
-        :execution (links/execution context execution-id)
-        :root (links/root context)
+    (let [ids (->> response :body :tasks (map :id))]
+      {:name "Tasks"
+       :self-relation (links/tasks context execution-id query-params)
+       :relations
+       {:execution (links/execution context execution-id)
         }
        :collection
        (conj
-         {:relations (into {} (map (fn [id]
-                                     [id (links/task context id)])
-                                   ids))}
+         {:relations 
+          (into {} 
+                (map-indexed 
+                  (fn [i id]
+                    [(+ 1 i (pagination/compute-offset query-params))
+                     (links/task context id)])
+                  ids))}
          (when (seq ids)
-           (links/next-link 
-             (links/tasks-path context execution-id) 
+           (links/next-rel
+             #(links/tasks-path context execution-id %)
              query-params)))})))
 
 

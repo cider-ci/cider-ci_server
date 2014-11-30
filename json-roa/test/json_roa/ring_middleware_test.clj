@@ -16,7 +16,7 @@
 (deftest test-wrap-roa-json-response
 
   (testing "a response with body of type map including roa data"
-    (let [input-response {:body {:_roa {:relations {} 
+    (let [input-response {:body {:_json-roa {:relations {} 
                                         :about {:version "0.0.0"}
                                         }}}
           built-response ((json-roa.ring-middleware/wrap-roa-json-response 
@@ -32,11 +32,11 @@
           (logging/debug test-wrap-roa-json-response {:data data}) 
           (testing "the parsed json data" 
             (is (map? data))
-            (is (:_roa data))
+            (is (:_json-roa data))
             )))))
   
   (testing "a response with body of type vector including roa data"
-    (let [input-response {:body [{:_roa {:relations {} 
+    (let [input-response {:body [{:_json-roa {:relations {} 
                                         :about {:version "0.0.0"}
                                         }}]}
           built-response ((json-roa.ring-middleware/wrap-roa-json-response 
@@ -50,7 +50,7 @@
           (logging/debug test-wrap-roa-json-response {:data data}) 
           (testing "the parsed json data" 
             (is (coll? data))
-            (is (-> data first :_roa))
+            (is (-> data first :_json-roa))
             )))))
     
   
@@ -67,7 +67,6 @@
                             identity) input-response)]
       (testing "has not been modified at all" 
         (is (= input-response built-response)))))
-
 
   )
 

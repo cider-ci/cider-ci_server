@@ -7,7 +7,7 @@ Returns the properties of the trial with the id `:id`.
 
 ### Trials
 
-#### GET `/task/:task_id/trials` 
+#### GET `/task/:task_id/trials/` 
 
 Returns a list of links each pointing to a trial which belongs to the
 task with the id `:task_id`. Order is descending with respect to the

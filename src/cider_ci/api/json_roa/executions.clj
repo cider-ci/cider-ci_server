@@ -5,6 +5,7 @@
 (ns cider-ci.api.json-roa.executions
   (:require
     [cider-ci.api.json-roa.links :as links]
+    [cider-ci.api.pagination :as pagination]
     [cider-ci.utils.debug :as debug]
     [clj-logging-config.log4j :as logging-config]
     [clojure.tools.logging :as logging])
@@ -13,20 +14,27 @@
 
 (defn build [request response]
   (let [context (:context request)
-        query-params (:query-prarams request)
-        ]
-    (let [ids (-> response :body :execution_ids)]
-      {:relations
+        query-params (:query-params request)]
+    (let [ids (->> response :body :executions (map :id))]
+      (logging/debug {:ids ids})
+      {:name "Executions"
+       :self-relation (links/executions context query-params)
+       :relations
        {:root (links/root context)
-        :self (links/executions context query-params)
         }
        :collection
        (conj
-         {:relations (into {} (map (fn [id]
-                                     [id (links/execution context id)])
-                                   ids))}
+         {:relations 
+          (into {} (map-indexed 
+                     (fn [i id]
+                       [(+ 1 i (pagination/compute-offset query-params))
+                        (links/execution context id)])
+                     ids))}
          (when (seq ids)
-           (links/next-link (links/executions-path context) query-params)))})))
+           (links/next-rel
+             (fn [query-params]
+               (links/executions-path context query-params))
+             query-params)))})))
 
 
 

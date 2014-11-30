@@ -19,10 +19,11 @@
 
 (defn root
   ([prefix]
-   {:href (str prefix "/")
+   {:name "Root"
+    :href (str prefix "/")
     :relations 
     {:api-doc
-     {:name "Cider-CI API Documentation"
+     {:name "API Documentation for Cider-CI"
       :href (str (api-docs-path prefix) "#cider-ci-api-documentation") 
       }}}))
 
@@ -35,6 +36,11 @@
                        (pagination/next-page-query-query-params 
                          query-params)))}})
 
+(defn next-rel [link-builder query-params]
+  {:next {:href
+          (link-builder (pagination/next-page-query-query-params 
+                          query-params))}})
+
 
 ;### executions #################################################################
 
@@ -43,8 +49,10 @@
    (executions-path prefix {}))
   ([prefix query-params]
    (str prefix "/executions/" 
-        (when-not (empty? query-params)
-          (str "?" (http/build-url-query-string query-params))))))
+        (if (empty? query-params)
+          "{?repository,branch,branchdescendants,state,treeid}"
+          (str "?" (http/build-url-query-string query-params))
+          ))))
 
 (defn executions
   ([prefix ]
@@ -54,7 +62,7 @@
     :href (executions-path prefix query-params)
     :relations
     {:api-doc 
-     {:name "Executions API Documentation" 
+     {:name "API Documentation Executions" 
       :href (str (api-docs-path prefix) "#executions")}}}))
 
 
@@ -68,7 +76,7 @@
     :href (str prefix "/execution/" id)
     :relations
     {:api-doc 
-     {:name "Execution API Documentation" 
+     {:name "API Documentation Execution" 
       :href (str (api-docs-path prefix) "#execution")}
      }}))
 
@@ -86,7 +94,7 @@
     :href (task-path prefix id)
     :relations
     {:api-doc 
-     {:name "Task API Documentation" 
+     {:name "API Documentation Task" 
       :href (str (api-docs-path prefix) "#task")}}}))
 
 
@@ -97,18 +105,19 @@
    (tasks-path prefix execution-id {}))
   ([prefix execution-id query-params]
    (str prefix "/execution/"  execution-id "/tasks/"
-        (when-not (empty? query-params)
+        (if (empty? query-params)
+          "{?state}"
           (str "?" (http/build-url-query-string query-params))))))
 
 (defn tasks
   ([prefix execution-id ]
    (tasks  prefix execution-id {}))
   ([prefix execution-id query-params]
-   {:name "tasks"
+   {:name "Tasks"
     :href (tasks-path prefix execution-id query-params)
     :relations
     {:api-doc 
-     { :name "Task API Documentation" 
+     {:name "API Documentation Task" 
       :href (str (api-docs-path prefix) "#tasks")}}}))
 
 
@@ -121,11 +130,11 @@
   ([prefix]
    (trial prefix "{id}"))
   ([prefix id]
-   {:name "trial"
+   {:name "Trial"
     :href (trial-path prefix id)
     :relations
     {:api-doc 
-     {:name "Trial API Documentation" 
+     {:name "API Documentation Trial" 
       :href (str (api-docs-path prefix) "#trial")}}}))
 
 
@@ -136,7 +145,8 @@
    (trials-path prefix task-id {}))
   ([prefix task-id query-params]
    (str prefix "/task/"  task-id "/trials/"
-        (when-not (empty? query-params)
+        (if (empty? query-params)
+          "{?state}"
           (str "?" (http/build-url-query-string query-params))))))
 
 (defn trials
@@ -147,7 +157,7 @@
     :href (trials-path prefix task-id query-params)
     :relations
     {:api-doc 
-     {:name "Trials API Documentation"
+     {:name "API Documentation Trials"
       :href (str (api-docs-path prefix) "#trials")}}}))
 
 
@@ -177,7 +187,9 @@
    (trial-attachments-path prefix trial-id {}))
   ([prefix trial-id query-params]
    (str prefix "/trial/"  trial-id "/trial-attachments/"
-        (when-not (empty? query-params)))))
+        (if (empty? query-params)
+          "{?pathsegment}"
+          (str "?" (http/build-url-query-string query-params))))))
 
 (defn trial-attachments 
   ([prefix trial-id]
@@ -188,10 +200,10 @@
     }))
 
 
-;### tree attachments ######################################################
+;### tree attachment ######################################################
 
 (defn tree-attachment-path
-  ([prefix attachment-id ]
+  ([prefix attachment-id]
    (str prefix "/tree-attachment/"  attachment-id)))
 
 (defn tree-attachment 
@@ -202,7 +214,7 @@
     :href (tree-attachment-path prefix attachment-id)
     :relations
     {:api-doc 
-     {:name "Tree-Attachments API Documentation"
+     {:name "Documentation Tree-Attachments"
       :href (str (api-docs-path prefix) "#tree-attachments")}}
     }))
 
@@ -214,7 +226,8 @@
    (tree-attachments-path prefix execution-id {}))
   ([prefix execution-id query-params]
    (str prefix "/execution/"  execution-id "/tree-attachments/"
-        (when-not (empty? query-params)))))
+        (when-not  (empty? query-params)
+          (str "?" (http/build-url-query-string query-params))))))
 
 (defn tree-attachments 
   ([prefix execution-id]

@@ -28,13 +28,16 @@
   (let [context (:context request)
         query-params (:query-prarams request)
         attachment-id (-> request :route-params :attachment_id)
-        trial-id (-> response :body :trial_id)
-        ]
-    {:relations
-     {:self (links/trial-attachment context attachment-id)
-      :data-stream (data-stream-link request response)
+        trial-id (->> response :body  :path 
+                      (re-find #"^\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})") 
+                      second)]
+    {:name "Trial-Attachment" 
+     :self-relation (links/trial-attachment context attachment-id)
+     :relations
+     {:data-stream (data-stream-link request response)
+      :trial-attachments (links/trial-attachments context trial-id)
       :trial (links/trial context trial-id)
-      :root (links/root context)}}))
+      }}))
 
 
 ;### Debug ####################################################################

@@ -12,15 +12,15 @@
 (defn- build-roa-json-response [response body]
   (-> response
       (assoc :body (json/generate-string body))
-      (response/header "Content-Type" "application/roa+json")
+      (response/header "Content-Type" "application/json-roa+json")
       (response/charset "UTF8")))
 
 (defn- check-and-build-roa-json-response [response]
   (if-not (coll? (:body response))
     response
     (if-let [body (-> response :body clojure.walk/keywordize-keys)]
-      (if (or (and (map? body) (:_roa body))
-              (and (coll? body) (-> body first :_roa)))
+      (if (or (and (map? body) (:_json-roa body))
+              (and (coll? body) (-> body first :_json-roa)))
         (build-roa-json-response response body)
         response)
       response)))
