@@ -1,4 +1,4 @@
-(defproject cider-ci_api "2.1.0"
+(defproject cider-ci_api "2.2.0"
   :description "Cider-CI API"
   :url "https://github.com/cider-ci/cider-ci_api"
   :license {:name "GNU AFFERO GENERAL PUBLIC LICENSE Version 3"
