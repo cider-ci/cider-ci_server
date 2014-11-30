@@ -43,7 +43,7 @@
   (-> {}
       (assoc-in [:_json-roa] json-roa-data)
       (assoc-in [:_json-roa :about_json-roa] about)
-      (assoc-in [:_json-roa :version] "0.0.0-beta.0+20141126")
+      (assoc-in [:_json-roa :version] "1.0.0-beta.0+20141130")
       ))
 
 ;### Routing ##################################################################
