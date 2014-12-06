@@ -26,9 +26,9 @@
         update-to #(stateful-entity/update-state 
                      :executions execution-id % {:assert-existence true})]
     (cond 
-      (every? #{"success"} states) (update-to "success")
+      (every? #{"passed"} states) (update-to "passed")
       (every? #{"aborted"} states) (update-to "aborted")
-      (every? #{"aborted" "failed" "success"} states) (update-to "failed")
+      (every? #{"aborted" "failed" "passed"} states) (update-to "failed")
       (some #{"executing"} states) (update-to "executing")
       (some #{"pending"} states) (update-to "pending")
       (empty? states) false

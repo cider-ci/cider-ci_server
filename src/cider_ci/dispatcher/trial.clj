@@ -18,7 +18,7 @@
 
 (defonce conf (atom nil))
 
-(defonce terminal-states #{"aborted" "failed" "success"})
+(defonce terminal-states #{"aborted" "failed" "passed"})
 
 ;#### utils ###################################################################
 (defn get-trial [id]

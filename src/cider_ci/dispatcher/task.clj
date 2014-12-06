@@ -18,7 +18,7 @@
 
 
 ;### utils ####################################################################
-(defonce terminal-states #{"aborted" "failed" "success"})
+(defonce terminal-states #{"aborted" "failed" "passed"})
 
 (defn sort-map-by-order-value [mp]
   (into {} (sort-by 
@@ -84,8 +84,8 @@
                     :create-new-trials-count create-new-trials-count
                     :_range _range
                     })
-    (when-not (some #{"success"} states)
-      (logging/debug "sequing and creating trials" )
+    (when-not (some #{"passed"} states)
+      (logging/debug "seqing and creating trials" )
       (doseq [_ _range]
         (create-trial task)))))
 
@@ -99,7 +99,7 @@
           update-to #(stateful-entity/update-state 
                        :tasks id % {:assert-existence true})]
       (cond 
-        (some #{"success"} states) (update-to "success")
+        (some #{"passed"} states) (update-to "passed")
         (every? #{"aborted"} states) (update-to "aborted")
         (every? #{"failed" "aborted"} states) (update-to "failed")
         (some #{"executing"} states) (update-to "executing")

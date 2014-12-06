@@ -44,7 +44,7 @@
   (with/logging
     (let [update-to #(update-state tablename id % {:assert-existence true})]
       (cond 
-        (some #{"success"} states) (update-to "success")
+        (some #{"passed"} states) (update-to "passed")
         (every? #{"aborted"} states) (update-to "aborted")
         (every? #{"failed" "aborted"} states) (update-to "failed")
         (some #{"executing"} states) (update-to "executing")
