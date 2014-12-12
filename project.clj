@@ -4,13 +4,13 @@
   :license {:name "GNU AFFERO GENERAL PUBLIC LICENSE Version 3"
             :url "http://www.gnu.org/licenses/agpl-3.0.html"}
   :dependencies [
-                 [cheshire "5.3.1"]
-                 [cider-ci/clj-auth "2.1.0-rc.4"]
-                 [cider-ci/clj-utils "2.0.1-rc.1"]
-                 [org.clojure/tools.nrepl "0.2.3"]
-                 [org.jruby/jruby-complete "1.7.13"]
+                 [cheshire "5.4.0"]
+                 [cider-ci/clj-auth "2.1.0"]
+                 [cider-ci/clj-utils "2.0.1"]
+                 [org.clojure/tools.nrepl "0.2.6"]
+                 [org.jruby/jruby-complete "1.7.17"]
                  [ring-middleware-accept "2.0.2"]
-                 [ring/ring-core "1.3.1"]
+                 [ring/ring-core "1.3.2"]
                  [honeysql "0.4.3"]
                  ]
   :source-paths [ "json-roa/src" 
