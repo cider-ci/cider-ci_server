@@ -5,12 +5,13 @@
 (ns cider-ci.storage.web
   (:require 
     [cider-ci.auth.core :as auth]
+    [cider-ci.auth.cors :as cors]
     [cider-ci.auth.http-basic :as http-basic]
     [cider-ci.auth.session :as session]
+    [cider-ci.storage.web.public :as public]
     [cider-ci.utils.debug :as debug]
     [cider-ci.utils.http :as http]
     [cider-ci.utils.http-server :as http-server]
-    [cider-ci.utils.rdbms :as rdbms]
     [cider-ci.utils.rdbms :as rdbms]
     [cider-ci.utils.routing :as routing]
     [cider-ci.utils.with :as with]
@@ -26,8 +27,7 @@
     )
   (:use 
     [cider-ci.storage.shared :only [delete-file delete-row delete-file-and-row]]
-    )
-  )
+    ))
 
 
 (defonce conf (atom {}))
@@ -145,27 +145,39 @@
 
 ;#### routing #################################################################
 
-(defn build-main-handler [context]
-  ( -> (cpj.handler/api (build-routes ))
+(defn build-base-handler []
+  ( -> (build-routes) 
+       cpj.handler/api  
        (routing/wrap-debug-logging 'cider-ci.storage.web)
-
-       (wrap-status-dispatch)
+       wrap-status-dispatch
        (routing/wrap-debug-logging 'cider-ci.storage.web)
-
-       (routing/wrap-prefix context)
-       (routing/wrap-debug-logging 'cider-ci.storage.web)
-
-       (auth/wrap-authenticate-and-authorize-service-or-user)
-       (routing/wrap-debug-logging 'cider-ci.storage.web)
-       (http-basic/wrap)
-       (routing/wrap-debug-logging 'cider-ci.storage.web)
-
-       (session/wrap)
-       (routing/wrap-debug-logging 'cider-ci.storage.web)
-       (cookies/wrap-cookies)
-       (routing/wrap-debug-logging 'cider-ci.storage.web)
-       (routing/wrap-log-exception)
        ))
+
+(defn wrap-auth [handler]
+  (-> handler
+      (routing/wrap-debug-logging 'cider-ci.storage.web)
+      auth/wrap-authenticate-and-authorize-service-or-user
+      (routing/wrap-debug-logging 'cider-ci.storage.web)
+      http-basic/wrap
+      (routing/wrap-debug-logging 'cider-ci.storage.web)
+      session/wrap
+      (routing/wrap-debug-logging 'cider-ci.storage.web)
+      cookies/wrap-cookies
+      (routing/wrap-debug-logging 'cider-ci.storage.web)
+      cors/wrap
+      (routing/wrap-debug-logging 'cider-ci.storage.web)
+      (public/wrap-shortcut handler)
+      ))
+
+(defn build-main-handler [context]
+  (-> (build-base-handler)
+      (routing/wrap-debug-logging 'cider-ci.storage.web)
+      wrap-auth
+      (routing/wrap-debug-logging 'cider-ci.storage.web)
+      (routing/wrap-prefix context)
+      (routing/wrap-debug-logging 'cider-ci.storage.web)
+      routing/wrap-log-exception
+      ))
 
 
 ;#### the server ##############################################################
