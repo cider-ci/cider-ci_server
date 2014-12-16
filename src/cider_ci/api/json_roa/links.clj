@@ -238,6 +238,29 @@
     }))
 
 
+;### tree attachments data stream link #####################################
+
+
+(defn-  tree-attachment-data-stream-val [context]
+  {:name "Tree-Attachment Data"
+   ; :href (str storage-service-prefix "/tree-attachments" path)
+   :methods {:get {}
+             :delete {} 
+             :put {} }
+   :relations {:api-doc 
+               {:name "Tree-Attachment Storage Resources Documentation"
+                :href (str (api-docs-path context) "#tree-attachment-1")}}})
+
+(defn tree-attachment-data-stream
+  ([request tree-id path-wo-slash]
+   (let [context (:context request)
+         storage-service-prefix (-> request :storage_service_prefix)
+         ]
+     (assoc-in (tree-attachment-data-stream-val context)
+               [:href]
+               (str storage-service-prefix 
+                    "/tree-attachments/" tree-id "/" path-wo-slash)))))
+
 
 ;### Debug ####################################################################
 ;(logging-config/set-logger! :level :debug)

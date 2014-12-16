@@ -27,10 +27,8 @@
      :self-relation (links/tree-attachments context execution-id)
      :relations
      {:execution (links/execution context execution-id)
-      :data-stream {:href (str (-> request :storage_service_prefix)  
-                                        "/tree-attachments/" tree-id "/{path}")
-                             :name "Tree-Attachment Data"
-                             :methods {:put {}}}}
+      :tree-attachment-data-stream (links/tree-attachment-data-stream request tree-id "{path}")
+      }
      :collection 
      (conj
        {:relations 

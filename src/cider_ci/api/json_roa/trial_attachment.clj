@@ -34,7 +34,7 @@
     {:name "Trial-Attachment" 
      :self-relation (links/trial-attachment context attachment-id)
      :relations
-     {:data-stream (data-stream-link request response)
+     {:trial-attachment-data-stream (data-stream-link request response)
       :trial-attachments (links/trial-attachments context trial-id)
       :trial (links/trial context trial-id)
       }}))

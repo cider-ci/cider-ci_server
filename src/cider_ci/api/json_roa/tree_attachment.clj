@@ -12,22 +12,6 @@
 
 
 
-(defn data-stream-link [request response]
-  (let [context (:context request)
-        path (-> response :body :path)
-        storage-service-prefix (-> request :storage_service_prefix)
-        ]
-    {:name "Tree-Attachment Data"
-     :href (str storage-service-prefix "/tree-attachments" path)
-     :methods {:get {}
-               :delete{} 
-               :put{} }
-     :relations {:api-doc 
-                 {:name "Tree-Attachment Storage Resources Documentation"
-                  :href (str (links/api-docs-path context) "#tree-attachment-1")}}
-     }))
-
-
 
 (defn build [request response]
   (let [context (:context request)
@@ -35,11 +19,16 @@
         attachment-id (-> request :route-params :attachment_id)
         tree-id (->> response :body :path
                      (re-find #"^\/(\w+)\/") 
-                     second)]
+                     second)
+        path-wo-slash (nth (->> response :body :path
+                                (re-find #"^\/(\w+)\/(.*)")) 
+                           2)
+        ]
     {:name "Tree-Attachment"
      :self-relation (links/tree-attachment context attachment-id)
      :relations
-     {:data-stream (data-stream-link request response)
+     {:tree-attachment-data-stream (links/tree-attachment-data-stream 
+                                     request tree-id path-wo-slash)
       :executions (links/executions context {:tree-id tree-id})
       }}))
 

@@ -18,6 +18,8 @@
       :execution (json-roa.links/execution context)
       :task (json-roa.links/task context)
       :trial (json-roa.links/trial context)
+      :tree-attachment-data-stream (json-roa.links/tree-attachment-data-stream 
+                                     request "{treeid}" "{path}")
       } 
      }))
 
