@@ -38,15 +38,36 @@
         body (:body res)]
     (parse-path-content path body)))
 
+
+
+(defn get-include-content [git-ref-id include-value]
+  (cond 
+    (string? include-value) (let [content (get-path-content 
+                                            git-ref-id include-value)]
+                              (if-not (map? content)
+                                (throw (IllegalStateException. 
+                                         (str "Only maps can be included. Given " 
+                                              (type content))))
+                                content))
+    (and 
+      (coll? include-value)
+      (every? string? include-value)) (reduce 
+                                        (fn [content include-path]
+                                          (util/deep-merge content 
+                                                           (get-include-content git-ref-id include-path)))
+                                        {} include-value) 
+
+    :else (throw (IllegalArgumentException. 
+                   (str "I don't know how get and include " include-value)
+                   ))))
+
 (defn expand [git-ref-id spec]
   (with/logging 
   (cond 
-    (map? spec) (if-let [path (:_cider-ci_include spec)]
-                  (let [content (get-path-content git-ref-id path)]
-                    (if-not (map? content)
-                      (throw (IllegalStateException. (str "Only maps can be included. Given " (type content) )))
-                      (expand git-ref-id (util/deep-merge (dissoc spec :_cider-ci_include)
-                                                          content))))
+    (map? spec) (if-let [include-value (:_cider-ci_include spec)]
+                  (let [content (get-include-content git-ref-id include-value)]
+                    (expand git-ref-id (util/deep-merge (dissoc spec :_cider-ci_include)
+                                                        content)))
                   (into {} (map (fn [pair]
                                   (let [[k v] pair]
                                     [k (expand git-ref-id v)]))
@@ -59,6 +80,7 @@
                          :else spec-item))
                      spec)
     :else spec))) 
+
 
 
 ;### initialize ###############################################################
