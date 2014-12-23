@@ -23,7 +23,7 @@
   (let [raw-spec (clojure.walk/keywordize-keys _raw-spec)
         db-task-spec (spec/get-or-create-task-spec (dissoc raw-spec
                                                             :execution_id))
-        execution-id (rdbms.conversion/convert-to-uuid (:execution_id raw-spec))
+        execution-id (:execution_id raw-spec)
         task-row (conj (select-keys raw-spec [:name :state :error])
                        {:execution_id execution-id
                         :traits (spec-map-to-array (or (:traits raw-spec) {}))

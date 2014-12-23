@@ -19,7 +19,7 @@
 
 ;### expand ###############################################################
 
-(defn parse-path-content [path content]
+(defn- parse-path-content [path content]
   ; TODO handle json content
   (try 
     (with/logging (yaml/parse-string content))
@@ -27,7 +27,7 @@
       (throw (IllegalStateException. 
                (str "Failed to parse the content of " path ))))))
 
-(defn get-path-content [git-ref-id path]
+(defn- get-path-content [git-ref-id path]
   (let [url (http/build-url (:repository_service @conf) 
                             (str "/path-content/" git-ref-id  "/" path))
         res (try (with/logging (http/get url {}))
@@ -40,26 +40,39 @@
 
 
 
-(defn get-include-content [git-ref-id include-value]
-  (cond 
-    (string? include-value) (let [content (get-path-content 
-                                            git-ref-id include-value)]
-                              (if-not (map? content)
-                                (throw (IllegalStateException. 
-                                         (str "Only maps can be included. Given " 
-                                              (type content))))
-                                content))
-    (and 
-      (coll? include-value)
-      (every? string? include-value)) (reduce 
-                                        (fn [content include-path]
-                                          (util/deep-merge content 
-                                                           (get-include-content git-ref-id include-path)))
-                                        {} include-value) 
+(defn- get-include-content-for-path [git-ref-id path]
+  (let [content (get-path-content 
+                  git-ref-id path)]
+    (if-not (map? content)
+      (throw (IllegalStateException. 
+               (str "Only maps can be included. Given " 
+                    (type content))))
+      content)))
 
+(defn- get-include-content-for-seq-of-paths [git-ref-id seq-of-paths]
+  (reduce 
+    (fn [content include-path]
+      (util/deep-merge content 
+                       (get-include-content-for-path 
+                         git-ref-id include-path)))
+    {} seq-of-paths))
+
+
+(defn- get-include-content [git-ref-id include-value]
+  (cond 
+    (string? include-value) (get-include-content-for-path 
+                              git-ref-id include-value)
+    (and (coll? include-value)
+         (every? string? include-value)) (get-include-content-for-seq-of-paths  
+                                           git-ref-id
+                                           include-value)
     :else (throw (IllegalArgumentException. 
                    (str "I don't know how get and include " include-value)
                    ))))
+
+
+;### expand ###############################################################
+
 
 (defn expand [git-ref-id spec]
   (with/logging 

@@ -38,7 +38,7 @@
          (jdbc/insert! (rdbms/get-ds) "execution_issues" row-data#)))))
 
 (defn get-execution [id]
-  (first (jdbc/query (rdbms/get-ds) ["SELECT * FROM executions WHERE id =?::UUID" id ])))
+  (first (jdbc/query (rdbms/get-ds) ["SELECT * FROM executions WHERE id =?" id ])))
 
 
 ;### build tasks ##############################################################
@@ -152,7 +152,7 @@
       (-> execution expand-execution-spec create-tasks)
       (doseq [task-with-id (jdbc/query 
                              (rdbms/get-ds) 
-                             ["SELECT id FROM tasks WHERE execution_id = ?::UUID" 
+                             ["SELECT id FROM tasks WHERE execution_id = ?" 
                               (:id execution)])]
         (messaging/publish "task.create-trials" task-with-id)))
     (throw (IllegalStateException. (str "could not find execution for " message)))))

@@ -17,7 +17,7 @@
   (-> (jdbc/query 
         (rdbms/get-ds) 
         [(str " SELECT * FROM specifications"
-              " WHERE id = ?::UUID") id])
+              " WHERE id = ?") id])
       first)
   ;(get-execution-spec "caf72b4c-26bf-5893-9f08-ce72f4af8605")
   )
