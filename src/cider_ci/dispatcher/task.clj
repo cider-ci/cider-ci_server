@@ -8,6 +8,7 @@
     [cider-ci.utils.messaging :as messaging]
     [cider-ci.dispatcher.stateful-entity :as stateful-entity]
     [cider-ci.dispatcher.execution :as execution]
+    [cider-ci.dispatcher.result :as result]
     [cider-ci.utils.rdbms :as rdbms]
     [cider-ci.utils.rdbms.conversion :as rdbms.conversion]
     [cider-ci.utils.with :as with]
@@ -91,6 +92,7 @@
 
 
 ;### re-evaluate  #############################################################
+
 (defn- evaluate-trials-and-update
   [task]
   (with/logging
@@ -98,6 +100,7 @@
           states (get-trial-states task)
           update-to #(stateful-entity/update-state 
                        :tasks id % {:assert-existence true})]
+      (result/update-task-and-execution-result id)
       (cond 
         (some #{"passed"} states) (update-to "passed")
         (every? #{"aborted"} states) (update-to "aborted")

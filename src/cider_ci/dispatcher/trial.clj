@@ -38,7 +38,7 @@
       (try 
         (assert id)
         (let [update-params (select-keys params
-                                         [:state :started_at :finished_at :error :scripts])
+                                         [:state :started_at :finished_at :error :scripts :result])
               converted-params (rdbms.conversion/convert-parameters :trials update-params)]
           (logging/debug {:params params :update-params update-params 
                           :converted-params converted-params})
