@@ -47,8 +47,8 @@
        (let [ds  (rdbms/get-ds)]
          (fact "drop table" (jdbc/db-do-commands ds "DROP TABLE IF EXISTS test ;") => truthy)
          (fact "create table" (jdbc/db-do-commands ds "CREATE TABLE test (data json);") => truthy)
-         (fact "insert" (jdbc/insert! ds "test" {:data {"array" ["s1" 7], "number" 42}}) => truthy )
-         (fact "query" (first (jdbc/query ds ["SELECT * FROM test"])) =>  {:data {"array" ["s1" 7], "number" 42}})
+         (fact "insert" (jdbc/insert! ds "test" {:data {:array ["s1" 7], :number 42}}) => truthy )
+         (fact "query" (first (jdbc/query ds ["SELECT * FROM test"])) =>  {:data {:array ["s1" 7], :number 42}})
          (fact "drop table" (jdbc/db-do-commands ds "DROP TABLE IF EXISTS test ;") => truthy)
          )
 

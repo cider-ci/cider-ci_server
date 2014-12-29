@@ -2,9 +2,9 @@
   (:require 
     [cider-ci.utils.rdbms.conversion :as conversion]
     [cider-ci.utils.with :as with]
-    [clj-postgresql.types]
     [clojure.java.jdbc :as jdbc]
     [clojure.tools.logging :as logging]
+    [pg-types.all]
     )
   (:import 
     [com.mchange.v2.c3p0 ComboPooledDataSource DataSources]
@@ -18,7 +18,10 @@
 (defn get-ds [] @ds)
 
 (defonce ^:private tables-metadata (atom nil))
-(defn get-tables-metadata [] @tables-metadata)
+
+(defn get-tables-metadata [] 
+  (logging/warn get-tables-metadata " is deprecated")
+  @tables-metadata)
 
 (defn- get-columns-metadata [table-name db-conf]
   (jdbc/with-db-metadata [md db-conf]
