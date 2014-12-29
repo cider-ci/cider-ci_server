@@ -68,18 +68,30 @@
              (#(when-let [max-pool-size (:max_pool_size db-conf)](.setMaxPoolSize % max-pool-size))))})
   )
 
+
+(defn amend-db-conf [db-conf]
+  (let [user (or (:user db-conf)  
+                 (System/getenv "PGUSER"))
+        password (or 
+                   (:password db-conf)
+                   (System/getenv "PGPASSWORD"))]
+    (conj db-conf
+          {:user user
+           :password password})))
+
 (defn reset []
   (reset! db-spec nil)
   (when @ds (.hardReset (:datasource @ds)))
   (reset! ds nil)
   (reset! tables-metadata nil))
 
-(defn initialize [db-conf]
-  (logging/info initialize [db-conf])
-  (reset! db-spec db-conf)
-  (create-c3p0-datasources db-conf)
-  (set-tables-metadata db-conf)
-  (conversion/initialize @tables-metadata))
+(defn initialize [_db-conf]
+  (let [db-conf (amend-db-conf _db-conf)]
+    (logging/info initialize [db-conf])
+    (reset! db-spec db-conf)
+    (create-c3p0-datasources db-conf)
+    (set-tables-metadata db-conf)
+    (conversion/initialize @tables-metadata)))
 
 
 ;(initialize {:subprotocol "sqlite" :subname ":memory:"})
