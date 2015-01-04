@@ -32,7 +32,7 @@
   (-> (hh/select :tasks.id :tasks.name)
       (hh/modifiers :distinct)
       (hh/from :tasks)
-      (hh/where [:= :tasks.execution_id (util/uuid execution-id)])
+      (hh/where [:= :tasks.execution_id execution-id])
       (hh/order-by [:tasks.name :desc] [:tasks.id :desc])))
 
 

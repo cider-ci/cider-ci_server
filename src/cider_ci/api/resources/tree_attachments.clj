@@ -48,7 +48,7 @@
 
 
 (defn get-attachments [request]
-  (let [execution-id (-> request :route-params :execution_id util/uuid)
+  (let [execution-id (-> request :route-params :execution_id)
         query-params (-> request :query-params)]
     {:body 
      {:tree_attachments

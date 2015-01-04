@@ -22,7 +22,7 @@
 (defn query-attachment [id]
   (first (jdbc/query 
            (rdbms/get-ds) 
-           ["SELECT * from tree_attachments WHERE id = ?" (util/uuid id)])))
+           ["SELECT * from tree_attachments WHERE id = ?" id])))
 
 (defn get-attachment [request]
   (let [id (-> request :route-params :id)

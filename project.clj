@@ -6,10 +6,10 @@
   :dependencies [
                  [cheshire "5.4.0"]
                  [cider-ci/clj-auth "2.1.0"]
-                 [cider-ci/clj-utils "2.0.1"]
+                 [cider-ci/clj-utils "2.3.0-rc.2"]
                  [org.clojure/tools.nrepl "0.2.6"]
-                 [org.jruby/jruby-complete "1.7.17"]
-                 [ring-middleware-accept "2.0.2"]
+                 [org.jruby/jruby-complete "1.7.18"]
+                 [ring-middleware-accept "2.0.3"]
                  [ring/ring-core "1.3.2"]
                  [honeysql "0.4.3"]
                  ]

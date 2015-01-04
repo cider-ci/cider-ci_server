@@ -31,7 +31,7 @@
   (let [id (-> request :params :id)
         data (first (jdbc/query 
                       (rdbms/get-ds) ["SELECT * from execution_stats 
-                                      WHERE execution_id = ?::uuid" id]))]
+                                      WHERE execution_id = ?" id]))]
     {:data data}))
 
 
@@ -40,7 +40,7 @@
 (defn query-exeuction [id]
   (first (jdbc/query (rdbms/get-ds) 
                      ["SELECT * from executions
-                      WHERE id = ?::UUID" id])))
+                      WHERE id = ?" id])))
 
 (defn execution-data [params]
   (let [id (:id params)

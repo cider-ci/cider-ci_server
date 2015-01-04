@@ -27,8 +27,8 @@
 
 (defn get-trial [request]
   (logging/debug request)
-  (let [trial-uuid (-> request :params :id util/uuid)
-        trial (first (jdbc/query (rdbms/get-ds) ["SELECT * from trials WHERE id = ?" trial-uuid]))]
+  (let [trial-id (-> request :params :id)
+        trial (first (jdbc/query (rdbms/get-ds) ["SELECT * from trials WHERE id = ?" trial-id]))]
     (when trial
       {:body trial})))
 

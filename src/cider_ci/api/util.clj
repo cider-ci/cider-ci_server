@@ -10,11 +10,6 @@
     )
   )
 
-(defn uuid [str-or-uuid]
-  (if (= (type str-or-uuid) java.util.UUID)
-    uuid
-    (java.util.UUID/fromString str-or-uuid)))
-
 (defn sort-map [m]
   (into {} (sort m)))
 

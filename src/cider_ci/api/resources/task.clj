@@ -26,8 +26,8 @@
 ;### get task ###################################################################
 
 (defn get-task [request]
-  (let [uuid (-> request :params :id util/uuid)
-        task (first (jdbc/query (rdbms/get-ds) ["SELECT * from tasks WHERE id = ?" uuid]))]
+  (let [id (-> request :params :id)
+        task (first (jdbc/query (rdbms/get-ds) ["SELECT * from tasks WHERE id = ?" id]))]
     (when task
       {:body task})))
 

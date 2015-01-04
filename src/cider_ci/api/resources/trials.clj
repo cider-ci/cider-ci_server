@@ -33,7 +33,7 @@
   (-> (hh/from :trials)
       (hh/select :trials.id :trials.created_at)
       (hh/modifiers :distinct)
-      (hh/where [:= :trials.task_id  (util/uuid task-id)])
+      (hh/where [:= :trials.task_id task-id])
       (hh/order-by [:trials.created_at :asc] [:trials.id :asc])))
 
 (defn filter-by-state [query params]

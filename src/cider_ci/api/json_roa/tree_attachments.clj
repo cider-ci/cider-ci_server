@@ -21,7 +21,7 @@
         tree-id (:tree_id 
                   (first (jdbc/query 
                            (rdbms/get-ds) 
-                           ["SELECT tree_id FROM executions WHERE id = ?::UUID" 
+                           ["SELECT tree_id FROM executions WHERE id = ?" 
                             execution-id])))]
     {:name "Tree-Attachments"
      :self-relation (links/tree-attachments context execution-id)

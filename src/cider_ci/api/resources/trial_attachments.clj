@@ -44,7 +44,7 @@
     (jdbc/query (rdbms/get-ds) query)))
 
 (defn get-attachments [request]
-  (let [trial-id (-> request :route-params :trial_id util/uuid)
+  (let [trial-id (-> request :route-params :trial_id)
         query-params (-> request :query-params)]
     {:body 
      {:trial_attachments
