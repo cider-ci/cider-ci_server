@@ -1,4 +1,4 @@
-; Copyright (C) 2013, 2014 Dr. Thomas Schank  (DrTom@schank.ch, Thomas.Schank@algocon.ch)
+; Copyright (C) 2013, 2014, 2015 Dr. Thomas Schank  (DrTom@schank.ch, Thomas.Schank@algocon.ch)
 ; Licensed under the terms of the GNU Affero General Public License v3.
 ; See the "LICENSE.txt" file provided with this software.
 
@@ -18,7 +18,7 @@
 (defn- assert-existence [tablename id]
   (when-not (first (jdbc/query (rdbms/get-ds)
                                [(str "SELECT 1 FROM " (name tablename) 
-                                     " WHERE id = ?::UUID " ) id]))
+                                     " WHERE id = ?" ) id]))
     (throw (IllegalArgumentException. 
              (str "The entity does not exist" {:tablename tablename :id id})))))
 
@@ -36,7 +36,7 @@
           (rdbms/get-ds) 
           tablename
           {:state state}
-          [(str "id = ?::UUID AND state != '" state "'") id])
+          [(str "id = ? AND state != '" state "'") id])
         first (not= 0))))
 
 

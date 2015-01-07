@@ -1,16 +1,15 @@
-; Copyright (C) 2013, 2014 Dr. Thomas Schank  (DrTom@schank.ch, Thomas.Schank@algocon.ch)
+; Copyright (C) 2013, 2014, 2015 Dr. Thomas Schank  (DrTom@schank.ch, Thomas.Schank@algocon.ch)
 ; Licensed under the terms of the GNU Affero General Public License v3.
 ; See the "LICENSE.txt" file provided with this software.
 
 (ns cider-ci.dispatcher.task
   (:require
-    [cider-ci.utils.debug :as debug]
-    [cider-ci.utils.messaging :as messaging]
-    [cider-ci.dispatcher.stateful-entity :as stateful-entity]
     [cider-ci.dispatcher.execution :as execution]
     [cider-ci.dispatcher.result :as result]
+    [cider-ci.dispatcher.stateful-entity :as stateful-entity]
+    [cider-ci.utils.debug :as debug]
+    [cider-ci.utils.messaging :as messaging]
     [cider-ci.utils.rdbms :as rdbms]
-    [cider-ci.utils.rdbms.conversion :as rdbms.conversion]
     [cider-ci.utils.with :as with]
     [clj-logging-config.log4j :as logging-config]
     [clojure.java.jdbc :as jdbc]
@@ -39,37 +38,36 @@
 (defn get-task [id]
   (first (jdbc/query (rdbms/get-ds) 
                                 ["SELECT * FROM tasks
-                                 WHERE id = ?::UUID" id])))
+                                 WHERE id = ?" id])))
 (defn get-task-spec [task-id]
   (let [ task_specs (jdbc/query (rdbms/get-ds) 
                                 ["SELECT task_specs.data FROM task_specs
                                  JOIN tasks ON tasks.task_spec_id = task_specs.id
-                                 WHERE tasks.id = ?::UUID" task-id])
+                                 WHERE tasks.id = ?" task-id])
         spec (clojure.walk/keywordize-keys (:data (first task_specs)))]
     spec))
 
 (defn- get-trial-states [task]
-  (let [id (rdbms.conversion/convert-to-uuid (:id task))]
+  (let [id (:id task)]
     (map :state 
          (jdbc/query (rdbms/get-ds) 
                      ["SELECT state FROM trials 
-                      WHERE task_id = ?::UUID" id]))))
+                      WHERE task_id = ?" id]))))
 
 
 ;### create trial #############################################################
 (defn create-trial [task]
-  (let [task-id (rdbms.conversion/convert-to-uuid (:id task))
-        spec (get-task-spec task-id)]
+  (let [task-id (:id task)
+        spec (get-task-spec task-id)
+        scripts (sort-map-by-order-value (:scripts spec)) ]
+    (logging/debug "INSERT" {:scripts scripts :task_id task-id})
     (with/logging
       (jdbc/insert! (rdbms/get-ds) :trials
-                    {:scripts  (rdbms.conversion/convert-to-json 
-                                 (sort-map-by-order-value (:scripts spec)))
-                     :task_id task-id})))
-  ;(create-trial "d0e04847-ef9c-53ec-a009-18a02a7b8f81")
-  )
+                    {:scripts scripts
+                     :task_id task-id}))))
 
 (defn- create-trials [task]
-  (let [id (rdbms.conversion/convert-to-uuid (:id task))
+  (let [id (:id task)
         spec (get-task-spec id)
         states (get-trial-states task) 
         finished-count (->> states (filter #(terminal-states %)) count)
@@ -96,7 +94,7 @@
 (defn- evaluate-trials-and-update
   [task]
   (with/logging
-    (let [id (rdbms.conversion/convert-to-uuid (:id task))
+    (let [id (:id task)
           states (get-trial-states task)
           update-to #(stateful-entity/update-state 
                        :tasks id % {:assert-existence true})]
