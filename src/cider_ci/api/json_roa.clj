@@ -1,4 +1,4 @@
-; Copyright (C) 2013, 2014 Dr. Thomas Schank  (DrTom@schank.ch, Thomas.Schank@algocon.ch)
+; Copyright (C) 2013, 2014, 2015 Dr. Thomas Schank  (DrTom@schank.ch, Thomas.Schank@algocon.ch)
 ; Licensed under the terms of the GNU Affero General Public License v3.
 ; See the "LICENSE.txt" file provided with this software.
 
@@ -43,7 +43,7 @@
   (-> {}
       (assoc-in [:_json-roa] json-roa-data)
       (assoc-in [:_json-roa :about_json-roa] about)
-      (assoc-in [:_json-roa :version] "1.0.0-beta.0+20141130")
+      (assoc-in [:_json-roa :version] "1.0.0-beta.0+2014, 2015 1130")
       ))
 
 ;### Routing ##################################################################

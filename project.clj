@@ -1,3 +1,7 @@
+; Copyright (C) 2013, 2014, 2015 Dr. Thomas Schank  (DrTom@schank.ch, Thomas.Schank@algocon.ch)
+; Licensed under the terms of the GNU Affero General Public License v3.
+; See the "LICENSE.txt" file provided with this software.
+
 (defproject cider-ci_api "2.2.0"
   :description "Cider-CI API"
   :url "https://github.com/cider-ci/cider-ci_api"
@@ -6,7 +10,7 @@
   :dependencies [
                  [cheshire "5.4.0"]
                  [cider-ci/clj-auth "2.1.0"]
-                 [cider-ci/clj-utils "2.3.0-rc.2"]
+                 [cider-ci/clj-utils "2.3.0"]
                  [org.clojure/tools.nrepl "0.2.6"]
                  [org.jruby/jruby-complete "1.7.18"]
                  [ring-middleware-accept "2.0.3"]
