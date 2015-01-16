@@ -6,9 +6,9 @@
   (:require 
     [cider-ci.builder.util :as util]
     [cider-ci.utils.debug :as debug]
-    [cider-ci.utils.with :as with]
     [cider-ci.utils.http :as http]
     [cider-ci.utils.rdbms :as rdbms]
+    [cider-ci.utils.with :as with]
     [clj-yaml.core :as yaml]
     [clojure.java.jdbc :as jdbc]
     [clojure.tools.logging :as logging]
@@ -27,9 +27,28 @@
       (throw (IllegalStateException. 
                (str "Failed to parse the content of " path ))))))
 
+
+
+;; TODO; enable this in cider-ci 3.0
+(defn- assert-path-spec
+  "Raises an exception if path doesn't start with a '/'"
+  [path]
+  (if (re-find #"^\/" path) 
+    path
+    (throw (IllegalArgumentException. 
+             (str "The string value of `_cider-ci_include` must start with a slash '/'. " )))))
+
+;; TODO remove this in cider-ci 3.0
+(defn- format-path 
+  "Prepends a '/' if not present."
+  [path]
+  (if (re-find #"^\/" path) 
+    path
+    (str "/" path)))
+
 (defn- get-path-content [git-ref-id path]
   (let [url (http/build-url (:repository_service @conf) 
-                            (str "/path-content/" git-ref-id  "/" path))
+                            (str "/path-content/" git-ref-id (format-path path)))
         res (try (with/logging (http/get url {}))
                  (catch Exception _ 
                    (throw 
@@ -74,25 +93,26 @@
 ;### expand ###############################################################
 
 
-(defn expand [git-ref-id spec]
-  (with/logging 
-  (cond 
-    (map? spec) (if-let [include-value (:_cider-ci_include spec)]
-                  (let [content (get-include-content git-ref-id include-value)]
-                    (expand git-ref-id (util/deep-merge (dissoc spec :_cider-ci_include)
-                                                        content)))
-                  (into {} (map (fn [pair]
-                                  (let [[k v] pair]
-                                    [k (expand git-ref-id v)]))
-                                spec)))
-    (coll? spec) (map (fn [spec-item]
-                       (logging/debug {:spec-item spec-item})
-                       (cond 
-                         (map? spec-item) (expand git-ref-id spec-item)
-                         (coll? spec-item) (expand git-ref-id spec-item)
-                         :else spec-item))
-                     spec)
-    :else spec))) 
+(defn expand 
+  ([git-ref-id spec]
+   (with/logging 
+     (cond 
+       (map? spec) (if-let [include-value (:_cider-ci_include spec)]
+                     (let [content (get-include-content git-ref-id include-value)]
+                       (expand git-ref-id (util/deep-merge (dissoc spec :_cider-ci_include)
+                                                           content)))
+                     (into {} (map (fn [pair]
+                                     (let [[k v] pair]
+                                       [k (expand git-ref-id v)]))
+                                   spec)))
+       (coll? spec) (map (fn [spec-item]
+                           (logging/debug {:spec-item spec-item})
+                           (cond 
+                             (map? spec-item) (expand git-ref-id spec-item)
+                             (coll? spec-item) (expand git-ref-id spec-item)
+                             :else spec-item))
+                         spec)
+       :else spec)))) 
 
 
 

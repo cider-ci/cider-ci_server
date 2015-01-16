@@ -33,7 +33,7 @@
      (catch Exception e#
        (let [row-data#  {:execution_id (:id ~execution) 
                          :description ~description
-                         :stacktrace  (exception/stringify e# "\\n")}]
+                         :stacktrace  (str (.getMessage e#) "\n\n"  (exception/stringify e# "\\n"))}]
          (logging/warn ~execution row-data# e#)
          (jdbc/insert! (rdbms/get-ds) "execution_issues" row-data#)))))
 
@@ -143,18 +143,30 @@
       (build-tasks execution spec))))
 
 
-;### messaging ################################################################
+(defn- assert-tasks [execution]
+  (when (= 0 (-> (jdbc/query (rdbms/get-ds) 
+                             ["SELECT count(*) AS count FROM tasks WHERE execution_id = ?" 
+                              (:id execution)]) 
+                 first :count))
+    (jdbc/update! (rdbms/get-ds) :executions
+                  {:state "failed"}
+                  ["id = ? " (:id execution)])
+    (throw (IllegalStateException. 
+             "This execution failed because no tasks have been created for it."))))
+
+
 (defn create-tasks-and-trials [message]
   (logging/debug create-tasks-and-trials message)
   (if-let [execution (get-execution (:execution_id message))] 
     (wrap-exception-create-execution-issue 
-      execution "Error in create-tasks-and-trials" 
+      execution "Error during create-tasks-and-trials" 
       (-> execution expand-execution-spec create-tasks)
       (doseq [task-with-id (jdbc/query 
                              (rdbms/get-ds) 
                              ["SELECT id FROM tasks WHERE execution_id = ?" 
                               (:id execution)])]
-        (messaging/publish "task.create-trials" task-with-id)))
+        (messaging/publish "task.create-trials" task-with-id))
+      (assert-tasks execution))
     (throw (IllegalStateException. (str "could not find execution for " message)))))
 
 ;(create-tasks-and-trials {:execution_id "fb1e97df-64de-4c12-bf01-4778924bbae9"})
