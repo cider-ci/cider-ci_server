@@ -60,6 +60,18 @@
            :name (str name-prefix " » " (:name merged-task))
            })))
 
+
+(defn value-seq-for-map-or-array 
+  [mapar]
+  "Accepts a map or any other collection and returns a seq of the values in the
+  first case and the collection itself in the second. Returns an empty array in
+  any other case." 
+  (cond 
+    (map? mapar) (map second mapar)
+    (coll? mapar) mapar  ; throw this if we do not accept arrays anymore
+    :else [] ))
+
+
 ; build-tasks-for-single-context and build-tasks-for-contexts-sequence 
 ; call each other recursively; no need for trampoline, sensible specs
 ; should not blow the stack
@@ -72,9 +84,9 @@
                                task-defaults 
                                script-defaults
                                new-name-prefix))
-                 (or (:tasks context) []))
+                 (value-seq-for-map-or-array (:tasks context)))
             (if-let [subcontexts-spec (:subcontexts context)]
-              (build-tasks-for-contexts-sequence subcontexts-spec 
+              (build-tasks-for-contexts-sequence (value-seq-for-map-or-array subcontexts-spec)
                                                  task-defaults 
                                                  script-defaults
                                                  new-name-prefix) 
