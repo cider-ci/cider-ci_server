@@ -2,25 +2,28 @@ database:
   db_spec: 
     adapter: "postgresql" 
     classname: "org.postgresl.Driver"
-    subname: "//localhost:5432/cider_ci_dev"
+    subname: "//localhost:5432/cider-ci_development"
     subprotocol: "postgresql"
+    user: cider-ci
+    password: cider-ci
     max_pool_size: 10 
 
 messaging: 
   connection: 
     vhost: cider-ci
     host: 127.0.0.1
-    username: guest
-    password: guest
+    username: cider-ci
+    password: cider-ci
 
-basic_auth:
-  username: builder
-  password: secret
 
 nrepl:
   port: 7884
   bind: "127.0.0.1"
   enabled: false
+
+basic_auth:
+  username: builder
+  password: secret
 
 http_server: 
   host: 127.0.0.1
