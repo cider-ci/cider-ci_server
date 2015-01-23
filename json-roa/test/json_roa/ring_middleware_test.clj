@@ -27,7 +27,7 @@
         (let [headers (-> built-response :headers)]
           (logging/debug {:headers headers})
           (testing "has the correct header" 
-            (is (re-matches #".*application\/roa\+json.*" (str headers)))))
+            (is (re-matches #".*application\/json-roa\+json.*" (str headers)))))
         (let [data (-> built-response :body (json/parse-string true))] 
           (logging/debug test-wrap-roa-json-response {:data data}) 
           (testing "the parsed json data" 
@@ -45,7 +45,7 @@
       (testing "the built response" 
         (is built-response)
         (testing "has the correct header" 
-          (is (re-matches #".*application\/roa\+json.*" (-> built-response :headers str))))
+          (is (re-matches #".*application\/json-roa\+json.*" (-> built-response :headers str))))
         (let [data (-> built-response :body (json/parse-string true))] 
           (logging/debug test-wrap-roa-json-response {:data data}) 
           (testing "the parsed json data" 

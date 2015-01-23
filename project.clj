@@ -10,9 +10,9 @@
   :dependencies [
                  [cheshire "5.4.0"]
                  [cider-ci/clj-auth "2.1.0"]
-                 [cider-ci/clj-utils "2.3.0"]
-                 [org.clojure/tools.nrepl "0.2.6"]
-                 [org.jruby/jruby-complete "1.7.18"]
+                 [cider-ci/clj-utils "2.4.0"]
+                 [org.clojure/tools.nrepl "0.2.7"]
+                 [org.jruby/jruby-complete "9.0.0.0.pre1"]
                  [ring-middleware-accept "2.0.3"]
                  [ring/ring-core "1.3.2"]
                  [honeysql "0.4.3"]
@@ -27,6 +27,7 @@
   :aot [cider-ci.api.main] 
   :main cider-ci.api.main 
   :repositories [["tmp" {:url "http://maven-repo-tmp.drtom.ch" :snapshots false}]]
+  :jvm-opts ["-Xmx256m"]
   )
 
 ;(cemerick.pomegranate.aether/register-wagon-factory!  "scp" #(let [c (resolve 'org.apache.maven.wagon.providers.ssh.external.ScpExternalWagon)] (clojure.lang.Reflector/invokeConstructor c (into-array []))))
