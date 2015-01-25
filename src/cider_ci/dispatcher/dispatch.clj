@@ -136,9 +136,10 @@
         submodules (get-submodule-definitions (:git_commit_id branch))
         trial-id (:id trial)
         environment-variables (conj (or (:environment_variables task-spec) {})
-                                    {:cider_ci_execution_id execution-id
-                                     :cider_ci_task_id (:task_id trial)
-                                     :cider_ci_trial_id trial-id})
+                                    {:CIDER_CI_EXECUTION_ID execution-id
+                                     :CIDER_CI_TASK_ID (:task_id trial)
+                                     :CIDER_CI_TRIAL_ID trial-id
+                                     :CIDER_CI_TREE_ID (:tree_id branch)})
         data {:trial_attachments (:trial_attachments task-spec)
               :tree_attachments (:tree_attachments task-spec)
               :trial_attachments_url (trial-attachments-url executor trial-id)
