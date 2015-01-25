@@ -2,11 +2,15 @@
 ; Licensed under the terms of the GNU Affero General Public License v3.
 ; See the "LICENSE.txt" file provided with this software.
 
+
+; TODO key of attachment as name if possible 
+
 (ns cider-ci.builder.tasks
   (:require 
-    [cider-ci.builder.task :as task]
-    [cider-ci.builder.spec :as spec]
     [cider-ci.builder.expansion :as expansion]
+    [cider-ci.builder.spec :as spec]
+    [cider-ci.builder.task :as task]
+    [cider-ci.builder.util :as util]
     [cider-ci.utils.config-loader :as config-loader]
     [cider-ci.utils.debug :as debug]
     [cider-ci.utils.exception :as exception]
@@ -42,18 +46,13 @@
 
 
 ;### build tasks ##############################################################
-(defn deep-merge [& vals]
-  (if (every? map? vals)
-    (apply merge-with deep-merge vals)
-    (last vals)))
-
 (defn build-scripts [task script-defaults]
   (into {} (for [[name-key script] (or (:scripts task) {})]
-             (let [final-script  (deep-merge script-defaults script)]
+             (let [final-script  (util/deep-merge script-defaults script)]
                [name-key final-script]))))
 
 (defn build-task [task-spec task-defaults script-defaults name-prefix]
-  (let [merged-task (deep-merge task-defaults task-spec)]
+  (let [merged-task (util/deep-merge task-defaults task-spec)]
     ;(logging/debug {:merged-task merged-task})
     (conj merged-task
           {:scripts (build-scripts merged-task script-defaults)
@@ -99,10 +98,10 @@
          (map 
            (fn [context]
              (logging/debug {:context context})
-             (let [task-defaults (deep-merge inherited-task-defaults
+             (let [task-defaults (util/deep-merge inherited-task-defaults
                                              (or (:task_defaults context) 
                                                  {}))
-                   script-defaults (deep-merge inherited-script-defaults
+                   script-defaults (util/deep-merge inherited-script-defaults
                                                (or (:script_defaults context) 
                                                    {}))]
                (build-tasks-for-single-context context 
