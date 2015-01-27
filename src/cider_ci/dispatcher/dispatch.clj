@@ -125,22 +125,25 @@
                                      :CIDER_CI_TASK_ID (:task_id trial)
                                      :CIDER_CI_TRIAL_ID trial-id
                                      :CIDER_CI_TREE_ID (:tree_id branch)})
-        data {:trial_attachments (:trial_attachments task-spec)
-              :tree_attachments (:tree_attachments task-spec)
-              :trial_attachments_url (trial-attachments-url executor trial-id)
-              :tree_attachments_url (tree-attachments-url executor tree-id)
-              :execution_id execution-id
-              :task_id (:task_id trial)
-              :trial_id trial-id
+        data {
               :environment_variables environment-variables
+              :execution_id execution-id
               :git_branch_name (:name branch)
-              :git_tree_id (:tree_id branch)
               :git_commit_id (:git_commit_id branch)
+              :git_options (or (:git_options task-spec) {})
+              :git_tree_id (:tree_id branch)
               :git_url (git-url executor repository-id)
               :patch_url (patch-url executor trial-id)
               :ports (:ports task-spec)
               :repository_id repository-id
-              :scripts (:scripts trial) }]
+              :scripts (:scripts trial) 
+              :task_id (:task_id trial)
+              :tree_attachments (:tree_attachments task-spec)
+              :tree_attachments_url (tree-attachments-url executor tree-id)
+              :trial_attachments (:trial_attachments task-spec)
+              :trial_attachments_url (trial-attachments-url executor trial-id)
+              :trial_id trial-id
+              }]
     data))
 
 (defn branch-and-commit [execution-id] 
