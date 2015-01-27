@@ -9,7 +9,6 @@
     [cider-ci.auth.http-basic :as http-basic]
     [cider-ci.repository.git.repositories :as git.repositories]
     [cider-ci.repository.sql.repository :as sql.repository]
-    [cider-ci.repository.submodules :as submodules]
     [cider-ci.utils.debug :as debug]
     [cider-ci.utils.exception :as utils.execption]
     [cider-ci.utils.http-server :as http-server]
@@ -30,17 +29,6 @@
 
 
 (defonce conf (atom {}))
-
-(defn get-submodules [commit-id]
-  (try 
-    (let [sms (submodules/submodules-for-commit commit-id)]
-      {:status 200
-       :headers {"Content-Type" "application/json"}
-       :body (json/write-str sms)})
-    (catch Exception e
-      (logging/warn (utils.execption/stringify e))
-      {:status 404}
-      )))
 
 (defn get-git-file [request]
   (logging/debug get-git-file [request])
@@ -87,8 +75,6 @@
 
 (defn build-routes [context]
   (cpj/routes 
-    (cpj/GET "/submodules/:commit-id" [commit-id] 
-             (get-submodules commit-id))
     (cpj/GET "/path-content/:id/*" request 
              (get-path-content request))
     (cpj/GET "/:id/git/*" request

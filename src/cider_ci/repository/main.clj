@@ -2,7 +2,6 @@
   (:require 
     [cider-ci.auth.core :as auth]
     [cider-ci.repository.repositories :as repositories]
-    [cider-ci.repository.submodules :as submodules]
     [cider-ci.repository.web :as web]
     [cider-ci.utils.config-loader :as config-loader]
     [cider-ci.utils.http :as http]
@@ -32,5 +31,4 @@
   (rdbms/initialize (get-db-spec))
   (auth/initialize (select-keys @conf [:session :basic_auth]))
   (repositories/initialize (select-keys @conf [:repositories]))
-  (submodules/initialize {})
   (web/initialize (select-keys @conf [:http_server :repositories])))
