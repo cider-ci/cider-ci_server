@@ -111,20 +111,6 @@
 
 
   
-(defn submodules-dispatch-data [submodules executor]
-  (map 
-    (fn [submodule]
-      {:git_commit_id (:commit_id submodule)
-       :repository_id (:repository_id submodule)
-       :git_url (git-url executor (:repository_id submodule))
-       :subpath_segments (:path submodule)
-       })
-    submodules))
-
-(defn get-submodule-definitions [id]
-  (logging/warn "TODO" get-submodule-definitions)
-  [])
-
 (defn build-dispatch-data [trial executor]
   (let [task (first (jdbc/query (rdbms/get-ds)
                                 ["SELECT * FROM tasks WHERE tasks.id = ?" (:task_id trial)]))
@@ -133,7 +119,6 @@
         branch (branch-and-commit execution-id)
         tree-id (:tree_id branch)
         repository-id (:repository_id branch)
-        submodules (get-submodule-definitions (:git_commit_id branch))
         trial-id (:id trial)
         environment-variables (conj (or (:environment_variables task-spec) {})
                                     {:CIDER_CI_EXECUTION_ID execution-id
@@ -152,7 +137,6 @@
               :git_tree_id (:tree_id branch)
               :git_commit_id (:git_commit_id branch)
               :git_url (git-url executor repository-id)
-              :git_submodules (submodules-dispatch-data submodules executor)
               :patch_url (patch-url executor trial-id)
               :ports (:ports task-spec)
               :repository_id repository-id
