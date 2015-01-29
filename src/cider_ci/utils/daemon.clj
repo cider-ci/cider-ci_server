@@ -23,20 +23,18 @@
          (~stop-fn)
          (let [done# (atom false)
                runner# (future (logging/info "daemon " ~daemon-name " started")
-                               ;(Thread/sleep (* ~secs-pause 1000))
                                (loop []
                                  (when-not @done#
                                    (with/suppress-and-log-error
                                      ~@body)
-                                   (Thread/sleep (* ~secs-pause 1000))
+                                   (Thread/sleep (Math/ceil (* ~secs-pause 1000)))
                                    (recur))))]
            (reset! ~stop (fn []
                            (reset! done# true)
                            (future-cancel runner#)
                            ;@runner#
-                           (logging/info "daemon " ~daemon-name "stopped")
-                           ))))
-       )))
+                           (logging/info "daemon " ~daemon-name "stopped"))))))))
+
 
 ;(macroexpand-1 '(define "Blah" start stop 10 (logging/info "looping ...")))
 

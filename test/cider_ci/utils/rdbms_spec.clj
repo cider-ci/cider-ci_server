@@ -8,6 +8,13 @@
     [midje.sweet])
   )
 
+(def db-spec {:adapter "postgresql" 
+              :classname "org.postgresl.Driver"
+              :subname "//localhost:5432/cider-ci_development"
+              :user "cider-ci"
+              :password "cider-ci"
+              :subprotocol "postgresql"
+              :max_pool_size 2 })
 
 (facts "using rdbms to create a pooled connection" 
 
@@ -38,11 +45,7 @@
 
        (rdbms/reset)
 
-       (rdbms/initialize {:adapter "postgresql" 
-                          :classname "org.postgresl.Driver"
-                          :subname "//localhost:5432/cider_ci_dev"
-                          :subprotocol "postgresql"
-                          :max_pool_size 2 })
+       (rdbms/initialize db-spec )
 
        (let [ds  (rdbms/get-ds)]
          (fact "drop table" (jdbc/db-do-commands ds "DROP TABLE IF EXISTS test ;") => truthy)
@@ -61,11 +64,7 @@
 
        (rdbms/reset)
 
-       (rdbms/initialize {:adapter "postgresql" 
-                          :classname "org.postgresl.Driver"
-                          :subname "//localhost:5432/cider_ci_dev"
-                          :subprotocol "postgresql"
-                          :max_pool_size 2 })
+       (rdbms/initialize db-spec)
 
        (let [ds  (rdbms/get-ds)]
          (fact "drop table" (jdbc/db-do-commands ds "DROP TABLE IF EXISTS test ;") => truthy)
