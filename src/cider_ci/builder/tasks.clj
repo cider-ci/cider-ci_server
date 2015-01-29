@@ -31,13 +31,13 @@
 
 
 ;### utils ####################################################################
-(defmacro wrap-exception-create-execution-issue [execution description & body]
+(defmacro wrap-exception-create-execution-issue [execution title & body]
   `(try 
      ~@body
      (catch Exception e#
        (let [row-data#  {:execution_id (:id ~execution) 
-                         :description ~description
-                         :stacktrace  (str (.getMessage e#) "\n\n"  (exception/stringify e# "\\n"))}]
+                         :title ~title
+                         :description (str (.getMessage e#) "\n\n"  (exception/stringify e# "\\n"))}]
          (logging/warn ~execution row-data# e#)
          (jdbc/insert! (rdbms/get-ds) "execution_issues" row-data#)))))
 
