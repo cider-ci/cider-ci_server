@@ -5,6 +5,8 @@
 (ns cider-ci.dispatcher.dispatch
   (:require
     [cider-ci.dispatcher.task :as task]
+    [cider-ci.dispatcher.trial :as trial-utils]
+
     [cider-ci.utils.daemon :as daemon]
     [cider-ci.utils.debug :as debug]
     [cider-ci.utils.http :as http]
@@ -14,19 +16,10 @@
     [clojure.data.json :as json]
     [clojure.java.jdbc :as jdbc]
     [clojure.tools.logging :as logging]
+    [honeysql.core :as hc]
+    [honeysql.helpers :as hh]
     [robert.hooke :as hooke]
     ))
-
-
-(declare 
-  branch-and-commit  
-  build-dispatch-data 
-  dispatch 
-  dispatch-trials 
-  executors-to-dispatch-to 
-  route-url-for-executor
-  to-be-dispatched-trials 
-  )
 
 
 
@@ -56,61 +49,30 @@
   (let [config (get-storage-http-config executor)]
     (http/build-url config (str "/tree-attachments/" tree-id "/"))))
 
+(defn- route-url-for-executor [executor path]
+  (let [config (if (:server_overwrite executor) 
+                 executor 
+                 (:dispatcher_service @conf))]
+    (http/build-url config path))) 
+
 (defn- patch-url [executor trial-id]
   (route-url-for-executor 
     executor 
     (str "/trials/" trial-id )))
 
 
-;### build urls ###############################################################
- 
-(defn dispatch [trial executor]
-  (try
-    (with/logging 
-      (let [data (build-dispatch-data trial executor)
-            protocol (if (:ssl executor) "https" "http")
-            url (str protocol "://" (:host executor) 
-                     ":" (:port executor) "/execute")]
-        (jdbc/update! (rdbms/get-ds) :trials 
-                      {:state "dispatching" :executor_id (:id executor)} 
-                      ["id = ?" (:id trial)])
-        (http/post url {:body (json/write-str data)})))
-    (catch Exception e
-      (jdbc/update! (rdbms/get-ds) :trials 
-                    {:state "pending" :executor_id nil} ["id = ?" (:id trial)])
-      false)))
+;### dispatch data ############################################################
+(defn branch-and-commit [execution-id] 
+  (first (jdbc/query (rdbms/get-ds)
+           ["SELECT branches.name, branches.repository_id, 
+              commits.tree_id as tree_id,
+              commits.id as git_commit_id FROM branches 
+            INNER JOIN branches_commits ON branches.id = branches_commits.branch_id 
+            INNER JOIN commits ON branches_commits.commit_id = commits.id 
+            INNER JOIN executions ON commits.tree_id = executions.tree_id
+            WHERE executions.id = ? 
+            ORDER BY branches.updated_at DESC" execution-id])))
 
-(defn dispatch-trials []
-  (doseq [trial (to-be-dispatched-trials)]
-    (loop [executors (executors-to-dispatch-to (:id trial))]
-      (if-let [executor (first executors)]
-        (if-not (dispatch trial executor)
-          (recur (rest executors)))))))
-
-(defn executors-to-dispatch-to [trial-id]
-  (jdbc/query (rdbms/get-ds)
-    ["SELECT executors_with_load.*
-     FROM executors_with_load,
-     tasks
-     INNER JOIN trials on trials.task_id = tasks.id
-     WHERE trials.id = ?
-     AND (tasks.traits <@ executors_with_load.traits)
-     AND executors_with_load.enabled = 't'
-     AND (last_ping_at > (now() - interval '1 Minutes'))
-     AND (executors_with_load.relative_load < 1)
-     ORDER BY executors_with_load.relative_load ASC " trial-id]))
-
-(defn to-be-dispatched-trials []
-  (jdbc/query (rdbms/get-ds)
-    ["SELECT trials.* FROM trials 
-     INNER JOIN tasks ON tasks.id = trials.task_id 
-     INNER JOIN executions ON executions.id = tasks.execution_id 
-     WHERE trials.state = 'pending'  
-     ORDER BY executions.priority DESC, executions.created_at ASC, tasks.priority DESC, tasks.created_at ASC"]
-    ))
-
-
-  
 (defn build-dispatch-data [trial executor]
   (let [task (first (jdbc/query (rdbms/get-ds)
                                 ["SELECT * FROM tasks WHERE tasks.id = ?" (:task_id trial)]))
@@ -146,29 +108,90 @@
               }]
     data))
 
-(defn branch-and-commit [execution-id] 
-  (first (jdbc/query (rdbms/get-ds)
-           ["SELECT branches.name, branches.repository_id, 
-              commits.tree_id as tree_id,
-              commits.id as git_commit_id FROM branches 
-            INNER JOIN branches_commits ON branches.id = branches_commits.branch_id 
-            INNER JOIN commits ON branches_commits.commit_id = commits.id 
-            INNER JOIN executions ON commits.tree_id = executions.tree_id
-            WHERE executions.id = ? 
-            ORDER BY branches.updated_at DESC" execution-id])))
 
-(defn route-url-for-executor [executor path]
-  (let [config (if (:server_overwrite executor) 
-                 executor 
-                 (:dispatcher_service @conf))]
-    (http/build-url config path))) 
+;### dispatch #################################################################
+
+(defn choose-executor-to-dispatch-to [trial]
+  (->> (-> (hh/select :executors_with_load.*)
+           (hh/from :trials)
+           (hh/where [:= :trials.id (:id trial)])
+           (hh/merge-join :tasks [:= :tasks.id :trials.task_id])
+           (hh/merge-join :executors_with_load (hc/raw "(tasks.traits <@ executors_with_load.traits)"))
+           (hh/merge-where (hc/raw "(last_ping_at > (now() - interval '1 Minutes'))"))
+           (hh/merge-where [:= :enabled true])
+           (hh/merge-where [:< :relative_load 1])
+           hc/format)
+       (jdbc/query (rdbms/get-ds))
+       (map (fn [e] (repeat (- (:max_load e) (:current_load e)) e)))
+       flatten rand-nth))
+
+(defn get-next-trial-to-be-dispatched []
+  (-> (-> (hh/select :trials.*)
+          (hh/from :trials)
+          (hh/merge-where [:= :trials.state "pending"])
+          (hh/merge-where [:exists  (-> (hh/select 1 )
+                                        (hh/from :executors_with_load)
+                                        (hh/merge-where [:< :relative_load 1])
+                                        (hh/merge-where [:= :enabled true])
+                                        (hh/merge-where (hc/raw "(tasks.traits <@ executors_with_load.traits)"))
+                                        (hh/merge-where (hc/raw "(last_ping_at > (now() - interval '1 Minutes'))")))])
+          (hh/merge-join :tasks [:= :tasks.id :trials.task_id])
+          (hh/merge-join :executions [:= :executions.id :tasks.execution_id])
+          (hh/order-by [:executions.priority :desc] 
+                       [:executions.created_at :asc] 
+                       [:tasks.priority :desc]
+                       [:tasks.created_at :asc]
+                       [:trials.created_at :asc])
+          (hh/limit 1)
+          hc/format)
+      (#(jdbc/query (rdbms/get-ds) %))
+      first))
+
+
+(defn- issues-count [trial]
+  (-> (jdbc/query (rdbms/get-ds) 
+                  ["SELECT count(*) FROM trial_issues WHERE trial_id = ? " (:id trial)] )
+      first :count))
+
+(defn dispatch [trial executor]
+  (try
+    (trial-utils/wrap-trial-with-issue-and-throw-again 
+      trial  "Error during dispatch" 
+      (let [data (build-dispatch-data trial executor)
+            protocol (if (:ssl executor) "https" "http")
+            url (str protocol "://" (:host executor) 
+                     ":" (:port executor) "/execute")]
+        
+        (jdbc/update! (rdbms/get-ds) :trials 
+                      {:state "dispatching" :executor_id (:id executor)} 
+                      ["id = ?" (:id trial)])
+        (http/post url {:body (json/write-str data)})))
+    (catch Exception e
+      (let  [row (if (<= 3 (issues-count trial))
+                   {:state "failed" :error "Too many issues, giving up to dispatch this trial " 
+                    :executor_id nil}
+                   {:state "pending" :executor_id nil})]
+        (trial-utils/update (conj trial row))
+        false))))
+
+(defn dispatch-trials []
+  (when-let [next-trial  (get-next-trial-to-be-dispatched)] 
+    (loop [trial next-trial
+           executor (choose-executor-to-dispatch-to trial)]
+      (jdbc/update! (rdbms/get-ds) :trials 
+                    {:state "dispatching" 
+                     :executor_id (:id executor)} 
+                    ["id = ?" (:id trial)])
+      (future (dispatch trial executor))
+      (when-let [trial (get-next-trial-to-be-dispatched)]
+        (recur trial (choose-executor-to-dispatch-to trial))))))
 
 
 ;#### dispatch service ########################################################
 (daemon/define "dispatch-service" 
   start-dispatch-service 
   stop-dispatch-service 
-  1
+  0.2
   (logging/debug "dispatch-service")
   (dispatch-trials))
 

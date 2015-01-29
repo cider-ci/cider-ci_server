@@ -24,6 +24,19 @@
   (first (jdbc/query (rdbms/get-ds) 
                      ["SELECT * FROM trials WHERE id = ?" id])))
 
+
+(defmacro wrap-trial-with-issue-and-throw-again [trial title & body]
+  `(try 
+     ~@body
+     (catch Exception e#
+       (let [row-data#  {:trial_id (:id ~trial) 
+                         :title ~title
+                         :description (str (.getMessage e#) "\n\n"  (exception/stringify e# "\\n"))}]
+         (logging/warn ~trial row-data# e#)
+         (jdbc/insert! (rdbms/get-ds) "trial_issues" row-data#))
+       (throw e#))))
+
+
 ;#### update trial ############################################################
 (defn dispatch-update [trial]
   (let [task-id (or (:task_id trial)
@@ -37,7 +50,7 @@
       (try 
         (assert id)
         (let [update-params (select-keys params
-                                         [ :error :finished_at :result
+                                         [:error :finished_at :result
                                           :scripts :started_at :state ])]
           (jdbc/update! (rdbms/get-ds)
                         :trials update-params
