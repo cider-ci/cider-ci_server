@@ -135,6 +135,11 @@
                                         (hh/merge-where [:= :enabled true])
                                         (hh/merge-where (hc/raw "(tasks.traits <@ executors_with_load.traits)"))
                                         (hh/merge-where (hc/raw "(last_ping_at > (now() - interval '1 Minutes'))")))])
+          (hh/merge-where [ "NOT EXISTS" (-> (hh/select 1)
+                                             (hh/from [:trials :active_trials])
+                                             (hh/merge-join [:tasks :active_tasks] [:= :active_tasks.id :active_trials.task_id])
+                                             (hh/merge-where [:in :active_trials.state  ["executing","dispatching"]])
+                                             (hh/merge-where (hc/raw "active_tasks.exclusive_resources && tasks.exclusive_resources")))])
           (hh/merge-join :tasks [:= :tasks.id :trials.task_id])
           (hh/merge-join :executions [:= :executions.id :tasks.execution_id])
           (hh/order-by [:executions.priority :desc] 
@@ -146,7 +151,6 @@
           hc/format)
       (#(jdbc/query (rdbms/get-ds) %))
       first))
-
 
 (defn- issues-count [trial]
   (-> (jdbc/query (rdbms/get-ds) 
