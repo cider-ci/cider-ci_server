@@ -8,6 +8,7 @@
     [clojure.stacktrace :as stacktrace]
     [clojure.tools.logging :as logging]
     [cider-ci.utils.with :as with]
+    [cider-ci.utils.map :refer [deep-merge]]
     ))
 
 
@@ -20,7 +21,7 @@
         (with/suppress-and-log-warn 
           (let [config-string (slurp config-resource)
                 config (yaml/parse-string config-string)
-                merge-fun #(conj % config)]
+                merge-fun #(deep-merge % config)]
             (logging/debug "read config" config)
             (swap! conf-atom merge-fun)
             (logging/info "merged config from " filename))))
