@@ -13,6 +13,7 @@
 
 
 (defn read-and-merge [conf-atom filenames]
+  (logging/warn "cider-ci.utils.config-loader is DEPRECATED consider cider-ci.utils.config ")
   (doseq [filename filenames]
     (logging/info "looking for " filename " config resource")
     (if-let [config-resource (clojure.java.io/resource filename)]

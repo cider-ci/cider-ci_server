@@ -2,7 +2,7 @@
 ; Licensed under the terms of the GNU Affero General Public License v3.
 ; See the "LICENSE.txt" file provided with this software.
 
-(defproject cider-ci/clj-utils "2.6.0"
+(defproject cider-ci/clj-utils "2.7.0"
   :description "Shared Clojure Utils for Cider-CI"
   :url "https://github.com/cider-ci/cider-ci_clj-utils"
   :license {:name "GNU AFFERO GENERAL PUBLIC LICENSE Version 3"
@@ -15,7 +15,7 @@
                  [clj-yaml "0.4.0"]
                  [com.mchange/c3p0 "0.9.5"]
                  [com.novemberain/langohr "3.0.1"]
-                 [compojure "1.3.1"]
+                 [compojure "1.3.2"]
                  [joda-time "2.7"]
                  [log4j/log4j "1.2.17" :exclusions [javax.mail/mail javax.jms/jms com.sun.jdmk/jmxtools com.sun.jmx/jmxri]]
                  [org.clojars.hozumi/clj-commons-exec "1.2.0"]
@@ -26,7 +26,7 @@
                  [org.clojure/tools.nrepl "0.2.7"]
                  [org.postgresql/postgresql "9.3-1102-jdbc4"]
                  [org.slf4j/slf4j-log4j12 "1.7.10"]
-                 [org.yaml/snakeyaml "1.14"]
+                 [org.yaml/snakeyaml "1.15"]
                  [pg-types "1.0.0-beta.6"]
                  [ring "1.3.2"] 
                  [ring/ring-core "1.3.2"] 
@@ -35,7 +35,7 @@
                  [robert/hooke "1.3.0"]
 
                  ; explicit transient deps to force conflict resolution
-                 [org.clojure/tools.reader "0.8.13"]
+                 [org.clojure/tools.reader "0.8.15"]
                  ]
 
   :profiles {:dev {:dependencies [
@@ -51,6 +51,4 @@
   :deploy-repositories [ ["tmp" "scp://maven@schank.ch/tmp/maven-repo/"]]
   )
 
-(cemerick.pomegranate.aether/register-wagon-factory!
-  "scp" #(let [c (resolve 'org.apache.maven.wagon.providers.ssh.external.ScpExternalWagon)]
-           (clojure.lang.Reflector/invokeConstructor c (into-array []))))
+;(cemerick.pomegranate.aether/register-wagon-factory!  "scp" #(let [c (resolve 'org.apache.maven.wagon.providers.ssh.external.ScpExternalWagon)] (clojure.lang.Reflector/invokeConstructor c (into-array []))))
