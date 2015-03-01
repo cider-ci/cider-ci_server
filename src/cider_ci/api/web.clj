@@ -9,6 +9,7 @@
     [cider-ci.auth.cors :as cors]
     [cider-ci.auth.http-basic :as http-basic]
     [cider-ci.auth.session :as session]
+    [cider-ci.utils.config :refer [get-config]]
     [cider-ci.utils.debug :as debug]
     [cider-ci.utils.http-server :as http-server]
     [cider-ci.utils.messaging :as messaging]
@@ -21,17 +22,15 @@
     [compojure.core :as cpj]
     [compojure.handler :as cpj.handler]
     [ring.adapter.jetty :as jetty]
+    [ring.middleware.content-type :as content-type]
     [ring.middleware.cookies :as cookies]
     [ring.middleware.json]
     [ring.middleware.resource :as resource]
-    [ring.middleware.content-type :as content-type]
     [ring.util.response :as response]
     )
   (:use 
     [clojure.walk :only [keywordize-keys]]
     ))
-
-(defonce conf (atom nil))
 
 
 ;##### static resources ####################################################### 
@@ -83,7 +82,7 @@
        (routing/wrap-debug-logging 'cider-ci.api.web)
        (auth/wrap-authenticate-and-authorize-service-or-user)
        (routing/wrap-debug-logging 'cider-ci.api.web)
-       http-basic/wrap
+       (http-basic/wrap {:user true :service true})
        (routing/wrap-debug-logging 'cider-ci.api.web)
        session/wrap
        (routing/wrap-debug-logging 'cider-ci.api.web)
@@ -103,17 +102,18 @@
 
 ;#### the server ##############################################################
 
-(defn initialize [new-conf]
-  (reset! conf new-conf)
-  (let [http-conf (-> @conf :http_server)
+(defn initialize []
+  (let [http-conf (-> (get-config) :services :api :http)
         context (str (:context http-conf) (:sub_context http-conf))]
     (http-server/start http-conf (build-main-handler context))))
+
 
 
 ;### Debug ####################################################################
 ;(logging-config/set-logger! :level :debug)
 ;(logging-config/set-logger! :level :info)
 ;(debug/debug-ns 'ring.middleware.resource)
+;(debug/debug-ns 'cider-ci.auth.core)
 ;(debug/debug-ns 'cider-ci.auth.session)
 ;(debug/debug-ns 'cider-ci.auth.http-basic)
 ;(debug/debug-ns *ns*)

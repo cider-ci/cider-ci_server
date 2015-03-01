@@ -11,18 +11,18 @@
     [cider-ci.api.resources.root :as resources.root]
     [cider-ci.api.resources.task :as task]
     [cider-ci.api.resources.tasks :as tasks]
-    [cider-ci.api.resources.trials :as trials]
-    [cider-ci.api.resources.trial :as trial]
-    [cider-ci.api.resources.trial-attachments :as trial-attachments]
-    [cider-ci.api.resources.trial-attachment :as trial-attachment]
-    [cider-ci.api.resources.tree-attachments :as tree-attachments]
     [cider-ci.api.resources.tree-attachment :as tree-attachment]
+    [cider-ci.api.resources.tree-attachments :as tree-attachments]
+    [cider-ci.api.resources.trial :as trial]
+    [cider-ci.api.resources.trial-attachment :as trial-attachment]
+    [cider-ci.api.resources.trial-attachments :as trial-attachments]
+    [cider-ci.api.resources.trials :as trials]
+    [cider-ci.utils.config :refer [get-config]]
     [cider-ci.utils.debug :as debug]
-    [cider-ci.utils.routing :as routing]
     [cider-ci.utils.exception :as exception]
     [cider-ci.utils.http :as http]
+    [cider-ci.utils.routing :as routing]
     [cider-ci.utils.with :as with]
-    [json-roa.ring-middleware]
     [clj-logging-config.log4j :as logging-config]
     [clojure.data.json :as json]
     [clojure.java.jdbc :as jdbc]
@@ -30,14 +30,13 @@
     [compojure.core :as cpj]
     [compojure.handler :as cpj.handler]
     [compojure.route :as cpj.route]
+    [json-roa.ring-middleware]
     [ring.adapter.jetty :as jetty]
     [ring.middleware.cookies :as cookies]
     [ring.middleware.json]
     [ring.util.response :as response]
     ))
 
-
-(defonce conf (atom nil))
 
 ;### sanitize request params #################################################
 
@@ -56,8 +55,7 @@
 (defn wrap-includ-storage-service-prefix [handler]
   (fn [request]
     (handler (assoc-in request [:storage_service_prefix]
-                       (http/build-url (:storage_service @conf) "")))))
-
+                       (http/build-url (-> (get-config) :services :storage :http_external) "")))))
 
 
 ;### init #####################################################################
@@ -101,10 +99,6 @@
         )))
 
 
-;### init #####################################################################
-
-(defn initialize [new-conf]
-  (reset! conf new-conf))
 
 
 ;### Debug ####################################################################
