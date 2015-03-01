@@ -25,7 +25,7 @@
         AND trials.executor_id IS NOT NULL"]))
 
 (defn trial-request-url [executor-db trial-db]
-  (str (executor-entity/base-url executor-db) "/trials/" (:id trial-db)))
+  (str (:base_url executor-db) "/trials/" (:id trial-db)))
 
 (defn get-executor [id]
   (first (jdbc/query (rdbms/get-ds)
@@ -42,7 +42,8 @@
                          {:insecure? true
                           :accept :json
                           :socket-timeout 3000 
-                          :conn-timeout 3000})]
+                          :conn-timeout 3000
+                          :basic-auth ["dispatcher" (executor-entity/http-basic-password executor)]})]
           ;TODO maybe implement some logic that considers the states 'success' and 'failed'
           ; maybe after we move the API from TB to IM 
           (logging/warn ["HANDLING TO BE IMPLEMENTED" check-trials response]))

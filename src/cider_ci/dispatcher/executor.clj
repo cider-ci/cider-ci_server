@@ -5,17 +5,15 @@
 (ns cider-ci.dispatcher.executor
   (:require
     [cider-ci.utils.debug :as debug]
+    [cider-ci.utils.config :as config]
     [clj-logging-config.log4j :as logging-config]
     [clojure.tools.logging :as logging]
+    [pandect.algo.sha1 :refer [sha1-hmac]]
     ))
 
 
-(defn base-url [executor]
-  (let [protocol (if (:ssl executor) "https" "http")]
-    (str protocol "://" (:host executor) ":"  (:port executor))))
-
-(defn ping-url [executor]
-  (str (base-url executor) "/ping"))
+(defn http-basic-password [executor]
+  (sha1-hmac (:name executor) (:secret (config/get-config))))
 
 
 ;#### debug ###################################################################

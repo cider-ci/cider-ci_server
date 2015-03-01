@@ -17,48 +17,31 @@
     ))
 
 
-(def conf (atom nil))
+(defn- update-traits-when-changed [executor data] 
+  (when-not (= (sort (:traits executor)) (sort (:traits data)))
+    (logging/info "TODO update executor traits")
+    (jdbc/update! 
+      (rdbms/get-ds)
+      :executors 
+      {:traits (sort (:traits data))}
+      ["id = ?" (:id executor)])))
 
 
-;#### ping ####################################################################
-
-(defn to-be-pinged []
-  (jdbc/query (rdbms/get-ds)
-              ["SELECT * FROM executors 
-               WHERE enabled = 't' 
-               AND ( last_ping_at < (now() - interval '30 Seconds') OR last_ping_at IS NULL)"]))
-
-(defn ping-executor [executor]
-  (with/suppress-and-log-warn
-    (let [response (http/post 
-                     (executor-entity/ping-url executor)
-                     {:body (json/write-str {})})]
-      (jdbc/execute! (rdbms/get-ds)
-                     ["UPDATE executors SET last_ping_at = now() WHERE executors.id = ?" (:id executor)]))))
-
-(defn ping-executors []
-  (doseq [executor (to-be-pinged)]
-    (ping-executor executor))) 
+(defn- update-last-ping-at [executor]
+  (-> 
+    (jdbc/execute! (rdbms/get-ds)
+                   ["UPDATE executors SET last_ping_at = now() 
+                    WHERE executors.id = ?" (:id executor)])
+    first
+    (> 0)))
 
 
-;#### service #################################################################
-
-(daemon/define "ping-executors" 
-  start-ping-executors
-  stop-ping-executors
-  1
-  (ping-executors))
-
-
-;#### initialize ##############################################################
-
-(defn initialize [new-conf]
-  (reset! conf new-conf)
-  (start-ping-executors))
+(defn ping [executor data]
+  (update-traits-when-changed executor data)
+  (update-last-ping-at executor))
 
 
 ;#### debug ###################################################################
-;(debug/debug-ns *ns*)
 ;(logging-config/set-logger! :level :debug)
 ;(logging-config/set-logger! :level :info)
-
+;(debug/debug-ns *ns*)

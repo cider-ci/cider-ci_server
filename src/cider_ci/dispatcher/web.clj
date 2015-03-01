@@ -7,6 +7,7 @@
     [cider-ci.auth.core :as auth]
     [cider-ci.auth.core]
     [cider-ci.auth.http-basic :as http-basic]
+    [cider-ci.dispatcher.ping :as ping]
     [cider-ci.dispatcher.trial :as trial]
     [cider-ci.utils.debug :as debug]
     [cider-ci.utils.http :as http]
@@ -49,6 +50,17 @@
        :headers {"content-type" "application/json;charset=utf-8"} })))
 
 
+;#### ping ####################################################################
+
+(defn ping [request]
+  (let [executor (:authenticated-executor request)]
+    (if-not (:id executor)
+      {:status 403}
+      (if (ping/ping executor (:body request))
+        {:status 202}
+        {:status 422})
+      )))
+
 ;#### routing #################################################################
 
 
@@ -58,38 +70,37 @@
     (cpj/GET "/status" request #'status-handler)
 
     (cpj/PATCH "/trials/:id" 
-               {{id :id} :params json-params :json-params} 
-               (update-trial id json-params))
+               {{id :id} :params data :body} 
+               (update-trial id data))
 
     (cpj/GET "/" [] "OK")
+
+    (cpj/POST "/ping" request #'ping)
 
     ))
 
 (defn build-main-handler [context]
   ( -> (cpj.handler/api (build-routes (:context (:web @conf))))
        (routing/wrap-debug-logging 'cider-ci.dispatcher.web)
-       (ring.middleware.json/wrap-json-params)
+       (ring.middleware.json/wrap-json-body {:keywords? true})
        (routing/wrap-debug-logging 'cider-ci.dispatcher.web)
        (routing/wrap-prefix context)
        (routing/wrap-debug-logging 'cider-ci.dispatcher.web)
        (auth/wrap-authenticate-and-authorize-service)
        (routing/wrap-debug-logging 'cider-ci.dispatcher.web)
-       (http-basic/wrap)
+       (http-basic/wrap {:executor true :user false :service true})
        (routing/wrap-debug-logging 'cider-ci.dispatcher.web)
-       (routing/wrap-log-exception)
-       ))
+       (routing/wrap-log-exception)))
 
 
 ;#### the server ##############################################################
 
 (defn initialize [new-conf]
   (reset! conf new-conf)
-  (cider-ci.auth.core/initialize 
-    (conj {:ds (rdbms/get-ds)}
-          (select-keys @conf [:basic_auth])))
-  (let [http-conf (-> @conf :http_server)
-        full-context (str (:context http-conf) (:sub_context http-conf))]
-    (http-server/start http-conf (build-main-handler full-context))))
+  (cider-ci.auth.core/initialize new-conf)
+  (let [http-conf (-> @conf :services :dispatcher :http)
+        context (str (:context http-conf) (:sub_context http-conf))]
+    (http-server/start http-conf (build-main-handler context))))
 
 
 

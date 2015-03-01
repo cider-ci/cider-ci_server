@@ -18,8 +18,6 @@
 
 ;#### 
 
-(defonce conf (atom {}))
-
 (defn sweep-scripts []
   (with/suppress-and-log-error
     (jdbc/execute! 
@@ -77,8 +75,7 @@
 
 ;#### initialize ##############################################################
 
-(defn initialize [new-conf]
-  (reset! conf new-conf)
+(defn initialize []
   (start-dispatch-timeout-sweeper)
   (start-terminal-state-timeout-sweeper)
   (start-scripts-sweeper)

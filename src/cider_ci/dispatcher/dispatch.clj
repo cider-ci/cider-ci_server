@@ -4,14 +4,16 @@
 
 (ns cider-ci.dispatcher.dispatch
   (:require
+    [cider-ci.dispatcher.executor :as executor-utils]
     [cider-ci.dispatcher.task :as task]
     [cider-ci.dispatcher.trial :as trial-utils]
-
+    [cider-ci.utils.config :refer [get-config]]
     [cider-ci.utils.daemon :as daemon]
     [cider-ci.utils.debug :as debug]
     [cider-ci.utils.http :as http]
     [cider-ci.utils.rdbms :as rdbms]
     [cider-ci.utils.with :as with]
+    [clj-http.client :as http-client]
     [clj-logging-config.log4j :as logging-config]
     [clojure.data.json :as json]
     [clojure.java.jdbc :as jdbc]
@@ -22,41 +24,32 @@
     ))
 
 
-
-(defonce conf (atom nil))
-
 ;### build urls ###############################################################
 
-(defn- get-repository-http-config [executor]
-  (if (:server_overwrite executor) 
-    executor 
-    (:repository_service @conf)))
+(defn- get-repository-http-config []
+  (-> (get-config) :services :repository :http_external))
 
-(defn- get-storage-http-config [executor]
-  (if (:server_overwrite executor) 
-    executor 
-    (:storage_service @conf)))
+(defn- get-storage-http-config []
+  (-> (get-config) :services :storage :http_external))
 
-(defn- git-url [executor repository-id]
-  (let [config (get-repository-http-config executor)]
+(defn- git-url [repository-id]
+  (let [config (get-repository-http-config)]
     (http/build-url config (str "/" repository-id "/git"))))
 
-(defn- trial-attachments-url [executor trial-id]
-  (let [config (get-storage-http-config executor)]
+(defn- trial-attachments-url [trial-id]
+  (let [config (get-storage-http-config)]
     (http/build-url config (str "/trial-attachments/" trial-id "/"))))
 
-(defn- tree-attachments-url [executor tree-id]
-  (let [config (get-storage-http-config executor)]
+(defn- tree-attachments-url [tree-id]
+  (let [config (get-storage-http-config)]
     (http/build-url config (str "/tree-attachments/" tree-id "/"))))
 
-(defn- route-url-for-executor [executor path]
-  (let [config (if (:server_overwrite executor) 
-                 executor 
-                 (:dispatcher_service @conf))]
+(defn- dispatcher-url-for-executor [executor path]
+  (let [config (-> (get-config) :services :dispatcher :http_external)]
     (http/build-url config path))) 
 
 (defn- patch-url [executor trial-id]
-  (route-url-for-executor 
+  (dispatcher-url-for-executor 
     executor 
     (str "/trials/" trial-id )))
 
@@ -94,16 +87,16 @@
               :git_commit_id (:git_commit_id branch)
               :git_options (or (:git_options task-spec) {})
               :git_tree_id (:tree_id branch)
-              :git_url (git-url executor repository-id)
+              :git_url (git-url repository-id)
               :patch_url (patch-url executor trial-id)
               :ports (:ports task-spec)
               :repository_id repository-id
               :scripts (:scripts trial) 
               :task_id (:task_id trial)
               :tree_attachments (:tree_attachments task-spec)
-              :tree_attachments_url (tree-attachments-url executor tree-id)
+              :tree_attachments_url (tree-attachments-url tree-id)
               :trial_attachments (:trial_attachments task-spec)
-              :trial_attachments_url (trial-attachments-url executor trial-id)
+              :trial_attachments_url (trial-attachments-url trial-id)
               :trial_id trial-id
               }]
     data))
@@ -134,7 +127,8 @@
                                         (hh/merge-where [:< :relative_load 1])
                                         (hh/merge-where [:= :enabled true])
                                         (hh/merge-where (hc/raw "(tasks.traits <@ executors_with_load.traits)"))
-                                        (hh/merge-where (hc/raw "(last_ping_at > (now() - interval '1 Minutes'))")))])
+                                        (hh/merge-where (hc/raw "(last_ping_at > (now() - interval '1 Minutes'))"))
+                                        )])
           (hh/merge-where [ "NOT EXISTS" (-> (hh/select 1)
                                              (hh/from [:trials :active_trials])
                                              (hh/merge-join [:tasks :active_tasks] [:= :active_tasks.id :active_trials.task_id])
@@ -163,13 +157,17 @@
       trial  "Error during dispatch" 
       (let [data (build-dispatch-data trial executor)
             protocol (if (:ssl executor) "https" "http")
-            url (str protocol "://" (:host executor) 
-                     ":" (:port executor) "/execute")]
-        
+            url (str (:base_url executor)  "/execute")]
+
         (jdbc/update! (rdbms/get-ds) :trials 
                       {:state "dispatching" :executor_id (:id executor)} 
                       ["id = ?" (:id trial)])
-        (http/post url {:body (json/write-str data)})))
+        (http-client/post url 
+                          {:content-type :json
+                           :body (json/write-str data)
+                           :insecure? true
+                           :basic-auth ["dispatcher" 
+                                        (executor-utils/http-basic-password executor)]})))
     (catch Exception e
       (let  [row (if (<= 3 (issues-count trial))
                    {:state "failed" :error "Too many issues, giving up to dispatch this trial " 
@@ -199,13 +197,13 @@
   (logging/debug "dispatch-service")
   (dispatch-trials))
 
-;#### initialize ##############################################################
-(defn initialize [new-conf]
-  (reset! conf new-conf)
+;### initialize ##############################################################
+(defn initialize []
   (start-dispatch-service))
 
-
 ;#### debug ###################################################################
-;(debug/debug-ns *ns*)
 ;(logging-config/set-logger! :level :debug)
 ;(logging-config/set-logger! :level :info)
+;(debug/debug-ns 'cider-ci.utils.http)
+;(debug/debug-ns *ns*)
+

@@ -15,7 +15,6 @@
     [clojure.tools.logging :as logging]
     ))
 
-(defonce conf (atom nil))
 
 (defonce terminal-states #{"aborted" "failed" "passed"})
 
@@ -88,10 +87,6 @@
 (def sql-to-be-dispatched
   " state = 'pending' ")
 
-
-;#### initialize ##############################################################
-(defn initialize [new-conf]
-  (reset! conf new-conf))
 
 
 ;#### debug ###################################################################

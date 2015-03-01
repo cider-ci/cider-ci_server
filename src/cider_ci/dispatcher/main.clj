@@ -11,42 +11,35 @@
     [cider-ci.dispatcher.task :as task]
     [cider-ci.dispatcher.trial :as trial]
     [cider-ci.dispatcher.web :as web]
-    [cider-ci.utils.config-loader :as config-loader]
+    [cider-ci.utils.config :as config]
     [cider-ci.utils.http :as http]
     [cider-ci.utils.messaging :as messaging]
+    [cider-ci.utils.map :refer [deep-merge]]
     [cider-ci.utils.nrepl :as nrepl]
     [cider-ci.utils.rdbms :as rdbms]
+    [cider-ci.utils.with :as with]
     [clojure.java.jdbc :as jdbc]
     [clojure.tools.logging :as logging]
     ))
 
-
-(defonce conf (atom {}))
-(defonce rdbms-ds (atom {}))
-
-(defn read-config []
-  (config-loader/read-and-merge
-    conf ["conf_default.yml" 
-          "/etc/cider-ci_dispatcher/conf.yml" 
-          "conf.yml"]))
-
 (defn get-db-spec []
-  (-> @conf (:database) (:db_spec) ))
+  (let [conf (config/get-config)]
+    (deep-merge 
+      (or (-> conf :database ) {} )
+      (or (-> conf :services :dispatcher :database ) {} ))))
 
 
 (defn -main [& args]
-  (read-config)
-  (nrepl/initialize (:nrepl @conf))
-  (rdbms/initialize (get-db-spec))
-  (messaging/initialize (:messaging @conf))
-  (http/initialize (select-keys @conf [:basic_auth]))
-  (ping/initialize {})
-  (trial/initialize {})
-  (task/initialize )
-  (sync-trials/initialize {})
-  (web/initialize (select-keys @conf [:http_server :basic_auth]))
-  (dispatch/initialize  (select-keys @conf [:repository_service
-                                            :storage_service
-                                            :dispatcher_service]))
-  (sweep/initialize {}))
+  (with/logging 
+    (config/initialize ["../config/config_default.yml" "./config/config_default.yml" "./config/config.yml"])
+    (let [conf (config/get-config)]
+      (nrepl/initialize (-> conf :services :dispatcher :nrepl))
+      (rdbms/initialize (get-db-spec))
+      (messaging/initialize (:messaging conf))
+      (http/initialize conf)
+      (task/initialize)
+      (sync-trials/initialize conf)
+      (web/initialize conf)
+      (dispatch/initialize) 
+      (sweep/initialize))))
 

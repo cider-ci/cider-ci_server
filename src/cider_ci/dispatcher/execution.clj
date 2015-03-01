@@ -20,11 +20,18 @@
                 (rdbms/get-ds)
                 ["SELECT state FROM tasks
                  WHERE execution_id = ?" id])))
+
+
+
+
+(defn update-state-and-fire-if-changed [execution-id new-state]
+  (when (stateful-entity/update-state 
+          :executions execution-id new-state {:assert-existence true})
+    (messaging/publish "execution.updated" {:id execution-id})))
   
 (defn evaluate-and-update [execution-id]
   (let [ states (get-task-states execution-id)
-        update-to #(stateful-entity/update-state 
-                     :executions execution-id % {:assert-existence true})]
+        update-to #(update-state-and-fire-if-changed execution-id %)]
     (cond 
       (every? #{"passed"} states) (update-to "passed")
       (every? #{"aborted"} states) (update-to "aborted")
@@ -32,8 +39,7 @@
       (some #{"executing"} states) (update-to "executing")
       (some #{"pending"} states) (update-to "pending")
       (empty? states) false
-      :else (throw (IllegalStateException. "NOOOO"))
-      )))
+      :else (throw (IllegalStateException. "NOOOO")))))
 
 
 ;#### debug ###################################################################
