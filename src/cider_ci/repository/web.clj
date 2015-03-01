@@ -34,10 +34,13 @@
   (logging/debug get-git-file [request])
   (let [repository-id (:id (:route-params request))
         relative-web-path (:* (:route-params request))
-        relative-file-path (str (:path (:repositories @conf)) "/" repository-id "/" relative-web-path) 
+        relative-file-path (str (-> @conf :services :repository :repositories :path) "/" repository-id "/" relative-web-path) 
         file (clojure.java.io/file relative-file-path)
         abs-path (.getAbsolutePath file)]
-    (logging/debug [repository-id relative-web-path relative-file-path (.exists file)])
+    (logging/debug {:repositories-id repository-id 
+                    :relative-file-path relative-file-path 
+                    :abs-path abs-path
+                    :file-exists? (.exists file)})
     (if (.exists file)
       (ring.util.response/file-response relative-file-path nil)
       {:status 404})))
@@ -92,7 +95,7 @@
        (routing/wrap-debug-logging 'cider-ci.repository.web)
        (auth/wrap-authenticate-and-authorize-service)
        (routing/wrap-debug-logging 'cider-ci.repository.web)
-       (http-basic/wrap)
+       (http-basic/wrap {:executor true :user false :service true})
        (routing/wrap-debug-logging 'cider-ci.repository.web)
        (routing/wrap-log-exception)
        ))
@@ -102,13 +105,13 @@
 
 (defn initialize [new-conf]
   (reset! conf new-conf)
-  (let [http-conf (-> @conf :http_server)
+  (let [http-conf (-> @conf :services :repository :http)
         context (str (:context http-conf) (:sub_context http-conf))]
     (http-server/start http-conf (build-main-handler context))))
 
 
 
 ;#### debug ###################################################################
-;(debug/debug-ns *ns*)
 ;(logging-config/set-logger! :level :debug)
 ;(logging-config/set-logger! :level :info)
+;(debug/debug-ns *ns*)

@@ -7,6 +7,6 @@
 /log
 /target
 /tmp
-conf.yml
+/config
 pom.xml
 pom.xml.asc

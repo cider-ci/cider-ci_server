@@ -208,7 +208,7 @@
 (defn initialize [new-conf]
   (logging/info initialize [new-conf])
   (reset! conf new-conf)
-  (git.repositories/initialize (:repositories @conf))
+  (git.repositories/initialize @conf)
   (start-update-repositories)
   )
 
