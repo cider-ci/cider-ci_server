@@ -1,0 +1,2 @@
+curl -i -u test:secret http://localhost:8884/cider-ci/builder/executions/available/$1
+

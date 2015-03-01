@@ -2,9 +2,6 @@
 ; Licensed under the terms of the GNU Affero General Public License v3.
 ; See the "LICENSE.txt" file provided with this software.
 
-
-; TODO key of attachment as name if possible 
-
 (ns cider-ci.builder.tasks
   (:require 
     [cider-ci.builder.expansion :as expansion]
@@ -46,6 +43,7 @@
 
 
 ;### build tasks ##############################################################
+
 (defn build-scripts [task script-defaults]
   (into {} (for [[name-key script] (or (:scripts task) {})]
              (let [final-script  (util/deep-merge script-defaults script)]
@@ -59,7 +57,6 @@
            :name (str name-prefix " » " (:name merged-task))
            })))
 
-
 (defn value-seq-for-map-or-array 
   [mapar]
   "Accepts a map or any other collection and returns a seq of the values in the
@@ -69,7 +66,6 @@
     (map? mapar) (map second mapar)
     (coll? mapar) mapar  ; throw this if we do not accept arrays anymore
     :else [] ))
-
 
 ; build-tasks-for-single-context and build-tasks-for-contexts-sequence 
 ; call each other recursively; no need for trampoline, sensible specs
@@ -144,6 +140,7 @@
 
 
 ;### create tasks for execution ###############################################
+
 (defn create-tasks [execution] 
   (wrap-exception-create-execution-issue 
     execution "Error when creating tasks" 
@@ -152,7 +149,6 @@
                                 (:expanded_specification_id execution)])
                    first :data)]
       (build-tasks execution spec))))
-
 
 (defn- assert-tasks [execution]
   (when (= 0 (-> (jdbc/query (rdbms/get-ds) 
@@ -164,7 +160,6 @@
                   ["id = ? " (:id execution)])
     (throw (IllegalStateException. 
              "This execution failed because no tasks have been created for it."))))
-
 
 (defn create-tasks-and-trials [message]
   (logging/debug create-tasks-and-trials message)
@@ -188,8 +183,7 @@
   (with/logging
     (messaging/listen "execution.create-tasks-and-trials" 
                       #'create-tasks-and-trials 
-                      "execution.create-tasks-and-trials")
-    ))
+                      "execution.create-tasks-and-trials")))
 
 
 ;### Debug ####################################################################
