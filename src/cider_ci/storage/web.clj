@@ -47,7 +47,7 @@
           s-postix)))))
 
 (defn first-matching-store [url-path]
-  (->> (:stores @conf)
+  (->> (-> @conf :services :storage :stores)
        (some (fn [store]
                (let [url-path-prefix (:url_path_prefix store)
                      path (without-prefix url-path url-path-prefix)]
@@ -158,7 +158,7 @@
       (routing/wrap-debug-logging 'cider-ci.storage.web)
       auth/wrap-authenticate-and-authorize-service-or-user
       (routing/wrap-debug-logging 'cider-ci.storage.web)
-      http-basic/wrap
+      (http-basic/wrap {:user true :service true :executor true})
       (routing/wrap-debug-logging 'cider-ci.storage.web)
       session/wrap
       (routing/wrap-debug-logging 'cider-ci.storage.web)
@@ -184,7 +184,7 @@
 
 (defn initialize [new-conf]
   (reset! conf new-conf)
-  (let [http-conf (-> @conf :http_server)
+  (let [http-conf (-> @conf :services :storage :http)
         context (str (:context http-conf) (:sub_context http-conf))]
     (http-server/start http-conf (build-main-handler context))))
 

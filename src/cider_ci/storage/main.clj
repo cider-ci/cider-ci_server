@@ -8,9 +8,10 @@
     [cider-ci.storage.shared :as shared]
     [cider-ci.storage.sweeper :as sweeper]
     [cider-ci.storage.web :as web]
-    [cider-ci.utils.config-loader :as config-loader]
+    [cider-ci.utils.config :as config :refer [get-config]]
     [cider-ci.utils.debug :as debug]
     [cider-ci.utils.http :as http]
+    [cider-ci.utils.map :refer [deep-merge]]
     [cider-ci.utils.nrepl :as nrepl]
     [cider-ci.utils.rdbms :as rdbms]
     [cider-ci.utils.with :as with]
@@ -19,15 +20,12 @@
     ))
 
 
-(defonce conf (atom {}))
-
 (defn get-db-spec []
-  (-> @conf (:database) (:db_spec) ))
+  (let [conf (get-config)]
+    (deep-merge 
+      (or (-> conf :database ) {} )
+      (or (-> conf :services :storage :database ) {} ))))
 
-(defn read-config []
-  (config-loader/read-and-merge
-    conf ["conf_default.yml" 
-          "conf.yml"]))
 
 (defn create-dirs [stores]
   (doseq [store stores]
@@ -38,16 +36,15 @@
 
 (defn -main [& args]
   (with/logging
-    (read-config)
-    (nrepl/initialize (:nrepl @conf))
-    (http/initialize (select-keys @conf [:basic_auth]))
-    (create-dirs (:stores @conf))
+    (config/initialize ["../config/config_default.yml" "./config/config_default.yml" "./config/config.yml"])
+    (nrepl/initialize (-> (get-config) :services :storage :nrepl))
+    (http/initialize (select-keys (get-config) [:basic_auth]))
+    (create-dirs (-> (get-config) :services :storage :stores))
     (rdbms/initialize (get-db-spec))
-    (auth/initialize (select-keys @conf [:session :basic_auth]))
+    (auth/initialize (select-keys (get-config) [:secret :session :basic_auth]))
     (shared/initialize {})
-    (web/initialize (select-keys @conf [:http_server :stores]))
-    (sweeper/initialize (select-keys @conf [:stores]))
-    ))
+    (web/initialize (get-config))
+    (sweeper/initialize (-> (get-config) :services :storage :stores))))
 
 
 ;### Debug ####################################################################

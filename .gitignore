@@ -4,8 +4,10 @@
 /.nrepl-port
 /checkouts
 /classes
+/config
 /log
 /target
 /tmp
+config/config.yml
 pom.xml
 pom.xml.asc

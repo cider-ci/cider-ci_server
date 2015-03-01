@@ -24,7 +24,7 @@
 ;##############################################################################
 
 (defn delete-expired []
-  (doseq [store (:stores @conf)]
+  (doseq [store @conf]
     (logging/info "cleaning rows without to_be_retained_before not set in " store)
     (doseq [file-row (jdbc/query (rdbms/get-ds) [ (str "SELECT * FROM " (:db_table store)
                                                     " WHERE to_be_retained_before IS NULL "
@@ -42,7 +42,7 @@
 
 (defn delete-file-orphans []
   (logging/debug delete-file-orphans [])
-  (doseq [store (:stores @conf)]
+  (doseq [store  @conf]
     (doseq [file (.listFiles (io/file (:file_path store)))]
       (logging/debug file)
       (with/suppress-and-log-error
@@ -62,7 +62,7 @@
 
 (defn delete-row-orphans []
   (logging/debug delete-row-orphans [])
-  (doseq [store (:stores @conf)]
+  (doseq [store @conf]
     (let [table-name (:db_table store)]
       (doseq [{id :id} (jdbc/query (rdbms/get-ds) [(str "SELECT id FROM " table-name)])]
         (logging/debug "check if row is orphan " (str id))
