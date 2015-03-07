@@ -10,7 +10,7 @@
   :dependencies [
                  [cheshire "5.4.0"]
                  [cider-ci/clj-auth "2.2.2"]
-                 [cider-ci/clj-utils "2.7.0"]
+                 [cider-ci/clj-utils "2.9.0"]
                  [org.clojure/tools.nrepl "0.2.7"]
                  [org.jruby/jruby-complete "9.0.0.0.pre1"]
                  [ring-middleware-accept "2.0.3"]

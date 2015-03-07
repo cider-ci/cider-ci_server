@@ -23,17 +23,10 @@
     [org.jruby.embed InvokeFailedException ScriptingContainer]
     ))
 
-
-(defn get-db-spec []
-  (let [conf (get-config)]
-    (deep-merge 
-      (or (-> conf :database ) {} )
-      (or (-> conf :services :api :database ) {} ))))
-
 (defn -main [& args]
   (with/logging 
-    (config/initialize ["../config/config_default.yml" "./config/config_default.yml" "./config/config.yml"])
-    (rdbms/initialize (get-db-spec))
+    (config/initialize)
+    (rdbms/initialize (config/get-db-spec :api))
     (messaging/initialize (:messaging (get-config)))
     (nrepl/initialize (-> (get-config) :services :api :nrepl))
     (auth/initialize (select-keys (get-config) [:secret :session :basic_auth]))
