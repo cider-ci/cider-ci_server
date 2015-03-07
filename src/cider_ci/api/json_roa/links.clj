@@ -11,9 +11,11 @@
     [clojure.tools.logging :as logging]))
 
 
-(defn api-docs-path [context]
-  (str context "/doc/api/index.html"))
+(defn api-docs-path []
+  (str "/cider-ci/docs/api/api_resources.html"))
 
+(defn storage-api-docs-path []
+  "/cider-ci/docs/api/storage_resources.html")
 
 ;### root #######################################################################
 
@@ -24,7 +26,7 @@
     :relations 
     {:api-doc
      {:name "API Documentation for Cider-CI"
-      :href (str (api-docs-path prefix) "#cider-ci-api-documentation") 
+      :href (str (api-docs-path) "#cider-ci-api-documentation") 
       }}}))
 
 
@@ -63,7 +65,7 @@
     :relations
     {:api-doc 
      {:name "API Documentation Executions" 
-      :href (str (api-docs-path prefix) "#executions")}}}))
+      :href (str (api-docs-path) "#executions")}}}))
 
 
 ;### execution ##################################################################
@@ -77,7 +79,7 @@
     :relations
     {:api-doc 
      {:name "API Documentation Execution" 
-      :href (str (api-docs-path prefix) "#execution")}
+      :href (str (api-docs-path) "#execution")}
      }}))
 
 
@@ -95,7 +97,7 @@
     :relations
     {:api-doc 
      {:name "API Documentation Task" 
-      :href (str (api-docs-path prefix) "#task")}}}))
+      :href (str (api-docs-path) "#task")}}}))
 
 
 ;### tasks #################################################################
@@ -118,7 +120,7 @@
     :relations
     {:api-doc 
      {:name "API Documentation Task" 
-      :href (str (api-docs-path prefix) "#tasks")}}}))
+      :href (str (api-docs-path) "#tasks")}}}))
 
 
 ;### trial #######################################################################
@@ -135,7 +137,7 @@
     :relations
     {:api-doc 
      {:name "API Documentation Trial" 
-      :href (str (api-docs-path prefix) "#trial")}}}))
+      :href (str (api-docs-path) "#trial")}}}))
 
 
 ;### trials #################################################################
@@ -158,7 +160,7 @@
     :relations
     {:api-doc 
      {:name "API Documentation Trials"
-      :href (str (api-docs-path prefix) "#trials")}}}))
+      :href (str (api-docs-path) "#trials")}}}))
 
 
 ;### trial attachments ######################################################
@@ -176,7 +178,7 @@
     :relations
     {:api-doc 
      {:name "Trial-Attachments API Documentation"
-      :href (str (api-docs-path prefix) "#trial-attachments")}}
+      :href (str (api-docs-path) "#trial-attachments")}}
     }))
 
 
@@ -215,7 +217,7 @@
     :relations
     {:api-doc 
      {:name "Documentation Tree-Attachments"
-      :href (str (api-docs-path prefix) "#tree-attachments")}}
+      :href (str (api-docs-path) "#tree-attachments")}}
     }))
 
 
@@ -249,7 +251,7 @@
              :put {} }
    :relations {:api-doc 
                {:name "Tree-Attachment Storage Resources Documentation"
-                :href (str (api-docs-path context) "#tree-attachment-1")}}})
+                :href (str (storage-api-docs-path) "#tree-attachments")}}})
 
 (defn tree-attachment-data-stream
   ([request tree-id path-wo-slash]

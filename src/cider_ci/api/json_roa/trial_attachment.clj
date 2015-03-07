@@ -21,7 +21,7 @@
      :relations
      {:api-doc 
       {:name "Trial-Attachment Storage Resources Documentation"
-       :href (str (links/api-docs-path context) "#trial-attachment-1")}}
+       :href (str (links/storage-api-docs-path) "#trial-attachments")}}
      }))
 
 (defn build [request response]
