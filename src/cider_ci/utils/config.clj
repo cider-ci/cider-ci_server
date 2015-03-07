@@ -57,6 +57,13 @@
    (read-configs-and-merge _filenames)
    (start-read-config)))
 
+(defn get-db-spec [service]
+  (let [conf (get-config)]
+    (deep-merge 
+      (or (-> conf :database ) {} )
+      (or (-> conf :services service :database ) {} ))))
+
+
 ;(initialize ["./config/executor_default_config.yml" "./config/executor_config.yml"])
 
 
