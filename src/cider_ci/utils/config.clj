@@ -44,11 +44,18 @@
 (daemon/define "reload-config" start-read-config stop-read-config 1
   (read-configs-and-merge @filenames))
 
-(defn initialize [_filenames]
-  (reset! filenames _filenames)
-  (read-configs-and-merge _filenames)
-  (start-read-config)
-  )
+(defn initialize 
+  ([]
+   (initialize ["/etc/cider-ci/config_default.yml" 
+                "../config/config_default.yml" 
+                "./config/config_default.yml" 
+                "/etc/cider-ci/config.yml" 
+                "../config/config.yml" 
+                "./config/config.yml"]))
+  ([_filenames]
+   (reset! filenames _filenames)
+   (read-configs-and-merge _filenames)
+   (start-read-config)))
 
 ;(initialize ["./config/executor_default_config.yml" "./config/executor_config.yml"])
 
