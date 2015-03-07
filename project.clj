@@ -26,7 +26,7 @@
   :resource-paths ["./config" "../config" "./resources"]
   :aot [cider-ci.api.main] 
   :main cider-ci.api.main 
-  :jvm-opts ["-Xmx256m"]
+  :jvm-opts ["-Xmx128m"]
   )
 
 ;(cemerick.pomegranate.aether/register-wagon-factory!  "scp" #(let [c (resolve 'org.apache.maven.wagon.providers.ssh.external.ScpExternalWagon)] (clojure.lang.Reflector/invokeConstructor c (into-array []))))
