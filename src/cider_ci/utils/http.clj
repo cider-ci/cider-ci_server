@@ -2,6 +2,7 @@
   (:refer-clojure 
     :exclude [get])
   (:require
+    [cider-ci.utils.config :refer [get-config]]
     [cider-ci.utils.debug :as debug]
     [cider-ci.utils.with :as with]
     [clj-http.client :as http-client]
@@ -30,6 +31,7 @@
 
 (defn build-url 
   ([config path]
+   (logging/warn "you probably should rather use build-service-url instead of build-url")
    (let [ protocol (cond 
                      (= true (:server_ssl config)) "https" 
                      (= true (:ssl config)) "https"
@@ -49,6 +51,25 @@
    (str (build-url config path) 
         "?" (build-url-query-string query-params))))
 
+;### build-service-url ########################################################
+
+(defn get-service-http-config [service-name-or-keyword]
+  (let [service-kw (keyword service-name-or-keyword)]
+    (-> (get-config) :services service-kw :http)))
+
+(defn build-service-prefix [service-name-or-keyword]
+  (let [config (get-service-http-config service-name-or-keyword) ]
+    (str (:context config) (:sub_context config))))
+
+(defn get-base-url []
+  (:server_base_url (get-config)))
+
+(defn build-service-url 
+  ([service-name-or-keyword path]
+   (str (get-base-url) (build-service-prefix service-name-or-keyword) path))
+  ([service-name-or-keyword path query-params]
+   (build-service-url service-name-or-keyword 
+                      (str "?" (build-url-query-string query-params)))))
 
 ;### Http request #############################################################
 
