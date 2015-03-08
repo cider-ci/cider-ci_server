@@ -61,6 +61,9 @@
   (let [config (get-service-http-config service-name-or-keyword) ]
     (str (:context config) (:sub_context config))))
 
+(defn build-service-path [service-name-or-keyword path]
+  (str (build-service-prefix service-name-or-keyword) path))
+
 (defn get-base-url []
   (:server_base_url (get-config)))
 
