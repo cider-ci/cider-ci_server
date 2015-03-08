@@ -14,8 +14,6 @@
     ))
 
 
-(defonce conf (atom {}))
-
 ;##############################################################################
 
 (defn delete-file [path]
@@ -33,12 +31,6 @@
   (let [path (str (:file_path store) "/" (:id file-row))]
     (and (delete-file path)
          (delete-row (:db_table store) (:id file-row)))))
-
-
-;### initialize ###############################################################
-
-(defn initialize [new-conf]
-  (reset! conf new-conf))
 
 
 ;### Debug ####################################################################
