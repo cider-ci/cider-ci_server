@@ -26,33 +26,17 @@
 
 ;### build urls ###############################################################
 
-(defn- get-repository-http-config []
-  (-> (get-config) :services :repository :http_external))
+(defn- git-path [repository-id]
+  (http/build-service-path :repository (str "/" repository-id "/git")))
 
-(defn- get-storage-http-config []
-  (-> (get-config) :services :storage :http_external))
+(defn- trial-attachments-path [trial-id]
+  (http/build-service-path :storage  (str "/trial-attachments/" trial-id "/")))
 
-(defn- git-url [repository-id]
-  (let [config (get-repository-http-config)]
-    (http/build-url config (str "/" repository-id "/git"))))
+(defn- tree-attachments-path [tree-id]
+  (http/build-service-path :storage  (str "/tree-attachments/" tree-id "/")))
 
-(defn- trial-attachments-url [trial-id]
-  (let [config (get-storage-http-config)]
-    (http/build-url config (str "/trial-attachments/" trial-id "/"))))
-
-(defn- tree-attachments-url [tree-id]
-  (let [config (get-storage-http-config)]
-    (http/build-url config (str "/tree-attachments/" tree-id "/"))))
-
-(defn- dispatcher-url-for-executor [executor path]
-  (let [config (-> (get-config) :services :dispatcher :http_external)]
-    (http/build-url config path))) 
-
-(defn- patch-url [executor trial-id]
-  (dispatcher-url-for-executor 
-    executor 
-    (str "/trials/" trial-id )))
-
+(defn- patch-path [executor trial-id]
+  (http/build-service-path :dispatcher (str "/trials/" trial-id )))
 
 ;### dispatch data ############################################################
 (defn branch-and-commit [execution-id] 
@@ -87,16 +71,16 @@
               :git_commit_id (:git_commit_id branch)
               :git_options (or (:git_options task-spec) {})
               :git_tree_id (:tree_id branch)
-              :git_url (git-url repository-id)
-              :patch_url (patch-url executor trial-id)
+              :git_path (git-path repository-id)
+              :patch_path (patch-path executor trial-id)
               :ports (:ports task-spec)
               :repository_id repository-id
               :scripts (:scripts trial) 
               :task_id (:task_id trial)
               :tree_attachments (:tree_attachments task-spec)
-              :tree_attachments_url (tree-attachments-url tree-id)
+              :tree_attachments_path (tree-attachments-path tree-id)
               :trial_attachments (:trial_attachments task-spec)
-              :trial_attachments_url (trial-attachments-url trial-id)
+              :trial_attachments_path (trial-attachments-path trial-id)
               :trial_id trial-id
               }]
     data))
