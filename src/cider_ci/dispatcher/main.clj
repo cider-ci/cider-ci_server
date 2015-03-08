@@ -11,7 +11,7 @@
     [cider-ci.dispatcher.task :as task]
     [cider-ci.dispatcher.trial :as trial]
     [cider-ci.dispatcher.web :as web]
-    [cider-ci.utils.config :as config]
+    [cider-ci.utils.config :as config :refer [get-db-spec]]
     [cider-ci.utils.http :as http]
     [cider-ci.utils.messaging :as messaging]
     [cider-ci.utils.map :refer [deep-merge]]
@@ -22,19 +22,12 @@
     [clojure.tools.logging :as logging]
     ))
 
-(defn get-db-spec []
-  (let [conf (config/get-config)]
-    (deep-merge 
-      (or (-> conf :database ) {} )
-      (or (-> conf :services :dispatcher :database ) {} ))))
-
-
 (defn -main [& args]
   (with/logging 
-    (config/initialize ["../config/config_default.yml" "./config/config_default.yml" "./config/config.yml"])
+    (config/initialize)
+    (rdbms/initialize (get-db-spec :dispatcher))
     (let [conf (config/get-config)]
       (nrepl/initialize (-> conf :services :dispatcher :nrepl))
-      (rdbms/initialize (get-db-spec))
       (messaging/initialize (:messaging conf))
       (http/initialize conf)
       (task/initialize)
