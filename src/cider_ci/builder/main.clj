@@ -10,7 +10,7 @@
     [cider-ci.builder.tasks :as tasks]
     [cider-ci.builder.web :as web]
     [cider-ci.utils.http :as http]
-    [cider-ci.utils.config :as config :refer [get-config]]
+    [cider-ci.utils.config :as config :refer [get-config get-db-spec]]
     [cider-ci.utils.debug :as debug]
     [cider-ci.utils.map :refer [deep-merge]]
     [cider-ci.utils.messaging :as messaging]
@@ -23,18 +23,11 @@
     ))
 
 
-(defn get-db-spec []
-  (let [conf (get-config)]
-    (deep-merge 
-      (or (-> conf :database ) {} )
-      (or (-> conf :services :builder :database ) {} ))))
-
-
 (defn -main [& args]
   (with/logging 
-    (config/initialize ["../config/config_default.yml" "./config/config_default.yml" "./config/config.yml"])
+    (config/initialize)
+    (rdbms/initialize (get-db-spec :builder))
     (nrepl/initialize (-> (get-config) :services :builder :nrepl))
-    (rdbms/initialize (get-db-spec))
     (messaging/initialize (:messaging (get-config)))
     (tasks/initialize)
     (auth/initialize (select-keys (get-config) [:secret :session :basic_auth]))

@@ -36,8 +36,9 @@
     (str "/" path)))
 
 (defn get-path-content_ [git-ref-id path]
-  (let [url (http/build-url (-> (get-config) :services :repository :http) 
-                            (str "/path-content/" git-ref-id (format-path path)))
+  (let [url (http/build-service-url 
+              :repository  
+              (str "/path-content/" git-ref-id (format-path path)))
         res (try (with/logging (http/get url {})))
         body (:body res)]
     (parse-path-content path body)))
