@@ -67,6 +67,9 @@
 (defn get-base-url []
   (:server_base_url (get-config)))
 
+(defn build-server-url [path]
+  (str (get-base-url) path))
+
 (defn build-service-url 
   ([service-name-or-keyword path]
    (str (get-base-url) (build-service-prefix service-name-or-keyword) path))
