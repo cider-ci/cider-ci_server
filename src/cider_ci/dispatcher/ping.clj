@@ -17,14 +17,24 @@
     ))
 
 
-(defn- update-traits-when-changed [executor data] 
+(defn- update-when-changed [executor data] 
+
   (when-not (= (sort (:traits executor)) (sort (:traits data)))
-    (logging/info "TODO update executor traits")
     (jdbc/update! 
       (rdbms/get-ds)
       :executors 
       {:traits (sort (:traits data))}
-      ["id = ?" (:id executor)])))
+      ["id = ?" (:id executor)]))
+
+  (when-let [max-load (:max_load data)]
+    (when-not (= (:max_load executor) max-load)
+      (jdbc/update! 
+        (rdbms/get-ds)
+        :executors 
+        {:max_load max-load}
+        ["id = ?" (:id executor)])))
+
+  )
 
 
 (defn- update-last-ping-at [executor]
@@ -37,7 +47,7 @@
 
 
 (defn ping [executor data]
-  (update-traits-when-changed executor data)
+  (update-when-changed executor data)
   (update-last-ping-at executor))
 
 
