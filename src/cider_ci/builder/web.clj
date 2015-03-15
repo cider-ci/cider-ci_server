@@ -82,6 +82,7 @@
   (cpj/routes
     (cpj/GET "/executions/available/:tree_id" request #'available-executions)
     (cpj/POST "/executions/" request #'create-execution)
+    (cpj/POST "/executions" request #'create-execution)
     (cpj/ANY "*" request default-handler)))
 
 
