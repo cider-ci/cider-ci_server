@@ -9,9 +9,9 @@
             :url "http://www.gnu.org/licenses/agpl-3.0.html"}
   :dependencies [
                  [cider-ci/clj-auth "2.2.2"]
-                 [cider-ci/clj-utils "2.11.0"]
+                 [cider-ci/clj-utils "2.12.0"]
                  [clj-jgit "0.8.3"]
-                 [org.clojure/tools.nrepl "0.2.7"]
+                 [org.clojure/tools.nrepl "0.2.8"]
                  ]
   :source-paths ["src"]
   :profiles {:dev 
