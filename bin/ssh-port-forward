@@ -1,1 +1,1 @@
-ssh -L 7883:localhost:7883 root@$1
+ssh -L 7886:localhost:7886 root@$1
