@@ -29,6 +29,14 @@
 (defn- git-path [repository-id]
   (http/build-service-path :repository (str "/" repository-id "/git")))
 
+(defn- git-url [repository-id]
+  ( -> 
+    (jdbc/query 
+      (rdbms/get-ds) 
+      ["SELECT origin_uri FROM repositories WHERE id = ?" repository-id])
+    first
+    :origin_uri))
+
 (defn- trial-attachments-path [trial-id]
   (http/build-service-path :storage  (str "/trial-attachments/" trial-id "/")))
 
@@ -39,7 +47,7 @@
   (http/build-service-path :dispatcher (str "/trials/" trial-id )))
 
 ;### dispatch data ############################################################
-(defn branch-and-commit [execution-id] 
+(defn get-branch-and-commit [execution-id] 
   (first (jdbc/query (rdbms/get-ds)
            ["SELECT branches.name, branches.repository_id, 
               commits.tree_id as tree_id,
@@ -50,28 +58,32 @@
             WHERE executions.id = ? 
             ORDER BY branches.updated_at DESC" execution-id])))
 
+(defn add-git-url [data repository-id]
+  (conj data
+        {:git_path (git-path repository-id)
+         :git_url (git-url repository-id) }))
+
 (defn build-dispatch-data [trial executor]
   (let [task (first (jdbc/query (rdbms/get-ds)
                                 ["SELECT * FROM tasks WHERE tasks.id = ?" (:task_id trial)]))
         task-spec (task/get-task-spec (:id task))
         execution-id (:execution_id task)
-        branch (branch-and-commit execution-id)
-        tree-id (:tree_id branch)
-        repository-id (:repository_id branch)
+        branch-and-commit (get-branch-and-commit execution-id)
+        tree-id (:tree_id branch-and-commit)
+        repository-id (:repository_id branch-and-commit)
         trial-id (:id trial)
         environment-variables (conj (or (:environment_variables task-spec) {})
                                     {:CIDER_CI_EXECUTION_ID execution-id
                                      :CIDER_CI_TASK_ID (:task_id trial)
                                      :CIDER_CI_TRIAL_ID trial-id
-                                     :CIDER_CI_TREE_ID (:tree_id branch)})
+                                     :CIDER_CI_TREE_ID (:tree_id branch-and-commit)})
         data {
               :environment_variables environment-variables
               :execution_id execution-id
-              :git_branch_name (:name branch)
-              :git_commit_id (:git_commit_id branch)
+              :git_branch_name (:name branch-and-commit)
+              :git_commit_id (:git_commit_id branch-and-commit)
               :git_options (or (:git_options task-spec) {})
-              :git_tree_id (:tree_id branch)
-              :git_path (git-path repository-id)
+              :git_tree_id (:tree_id branch-and-commit)
               :patch_path (patch-path executor trial-id)
               :ports (:ports task-spec)
               :repository_id repository-id
@@ -83,7 +95,8 @@
               :trial_attachments_path (trial-attachments-path trial-id)
               :trial_id trial-id
               }]
-    data))
+    (-> data
+        (add-git-url repository-id))))
 
 
 ;### dispatch #################################################################
