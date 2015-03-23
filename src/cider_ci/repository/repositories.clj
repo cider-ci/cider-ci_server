@@ -21,9 +21,6 @@
     ))
 
 
-;### config and initialization ################################################
-(defonce conf (atom {}))
-
 
 ;### helpers ##################################################################
 (defn directory-exists? [path]
@@ -205,10 +202,7 @@
 
 ;### update-repositories ######################################################
 
-(defn initialize [new-conf]
-  (logging/info initialize [new-conf])
-  (reset! conf new-conf)
-  (git.repositories/initialize @conf)
+(defn initialize []
   (start-update-repositories)
   )
 

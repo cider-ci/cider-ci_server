@@ -4,19 +4,18 @@
 
 
 (ns cider-ci.repository.git.repositories
+  (:import 
+    [java.io File]
+    )
   (:require 
-    [clojure.tools.logging :as logging]
+    [cider-ci.utils.config :as config :refer [get-config get-db-spec]]
     [cider-ci.utils.debug :as debug]
+    [cider-ci.utils.fs :as ci-fs]
     [cider-ci.utils.system :as system]
     [cider-ci.utils.with :as with]
+    [clojure.string :as string :refer [blank?]]
+    [clojure.tools.logging :as logging]
     ))
-
-
-(defonce conf (atom {}))
-
-(defn initialize [new-conf]
-  (logging/info initialize [new-conf])
-  (reset! conf new-conf))
 
 
 (defn canonic-id 
@@ -32,18 +31,14 @@
 
 
 (defn path 
-  ;"Returns the base path" 
-  ;[]
-  ;(:path @conf)
-  "Returns the absolute path to the (git-)repository.
-  Performs sanity checks on the path an throws exceptions in case."
-  [_repository]
-  (let [path (str (:path @conf)
-                  "/" (str (canonic-id _repository)))]
-    (if (re-matches #".+\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})"  path)
-      path
-      (throw (IllegalStateException. (str "Not a valid repository-path: " path "for args:" _repository))))))
-
+  "Returns the absolute path to the (git-)repository."
+  [repository]
+  (let [path  (-> (get-config) :services :repository :repositories :path)
+        origin-uri (:origin_uri repository)]
+    (assert (not (blank? path)))
+    (assert (not (blank? origin-uri)))
+    (str path (File/separator) (ci-fs/path-proof origin-uri))))
+  
 
 (defn get-path-contents 
   "Returns the content of the path or nil if not applicable."
