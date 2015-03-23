@@ -14,7 +14,7 @@
     ))
 
 (defn -main [& args]
-  (with/logging 
+  (with/log-error
     (config/initialize)
     (rdbms/initialize (get-db-spec :dispatcher))
     (nrepl/initialize (-> (get-config) :services :repository :nrepl))

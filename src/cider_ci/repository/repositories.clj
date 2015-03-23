@@ -10,6 +10,8 @@
     [cider-ci.utils.daemon :as daemon]
     [cider-ci.utils.debug :as debug]
     [cider-ci.utils.exception :as exception]
+    [cider-ci.utils.fs :as ci-fs]
+    [me.raynes.fs :as fs]
     [cider-ci.utils.messaging :as messaging]
     [cider-ci.utils.rdbms :as rdbms]
     [cider-ci.utils.system :as system]
@@ -97,16 +99,15 @@
                  {:watchdog (* 10 60 1000), :dir repository-path, :env {"TERM" "VT-100"}})))
 
 (defn send-branch-update-notifications [branches]
-  (with/logging
+  (with/log-error
     (logging/debug send-branch-update-notifications [branches])
     (doseq [branch branches]
       (messaging/publish "branch.updated" branch))))
 
 (defn git-update [repository]
-  (with/logging
+  (with/log-error
     (let [updated-branches (atom nil)
-          dir (git.repositories/path repository)
-          sid (str (git.repositories/canonic-id repository))]
+          dir (git.repositories/path repository)]
       (assert-directory-exists! dir)
       (jdbc/with-db-transaction [tx (rdbms/get-ds)]
         (update-git-server-info repository)
@@ -114,25 +115,25 @@
       (send-branch-update-notifications @updated-branches))))
 
 (defn git-initialize [repository]
-  (with/logging
-    (let [dir (git.repositories/path repository)
-          sid (str (git.repositories/canonic-id repository))]
+  (with/log-error
+    (let [dir (git.repositories/path repository)]
       (system/exec-with-success-or-throw ["rm" "-rf" dir])
       (system/exec-with-success-or-throw 
         ["git" "clone" "--mirror" (:origin_uri repository) dir]
         {:watchdog (* 5 60 1000)}))))
 
 (defn git-fetch-or-initialize [repository]
-  (try (with/logging 
-         (let [repository-path (git.repositories/path repository)
-               id (git.repositories/canonic-id repository)] 
-           (system/exec-with-success-or-throw 
-             ["git" "fetch" (:origin_uri repository) "--force" "--tags" "--prune"  "+*:*"]
-             {:watchdog (* 10 60 1000), 
-              :dir repository-path, 
-              :env {"TERM" "VT-100"}})))
-       (catch Exception _
-         (git-initialize repository))))
+  (try (with/log-error
+         (let [repository-path (git.repositories/path repository)] 
+           (if (fs/exists? repository-path)
+             (git-initialize repository)
+             (system/exec-with-success-or-throw 
+               ["git" "fetch" (:origin_uri repository) "--force" "--tags" "--prune"  "+*:*"]
+               {:watchdog (* 10 60 1000), 
+                :dir repository-path, 
+                :env {"TERM" "VT-100"}})))
+         (catch Exception _
+           (git-initialize repository)))))
 
 
 ;### Submit actions through agent #############################################
