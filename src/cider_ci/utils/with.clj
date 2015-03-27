@@ -10,12 +10,35 @@
     [cider-ci.utils.exception :as exception]
     ))
 
+
 (defmacro logging [& expressions]
   `(try
+     (logging/warn "cider-ci.utils.with/logging is DEPRECATED, use (log [level & body]), or (log-error,....")
      ~@expressions
      (catch Throwable e#
        (clj-logging/error (exception/stringify e#))
        (throw e#))))
+
+
+(defmacro log [level & expressions]
+  `(try
+     ~@expressions
+     (catch Throwable e#
+       (clj-logging/log ~level (exception/stringify e#))
+       (throw e#))))
+
+(defmacro log-debug [& expressions]
+ `(log :debug ~@expressions))
+
+(defmacro log-info [& expressions]
+ `(log :info ~@expressions))
+
+(defmacro log-warn [& expressions]
+ `(log :warn ~@expressions))
+
+(defmacro log-error [& expressions]
+ `(log :error ~@expressions))
+
 
 (defmacro suppress-and-log [level & expressions]
   `(try
