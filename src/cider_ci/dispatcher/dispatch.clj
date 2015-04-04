@@ -47,16 +47,16 @@
   (http/build-service-path :dispatcher (str "/trials/" trial-id )))
 
 ;### dispatch data ############################################################
-(defn get-branch-and-commit [execution-id] 
+(defn get-branch-and-commit [job-id] 
   (first (jdbc/query (rdbms/get-ds)
            ["SELECT branches.name, branches.repository_id, 
               commits.tree_id as tree_id,
               commits.id as git_commit_id FROM branches 
             INNER JOIN branches_commits ON branches.id = branches_commits.branch_id 
             INNER JOIN commits ON branches_commits.commit_id = commits.id 
-            INNER JOIN executions ON commits.tree_id = executions.tree_id
-            WHERE executions.id = ? 
-            ORDER BY branches.updated_at DESC" execution-id])))
+            INNER JOIN jobs ON commits.tree_id = jobs.tree_id
+            WHERE jobs.id = ? 
+            ORDER BY branches.updated_at DESC" job-id])))
 
 (defn add-git-url [data repository-id]
   (conj data
@@ -67,19 +67,19 @@
   (let [task (first (jdbc/query (rdbms/get-ds)
                                 ["SELECT * FROM tasks WHERE tasks.id = ?" (:task_id trial)]))
         task-spec (task/get-task-spec (:id task))
-        execution-id (:execution_id task)
-        branch-and-commit (get-branch-and-commit execution-id)
+        job-id (:job_id task)
+        branch-and-commit (get-branch-and-commit job-id)
         tree-id (:tree_id branch-and-commit)
         repository-id (:repository_id branch-and-commit)
         trial-id (:id trial)
         environment-variables (conj (or (:environment_variables task-spec) {})
-                                    {:CIDER_CI_EXECUTION_ID execution-id
+                                    {:CIDER_CI_EXECUTION_ID job-id
                                      :CIDER_CI_TASK_ID (:task_id trial)
                                      :CIDER_CI_TRIAL_ID trial-id
                                      :CIDER_CI_TREE_ID (:tree_id branch-and-commit)})
         data {
               :environment_variables environment-variables
-              :execution_id execution-id
+              :job_id job-id
               :git_branch_name (:name branch-and-commit)
               :git_commit_id (:git_commit_id branch-and-commit)
               :git_options (or (:git_options task-spec) {})
@@ -132,9 +132,9 @@
                                              (hh/merge-where [:in :active_trials.state  ["executing","dispatching"]])
                                              (hh/merge-where (hc/raw "active_tasks.exclusive_resources && tasks.exclusive_resources")))])
           (hh/merge-join :tasks [:= :tasks.id :trials.task_id])
-          (hh/merge-join :executions [:= :executions.id :tasks.execution_id])
-          (hh/order-by [:executions.priority :desc] 
-                       [:executions.created_at :asc] 
+          (hh/merge-join :jobs [:= :jobs.id :tasks.job_id])
+          (hh/order-by [:jobs.priority :desc] 
+                       [:jobs.created_at :asc] 
                        [:tasks.priority :desc]
                        [:tasks.created_at :asc]
                        [:trials.created_at :asc])

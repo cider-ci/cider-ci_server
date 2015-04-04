@@ -2,7 +2,7 @@
 ; Licensed under the terms of the GNU Affero General Public License v3.
 ; See the "LICENSE.txt" file provided with this software.
 
-(ns cider-ci.dispatcher.execution
+(ns cider-ci.dispatcher.job
   (:require
     [cider-ci.dispatcher.stateful-entity :as stateful-entity]
     [cider-ci.utils.debug :as debug]
@@ -19,19 +19,19 @@
   (map :state (jdbc/query 
                 (rdbms/get-ds)
                 ["SELECT state FROM tasks
-                 WHERE execution_id = ?" id])))
+                 WHERE job_id = ?" id])))
 
 
 
 
-(defn update-state-and-fire-if-changed [execution-id new-state]
+(defn update-state-and-fire-if-changed [job-id new-state]
   (when (stateful-entity/update-state 
-          :executions execution-id new-state {:assert-existence true})
-    (messaging/publish "execution.updated" {:id execution-id})))
+          :jobs job-id new-state {:assert-existence true})
+    (messaging/publish "job.updated" {:id job-id})))
   
-(defn evaluate-and-update [execution-id]
-  (let [ states (get-task-states execution-id)
-        update-to #(update-state-and-fire-if-changed execution-id %)]
+(defn evaluate-and-update [job-id]
+  (let [ states (get-task-states job-id)
+        update-to #(update-state-and-fire-if-changed job-id %)]
     (cond 
       (every? #{"passed"} states) (update-to "passed")
       (every? #{"aborted"} states) (update-to "aborted")

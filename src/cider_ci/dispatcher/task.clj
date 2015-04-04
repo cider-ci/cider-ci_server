@@ -4,7 +4,7 @@
 
 (ns cider-ci.dispatcher.task
   (:require
-    [cider-ci.dispatcher.execution :as execution]
+    [cider-ci.dispatcher.job :as job]
     [cider-ci.dispatcher.result :as result]
     [cider-ci.dispatcher.stateful-entity :as stateful-entity]
     [cider-ci.utils.debug :as debug]
@@ -40,11 +40,11 @@
                                 ["SELECT * FROM tasks
                                  WHERE id = ?" id])))
 (defn get-task-spec [task-id]
-  (let [ task_specs (jdbc/query (rdbms/get-ds) 
-                                ["SELECT task_specs.data FROM task_specs
-                                 JOIN tasks ON tasks.task_spec_id = task_specs.id
+  (let [ task_specifications (jdbc/query (rdbms/get-ds) 
+                                ["SELECT task_specifications.data FROM task_specifications
+                                 JOIN tasks ON tasks.task_specification_id = task_specifications.id
                                  WHERE tasks.id = ?" task-id])
-        spec (clojure.walk/keywordize-keys (:data (first task_specs)))]
+        spec (clojure.walk/keywordize-keys (:data (first task_specifications)))]
     spec))
 
 (defn- get-trial-states [task]
@@ -98,7 +98,7 @@
           states (get-trial-states task)
           update-to #(stateful-entity/update-state 
                        :tasks id % {:assert-existence true})]
-      (result/update-task-and-execution-result id)
+      (result/update-task-and-job-result id)
       (cond 
         (some #{"passed"} states) (update-to "passed")
         (every? #{"aborted"} states) (update-to "aborted")
@@ -119,7 +119,7 @@
   (create-trials task)
   (when (evaluate-trials-and-update task)
     (messaging/publish "task.state-changed" task)
-    (execution/evaluate-and-update (:execution_id (get-task (:id task)))))
+    (job/evaluate-and-update (:job_id (get-task (:id task)))))
   ;(evaluate-and-create-trials {:id "d0e04847-ef9c-53ec-a009-18a02a7b8f81"})
   ;(evaluate-and-create-trials {:id "6946714b-9bbd-5c78-9304-878bd2cf6049"})
   )
