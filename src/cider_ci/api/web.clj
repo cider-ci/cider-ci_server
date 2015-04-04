@@ -116,4 +116,5 @@
 ;(debug/debug-ns 'cider-ci.auth.core)
 ;(debug/debug-ns 'cider-ci.auth.session)
 ;(debug/debug-ns 'cider-ci.auth.http-basic)
+;(debug/debug-ns 'cider-ci.open-session.encryptor)
 ;(debug/debug-ns *ns*)

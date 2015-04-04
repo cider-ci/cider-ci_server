@@ -212,7 +212,7 @@
   ([prefix ]
    (tree-attachment prefix "{attachment_id}"))
   ([prefix attachment-id]
-   {:name "Tree-attachment"
+   {:name "Tree-Attachment"
     :href (tree-attachment-path prefix attachment-id)
     :relations
     {:api-doc 
