@@ -13,12 +13,15 @@
     [clj-time.format :as time-format]
     [clojure.tools.logging :as logging]
     [cider-ci.utils.system :as system]
+    [clojure.string :as string :refer [split]]
     ))
 
-(defn trim-line [lines n]
+;##############################################################################
+
+(defn- trim-line [lines n]
   (clojure.string/trim (nth lines n)))
 
-(defn parse-time [ts]
+(defn- parse-time [ts]
   (time-coerce/to-sql-time (time-format/parse (time-format/formatters :rfc822) ts)))
 
 (defn get [id repository-path]
@@ -40,10 +43,8 @@
      :subject (clojure.string/trim (nth lines 7))
      :body (clojure.string/join "\n" (drop 8 lines))
      }))
-  ;(time-format/parse "2013-05-20 16:03:27 +0200")
-  ;(get "6712b320e6998988f023ea2a6265e2d781f6e959" "/Users/thomas/Programming/ROR/cider-ci_server-tb/repositories/f81e51fa-b83e-4fba-8f2f-d3f0d71ccc4f")
-  ;(find-commit "6712b320e6998988f023ea2a6265e2d781f6e959")
-  ; (`cd #{repository.dir};  ).split(/\n/).map(&:strip)
+
+;##############################################################################
 
 (defn get-git-parent-ids [id repository-path]
   (let [res (system/exec
@@ -52,15 +53,30 @@
         out (clojure.string/trim (:out res))
         ids (clojure.string/split out #"\s+")]
     (rest ids)))
-  ;(get-git-parent-ids "6712b320e6998988f023ea2a6265e2d781f6e959" "/Users/thomas/Programming/ROR/cider-ci_server-tb/repositories/f81e51fa-b83e-4fba-8f2f-d3f0d71ccc4f")
 
 (defn arcs-to-parents [id repository-path]
   (let [parent-ids  (get-git-parent-ids id repository-path)
         fun (fn [pid] {:child_id id :parent_id pid}) ]
     (map fun parent-ids )
     ))
-  ;(arcs-to-parents "6712b320e6998988f023ea2a6265e2d781f6e959" "/Users/thomas/Programming/ROR/cider-ci_server-tb/repositories/f81e51fa-b83e-4fba-8f2f-d3f0d71ccc4f")
 
+
+;##############################################################################
+
+(defn get-submodules 
+  "Returns a seq of maps each containing a :submodule_commit_id and :path key"
+  [commit-id repository-path]
+  (->> (system/exec-with-success-or-throw
+         ["git" "ls-tree" "-r" commit-id]
+         {:dir repository-path})
+       :out
+       (#(split % #"\n"))
+       (map #(split % #"\s+"))
+       (filter #(= "commit" (nth % 1))) 
+       (map #(hash-map :submodule_commit_id (nth % 2) :path (nth % 3)))))
+;(get-submodules "5f0430a5c7d3d399ad717c9d347b7a57d56a69c9" "./tmp/repositories/http-localhost-8888-cider-ci-demo-project-bash_e62bc7e0-81da-5cdb-bb04-58f429e9f7c1")
+
+;(type (:out (deref (commons-exec/sh ["git" "ls-tree" "-r" "5f0430a5c7d3d399ad717c9d347b7a57d56a69c9"] {:dir "./tmp/repositories/http-localhost-8888-cider-ci-demo-project-bash_e62bc7e0-81da-5cdb-bb04-58f429e9f7c1" }))))
 
 
 

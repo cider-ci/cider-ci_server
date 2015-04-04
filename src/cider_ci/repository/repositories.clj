@@ -72,22 +72,18 @@
                            :current_commit_id current-commit-id}))
                       lines)]
     branches))
-  ;(get-git-branches "/Users/thomas/Programming/ROR/cider-ci_server-tb/repositories/f81e51fa-b83e-4fba-8f2f-d3f0d71ccc4f")
 
-(defn update-or-create-branches [ds repository]
-  (logging/debug update-or-create-branches ["ds" repository])
+(defn update-or-create-branches [tx repository]
   (let [repository-path (git.repositories/path repository)
         git-branches (get-git-branches repository-path)
         canonic-id (git.repositories/canonic-id repository)]
     (logging/debug update-or-create-branches {:repository-path repository-path
                                               :git-branches git-branches
                                               :canonic-id canonic-id})
-    (sql.branches/delete-removed ds git-branches canonic-id)
-    (let [created (branches/create-new ds git-branches canonic-id repository-path)
-          updated (branches/update-outdated ds git-branches canonic-id repository-path)]
+    (sql.branches/delete-removed tx git-branches canonic-id)
+    (let [created (branches/create-new tx git-branches canonic-id repository-path)
+          updated (branches/update-outdated tx git-branches canonic-id repository-path)]
       (concat created updated)))) 
-  ;(hooke/add-hook #'update-or-create-branches #'util/logit)
-
 
 
 ;### GIT Stuff ################################################################

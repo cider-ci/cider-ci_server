@@ -4,35 +4,49 @@
 
 (ns cider-ci.repository.branches
   (:require
-    [clj-logging-config.log4j :as logging-config]
-    [clojure.tools.logging :as logging]
     [cider-ci.repository.commits :as commits]
     [cider-ci.repository.sql.branches :as sql.branches]
+    [cider-ci.utils.debug :as debug]
+    [clj-logging-config.log4j :as logging-config]
     [clojure.java.jdbc :as jdbc]
+    [clojure.tools.logging :as logging]
     ))
 
 
-(defn create-new [ds git-branches canonic-id repository-path]
-  (logging/debug create-new ["ds" git-branches canonic-id repository-path])
-  (let [current-branch-names (set (map :name (set (sql.branches/for-repository ds canonic-id))))
-        to-be-created (filter 
-                        (fn [git-branch] (not (contains? current-branch-names (:name git-branch)))) 
-                        git-branches) ]
-    (logging/debug [current-branch-names to-be-created])
-    (doall (map (fn [git-branch] 
-                  (logging/debug "creating branch: " git-branch)
-                  (let [commit-id (:current_commit_id git-branch)
-                        current_commit (commits/import-recursively ds commit-id repository-path)
-                        created (first (sql.branches/create! ds (merge git-branch {:repository_id canonic-id})))]
-                    (logging/debug "update_branches_commits for " created)
-                    (jdbc/query ds ["SELECT update_branches_commits(?,?,?)" 
-                                    (:id created)
-                                    (:current_commit_id created)
-                                    nil])
-                    (logging/debug "done")
-                    created))
+;### create-new db branches ###################################################
+
+(defn- get-existing-db-branches [tx repository-id]
+  (set (map :name (set (sql.branches/for-repository tx repository-id)))))
+
+(defn- filter-to-be-created-branches [git-branches existing-db-branches]
+  (filter 
+    (fn [git-branch] (not (contains? existing-db-branches (:name git-branch)))) 
+    git-branches))
+
+(defn- update-or-create-branches-commits [tx db-branch]
+  ; call stored procedure to do this
+  (jdbc/query tx ["SELECT update_branches_commits(?,?,?)" 
+                  (:id db-branch)
+                  (:current_commit_id db-branch)
+                  nil]))
+
+(defn- create-new-db-branch [tx repository-path repository-id git-branch]
+  (let [commit-id (:current_commit_id git-branch)
+        current_commit (commits/import-recursively tx commit-id repository-path)
+        db-branch (first (sql.branches/create! 
+                           tx (assoc git-branch :repository_id repository-id)))]
+    (update-or-create-branches-commits tx db-branch)
+    db-branch))
+
+(defn create-new [tx git-branches repository-id repository-path]
+  (let [existing-db-branches (get-existing-db-branches tx repository-id)
+        to-be-created (filter-to-be-created-branches 
+                        git-branches existing-db-branches)]
+    (doall (map #(create-new-db-branch tx repository-path repository-id %) 
                 to-be-created))))
 
+
+;##############################################################################
 
 (defn- to-be-updated
   [git-branches existing-branches]
@@ -43,41 +57,40 @@
                                                     (= name (:name existing-branch)))
                                                   existing-branches))]
               ; TODO corresponding-existing has only name attribute
-              (logging/debug "corresponding-existing: " corresponding-existing)
               (if-not corresponding-existing
                 false
                 (not= (:current_commit_id corresponding-existing) (:current_commit_id git-branch)))))
           git-branches))
 
 
-(defn update-outdated [ds git-branches canonic-id repository-path]
-  (logging/debug update-outdated ["ds" git-branches canonic-id repository-path])
-  (let [existing-branches (sql.branches/for-repository ds canonic-id)
+(defn update-outdated [tx git-branches canonic-id repository-path]
+  (let [existing-branches (sql.branches/for-repository tx canonic-id)
         to-be-updated (to-be-updated git-branches existing-branches)]
-    (logging/debug "to-be-updated " to-be-updated)
     (doall (map (fn [git-branch]
-                  (logging/debug "updating branch" git-branch)
-                  (let [branch (first (jdbc/query ds ["SELECT * FROM branches WHERE
+                  (let [branch (first (jdbc/query tx ["SELECT * FROM branches WHERE
                                                       repository_id = ? AND name = ?" 
                                                       canonic-id 
                                                       (:name git-branch)]))
-                        _ (commits/import-recursively ds (:current_commit_id git-branch) repository-path)
+                        _ (commits/import-recursively tx (:current_commit_id git-branch) repository-path)
 
-                        update_result (jdbc/update! ds :branches 
+                        update_result (jdbc/update! tx :branches 
                                                     (select-keys git-branch [:current_commit_id]) 
                                                     ["repository_id = ? AND name = ?" canonic-id (:name git-branch)])
 
-                        update_branches_commits_result (jdbc/query ds ["SELECT update_branches_commits(?,?,?)" 
+                        update_branches_commits_result (jdbc/query tx ["SELECT update_branches_commits(?,?,?)" 
                                                                        (:id branch)
                                                                        (:current_commit_id git-branch)
                                                                        (:current_commit_id branch)])
 
-                        updated_branch (first (jdbc/query ds ["SELECT * FROM branches WHERE
+                        updated_branch (first (jdbc/query tx ["SELECT * FROM branches WHERE
                                                               repository_id = ? AND name = ?" 
                                                               canonic-id 
                                                               (:name git-branch)]))]
-                    (logging/debug "finished updating_branch, updated: " updated_branch)
                     updated_branch))
                 to-be-updated))))
 
 
+;#### debug ###################################################################
+;(debug/debug-ns *ns*)
+;(logging-config/set-logger! :level :debug)
+;(logging-config/set-logger! :level :info)
