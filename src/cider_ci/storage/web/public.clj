@@ -19,8 +19,8 @@
 
 (defn- build-basequery []
   (-> (hh/select :true)
-      (hh/from :executions)
-      (hh/merge-join :commits [:= :commits.tree_id :executions.tree_id])
+      (hh/from :jobs)
+      (hh/merge-join :commits [:= :commits.tree_id :jobs.tree_id])
       (hh/merge-join :branches_commits [:= :branches_commits.commit_id :commits.id])
       (hh/merge-join :branches [:= :branches.id :branches_commits.branch_id])
       (hh/merge-join :repositories [:= :repositories.id :branches.repository_id])
@@ -30,7 +30,7 @@
 (defn- tree-attachment-public-viewable? [request]
   (let [tree-id (-> request :route-params :tree_id)
         query (-> (build-basequery) 
-                  (hh/merge-where [:= :executions.tree_id tree-id])
+                  (hh/merge-where [:= :jobs.tree_id tree-id])
                   hc/format)
         qres (first (jdbc/query (rdbms/get-ds) query)) ]
     ; this is not used as a http response
@@ -43,7 +43,7 @@
   (let [trial-id (-> request :route-params :trial_id 
                      rdbms.conversion/convert-to-uuid)
         query (-> (build-basequery) 
-                  (hh/merge-join :tasks [:= :tasks.execution_id :executions.id])
+                  (hh/merge-join :tasks [:= :tasks.job_id :jobs.id])
                   (hh/merge-join :trials [:= :trials.task_id :tasks.id])
                   (hh/merge-where [:= :trials.id trial-id])
                   hc/format)
