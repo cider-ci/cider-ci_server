@@ -2,7 +2,7 @@
 ; Licensed under the terms of the GNU Affero General Public License v3.
 ; See the "LICENSE.txt" file provided with this software.
 
-(ns cider-ci.builder.executions.tags
+(ns cider-ci.builder.jobs.tags
   (:require 
     [cider-ci.builder.util :as util]
     [cider-ci.utils.debug :as debug]
@@ -21,15 +21,15 @@
                (rdbms/get-ds) :tags
                {:tag tag}))))
 
-(defn add-exectutions-tags-link [execution-params tag-params]
+(defn add-exectutions-tags-link [job-params tag-params]
   (or (first (jdbc/query 
                (rdbms/get-ds)
-               ["SELECT * FROM executions_tags 
-                WHERE execution_id = ? 
-                AND tag_id = ? " (:id execution-params ) (:id tag-params)]))
+               ["SELECT * FROM jobs_tags 
+                WHERE job_id = ? 
+                AND tag_id = ? " (:id job-params ) (:id tag-params)]))
       (first (jdbc/insert!
-               (rdbms/get-ds) :executions_tags
-               {:execution_id (:id execution-params) :tag_id (:id tag-params)}))))
+               (rdbms/get-ds) :jobs_tags
+               {:job_id (:id job-params) :tag_id (:id tag-params)}))))
 
 (defn get-branch-tags [params]
   (->> (jdbc/query 
@@ -54,7 +54,7 @@
     (get-repository-tags params)
     ))
 
-(defn add-execution-tags [params]
+(defn add-job-tags [params]
   (doseq [tag (get-tags params)]
     (let [tag-row (get-or-insert-tag tag)]
       (add-exectutions-tags-link params tag-row)))

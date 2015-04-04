@@ -5,7 +5,7 @@
 (ns cider-ci.builder.main
   (:require 
     [cider-ci.auth.core :as auth]
-    [cider-ci.builder.executions.chaining :as executions.chaining]
+    [cider-ci.builder.jobs.chaining :as jobs.chaining]
     [cider-ci.builder.repository :as repository]
     [cider-ci.builder.tasks :as tasks]
     [cider-ci.builder.web :as web]
@@ -24,7 +24,7 @@
 
 
 (defn -main [& args]
-  (with/logging 
+  (with/log :warn
     (config/initialize)
     (rdbms/initialize (get-db-spec :builder))
     (nrepl/initialize (-> (get-config) :services :builder :nrepl))
@@ -32,7 +32,7 @@
     (tasks/initialize)
     (auth/initialize (select-keys (get-config) [:secret :session :basic_auth]))
     (web/initialize)
-    (executions.chaining/initialize)
+    (jobs.chaining/initialize)
     (http/initialize (get-config))))
 
 

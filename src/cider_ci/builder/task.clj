@@ -22,14 +22,14 @@
 (defn create-db-task [_raw-spec]
   (let [raw-spec (clojure.walk/keywordize-keys _raw-spec)
         db-task-spec (spec/get-or-create-task-spec (dissoc raw-spec
-                                                           :execution_id))
-        execution-id (:execution_id raw-spec)
+                                                           :job_id))
+        job-id (:job_id raw-spec)
         task-row (conj (select-keys raw-spec [:name :state :error :priority])
-                       {:execution_id execution-id
+                       {:job_id job-id
                         :traits (spec-map-to-array (or (:traits raw-spec) {}))
                         :exclusive_resources (spec-map-to-array (or (:exclusive_resources raw-spec) {}))
-                        :task_spec_id (:id db-task-spec)
-                        :id (util/idid2id execution-id (:id db-task-spec))
+                        :task_specification_id (:id db-task-spec)
+                        :id (util/idid2id job-id (:id db-task-spec))
                         })]
     (logging/debug task-row)
     (first (jdbc/insert! (rdbms/get-ds) "tasks" task-row))))

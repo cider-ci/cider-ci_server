@@ -6,7 +6,7 @@
   (:require 
     [cider-ci.auth.core :as auth]
     [cider-ci.auth.http-basic :as http-basic]
-    [cider-ci.builder.executions :as executions]
+    [cider-ci.builder.jobs :as jobs]
     [cider-ci.utils.config :refer [get-config]]
     [cider-ci.utils.debug :as debug]
     [cider-ci.utils.http-server :as http-server]
@@ -47,12 +47,12 @@
     (cpj/ANY "*" request default-handler)))
 
 
-;##### executions ############################################################# 
+;##### jobs ############################################################# 
 
-(defn create-execution [request]
-  (with/logging
+(defn create-job [request]
+  (with/log :warn
     {:status 201 
-     :body (executions/create 
+     :body (jobs/create 
              (->> request
                   :body
                   keywordize-keys
@@ -62,12 +62,12 @@
                                v)]))
                   (into {})))}))
 
-(defn available-executions [request]
+(defn available-jobs [request]
   (try 
     {:status 200 
      :headers {"content-type" "application/json;charset=utf-8"}
      :body (json/write-str 
-             (executions/available-executions 
+             (jobs/available-jobs 
                (-> request :route-params :tree_id)))}
     (catch clojure.lang.ExceptionInfo e
       (case (-> e ex-data :object :status)
@@ -78,11 +78,11 @@
        :body "Failed to parse the YAML file."}
       )))
 
-(defn wrap-executions [default-handler]
+(defn wrap-jobs [default-handler]
   (cpj/routes
-    (cpj/GET "/executions/available/:tree_id" request #'available-executions)
-    (cpj/POST "/executions/" request #'create-execution)
-    (cpj/POST "/executions" request #'create-execution)
+    (cpj/GET "/jobs/available/:tree_id" request #'available-jobs)
+    (cpj/POST "/jobs/" request #'create-job)
+    (cpj/POST "/jobs" request #'create-job)
     (cpj/ANY "*" request default-handler)))
 
 
@@ -92,7 +92,7 @@
   ( -> top-handler
        wrap-status-dispatch
        (routing/wrap-debug-logging 'cider-ci.builder.web)
-       wrap-executions
+       wrap-jobs
        (routing/wrap-debug-logging 'cider-ci.builder.web)
        ring.middleware.json/wrap-json-response
        ring.middleware.json/wrap-json-body

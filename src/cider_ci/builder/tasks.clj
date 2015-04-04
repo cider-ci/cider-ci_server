@@ -28,18 +28,18 @@
 
 
 ;### utils ####################################################################
-(defmacro wrap-exception-create-execution-issue [execution title & body]
+(defmacro wrap-exception-create-job-issue [job title & body]
   `(try 
      ~@body
      (catch Exception e#
-       (let [row-data#  {:execution_id (:id ~execution) 
+       (let [row-data#  {:job_id (:id ~job) 
                          :title ~title
                          :description (str (.getMessage e#) "\n\n"  (exception/stringify e# "\\n"))}]
-         (logging/warn ~execution row-data# e#)
-         (jdbc/insert! (rdbms/get-ds) "execution_issues" row-data#)))))
+         (logging/warn ~job row-data# e#)
+         (jdbc/insert! (rdbms/get-ds) "job_issues" row-data#)))))
 
-(defn get-execution [id]
-  (first (jdbc/query (rdbms/get-ds) ["SELECT * FROM executions WHERE id =?" id ])))
+(defn get-job [id]
+  (first (jdbc/query (rdbms/get-ds) ["SELECT * FROM jobs WHERE id =?" id ])))
 
 
 ;### build tasks ##############################################################
@@ -108,82 +108,79 @@
 
 (defn build-tasks 
   "Build the tasks for the given top-level specification."
-  [execution _spec]
+  [job _spec]
   (let [spec (clojure.walk/keywordize-keys _spec)
         tasks (build-tasks-for-single-context 
                 spec
                 (conj (or (:task_defaults spec) {})
-                      {:execution_id (:id execution)})
+                      {:job_id (:id job)})
                 (or (:script_defaults spec) {})
                 "")] 
     (doseq [raw-task tasks]
-      (wrap-exception-create-execution-issue 
-        execution "Error during task creation" 
+      (wrap-exception-create-job-issue 
+        job "Error during task creation" 
         (task/create-db-task raw-task)))))
 
-(defn expand-execution-spec [execution]
-  (wrap-exception-create-execution-issue 
-    execution "Error during expansion" 
-    (let [original-spec (spec/get-execution-spec (:specification_id execution))
-          substituded-spec-data (expansion/expand (:tree_id execution) 
+(defn expand-job-spec [job]
+  (wrap-exception-create-job-issue 
+    job "Error during expansion" 
+    (let [original-spec (spec/get-job-specification (:job_specification_id job))
+          substituded-spec-data (expansion/expand (:tree_id job) 
                                                   (clojure.walk/keywordize-keys
                                                     (:data original-spec)))
-          expanded-spec (spec/get-or-create-execution-specification 
+          expanded-spec (spec/get-or-create-job-specification 
                           substituded-spec-data)]
       (logging/debug {:original-spec original-spec 
                       :substituded-spec-data substituded-spec-data
                       :expanded-spec expanded-spec})
-      (jdbc/update! (rdbms/get-ds) :executions
-                    {:expanded_specification_id (:id expanded-spec)}
-                    ["id = ? " (:id execution)])
-      (get-execution (:id execution)))))
+      (jdbc/update! (rdbms/get-ds) :jobs
+                    {:expanded_job_specification_id (:id expanded-spec)}
+                    ["id = ? " (:id job)])
+      (get-job (:id job)))))
 
 
-;### create tasks for execution ###############################################
+;### create tasks for job ###############################################
 
-(defn create-tasks [execution] 
-  (wrap-exception-create-execution-issue 
-    execution "Error when creating tasks" 
+(defn create-tasks [job] 
+  (wrap-exception-create-job-issue 
+    job "Error when creating tasks" 
     (let [spec (-> (jdbc/query (rdbms/get-ds) 
-                               ["SELECT * FROM specifications WHERE id = ?" 
-                                (:expanded_specification_id execution)])
+                               ["SELECT * FROM job_specifications WHERE id = ?" 
+                                (:expanded_job_specification_id job)])
                    first :data)]
-      (build-tasks execution spec))))
+      (build-tasks job spec))))
 
-(defn- assert-tasks [execution]
+(defn- assert-tasks [job]
   (when (= 0 (-> (jdbc/query (rdbms/get-ds) 
-                             ["SELECT count(*) AS count FROM tasks WHERE execution_id = ?" 
-                              (:id execution)]) 
+                             ["SELECT count(*) AS count FROM tasks WHERE job_id = ?" 
+                              (:id job)]) 
                  first :count))
-    (jdbc/update! (rdbms/get-ds) :executions
+    (jdbc/update! (rdbms/get-ds) :jobs
                   {:state "failed"}
-                  ["id = ? " (:id execution)])
+                  ["id = ? " (:id job)])
     (throw (IllegalStateException. 
-             "This execution failed because no tasks have been created for it."))))
+             "This job failed because no tasks have been created for it."))))
 
 (defn create-tasks-and-trials [message]
-  (logging/debug create-tasks-and-trials message)
-  (if-let [execution (get-execution (:execution_id message))] 
-    (wrap-exception-create-execution-issue 
-      execution "Error during create-tasks-and-trials" 
-      (-> execution expand-execution-spec create-tasks)
+  (if-let [job (get-job (:job_id message))] 
+    (wrap-exception-create-job-issue 
+      job "Error during create-tasks-and-trials" 
+      (-> job expand-job-spec create-tasks)
       (doseq [task-with-id (jdbc/query 
                              (rdbms/get-ds) 
-                             ["SELECT id FROM tasks WHERE execution_id = ?" 
-                              (:id execution)])]
+                             ["SELECT id FROM tasks WHERE job_id = ?" 
+                              (:id job)])]
         (messaging/publish "task.create-trials" task-with-id))
-      (assert-tasks execution))
-    (throw (IllegalStateException. (str "could not find execution for " message)))))
-
-;(create-tasks-and-trials {:execution_id "fb1e97df-64de-4c12-bf01-4778924bbae9"})
+      (assert-tasks job))
+    (throw (IllegalStateException. (str "could not find job for " message)))))
 
 ;### initialization ###########################################################
 (defn initialize []
   (logging/debug "initialize")
-  (with/logging
-    (messaging/listen "execution.create-tasks-and-trials" 
+  (with/log :warn
+    (messaging/listen "job.create-tasks-and-trials" 
                       #'create-tasks-and-trials 
-                      "execution.create-tasks-and-trials")))
+                      "job.create-tasks-and-trials")))
 
 
 ;### Debug ####################################################################

@@ -53,7 +53,7 @@
 
 (defn expand 
   ([git-ref-id spec]
-   (with/logging 
+   (with/log :warn
      (cond 
        (map? spec) (if-let [include-value (:_cider-ci_include spec)]
                      (let [content (get-include-content git-ref-id include-value)]

@@ -13,24 +13,24 @@
     [clojure.java.jdbc :as jdbc]
     ))
 
-(defn get-execution-spec [id]
+(defn get-job-specification [id]
   (-> (jdbc/query 
         (rdbms/get-ds) 
-        [(str " SELECT * FROM specifications"
+        [(str " SELECT * FROM job_specifications"
               " WHERE id = ?") id])
       first)
-  ;(get-execution-spec "caf72b4c-26bf-5893-9f08-ce72f4af8605")
+  ;(get-job-specification "caf72b4c-26bf-5893-9f08-ce72f4af8605")
   )
 
-(defn get-or-create-execution-specification [data]
+(defn get-or-create-job-specification [data]
   (let [id (util/id-hash data)]
-    (or (first (jdbc/query (rdbms/get-ds) ["SELECT * FROM specifications WHERE id = ?" id]))
-        (first(jdbc/insert! (rdbms/get-ds) :specifications {:id id :data data})))))
+    (or (first (jdbc/query (rdbms/get-ds) ["SELECT * FROM job_specifications WHERE id = ?" id]))
+        (first(jdbc/insert! (rdbms/get-ds) :job_specifications {:id id :data data})))))
 
 (defn get-or-create-task-spec [data]
   (let [id (util/id-hash data)]
-    (or (first (jdbc/query (rdbms/get-ds) ["SELECT * FROM task_specs WHERE id = ?" id]))
-        (first(jdbc/insert! (rdbms/get-ds) :task_specs {:id id :data data})))))
+    (or (first (jdbc/query (rdbms/get-ds) ["SELECT * FROM task_specifications WHERE id = ?" id]))
+        (first(jdbc/insert! (rdbms/get-ds) :task_specifications {:id id :data data})))))
 
 ;### Debug ####################################################################
 ;(debug/debug-ns *ns*)

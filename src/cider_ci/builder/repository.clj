@@ -17,7 +17,7 @@
 
 
 (defn- parse-path-content [path content]
-  (with/logging (yaml/parse-string content)))
+  (with/log :warn (yaml/parse-string content)))
 
 (defn- assert-path-spec
   "Raises an exception if path doesn't start with a '/'"
@@ -39,7 +39,7 @@
   (let [url (http/build-service-url 
               :repository  
               (str "/path-content/" git-ref-id (format-path path)))
-        res (try (with/logging (http/get url {})))
+        res (try (with/log :warn (http/get url {})))
         body (:body res)]
     (parse-path-content path body)))
 

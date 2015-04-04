@@ -15,12 +15,12 @@
 
 (facts task/create-db-task
        (main/-main)
-       (jdbc/delete! (rdbms/get-ds) :executions ["name = 'test execution'"])
-       (let [execution (first (jdbc/insert! 
+       (jdbc/delete! (rdbms/get-ds) :jobs ["name = 'test job'"])
+       (let [job (first (jdbc/insert! 
                                 (rdbms/get-ds) 
-                                :executions {:tree_id "a-fake-tree-id" :name "test execution" }))]
+                                :jobs {:tree_id "a-fake-tree-id" :name "test job" }))]
          (fact (task/create-db-task {:traits {:linux true :windows false} 
-                                     :execution_id (:id execution)
+                                     :job_id (:id job)
                                      :name "test task"
                                      :scripts []})
                => truthy)

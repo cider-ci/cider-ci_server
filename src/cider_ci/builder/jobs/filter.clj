@@ -2,10 +2,10 @@
 ; Licensed under the terms of the GNU Affero General Public License v3.
 ; See the "LICENSE.txt" file provided with this software.
 
-(ns cider-ci.builder.executions.filter
+(ns cider-ci.builder.jobs.filter
   (:require 
     [cider-ci.builder.repository :as repository]
-    [cider-ci.builder.executions.tags :as tags]
+    [cider-ci.builder.jobs.tags :as tags]
     [cider-ci.builder.spec :as spec]
     [cider-ci.builder.tasks :as tasks]
     [cider-ci.builder.util :as util]
@@ -24,7 +24,7 @@
     ))
 
 
-;### filter executions ########################################################
+;### filter jobs ########################################################
 
 (defn add-state-filter-to-query [query-atom name state tree-id]
   (reset! query-atom 
@@ -32,10 +32,10 @@
               (hh/merge-where 
                 [" EXISTS " 
                  (-> (hh/select 1)
-                     (hh/from :executions)
-                     (hh/merge-where [:= :executions.name name])
-                     (hh/merge-where [:= :executions.state state])
-                     (hh/merge-where [:= :executions.tree_id tree-id]))]))))
+                     (hh/from :jobs)
+                     (hh/merge-where [:= :jobs.name name])
+                     (hh/merge-where [:= :jobs.state state])
+                     (hh/merge-where [:= :jobs.tree_id tree-id]))]))))
 
 (defn branch-filter-sql-part [conditions]
   (when-let [branch-filter-str (:branch conditions)]
@@ -64,16 +64,16 @@
               (hh/merge-where
                 ["NOT EXISTS" 
                  (-> (hh/select 1)
-                     (hh/from :executions)
-                     (hh/where [:= :executions.name name])
-                     (hh/merge-where [:= :executions.tree_id tree-id]))]))))
+                     (hh/from :jobs)
+                     (hh/where [:= :jobs.name name])
+                     (hh/merge-where [:= :jobs.tree_id tree-id]))]))))
 
 (defn dependencies-fullfiled? [properties]
   (let [query-atom (atom (hh/select :true))
         tree-id (:tree_id properties)]
     (logging/debug {:properties properties :initial-sql (hc/format @query-atom)})
     (add-self-name-filter-to-query query-atom (:name properties) tree-id)
-    (doseq [[other-name-sym state](->> properties :depends :executions)]
+    (doseq [[other-name-sym state](->> properties :depends :jobs)]
       (add-state-filter-to-query query-atom (name other-name-sym) state tree-id))
     (add-branch-filter-to-query (:tree_id properties) query-atom (:depends properties))
     (logging/debug {:final-sql (hc/format @query-atom)})

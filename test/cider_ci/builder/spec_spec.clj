@@ -13,25 +13,25 @@
   (java.util.UUID/fromString "cb993bdb-3a90-5842-8e12-4236ba30e276" )
   )
 
-(facts "get-or-create-execution-specification"
+(facts "get-or-create-job-specification"
        (main/-main)
        (fact "the connection is up" (rdbms/get-ds) => truthy)
-       (fact "get-or-create-execution-specification yields row when not exists yet" 
-             (jdbc/delete! (rdbms/get-ds) :specifications ["id = ?" x42-uuid])
-             (:id (get-or-create-execution-specification {:x 42})) => x42-uuid)
-       (fact "get-or-create-execution-specification yields row when exists"
-             (get-or-create-execution-specification {:x 42})
-             (first (jdbc/query (rdbms/get-ds) ["SELECT * FROM specifications WHERE id = ?",x42-uuid]))
+       (fact "get-or-create-job-specification yields row when not exists yet" 
+             (jdbc/delete! (rdbms/get-ds) :job_specifications ["id = ?" x42-uuid])
+             (:id (get-or-create-job-specification {:x 42})) => x42-uuid)
+       (fact "get-or-create-job-specification yields row when exists"
+             (get-or-create-job-specification {:x 42})
+             (first (jdbc/query (rdbms/get-ds) ["SELECT * FROM job_specifications WHERE id = ?",x42-uuid]))
                => truthy))
 
 (facts "get-or-create-task-spec"
        (main/-main)
        (fact "the connection is up" (rdbms/get-ds) => truthy)
        (fact "get-or-create-task-spec yields row when not exists yet" 
-             (jdbc/delete! (rdbms/get-ds) :task_specs ["id = ?" x42-uuid])
+             (jdbc/delete! (rdbms/get-ds) :task_specifications ["id = ?" x42-uuid])
              (:id (get-or-create-task-spec {:x 42})) => x42-uuid)
        (fact "get-or-create-task-spec yields row when exists"
              (get-or-create-task-spec {:x 42})
-             (first (jdbc/query (rdbms/get-ds) ["SELECT * FROM task_specs WHERE id = ?",x42-uuid]))
+             (first (jdbc/query (rdbms/get-ds) ["SELECT * FROM task_specifications WHERE id = ?",x42-uuid]))
                => truthy))
 
