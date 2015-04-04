@@ -2,7 +2,7 @@
 ; Licensed under the terms of the GNU Affero General Public License v3.
 ; See the "LICENSE.txt" file provided with this software.
 
-(ns cider-ci.api.json-roa.execution
+(ns cider-ci.api.json-roa.job
   (:require
     [cider-ci.api.json-roa.links :as links]
     [cider-ci.utils.debug :as debug]
@@ -15,11 +15,11 @@
   (let [context (:context request)
         query-params (:query-prarams request)
         id (-> response :body :id)]
-    {:name "Execution"
-     :self-relation (links/execution context id)
+    {:name "Job"
+     :self-relation (links/job context id)
      :relations
      {:tree-attachments (links/tree-attachments context id)
-      :executions (links/executions context)
+      :jobs (links/jobs context)
       :tasks (links/tasks context id)}}))
 
 

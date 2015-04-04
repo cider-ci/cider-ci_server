@@ -5,8 +5,8 @@
 
 (ns cider-ci.api.json-roa
   (:require 
-    [cider-ci.api.json-roa.execution :as json-roa.execution]
-    [cider-ci.api.json-roa.executions :as json-roa.executions]
+    [cider-ci.api.json-roa.job :as json-roa.job]
+    [cider-ci.api.json-roa.jobs :as json-roa.jobs]
     [cider-ci.api.json-roa.links :as json-roa.links]
     [cider-ci.api.json-roa.root :as json-roa.root]
     [cider-ci.api.json-roa.task :as json-roa.task]
@@ -51,9 +51,9 @@
 (defn build-routes-handler [json-response]
   (cpj/routes
     (cpj/GET "/" request (json-roa.root/build request))
-    (cpj/GET "/executions/" request (json-roa.executions/build request json-response))
-    (cpj/GET "/execution/:id" request (json-roa.execution/build request json-response))
-    (cpj/GET "/execution/:id/tasks/" request (json-roa.tasks/build request json-response))
+    (cpj/GET "/jobs/" request (json-roa.jobs/build request json-response))
+    (cpj/GET "/job/:id" request (json-roa.job/build request json-response))
+    (cpj/GET "/job/:id/tasks/" request (json-roa.tasks/build request json-response))
     (cpj/GET "/task/:id" request (json-roa.task/build request json-response))
     (cpj/GET "/task/:id/trials/" request (json-roa.trials/build request json-response))
     (cpj/GET "/trial/:id" request (json-roa.trial/build request json-response))
@@ -61,7 +61,7 @@
     (cpj/ANY "/trial/:trial_id/trial-attachments/" request (json-roa.trial-attachments/build request json-response))
     (cpj/ANY "/trial-attachment/:id" request (json-roa.trial-attachment/build request json-response))
 
-    (cpj/ANY "/execution/:id/tree-attachments/" request (json-roa.tree-attachments/build request json-response))
+    (cpj/ANY "/job/:id/tree-attachments/" request (json-roa.tree-attachments/build request json-response))
     (cpj/ANY "/tree-attachment/:id" request (json-roa.tree-attachment/build request json-response))
 
 

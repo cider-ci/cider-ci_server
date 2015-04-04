@@ -2,7 +2,7 @@
 ; Licensed under the terms of the GNU Affero General Public License v3.
 ; See the "LICENSE.txt" file provided with this software.
 
-(ns cider-ci.api.json-roa.executions
+(ns cider-ci.api.json-roa.jobs
   (:require
     [cider-ci.api.json-roa.links :as links]
     [cider-ci.api.pagination :as pagination]
@@ -15,10 +15,10 @@
 (defn build [request response]
   (let [context (:context request)
         query-params (:query-params request)]
-    (let [ids (->> response :body :executions (map :id))]
+    (let [ids (->> response :body :jobs (map :id))]
       (logging/debug {:ids ids})
-      {:name "Executions"
-       :self-relation (links/executions context query-params)
+      {:name "Jobs"
+       :self-relation (links/jobs context query-params)
        :relations
        {:root (links/root context)
         }
@@ -28,12 +28,12 @@
           (into {} (map-indexed 
                      (fn [i id]
                        [(+ 1 i (pagination/compute-offset query-params))
-                        (links/execution context id)])
+                        (links/job context id)])
                      ids))}
          (when (seq ids)
            (links/next-rel
              (fn [query-params]
-               (links/executions-path context query-params))
+               (links/jobs-path context query-params))
              query-params)))})))
 
 

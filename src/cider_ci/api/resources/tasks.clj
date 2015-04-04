@@ -28,11 +28,11 @@
 (defonce conf (atom nil))
 
 ;### get tasks ##################################################################
-(defn build-tasks-base-query [execution-id]
+(defn build-tasks-base-query [job-id]
   (-> (hh/select :tasks.id :tasks.name)
       (hh/modifiers :distinct)
       (hh/from :tasks)
-      (hh/where [:= :tasks.execution_id execution-id])
+      (hh/where [:= :tasks.job_id job-id])
       (hh/order-by [:tasks.name :desc] [:tasks.id :desc])))
 
 
@@ -42,8 +42,8 @@
         (hh/merge-where [:= :tasks.state state]))
     query))
 
-(defn tasks-data [execution-id query-params]
-  (let [query (-> (build-tasks-base-query execution-id)
+(defn tasks-data [job-id query-params]
+  (let [query (-> (build-tasks-base-query job-id)
                   (filter-by-state query-params)
                   (pagination/add-offset-for-honeysql query-params)
                   hc/format)]
@@ -53,14 +53,14 @@
 (defn get-tasks [request] 
   {:body 
    {:tasks
-    (tasks-data (-> request :params :execution_id)
+    (tasks-data (-> request :params :job_id)
                 (-> request :query-params))}})
 
 
 ;### routes #####################################################################
 (def routes 
   (cpj/routes
-    (cpj/GET "/execution/:execution_id/tasks/" request (get-tasks request))
+    (cpj/GET "/job/:job_id/tasks/" request (get-tasks request))
     ))
 
 

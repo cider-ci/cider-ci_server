@@ -33,12 +33,12 @@
         (hh/merge-where [:like :path (str "/" tree-id "/%" pathsegment "%")]))
     query))
 
-(defn attachments-data [execution-id query-params]
+(defn attachments-data [job-id query-params]
   (let [ tree-id (:tree_id 
                    (first (jdbc/query 
                             (rdbms/get-ds) 
-                            ["SELECT tree_id FROM executions WHERE id = ?" 
-                             execution-id])))
+                            ["SELECT tree_id FROM jobs WHERE id = ?" 
+                             job-id])))
         query (-> (build-attachments-base-query tree-id)
                   (filter-by-path-segment tree-id query-params)
                   (pagination/add-offset-for-honeysql  query-params)
@@ -48,16 +48,16 @@
 
 
 (defn get-attachments [request]
-  (let [execution-id (-> request :route-params :execution_id)
+  (let [job-id (-> request :route-params :job_id)
         query-params (-> request :query-params)]
     {:body 
      {:tree_attachments
-      (attachments-data execution-id query-params)}}))
+      (attachments-data job-id query-params)}}))
 
 ;### routes #####################################################################
 (def routes 
   (cpj/routes
-    (cpj/GET "/execution/:execution_id/tree-attachments/" request (get-attachments request))
+    (cpj/GET "/job/:job_id/tree-attachments/" request (get-attachments request))
     ))
 
 

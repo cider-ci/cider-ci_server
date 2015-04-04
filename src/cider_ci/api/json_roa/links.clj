@@ -44,42 +44,42 @@
                           query-params))}})
 
 
-;### executions #################################################################
+;### jobs #################################################################
 
-(defn executions-path 
+(defn jobs-path 
   ([prefix]
-   (executions-path prefix {}))
+   (jobs-path prefix {}))
   ([prefix query-params]
-   (str prefix "/executions/" 
+   (str prefix "/jobs/" 
         (if (empty? query-params)
           "{?repository,branch,branchdescendants,state,treeid}"
           (str "?" (http/build-url-query-string query-params))
           ))))
 
-(defn executions
+(defn jobs
   ([prefix ]
-   (executions prefix {}))
+   (jobs prefix {}))
   ([prefix query-params]
-   {:name "Executions"
-    :href (executions-path prefix query-params)
+   {:name "Jobs"
+    :href (jobs-path prefix query-params)
     :relations
     {:api-doc 
-     {:name "API Documentation Executions" 
-      :href (str (api-docs-path) "#executions")}}}))
+     {:name "API Documentation Jobs" 
+      :href (str (api-docs-path) "#jobs")}}}))
 
 
-;### execution ##################################################################
+;### job ##################################################################
 
-(defn execution
+(defn job
   ([prefix]
-   (execution prefix "{id}"))
+   (job prefix "{id}"))
   ([prefix id]
-   {:name "Execution"
-    :href (str prefix "/execution/" id)
+   {:name "Job"
+    :href (str prefix "/job/" id)
     :relations
     {:api-doc 
-     {:name "API Documentation Execution" 
-      :href (str (api-docs-path) "#execution")}
+     {:name "API Documentation Job" 
+      :href (str (api-docs-path) "#job")}
      }}))
 
 
@@ -103,20 +103,20 @@
 ;### tasks #################################################################
 
 (defn tasks-path 
-  ([prefix execution-id]
-   (tasks-path prefix execution-id {}))
-  ([prefix execution-id query-params]
-   (str prefix "/execution/"  execution-id "/tasks/"
+  ([prefix job-id]
+   (tasks-path prefix job-id {}))
+  ([prefix job-id query-params]
+   (str prefix "/job/"  job-id "/tasks/"
         (if (empty? query-params)
           "{?state}"
           (str "?" (http/build-url-query-string query-params))))))
 
 (defn tasks
-  ([prefix execution-id ]
-   (tasks  prefix execution-id {}))
-  ([prefix execution-id query-params]
+  ([prefix job-id ]
+   (tasks  prefix job-id {}))
+  ([prefix job-id query-params]
    {:name "Tasks"
-    :href (tasks-path prefix execution-id query-params)
+    :href (tasks-path prefix job-id query-params)
     :relations
     {:api-doc 
      {:name "API Documentation Task" 
@@ -224,19 +224,19 @@
 ;### tree attachments ######################################################
 
 (defn tree-attachments-path
-  ([prefix execution-id]
-   (tree-attachments-path prefix execution-id {}))
-  ([prefix execution-id query-params]
-   (str prefix "/execution/"  execution-id "/tree-attachments/"
+  ([prefix job-id]
+   (tree-attachments-path prefix job-id {}))
+  ([prefix job-id query-params]
+   (str prefix "/job/"  job-id "/tree-attachments/"
         (when-not  (empty? query-params)
           (str "?" (http/build-url-query-string query-params))))))
 
 (defn tree-attachments 
-  ([prefix execution-id]
-   (tree-attachments prefix execution-id {}))
-  ([prefix execution-id query-params]
+  ([prefix job-id]
+   (tree-attachments prefix job-id {}))
+  ([prefix job-id query-params]
    {:name "Tree-Attachments"
-    :href (tree-attachments-path prefix execution-id query-params)
+    :href (tree-attachments-path prefix job-id query-params)
     }))
 
 

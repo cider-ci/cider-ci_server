@@ -16,17 +16,17 @@
 (defn build [request response]
   (let [context (:context request)
         query-params (:query-prarams request)
-        execution-id (-> request :route-params :id)
+        job-id (-> request :route-params :id)
         ids (->> response :body :tree_attachments (map :id))
         tree-id (:tree_id 
                   (first (jdbc/query 
                            (rdbms/get-ds) 
-                           ["SELECT tree_id FROM executions WHERE id = ?" 
-                            execution-id])))]
+                           ["SELECT tree_id FROM jobs WHERE id = ?" 
+                            job-id])))]
     {:name "Tree-Attachments"
-     :self-relation (links/tree-attachments context execution-id)
+     :self-relation (links/tree-attachments context job-id)
      :relations
-     {:execution (links/execution context execution-id)
+     {:job (links/job context job-id)
       :tree-attachment-data-stream (links/tree-attachment-data-stream request tree-id "{path}")
       }
      :collection 
@@ -41,7 +41,7 @@
                 ids))}
        (when (seq ids)
          (links/next-link 
-           (links/tree-attachments-path context execution-id) 
+           (links/tree-attachments-path context job-id) 
            query-params)))}))
 
 

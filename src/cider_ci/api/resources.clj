@@ -6,8 +6,8 @@
 (ns cider-ci.api.resources
   (:require 
     [cider-ci.api.json-roa :as json-roa]
-    [cider-ci.api.resources.execution :as execution]
-    [cider-ci.api.resources.executions :as executions]
+    [cider-ci.api.resources.job :as job]
+    [cider-ci.api.resources.jobs :as jobs]
     [cider-ci.api.resources.root :as resources.root]
     [cider-ci.api.resources.task :as task]
     [cider-ci.api.resources.tasks :as tasks]
@@ -65,10 +65,10 @@
   (cpj/routes 
     (cpj/GET "/" request (resources.root/get request))
 
-    (cpj/ANY "/executions/" [] executions/routes)
-    (cpj/ANY "/execution/*" [] execution/routes)
+    (cpj/ANY "/jobs/" [] jobs/routes)
+    (cpj/ANY "/job/*" [] job/routes)
 
-    (cpj/ANY "/execution/:id/tasks/" [] tasks/routes)
+    (cpj/ANY "/job/:id/tasks/" [] tasks/routes)
     (cpj/ANY "/task/*" [] task/routes)
 
     (cpj/ANY "/task/:id/trials/" [] trials/routes)
@@ -77,7 +77,7 @@
     (cpj/ANY "/trial/:trial_id/trial-attachments/" [] trial-attachments/routes)
     (cpj/ANY "/trial-attachment/*" [] trial-attachment/routes)
 
-    (cpj/ANY "/execution/:id/tree-attachments/" [] tree-attachments/routes)
+    (cpj/ANY "/job/:id/tree-attachments/" [] tree-attachments/routes)
     (cpj/ANY "/tree-attachment/*" [] tree-attachment/routes)
 
     (cpj/ANY "*" request {:status 404 :body {:message "404 NOT FOUND"}})

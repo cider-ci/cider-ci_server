@@ -15,14 +15,14 @@
 (defn build [request response]
   (let [context (:context request)
         query-params (:query-params request)
-        execution-id (-> request :params :id)
+        job-id (-> request :params :id)
         ]
-    (logging/debug build {:context context :execution-id execution-id :query-prarams query-params})
+    (logging/debug build {:context context :job-id job-id :query-prarams query-params})
     (let [ids (->> response :body :tasks (map :id))]
       {:name "Tasks"
-       :self-relation (links/tasks context execution-id query-params)
+       :self-relation (links/tasks context job-id query-params)
        :relations
-       {:execution (links/execution context execution-id)
+       {:job (links/job context job-id)
         }
        :collection
        (conj
@@ -35,7 +35,7 @@
                   ids))}
          (when (seq ids)
            (links/next-rel
-             #(links/tasks-path context execution-id %)
+             #(links/tasks-path context job-id %)
              query-params)))})))
 
 

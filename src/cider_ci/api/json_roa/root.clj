@@ -14,8 +14,8 @@
     {:name "Root"
      :self-relation (json-roa.links/root context)
      :relations 
-     {:executions (json-roa.links/executions context)
-      :execution (json-roa.links/execution context)
+     {:jobs (json-roa.links/jobs context)
+      :job (json-roa.links/job context)
       :task (json-roa.links/task context)
       :trial (json-roa.links/trial context)
       :tree-attachment-data-stream (json-roa.links/tree-attachment-data-stream 

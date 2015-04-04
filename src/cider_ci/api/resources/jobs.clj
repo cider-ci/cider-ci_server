@@ -2,7 +2,7 @@
 ; Licensed under the terms of the GNU Affero General Public License v3.
 ; See the "LICENSE.txt" file provided with this software.
 
-(ns cider-ci.api.resources.executions
+(ns cider-ci.api.resources.jobs
   (:require 
     [cider-ci.api.pagination :as pagination]
     [cider-ci.utils.debug :as debug]
@@ -57,18 +57,18 @@
 
 ;### get-index ##################################################################
 
-(defn build-executions-base-query []
-  (-> (hh/select :executions.id :executions.created_at)
-      (hh/from :executions)
+(defn build-jobs-base-query []
+  (-> (hh/select :jobs.id :jobs.created_at)
+      (hh/from :jobs)
       (hh/modifiers :distinct)
-      (hh/order-by [:executions.created_at :desc])
+      (hh/order-by [:jobs.created_at :desc])
       ))
 
 
 (defn filter-by-branch [query params]
   (if-let [branch-name (:branch params)]
     (-> query
-        (hh/merge-join :commits [:= :commits.tree_id :executions.tree_id])
+        (hh/merge-join :commits [:= :commits.tree_id :jobs.tree_id])
         (hh/merge-join :branches [:= :branches.current_commit_id :commits.id])
         (hh/merge-where [:= :%lower.branches.name (clojure.string/lower-case branch-name)]))
     query))
@@ -76,7 +76,7 @@
 (defn filter-by-branch-descendants [query params]
   (if-let [branch-name (:branchdescendants params)]
     (-> query
-        (hh/merge-join :commits [:= :commits.tree_id :executions.tree_id])
+        (hh/merge-join :commits [:= :commits.tree_id :jobs.tree_id])
         (hh/merge-join :branches_commits [:= :branches_commits.commit_id :commits.id])
         (hh/merge-join [:branches :branches_via_branches_commits] [:= :branches_via_branches_commits.id :branches_commits.branch_id])
         (hh/merge-where [:= :%lower.branches_via_branches_commits.name (clojure.string/lower-case branch-name)]))
@@ -85,7 +85,7 @@
 (defn filter-by-repository [query params]
   (if-let [repository-name (:repository params)]
     (-> query
-        (hh/merge-join :commits [:= :commits.tree_id :executions.tree_id])
+        (hh/merge-join :commits [:= :commits.tree_id :jobs.tree_id])
         (hh/merge-join :branches_commits [:= :branches_commits.commit_id :commits.id])
         (hh/merge-join [:branches :branches_via_branches_commits] [:= :branches_via_branches_commits.id :branches_commits.branch_id])
         (hh/merge-join :repositories [:= :repositories.id :branches_via_branches_commits.repository_id])
@@ -95,13 +95,13 @@
 (defn filter-by-state [query params]
   (if-let [state (:state params)]
     (-> query
-        (hh/merge-where [:= :executions.state state]))
+        (hh/merge-where [:= :jobs.state state]))
     query))
 
 (defn filter-by-tree-id [query params]
   (if-let [tree-id (:treeid params)]
     (-> query
-        (hh/merge-where [:= :executions.tree_id tree-id]))
+        (hh/merge-where [:= :jobs.tree_id tree-id]))
     query))
 
 (defn log-debug-honeymap [honeymap]
@@ -109,7 +109,7 @@
   honeymap)
 
 (defn index [query-params]
-  (let [query (-> (build-executions-base-query) 
+  (let [query (-> (build-jobs-base-query) 
                   log-debug-honeymap
                   (pagination/add-offset-for-honeysql query-params)
                   log-debug-honeymap
@@ -127,16 +127,16 @@
                   hc/format
                   log-debug-honeymap
                   )
-        _ (logging/debug "GET /executions " {:query query})]
+        _ (logging/debug "GET /jobs " {:query query})]
     (jdbc/query (rdbms/get-ds) query)))
 
 (defn get-index [request] 
-  {:body {:executions (index (:query-params request))}})
+  {:body {:jobs (index (:query-params request))}})
 
 ;### routes #####################################################################
 (def routes
   (cpj/routes
-    (cpj/GET "/executions/" request (get-index request))))
+    (cpj/GET "/jobs/" request (get-index request))))
 
 
 ;### init #####################################################################

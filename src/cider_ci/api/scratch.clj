@@ -19,17 +19,17 @@
              :where [:= :%lower.branch.name "?name"]})
 
 (def m2 (-> 
-          (select :executions.id :executions.created_at)
+          (select :jobs.id :jobs.created_at)
           (modifiers :distinct)
           (sql/format)
           ))
 
 (def base-query 
   (->
-    (select :executions.id :executions.created_at)
+    (select :jobs.id :jobs.created_at)
     (modifiers :distinct)
-    (join :commits [:= :commits.tree_id :executions_tree_id])
-    (merge-join :commits [:= :commits.tree_id :executions_tree_id])
+    (join :commits [:= :commits.tree_id :jobs_tree_id])
+    (merge-join :commits [:= :commits.tree_id :jobs_tree_id])
     ;(merge-join :branches_commits [:= :branches_commits.commit_id :commits.id])
     ;(sql/format)
     ))

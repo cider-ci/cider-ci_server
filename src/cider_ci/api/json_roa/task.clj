@@ -19,8 +19,8 @@
      :self-relation (links/tasks context id)
      :relations
      {:trials (links/trials context id)
-      :tasks (links/tasks context (-> response :body :execution_id))
-      :execution (links/execution context (-> response :body :execution_id))
+      :tasks (links/tasks context (-> response :body :job_id))
+      :job (links/job context (-> response :body :job_id))
       }}))
 
 

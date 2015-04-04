@@ -29,7 +29,7 @@
      :relations
      {:tree-attachment-data-stream (links/tree-attachment-data-stream 
                                      request tree-id path-wo-slash)
-      :executions (links/executions context {:tree-id tree-id})
+      :jobs (links/jobs context {:tree-id tree-id})
       }}))
 
 

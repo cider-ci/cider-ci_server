@@ -3,7 +3,7 @@
 ; See the "LICENSE.txt" file provided with this software.
 
 
-(ns cider-ci.api.resources.execution
+(ns cider-ci.api.resources.job
   (:require 
     [cider-ci.utils.debug :as debug]
     [cider-ci.utils.http-server :as http-server]
@@ -25,41 +25,41 @@
 
 
 
-;### get-execution-stats ########################################################
+;### get-job-stats ########################################################
 
-(defn get-execution-stats [request]
+(defn get-job-stats [request]
   (let [id (-> request :params :id)
         data (first (jdbc/query 
-                      (rdbms/get-ds) ["SELECT * from execution_stats 
-                                      WHERE execution_id = ?" id]))]
+                      (rdbms/get-ds) ["SELECT * from job_stats 
+                                      WHERE job_id = ?" id]))]
     {:data data}))
 
 
-;### get-execution ##############################################################
+;### get-job ##############################################################
 
 (defn query-exeuction [id]
   (first (jdbc/query (rdbms/get-ds) 
-                     ["SELECT * from executions
+                     ["SELECT * from jobs
                       WHERE id = ?" id])))
 
-(defn execution-data [params]
+(defn job-data [params]
   (let [id (:id params)
-        execution (query-exeuction id)]
-    (dissoc execution 
+        job (query-exeuction id)]
+    (dissoc job 
             :expanded_specification_id
             :specification_id
             )))
 
-(defn get-execution [request] 
-  {:body (execution-data (:params request))
+(defn get-job [request] 
+  {:body (job-data (:params request))
    })
 
 ;### routes #####################################################################
 
 (def routes 
   (cpj/routes
-    (cpj/GET "/execution/:id" request (get-execution request))
-    (cpj/GET "/execution/:id/stats" request (get-execution-stats request))))
+    (cpj/GET "/job/:id" request (get-job request))
+    (cpj/GET "/job/:id/stats" request (get-job-stats request))))
 
 
 ;### init #####################################################################
