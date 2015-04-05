@@ -11,6 +11,7 @@
                  [cider-ci/clj-utils "3.0.0-beta.1"]
                  [drtom/clj-uuid "0.0.8"]
                  [drtom/honeysql "1.1.0"]
+                 [org.clojure/core.memoize "0.5.6"]
                  [org.clojure/tools.nrepl "0.2.8"]
                  ]
   :source-paths [ "src"]

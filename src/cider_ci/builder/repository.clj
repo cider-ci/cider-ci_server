@@ -11,6 +11,7 @@
     [cider-ci.utils.rdbms :as rdbms]
     [cider-ci.utils.with :as with]
     [clj-yaml.core :as yaml]
+    [clojure.core.memoize :as memo]
     [clojure.java.jdbc :as jdbc]
     [clojure.tools.logging :as logging]
     ))
@@ -27,24 +28,20 @@
     (throw (IllegalArgumentException. 
              (str "The string value of `_cider-ci_include` must start with a slash '/'. " )))))
 
-;; TODO remove this in cider-ci 3.0
-(defn- format-path 
-  "Prepends a '/' if not present."
-  [path]
-  (if (re-find #"^\/" path) 
-    path
-    (str "/" path)))
-
 (defn get-path-content_ [git-ref-id path]
   (let [url (http/build-service-url 
               :repository  
-              (str "/path-content/" git-ref-id (format-path path)))
+              (str "/path-content/" git-ref-id (assert-path-spec path)))
         res (try (with/log :warn (http/get url {})))
         body (:body res)]
     (parse-path-content path body)))
 
 
-(def get-path-content (memoize get-path-content_))
+(def get-path-content (memo/lru get-path-content_
+                                :lru/threshold 500))
 
-;(get-path-content "e95b3a51c55116d0f91105ec78ad1277af473013" ".cider-ci.yml")
+;### Debug ####################################################################
+;(logging-config/set-logger! :level :debug)
+;(logging-config/set-logger! :level :info)
+;(debug/debug-ns *ns*)
 

@@ -4,12 +4,12 @@
 
 (ns cider-ci.builder.jobs
   (:require 
+    [cider-ci.builder.dotfile]
     [cider-ci.builder.jobs.filter :as jobs.filter]
     [cider-ci.builder.jobs.tags :as tags]
     [cider-ci.builder.repository :as repository]
     [cider-ci.builder.spec :as spec]
     [cider-ci.builder.tasks :as tasks]
-    [cider-ci.builder.util :as util :refer [builds-or-jobs]]
     [cider-ci.utils.debug :as debug]
     [cider-ci.utils.http :as http]
     [cider-ci.utils.map :refer [deep-merge]]
@@ -29,10 +29,9 @@
 
 (defn try-to-add-specification-from-dotfile [params] 
   (try 
-    (-> (repository/get-path-content (:tree_id params) "/.cider-ci.yml")
-        builds-or-jobs
+    (-> (cider-ci.builder.dotfile/get-dotfile (:tree_id params))
+        :jobs
         (get (keyword (:name params)))
-        :job_specification
         ((fn [js] (assoc params :job_specification js))))
     (catch clojure.lang.ExceptionInfo e
       (case (-> e ex-data :object :status)
@@ -85,8 +84,8 @@
 ;### available jobs #####################################################
 
 (defn available-jobs [tree-id]
-  (->> (repository/get-path-content tree-id "/.cider-ci.yml")
-       builds-or-jobs
+  (->> (cider-ci.builder.dotfile/get-dotfile tree-id)
+       :jobs
        (into [])
        (map (fn [[name_sym properties]] (assoc properties 
                                                :name (name name_sym)

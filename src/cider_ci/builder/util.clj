@@ -10,11 +10,6 @@
     [clojure.data.json :as json]
     ))
 
-(defn builds-or-jobs [dotfile-map]
-  (if (and (:builds dotfile-map) (:jobs dotfile-map))
-    (throw (IllegalArgumentException. "The dotfile-map must contain :jobs or :maps execlusively")))
-  (or (:builds dotfile-map) (:jobs dotfile-map)))
-
 (defn deep-merge [& vals]
   (if (every? map? vals)
     (apply merge-with deep-merge vals)

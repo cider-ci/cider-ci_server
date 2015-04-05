@@ -4,19 +4,19 @@
 
 (ns cider-ci.builder.jobs.chaining
   (:require 
-    [cider-ci.builder.repository :as repository]
+    [cider-ci.builder.dotfile :as dotfile]
     [cider-ci.builder.jobs :as jobs]
     [cider-ci.builder.jobs.filter :as jobs.filter]
     [cider-ci.builder.jobs.tags :as tags]
+    [cider-ci.builder.repository :as repository]
     [cider-ci.builder.spec :as spec]
     [cider-ci.builder.tasks :as tasks]
-    [cider-ci.builder.util :as util :refer [builds-or-jobs]]
     [cider-ci.utils.debug :as debug]
     [cider-ci.utils.http :as http]
+    [cider-ci.utils.map :refer [deep-merge]]
     [cider-ci.utils.messaging :as messaging]
     [cider-ci.utils.rdbms :as rdbms]
     [cider-ci.utils.with :as with]
-    [cider-ci.utils.map :refer [deep-merge]]
     [clj-logging-config.log4j :as logging-config]
     [clj-yaml.core :as yaml]
     [clojure.java.jdbc :as jdbc]
@@ -33,7 +33,7 @@
           tree-id (:tree_id properties)]
       (logging/debug "trigger-constraints-fullfilled?" {:properties properties :initial-sql (hc/format @query-atom)})
       (jobs.filter/add-self-name-filter-to-query query-atom (:name properties) tree-id)
-      (jobs.filter/add-branch-filter-to-query tree-id query-atom (-> properties :trigger))
+      (jobs.filter/add-branch-filter-to-query tree-id query-atom (-> properties :triggers))
       (logging/debug "trigger-constraints-fullfilled?" {:final-sql (hc/format @query-atom)})
       (->> (-> @query-atom
                (hc/format))
@@ -42,19 +42,20 @@
            :bool)))
   
 (defn trigger-jobs [tree-id]
-  (->> (repository/get-path-content tree-id "/.cider-ci.yml")
-       builds-or-jobs
+  (->> (dotfile/get-dotfile tree-id)
+       :jobs
        (map (fn [[name_sym properties]] (assoc properties 
                                                :name (name name_sym)
                                                :tree_id tree-id)))
-       (filter #(-> % :trigger))
+       (filter #(-> % :triggers))
        (filter jobs.filter/dependencies-fullfiled?)
        (filter trigger-constraints-fullfilled?)
+       (map jobs/add-specification-from-dofile-if-not-present)
        (map jobs/add-specification-id-if-not-present)
        (map jobs/create)
        doall))
 
-;(trigger-jobs "6ead70379661922505b6c8c3b0acfce93f79fe3e")
+;(trigger-jobs "fd4f87460095ac66647e5bfc4fc56f7039a665c9") 
 ;(available-jobs "6ead70379661922505b6c8c3b0acfce93f79fe3e")
 
 

@@ -73,9 +73,9 @@
         tree-id (:tree_id properties)]
     (logging/debug {:properties properties :initial-sql (hc/format @query-atom)})
     (add-self-name-filter-to-query query-atom (:name properties) tree-id)
-    (doseq [[other-name-sym state](->> properties :depends :jobs)]
+    (doseq [[other-name-sym {state :state}](->> properties :dependencies :jobs)]
       (add-state-filter-to-query query-atom (name other-name-sym) state tree-id))
-    (add-branch-filter-to-query (:tree_id properties) query-atom (:depends properties))
+    (add-branch-filter-to-query (:tree_id properties) query-atom (:dependencies properties))
     (logging/debug {:final-sql (hc/format @query-atom)})
     (->> (-> @query-atom
              (hc/format))

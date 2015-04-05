@@ -19,12 +19,16 @@
     [clojure.tools.logging :as logging]
     [compojure.core :as cpj]
     [ring.middleware.json]
+    [cider-ci.builder.dotfile]
     [clojure.walk :refer [keywordize-keys]]
     ))
 
 
 (defn top-handler [request]
-  {:status 418})
+  (logging/warn "HTTP 404 for " request)
+  {:status 404
+   :body "This resource is not known to the Cider-Ci Builder."
+   })
 
 
 ;##### status dispatch ######################################################## 
@@ -78,11 +82,40 @@
        :body "Failed to parse the YAML file."}
       )))
 
+
+(defn dotfile [request]
+  (try 
+    {:status 200
+     :headers {"content-type" "application/json;charset=utf-8"}
+     :body (json/write-str 
+             (cider-ci.builder.dotfile/get-dotfile 
+               (-> request :route-params :tree_id)))
+     }
+    (catch clojure.lang.ExceptionInfo e
+      (logging/warn e)
+      (logging/warn (-> e .getData :object ))
+      (case (-> e .getData :object :status)
+        404  {:status 404
+              :body (str "The dotfile itself or a included resource doesn't exist. \n\n"
+                         (-> e .getData :object ))}
+        {:status 500
+         :body "See the builder logs for details."
+         }
+        )
+      )
+    (catch Exception e
+      (logging/error e)
+      {:status 500
+       :body "See the builder logs for details."
+       }
+      )))
+
 (defn wrap-jobs [default-handler]
   (cpj/routes
     (cpj/GET "/jobs/available/:tree_id" request #'available-jobs)
     (cpj/POST "/jobs/" request #'create-job)
     (cpj/POST "/jobs" request #'create-job)
+    (cpj/GET "/dotfile/:tree_id" request #'dotfile)
     (cpj/ANY "*" request default-handler)))
 
 
