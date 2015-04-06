@@ -82,7 +82,7 @@
 (defn- request [method url params]
   (logging/debug [method url params])
   (let [basic-auth (:basic_auth @conf)]
-    (with/logging
+    (with/log-error
       (logging/debug ("http/" method) {:url url :basic-auth basic-auth})
       (http-client/request
         (conj {:basic-auth [(:username basic-auth) (:password basic-auth)]

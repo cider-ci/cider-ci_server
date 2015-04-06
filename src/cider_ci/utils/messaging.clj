@@ -138,7 +138,7 @@
   ([name message options]
    (publish name message options name))
   ([exchange-name message options routing-key]
-   (with/logging
+   (with/log-error
      (memoized-create-exchange exchange-name)
      (logging/debug {:publish {:message message 
                                :exchange exchange-name :routing-key routing-key}})
@@ -160,7 +160,7 @@
   ([exchange-name receiver queue-name]
    (listen exchange-name receiver queue-name {}))
   ([exchange-name receiver qname options]
-   (with/logging
+   (with/log-error
      (create-exchange exchange-name)
      (let [queue-name (:queue 
                         (lq/declare (get-channel)
@@ -179,7 +179,7 @@
   "Checks if the internal channel is open and returns true in case."
   []
   (try 
-    (with/logging (rmq/open? (get-channel)))
+    (with/log-error (rmq/open? (get-channel)))
     (catch Exception _ false)
     ))
 
@@ -187,7 +187,7 @@
 (defn initialize [new-conf]
   (logging/info [initialize new-conf])
   (reset! conf new-conf)
-  (with/logging
+  (with/log-error
 
     (connect (:connection @conf))
 
