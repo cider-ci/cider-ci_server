@@ -32,7 +32,7 @@
 
 (defn wrap-log-exception [handler]
   (fn [request]
-    (with/logging
+    (with/log :error 
       (handler request))))
 
 
