@@ -121,23 +121,6 @@
         job "Error during task creation" 
         (task/create-db-task raw-task)))))
 
-(defn expand-job-spec [job]
-  (wrap-exception-create-job-issue 
-    job "Error during expansion" 
-    (let [original-spec (spec/get-job-specification (:job_specification_id job))
-          substituded-spec-data (expansion/expand (:tree_id job) 
-                                                  (clojure.walk/keywordize-keys
-                                                    (:data original-spec)))
-          expanded-spec (spec/get-or-create-job-specification 
-                          substituded-spec-data)]
-      (logging/debug {:original-spec original-spec 
-                      :substituded-spec-data substituded-spec-data
-                      :expanded-spec expanded-spec})
-      (jdbc/update! (rdbms/get-ds) :jobs
-                    {:expanded_job_specification_id (:id expanded-spec)}
-                    ["id = ? " (:id job)])
-      (get-job (:id job)))))
-
 
 ;### create tasks for job ###############################################
 
@@ -146,7 +129,7 @@
     job "Error when creating tasks" 
     (let [spec (-> (jdbc/query (rdbms/get-ds) 
                                ["SELECT * FROM job_specifications WHERE id = ?" 
-                                (:expanded_job_specification_id job)])
+                                (:job_specification_id job)])
                    first :data)]
       (build-tasks job spec))))
 
@@ -165,7 +148,7 @@
   (if-let [job (get-job (:job_id message))] 
     (wrap-exception-create-job-issue 
       job "Error during create-tasks-and-trials" 
-      (-> job expand-job-spec create-tasks)
+      (-> job create-tasks)
       (doseq [task-with-id (jdbc/query 
                              (rdbms/get-ds) 
                              ["SELECT id FROM tasks WHERE job_id = ?" 
