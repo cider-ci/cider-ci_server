@@ -61,7 +61,7 @@
         spec (get-task-spec task-id)
         scripts (sort-map-by-order-value (:scripts spec)) ]
     (logging/debug "INSERT" {:scripts scripts :task_id task-id})
-    (with/logging
+    (with/log-error
       (jdbc/insert! (rdbms/get-ds) :trials
                     {:scripts scripts
                      :task_id task-id}))))
@@ -93,7 +93,7 @@
 
 (defn- evaluate-trials-and-update
   [task]
-  (with/logging
+  (with/log-error
     (let [id (:id task)
           states (get-trial-states task)
           update-to #(stateful-entity/update-state 
@@ -127,7 +127,7 @@
 
 ;### initialize ###############################################################
 (defn initialize []
-  (with/logging
+  (with/log-error
     (messaging/listen "task.create-trials" 
                       #'create-trials
                       "task.create-trials")
