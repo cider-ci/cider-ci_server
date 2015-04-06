@@ -49,47 +49,35 @@
              (let [final-script  (util/deep-merge script-defaults script)]
                [name-key final-script]))))
 
-(defn build-task [task-spec task-defaults script-defaults name-prefix]
+(defn build-task [task-spec task-defaults script-defaults default-name]
   (let [merged-task (util/deep-merge task-defaults task-spec)]
     ;(logging/debug {:merged-task merged-task})
     (conj merged-task
           {:scripts (build-scripts merged-task script-defaults)
-           :name (str name-prefix " » " (:name merged-task))
+           :name (or (:name merged-task) (name default-name))
            })))
-
-(defn value-seq-for-map-or-array 
-  [mapar]
-  "Accepts a map or any other collection and returns a seq of the values in the
-  first case and the collection itself in the second. Returns an empty array in
-  any other case." 
-  (cond 
-    (map? mapar) (map second mapar)
-    (coll? mapar) mapar  ; throw this if we do not accept arrays anymore
-    :else [] ))
 
 ; build-tasks-for-single-context and build-tasks-for-contexts-sequence 
 ; call each other recursively; no need for trampoline, sensible specs
 ; should not blow the stack
 (declare build-tasks-for-contexts-sequence)
-(defn build-tasks-for-single-context [context task-defaults script-defaults name-prefix]
+(defn build-tasks-for-single-context [context task-defaults script-defaults]
   "Build the tasks for a single context."
-  (let [new-name-prefix (str name-prefix (if (empty? name-prefix) "" " » ") (:name context))]
-    (concat (map (fn [task-spec]
-                   (build-task task-spec 
-                               task-defaults 
-                               script-defaults
-                               new-name-prefix))
-                 (value-seq-for-map-or-array (:tasks context)))
-            (if-let [subcontexts-spec (:subcontexts context)]
-              (build-tasks-for-contexts-sequence (value-seq-for-map-or-array subcontexts-spec)
-                                                 task-defaults 
-                                                 script-defaults
-                                                 new-name-prefix) 
-              []))))
+  (concat (map (fn [[default-name task-spec]]
+                 (logging/debug {:default-name default-name :task-spec task-spec})
+                 (build-task task-spec 
+                             task-defaults 
+                             script-defaults
+                             default-name))
+               (:tasks context))
+          (if-let [subcontexts-spec (:subcontexts context)]
+            (build-tasks-for-contexts-sequence 
+              subcontexts-spec task-defaults script-defaults)
+            [])))
 
 (defn build-tasks-for-contexts-sequence
   "Build the tasks for a sequence of contexts."
-  [context-spec inherited-task-defaults inherited-script-defaults name-prefix]
+  [[context-id context-spec] inherited-task-defaults inherited-script-defaults]
   (apply concat 
          (map 
            (fn [context]
@@ -102,8 +90,7 @@
                                                    {}))]
                (build-tasks-for-single-context context 
                                                task-defaults 
-                                               script-defaults
-                                               name-prefix)))
+                                               script-defaults)))
            context-spec)))
 
 (defn build-tasks 
@@ -114,8 +101,7 @@
                 spec
                 (conj (or (:task_defaults spec) {})
                       {:job_id (:id job)})
-                (or (:script_defaults spec) {})
-                "")] 
+                (or (:script_defaults spec) {}))] 
     (doseq [raw-task tasks]
       (wrap-exception-create-job-issue 
         job "Error during task creation" 
@@ -167,6 +153,6 @@
 
 
 ;### Debug ####################################################################
-;(debug/debug-ns *ns*)
 ;(logging-config/set-logger! :level :debug)
 ;(logging-config/set-logger! :level :info)
+;(debug/debug-ns *ns*)
