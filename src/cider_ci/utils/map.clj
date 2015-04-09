@@ -25,7 +25,7 @@
     (map (fn [[k m]]
            (if (:name m) 
              m
-             (assoc m :name k)))
+             (assoc m :name (name k))))
          map-or-array)
     map-or-array))
 
