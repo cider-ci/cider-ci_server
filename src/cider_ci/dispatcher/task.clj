@@ -20,14 +20,6 @@
 ;### utils ####################################################################
 (defonce terminal-states #{"aborted" "failed" "passed"})
 
-(defn sort-map-by-order-value [mp]
-  (into {} (sort-by 
-             #(let [[k v] %] 
-                (or (:order v) 0))   
-             mp)))
-
-;(sort-map-by-order-value {:z {:order 2}  :x {:order 1}})
-
 (defn convert-scripts-to-array [scripts-map]
   (sort-by #(or (:order %) 0) 
            (for [[script-name properties] scripts-map]
@@ -59,7 +51,7 @@
 (defn create-trial [task]
   (let [task-id (:id task)
         spec (get-task-spec task-id)
-        scripts (sort-map-by-order-value (:scripts spec)) ]
+        scripts (:scripts spec) ]
     (logging/debug "INSERT" {:scripts scripts :task_id task-id})
     (with/log-error
       (jdbc/insert! (rdbms/get-ds) :trials
