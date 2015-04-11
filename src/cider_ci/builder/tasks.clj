@@ -11,6 +11,7 @@
     [cider-ci.utils.config-loader :as config-loader]
     [cider-ci.utils.debug :as debug]
     [cider-ci.utils.exception :as exception]
+    [cider-ci.utils.map :as map]
     [cider-ci.utils.messaging :as messaging]
     [cider-ci.utils.rdbms :as rdbms]
     [cider-ci.utils.with :as with]
@@ -45,9 +46,14 @@
 ;### build tasks ##############################################################
 
 (defn build-scripts [task script-defaults]
-  (into {} (for [[name-key script] (or (:scripts task) {})]
-             (let [final-script  (util/deep-merge script-defaults script)]
-               [name-key final-script]))))
+  (->> task 
+       :scripts 
+       (#(or % []))
+       map/convert-to-array  
+       (map #(util/deep-merge script-defaults %))))
+  
+;(build-scripts {:scripts [{:x 5}]} {:x 7 :y 9})
+;(build-scripts {:scripts {:blah {:x 5}}} {:x 7 :y 9})
 
 (defn build-task [task-spec task-defaults script-defaults default-name]
   (let [merged-task (util/deep-merge task-defaults task-spec)]
