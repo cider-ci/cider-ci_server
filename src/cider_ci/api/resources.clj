@@ -18,11 +18,9 @@
     [cider-ci.api.resources.trial-attachments :as trial-attachments]
     [cider-ci.api.resources.trials :as trials]
     [cider-ci.utils.config :refer [get-config]]
-    [cider-ci.utils.debug :as debug]
-    [cider-ci.utils.exception :as exception]
     [cider-ci.utils.http :as http]
     [cider-ci.utils.routing :as routing]
-    [cider-ci.utils.with :as with]
+    [drtom.logbug.catcher :as catcher]
     [clj-logging-config.log4j :as logging-config]
     [clojure.data.json :as json]
     [clojure.java.jdbc :as jdbc]
@@ -30,6 +28,8 @@
     [compojure.core :as cpj]
     [compojure.handler :as cpj.handler]
     [compojure.route :as cpj.route]
+    [drtom.logbug.debug :as debug]
+    [drtom.logbug.ring :refer [wrap-handler-with-logging]]
     [json-roa.ring-middleware]
     [ring.adapter.jetty :as jetty]
     [ring.middleware.cookies :as cookies]
@@ -84,18 +84,18 @@
     ))
 
 (defn build-routes-handler []
-  (with/logging
+  (catcher/wrap-with-log-warn
     (-> routes 
-        (routing/wrap-debug-logging 'cider-ci.api.resources)
+        (wrap-handler-with-logging 'cider-ci.api.resources)
         json-roa/wrap
-        (routing/wrap-debug-logging 'cider-ci.api.resources)
+        (wrap-handler-with-logging 'cider-ci.api.resources)
         json-roa.ring-middleware/wrap-roa-json-response
-        (routing/wrap-debug-logging 'cider-ci.api.resources)
+        (wrap-handler-with-logging 'cider-ci.api.resources)
         wrap-includ-storage-service-prefix
-        (routing/wrap-debug-logging 'cider-ci.api.resources)
+        (wrap-handler-with-logging 'cider-ci.api.resources)
         ring.middleware.json/wrap-json-response
         wrap-sanitize-request-params
-        (routing/wrap-debug-logging 'cider-ci.api.resources)
+        (wrap-handler-with-logging 'cider-ci.api.resources)
         )))
 
 

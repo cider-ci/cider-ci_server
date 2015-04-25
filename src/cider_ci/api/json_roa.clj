@@ -17,7 +17,8 @@
     [cider-ci.api.json-roa.trial-attachment :as json-roa.trial-attachment]
     [cider-ci.api.json-roa.trial-attachments :as json-roa.trial-attachments]
     [cider-ci.api.json-roa.trials :as json-roa.trials]
-    [cider-ci.utils.debug :as debug]
+    [drtom.logbug.debug :as debug]
+    [drtom.logbug.ring :refer [wrap-handler-with-logging]]
     [cider-ci.utils.http :as http]
     [cider-ci.utils.routing :as routing]
     [clj-logging-config.log4j :as logging-config]
@@ -126,13 +127,13 @@
 
 (defn wrap [handler]
   (-> handler 
-      (routing/wrap-debug-logging 'cider-ci.api.json-roa)
+      (wrap-handler-with-logging 'cider-ci.api.json-roa)
       wrap-dispatch
-      (routing/wrap-debug-logging 'cider-ci.api.json-roa)
+      (wrap-handler-with-logging 'cider-ci.api.json-roa)
       wrap-accept
-      (routing/wrap-debug-logging 'cider-ci.api.json-roa)
+      (wrap-handler-with-logging 'cider-ci.api.json-roa)
       wrap-negotiate-accept
-      (routing/wrap-debug-logging 'cider-ci.api.json-roa)
+      (wrap-handler-with-logging 'cider-ci.api.json-roa)
       )) 
   
 

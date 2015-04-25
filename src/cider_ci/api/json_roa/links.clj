@@ -6,7 +6,7 @@
   (:require
     [cider-ci.api.pagination :as pagination]
     [cider-ci.utils.http :as http]
-    [cider-ci.utils.debug :as debug]
+    [drtom.logbug.debug :as debug]
     [clj-logging-config.log4j :as logging-config]
     [clojure.tools.logging :as logging]
     [ring.util.codec :refer [form-encode]]

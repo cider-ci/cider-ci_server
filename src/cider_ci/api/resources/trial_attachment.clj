@@ -5,7 +5,7 @@
 (ns cider-ci.api.resources.trial-attachment
   (:require 
     [cider-ci.api.util :as util]
-    [cider-ci.utils.debug :as debug]
+    [drtom.logbug.debug :as debug]
     [cider-ci.utils.http :as http]
     [cider-ci.utils.rdbms :as rdbms]
     [clj-http.client :as http-client]

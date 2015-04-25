@@ -6,7 +6,7 @@
   (:require 
     [cider-ci.api.pagination :as pagination]
     [cider-ci.api.util :as util]
-    [cider-ci.utils.debug :as debug]
+    [drtom.logbug.debug :as debug]
     [cider-ci.utils.http :as http]
     [cider-ci.utils.http-server :as http-server]
     [cider-ci.utils.rdbms :as rdbms]

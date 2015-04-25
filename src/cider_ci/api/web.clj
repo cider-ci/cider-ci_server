@@ -6,21 +6,22 @@
   (:require 
     [cider-ci.api.resources :as resources]
     [cider-ci.auth.core :as auth]
-    [cider-ci.auth.cors :as cors]
     [cider-ci.auth.http-basic :as http-basic]
     [cider-ci.auth.session :as session]
+    [cider-ci.open-session.cors :as cors]
     [cider-ci.utils.config :refer [get-config]]
-    [cider-ci.utils.debug :as debug]
     [cider-ci.utils.http-server :as http-server]
     [cider-ci.utils.messaging :as messaging]
     [cider-ci.utils.rdbms :as rdbms]
     [cider-ci.utils.routing :as routing]
-    [cider-ci.utils.with :as with]
     [clj-logging-config.log4j :as logging-config]
     [clojure.data.json :as json]
     [clojure.tools.logging :as logging]
     [compojure.core :as cpj]
     [compojure.handler :as cpj.handler]
+    [drtom.logbug.catcher :as catcher]
+    [drtom.logbug.debug :as debug]
+    [drtom.logbug.ring :refer [wrap-handler-with-logging]]
     [ring.adapter.jetty :as jetty]
     [ring.middleware.content-type :as content-type]
     [ring.middleware.cookies :as cookies]
@@ -73,29 +74,29 @@
 
 (defn build-main-handler [context]
   ( -> (resources/build-routes-handler)
-       (routing/wrap-debug-logging 'cider-ci.api.web)
+       (wrap-handler-with-logging 'cider-ci.api.web)
        ring.middleware.json/wrap-json-params
-       (routing/wrap-debug-logging 'cider-ci.api.web)
+       (wrap-handler-with-logging 'cider-ci.api.web)
        (ring.middleware.params/wrap-params)
-       (routing/wrap-debug-logging 'cider-ci.api.web)
+       (wrap-handler-with-logging 'cider-ci.api.web)
        wrap-status-dispatch
-       (routing/wrap-debug-logging 'cider-ci.api.web)
+       (wrap-handler-with-logging 'cider-ci.api.web)
        (auth/wrap-authenticate-and-authorize-service-or-user)
-       (routing/wrap-debug-logging 'cider-ci.api.web)
+       (wrap-handler-with-logging 'cider-ci.api.web)
        (http-basic/wrap {:user true :service true})
-       (routing/wrap-debug-logging 'cider-ci.api.web)
+       (wrap-handler-with-logging 'cider-ci.api.web)
        session/wrap
-       (routing/wrap-debug-logging 'cider-ci.api.web)
+       (wrap-handler-with-logging 'cider-ci.api.web)
        cookies/wrap-cookies
-       (routing/wrap-debug-logging 'cider-ci.api.web)
+       (wrap-handler-with-logging 'cider-ci.api.web)
        wrap-static-resources-dispatch
-       (routing/wrap-debug-logging 'cider-ci.api.web)
+       (wrap-handler-with-logging 'cider-ci.api.web)
        content-type/wrap-content-type
-       (routing/wrap-debug-logging 'cider-ci.api.web)
+       (wrap-handler-with-logging 'cider-ci.api.web)
        cors/wrap
-       (routing/wrap-debug-logging 'cider-ci.api.web)
+       (wrap-handler-with-logging 'cider-ci.api.web)
        (routing/wrap-prefix context)
-       (routing/wrap-debug-logging 'cider-ci.api.web)
+       (wrap-handler-with-logging 'cider-ci.api.web)
        (routing/wrap-log-exception)
        ))
 

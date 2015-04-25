@@ -5,7 +5,7 @@
 
 (ns cider-ci.api.resources.job
   (:require 
-    [cider-ci.utils.debug :as debug]
+    [drtom.logbug.debug :as debug]
     [cider-ci.utils.http-server :as http-server]
     [cider-ci.utils.rdbms :as rdbms]
     [clj-http.client :as http-client]

@@ -10,21 +10,20 @@
     [cider-ci.api.web :as web]
     [cider-ci.auth.core :as auth]
     [cider-ci.utils.config :as config :refer [get-config]]
-    [cider-ci.utils.debug :as debug]
+    [drtom.logbug.debug :as debug]
     [cider-ci.utils.http :as http]
     [cider-ci.utils.map :refer [deep-merge]]
     [cider-ci.utils.messaging :as messaging]
     [cider-ci.utils.nrepl :as nrepl]
     [cider-ci.utils.rdbms :as rdbms]
-    [cider-ci.utils.with :as with]
+    [drtom.logbug.catcher :as catcher]
+    [drtom.logbug.thrown]
     [clojure.tools.logging :as logging]
-    )
-  (:import 
-    [org.jruby.embed InvokeFailedException ScriptingContainer]
     ))
 
 (defn -main [& args]
-  (with/logging 
+  (catcher/wrap-with-log-error
+    (drtom.logbug.thrown/reset-ns-filter-regex #".*cider-ci.*")
     (config/initialize)
     (rdbms/initialize (config/get-db-spec :api))
     (messaging/initialize (:messaging (get-config)))
