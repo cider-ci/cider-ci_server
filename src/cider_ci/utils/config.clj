@@ -7,7 +7,7 @@
   (:require 
     [clj-yaml.core :as yaml]
     [cider-ci.utils.daemon :as daemon]
-    [cider-ci.utils.debug :as debug]
+    [drtom.logbug.debug :as debug]
     [cider-ci.utils.map :refer [deep-merge]]
     [clojure.tools.logging :as logging]
     [clojure.java.io :as io]

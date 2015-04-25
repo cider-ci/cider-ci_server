@@ -14,8 +14,8 @@
     [langohr.core :as rmq]
     [langohr.exchange :as le]
     [langohr.queue :as lq]
-    [cider-ci.utils.debug :as debug]
-    [cider-ci.utils.with :as with]
+    [drtom.logbug.debug :as debug]
+    [drtom.logbug.catcher :as catcher]
     [cider-ci.utils.json-protocol]
     ) 
   (:import 
@@ -40,8 +40,8 @@
                    (:connection @conf))))))
 
 (defn disconnect []
-  (with/suppress-and-log-warn (rmq/close @ch))
-  (with/suppress-and-log-warn (rmq/close @conn))
+  (catcher/wrap-with-suppress-and-log-warn (rmq/close @ch))
+  (catcher/wrap-with-suppress-and-log-warn (rmq/close @conn))
   (reset! ch nil)
   (reset! conn nil)
   )
@@ -89,7 +89,7 @@
 
 (defn- create-handler [message-receiver]
   (fn [ch metadata ^bytes payload]
-    (with/suppress-and-log-warn
+    (catcher/wrap-with-suppress-and-log-warn
       (logging/debug {:message (conj 
                                  (select-keys metadata [:type :exchange])
                                  {:payload (String. payload "UTF-8")})})
@@ -138,7 +138,7 @@
   ([name message options]
    (publish name message options name))
   ([exchange-name message options routing-key]
-   (with/log-error
+   (catcher/wrap-with-log-error
      (memoized-create-exchange exchange-name)
      (logging/debug {:publish {:message message 
                                :exchange exchange-name :routing-key routing-key}})
@@ -160,7 +160,7 @@
   ([exchange-name receiver queue-name]
    (listen exchange-name receiver queue-name {}))
   ([exchange-name receiver qname options]
-   (with/log-error
+   (catcher/wrap-with-log-error
      (create-exchange exchange-name)
      (let [queue-name (:queue 
                         (lq/declare (get-channel)
@@ -179,7 +179,7 @@
   "Checks if the internal channel is open and returns true in case."
   []
   (try 
-    (with/log-error (rmq/open? (get-channel)))
+    (catcher/wrap-with-log-error (rmq/open? (get-channel)))
     (catch Exception _ false)
     ))
 
@@ -187,10 +187,8 @@
 (defn initialize [new-conf]
   (logging/info [initialize new-conf])
   (reset! conf new-conf)
-  (with/log-error
-
+  (catcher/wrap-with-log-error
     (connect (:connection @conf))
-
     (reset! logging-queue (lq/declare (get-channel)))
     (future 
       (lcons/subscribe (get-channel) (:queue @logging-queue) 

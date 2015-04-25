@@ -6,7 +6,7 @@
   (:require 
     [clj-logging-config.log4j :as logging-config]
     [clojure.tools.logging :as logging]
-    [cider-ci.utils.with :as with]
+    [drtom.logbug.catcher :as catcher]
     ))
 
 
@@ -25,7 +25,7 @@
                runner# (future (logging/info "daemon " ~daemon-name " started")
                                (loop []
                                  (when-not @done#
-                                   (with/suppress-and-log-error
+                                   (catcher/wrap-with-suppress-and-log-error
                                      ~@body)
                                    (Thread/sleep (Math/ceil (* ~secs-pause 1000)))
                                    (recur))))]

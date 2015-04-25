@@ -3,8 +3,8 @@
     :exclude [get])
   (:require
     [cider-ci.utils.config :refer [get-config]]
-    [cider-ci.utils.debug :as debug]
-    [cider-ci.utils.with :as with]
+    [drtom.logbug.debug :as debug]
+    [drtom.logbug.catcher :as catcher]
     [clj-http.client :as http-client]
     [clj-logging-config.log4j :as logging-config]
     [clojure.tools.logging :as logging]
@@ -82,7 +82,7 @@
 (defn- request [method url params]
   (logging/debug [method url params])
   (let [basic-auth (:basic_auth @conf)]
-    (with/log-error
+    (catcher/wrap-with/log-error
       (logging/debug ("http/" method) {:url url :basic-auth basic-auth})
       (http-client/request
         (conj {:basic-auth [(:username basic-auth) (:password basic-auth)]

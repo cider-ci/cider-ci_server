@@ -5,21 +5,11 @@
 
 (ns cider-ci.utils.routing
   (:require 
-    [cider-ci.utils.with :as with]
+    [drtom.logbug.catcher :as cacher]
     [clojure.tools.logging :as logging]
     [compojure.core :as cpj]
     ))
 
-
-(defn wrap-debug-logging 
-  "Wraps a handler with debug logging of request and response to the given namespace."
-  [handler ns]
-  (fn [request]
-    (let [wrap-debug-logging-level (or (:wrap-debug-logging-level request) 0 )]
-      (logging/log ns :debug nil (print-str  "wrap-debug-logging " wrap-debug-logging-level " request: " request))
-      (let [response (handler (assoc request :wrap-debug-logging-level (+ wrap-debug-logging-level 1)))]
-        (logging/log ns :debug nil (print-str  "wrap-debug-logging " wrap-debug-logging-level " response: " response))
-        response))))
 
 (defn wrap-prefix 
   "Check for prefix match. Pass on and add :contex, or return 404 if it doesn't match."
@@ -32,7 +22,7 @@
 
 (defn wrap-log-exception [handler]
   (fn [request]
-    (with/log :error 
+    (catcher/wrap-with-log-error
       (handler request))))
 
 

@@ -1,7 +1,7 @@
 (ns cider-ci.utils.rdbms
   (:require 
     [cider-ci.utils.rdbms.conversion :as conversion]
-    [cider-ci.utils.with :as with]
+    [drtom.logbug.catcher :as catcher]
     [clojure.java.jdbc :as jdbc]
     [clojure.tools.logging :as logging]
     [pg-types.all]
@@ -53,7 +53,7 @@
   false otherwise."
   []
   (try 
-    (with/logging 
+    (catcher/wrap-with-log-error
       (->> (jdbc/query (get-ds) ["SELECT true AS state"]) 
            first :state))
     (catch Exception _

@@ -1,6 +1,6 @@
 (ns cider-ci.utils.nrepl
   (:require 
-    [cider-ci.utils.with :as with]
+    [drtom.logbug.catcher :as catcher]
     [clj-logging-config.log4j :as logging-config]
     [clojure.tools.logging :as logging]
     [clojure.tools.nrepl.server :as nrepl-server]
@@ -23,14 +23,14 @@
 (defonce ^:private server nil)
 
 (defn stop-server []
-  (with/log-error 
+  (catcher/wrap-with-log-error
     (logging/info "stopping server")
     (nrepl-server/stop-server server)
     (def ^:private server nil)))
 
 (defn start-server []
   (logging/debug start-server [])
-  (with/log-error 
+  (catcher/wrap-with-log-error
     (when server (stop-server))
     (if (:enabled @conf)
       (let [args (flatten (seq (select-keys @conf [:port :bind])))]

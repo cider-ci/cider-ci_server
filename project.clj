@@ -2,7 +2,7 @@
 ; Licensed under the terms of the GNU Affero General Public License v3.
 ; See the "LICENSE.txt" file provided with this software.
 
-(defproject cider-ci/clj-utils "3.0.0-beta.5"
+(defproject cider-ci/clj-utils "3.0.0-beta.6"
   :description "Shared Clojure Utils for Cider-CI"
   :url "https://github.com/cider-ci/cider-ci_clj-utils"
   :license {:name "GNU AFFERO GENERAL PUBLIC LICENSE Version 3"
@@ -10,7 +10,6 @@
   :dependencies [
                  [cheshire "5.4.0"]
                  [clj-http "1.1.0"]
-                 [clj-logging-config "1.9.12"]
                  [clj-time "0.9.0"]
                  [clj-yaml "0.4.0"]
                  [com.mchange/c3p0 "0.9.5"]
@@ -23,7 +22,6 @@
                  [org.clojure/clojure "1.6.0"]
                  [org.clojure/data.json "0.2.6"]
                  [org.clojure/java.jdbc "0.3.6"]
-                 [org.clojure/tools.logging "0.3.1"]
                  [org.clojure/tools.nrepl "0.2.10"]
                  [org.postgresql/postgresql "9.3-1102-jdbc4"]
                  [org.slf4j/slf4j-log4j12 "1.7.12"]
@@ -33,7 +31,8 @@
                  [ring/ring-core "1.3.2"] 
                  [ring/ring-jetty-adapter "1.3.2"]
                  [ring/ring-json "0.3.1"]
-                 [robert/hooke "1.3.0"]
+
+                 [drtom/logbug "1.0.0-BETA.1"]
 
                  ; explicit transient deps to force conflict resolution
                  [org.clojure/java.classpath "0.2.2"]

@@ -7,7 +7,7 @@
     [clj-yaml.core :as yaml]
     [clojure.stacktrace :as stacktrace]
     [clojure.tools.logging :as logging]
-    [cider-ci.utils.with :as with]
+    [drtom.logbug.catcher :as catcher]
     [cider-ci.utils.map :refer [deep-merge]]
     ))
 
@@ -19,7 +19,7 @@
     (if-let [config-resource (clojure.java.io/resource filename)]
       (do
         (logging/info "trying to read, parse and merge " config-resource)
-        (with/suppress-and-log-warn 
+        (catcher/wrap-with-suppress-and-log-info
           (let [config-string (slurp config-resource)
                 config (yaml/parse-string config-string)
                 merge-fun #(deep-merge % config)]

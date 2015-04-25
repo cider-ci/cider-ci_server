@@ -5,7 +5,7 @@
 
 (ns cider-ci.utils.system
   (:require 
-    [cider-ci.utils.debug :as debug]
+    [drtom.logbug.debug :as debug]
     [clj-commons-exec :as commons-exec]
     [clj-logging-config.log4j :as logging-config]
     [clojure.tools.logging :as logging]

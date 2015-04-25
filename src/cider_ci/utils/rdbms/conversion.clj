@@ -5,7 +5,7 @@
 
 (ns cider-ci.utils.rdbms.conversion
   (:require
-    [cider-ci.utils.debug :as debug]
+    [drtom.logbug.debug :as debug]
     [clj-logging-config.log4j :as logging-config]
     [clj-time.coerce :as time-coerce]
     [clj-time.core :as time-core]
