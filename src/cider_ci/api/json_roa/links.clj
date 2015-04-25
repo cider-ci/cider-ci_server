@@ -8,7 +8,9 @@
     [cider-ci.utils.http :as http]
     [cider-ci.utils.debug :as debug]
     [clj-logging-config.log4j :as logging-config]
-    [clojure.tools.logging :as logging]))
+    [clojure.tools.logging :as logging]
+    [ring.util.codec :refer [form-encode]]
+    ))
 
 
 (defn api-docs-path []
