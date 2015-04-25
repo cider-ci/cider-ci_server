@@ -20,7 +20,6 @@
     [cider-ci.utils.config :refer [get-config]]
     [cider-ci.utils.http :as http]
     [cider-ci.utils.routing :as routing]
-    [drtom.logbug.catcher :as catcher]
     [clj-logging-config.log4j :as logging-config]
     [clojure.data.json :as json]
     [clojure.java.jdbc :as jdbc]
@@ -28,9 +27,11 @@
     [compojure.core :as cpj]
     [compojure.handler :as cpj.handler]
     [compojure.route :as cpj.route]
+    [drtom.logbug.catcher :as catcher]
     [drtom.logbug.debug :as debug]
     [drtom.logbug.ring :refer [wrap-handler-with-logging]]
-    [json-roa.ring-middleware]
+    [json-roa.ring-middleware.request]
+    [json-roa.ring-middleware.response]
     [ring.adapter.jetty :as jetty]
     [ring.middleware.cookies :as cookies]
     [ring.middleware.json]
@@ -87,9 +88,9 @@
   (catcher/wrap-with-log-warn
     (-> routes 
         (wrap-handler-with-logging 'cider-ci.api.resources)
-        json-roa/wrap
+        (json-roa.ring-middleware.request/wrap json-roa/handler)
         (wrap-handler-with-logging 'cider-ci.api.resources)
-        json-roa.ring-middleware/wrap-roa-json-response
+        json-roa.ring-middleware.response/wrap
         (wrap-handler-with-logging 'cider-ci.api.resources)
         wrap-includ-storage-service-prefix
         (wrap-handler-with-logging 'cider-ci.api.resources)

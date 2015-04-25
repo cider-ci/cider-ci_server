@@ -44,7 +44,7 @@
   (-> {}
       (assoc-in [:_json-roa] json-roa-data)
       (assoc-in [:_json-roa :about_json-roa] about)
-      (assoc-in [:_json-roa :version] "1.0.0-beta.0+2014, 2015 1130")
+      (assoc-in [:_json-roa :version] "1.0.0")
       ))
 
 ;### Routing ##################################################################
@@ -68,74 +68,17 @@
 
     ))
 
-(defn builder [request json-response]
+(defn handler [request json-response]
   (let [json-roa-handler (build-routes-handler json-response)
         json-roa-data (select-keys (json-roa-handler request) [:self-relation :relations :collection :name]) 
         amended-json-roa-data  (amend-json-roa request json-roa-data)]
-    (logging/debug builder {:json-response json-response :json-roa-data json-roa-data})
+    (logging/debug 'handler {:json-response json-response :json-roa-data json-roa-data})
     (update-in json-response 
                [:body] 
                (fn [original-body json-road-data] 
                  (into {} (sort (conj {} original-body json-road-data)))) 
                amended-json-roa-data )))
 
-
-;### wrap negotiate accept ####################################################
-
-(defn wrap-negotiate-accept [handler]
-  (ring.middleware.accept/wrap-accept 
-    handler
-    {:mime 
-     ["application/json-roa+json" :qs 1 
-      "application/json" :qs 0.5
-      ]}))
-
-;### dispatch #################################################################
-
-(defn dispatch [request json-response]
-  (let [mime (or (-> request :accept :mime) 
-                 "application/json-roa+json")]
-    (if (re-matches #"application\/.*\bjson-roa\b.*" mime)
-      (builder request json-response)
-      json-response)))
-
-
-(defn wrap-dispatch [handler]
-  (fn [request]
-    (let [response (handler request)]
-      (dispatch request response)
-      )))
-
-;### accept ###################################################################
-
-(defn not-acceptable [request]
-  (-> 
-    {:status 406
-     :body "This resource accepts 'application/json-roa+json' or 'application/json' only."}
-    (response/header "Content-Type" "text/plain")
-    (response/charset "UTF8")))
-
-(defn wrap-accept [handler]
-  (fn [request]
-    (let [mime (-> request :accept :mime)] 
-      (cond 
-        (not mime) (not-acceptable request)
-        (re-matches #".*json.*" mime) (handler request)
-        :else (not-acceptable request)))))
-
-;### wrap #####################################################################
-
-(defn wrap [handler]
-  (-> handler 
-      (wrap-handler-with-logging 'cider-ci.api.json-roa)
-      wrap-dispatch
-      (wrap-handler-with-logging 'cider-ci.api.json-roa)
-      wrap-accept
-      (wrap-handler-with-logging 'cider-ci.api.json-roa)
-      wrap-negotiate-accept
-      (wrap-handler-with-logging 'cider-ci.api.json-roa)
-      )) 
-  
 
 ;### Debug ####################################################################
 ;(logging-config/set-logger! :level :debug)
