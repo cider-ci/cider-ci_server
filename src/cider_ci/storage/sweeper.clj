@@ -5,9 +5,9 @@
 (ns cider-ci.storage.sweeper
   (:require 
     [cider-ci.utils.daemon :as daemon]
-    [cider-ci.utils.debug :as debug]
+    [drtom.logbug.debug :as debug]
     [cider-ci.utils.rdbms :as rdbms]
-    [cider-ci.utils.with :as with]
+    [drtom.logbug.catcher :as catcher]
     [clj-logging-config.log4j :as logging-config]
     [clojure.java.io :as io]
     [clojure.java.jdbc :as jdbc]
@@ -45,7 +45,7 @@
   (doseq [store  @conf]
     (doseq [file (.listFiles (io/file (:file_path store)))]
       (logging/debug file)
-      (with/suppress-and-log-error
+      (catcher/wrap-with-suppress-and-log-error
         (let [abs-path (.getAbsolutePath file)
               file-name (fsutils/name file)]
               (logging/debug "checking" {:abs-path abs-path :file-name file-name})

@@ -5,16 +5,14 @@
 (ns cider-ci.storage.web
   (:require 
     [cider-ci.auth.core :as auth]
-    [cider-ci.auth.cors :as cors]
     [cider-ci.auth.http-basic :as http-basic]
     [cider-ci.auth.session :as session]
+    [cider-ci.open-session.cors :as cors]
     [cider-ci.storage.web.public :as public]
-    [cider-ci.utils.debug :as debug]
     [cider-ci.utils.http :as http]
     [cider-ci.utils.http-server :as http-server]
     [cider-ci.utils.rdbms :as rdbms]
     [cider-ci.utils.routing :as routing]
-    [cider-ci.utils.with :as with]
     [clj-logging-config.log4j :as logging-config]
     [clojure.data.json :as json]
     [clojure.java.io :as io]
@@ -22,6 +20,9 @@
     [clojure.tools.logging :as logging]
     [compojure.core :as cpj]
     [compojure.handler :as cpj.handler]
+    [drtom.logbug.catcher :as catcher]
+    [drtom.logbug.debug :as debug]
+    [drtom.logbug.ring :refer [wrap-handler-with-logging]]
     [ring.middleware.cookies :as cookies]
     [ring.util.response]
     )
@@ -95,7 +96,7 @@
 
 (defn get-file [request]
   (logging/debug get-file [request])
-  (with/suppress-and-log-warn 
+  (catcher/wrap-with-suppress-and-log-warn 
     (when-let [[store url-path] (store-and-url-path request)]
       (when-let [storage-row (get-row store url-path)]
         (let [file-path (str (:file_path store) "/" (:id storage-row))]
@@ -148,34 +149,34 @@
 (defn build-base-handler []
   ( -> (build-routes) 
        cpj.handler/api  
-       (routing/wrap-debug-logging 'cider-ci.storage.web)
+       (wrap-handler-with-logging 'cider-ci.storage.web)
        wrap-status-dispatch
-       (routing/wrap-debug-logging 'cider-ci.storage.web)
+       (wrap-handler-with-logging 'cider-ci.storage.web)
        ))
 
 (defn wrap-auth [handler]
   (-> handler
-      (routing/wrap-debug-logging 'cider-ci.storage.web)
+      (wrap-handler-with-logging 'cider-ci.storage.web)
       auth/wrap-authenticate-and-authorize-service-or-user
-      (routing/wrap-debug-logging 'cider-ci.storage.web)
+      (wrap-handler-with-logging 'cider-ci.storage.web)
       (http-basic/wrap {:user true :service true :executor true})
-      (routing/wrap-debug-logging 'cider-ci.storage.web)
+      (wrap-handler-with-logging 'cider-ci.storage.web)
       session/wrap
-      (routing/wrap-debug-logging 'cider-ci.storage.web)
+      (wrap-handler-with-logging 'cider-ci.storage.web)
       cookies/wrap-cookies
-      (routing/wrap-debug-logging 'cider-ci.storage.web)
+      (wrap-handler-with-logging 'cider-ci.storage.web)
       cors/wrap
-      (routing/wrap-debug-logging 'cider-ci.storage.web)
+      (wrap-handler-with-logging 'cider-ci.storage.web)
       (public/wrap-shortcut handler)
       ))
 
 (defn build-main-handler [context]
   (-> (build-base-handler)
-      (routing/wrap-debug-logging 'cider-ci.storage.web)
+      (wrap-handler-with-logging 'cider-ci.storage.web)
       wrap-auth
-      (routing/wrap-debug-logging 'cider-ci.storage.web)
+      (wrap-handler-with-logging 'cider-ci.storage.web)
       (routing/wrap-prefix context)
-      (routing/wrap-debug-logging 'cider-ci.storage.web)
+      (wrap-handler-with-logging 'cider-ci.storage.web)
       routing/wrap-log-exception
       ))
 

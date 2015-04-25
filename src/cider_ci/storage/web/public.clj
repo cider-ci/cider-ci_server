@@ -4,9 +4,8 @@
 
 (ns cider-ci.storage.web.public
   (:require 
-    [cider-ci.utils.debug :as debug]
+    [drtom.logbug.debug :as debug]
     [cider-ci.utils.rdbms :as rdbms]
-    [cider-ci.utils.rdbms.conversion :as rdbms.conversion]
     [clj-logging-config.log4j :as logging-config]
     [clojure.java.jdbc :as jdbc]
     [clojure.tools.logging :as logging]
@@ -40,8 +39,7 @@
       {:public_viewable false, :status 401})))
 
 (defn- trial-attachment-public-viewable? [request]
-  (let [trial-id (-> request :route-params :trial_id 
-                     rdbms.conversion/convert-to-uuid)
+  (let [trial-id (-> request :route-params :trial_id)
         query (-> (build-basequery) 
                   (hh/merge-join :tasks [:= :tasks.job_id :jobs.id])
                   (hh/merge-join :trials [:= :trials.task_id :tasks.id])
