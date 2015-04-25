@@ -7,7 +7,7 @@
     [cider-ci.dispatcher.executor :as executor-entity]
     [cider-ci.dispatcher.trial :as trial-entity]
     [cider-ci.utils.daemon :as daemon]
-    [cider-ci.utils.debug :as debug]
+    [drtom.logbug.debug :as debug]
     [cider-ci.utils.http :as http]
     [cider-ci.utils.rdbms :as rdbms]
     [clj-logging-config.log4j :as logging-config]

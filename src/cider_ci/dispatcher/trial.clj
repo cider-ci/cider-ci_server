@@ -5,11 +5,11 @@
 (ns cider-ci.dispatcher.trial
   (:require
     [cider-ci.dispatcher.task :as task]
-    [cider-ci.utils.debug :as debug]
-    [cider-ci.utils.exception :as exception]
+    [drtom.logbug.debug :as debug]
+    [drtom.logbug.thrown :as thrown]
     [cider-ci.utils.messaging :as messaging]
     [cider-ci.utils.rdbms :as rdbms]
-    [cider-ci.utils.with :as with]
+    [drtom.logbug.catcher :as catcher]
     [clj-logging-config.log4j :as logging-config]
     [clojure.java.jdbc :as jdbc]
     [clojure.tools.logging :as logging]
@@ -30,7 +30,7 @@
      (catch Exception e#
        (let [row-data#  {:trial_id (:id ~trial) 
                          :title ~title
-                         :description (str (.getMessage e#) "\n\n"  (exception/stringify e# "\\n"))}]
+                         :description (str (.getMessage e#) "\n\n"  (thrown/stringify e# "\\n"))}]
          (logging/warn ~trial row-data# e#)
          (jdbc/insert! (rdbms/get-ds) "trial_issues" row-data#))
        (throw e#))))
@@ -44,7 +44,7 @@
     (task/evaluate-and-create-trials {:id task-id})))
 
 (defn update [params]
-  (with/suppress-and-log-warn
+  (catcher/wrap-with-suppress-and-log-warn
     (let [id (:id params)]
       (try 
         (assert id)
@@ -59,7 +59,7 @@
           (jdbc/update! (rdbms/get-ds)
                         :trials 
                         {:state "failed" 
-                         :error (exception/stringify e)}
+                         :error (thrown/stringify e)}
                         ["id = ?" id])
           (dispatch-update (select-keys params [:id :task_id])))))))
 

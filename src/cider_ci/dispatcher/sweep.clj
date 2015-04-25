@@ -6,9 +6,9 @@
   (:require
     [cider-ci.dispatcher.trial :as trial]
     [cider-ci.utils.daemon :as daemon]
-    [cider-ci.utils.debug :as debug]
+    [drtom.logbug.debug :as debug]
     [cider-ci.utils.rdbms :as rdbms]
-    [cider-ci.utils.with :as with]
+    [drtom.logbug.catcher :as catcher]
     [clj-logging-config.log4j :as logging-config]
     [clojure.data.json :as json]
     [clojure.java.jdbc :as jdbc]
@@ -19,7 +19,7 @@
 ;#### 
 
 (defn sweep-scripts []
-  (with/suppress-and-log-error
+  (catcher/wrap-with-suppress-and-log-error
     (jdbc/execute! 
       (rdbms/get-ds)
       [ (str "UPDATE trials SET scripts = '[]'
@@ -32,7 +32,7 @@
                            WHERE " trial/sql-to-be-dispatched
                            " AND " trial/sql-in-dispatch-timeout)])
                   (map #(:id %)))]
-    (with/suppress-and-log-error
+    (catcher/wrap-with-suppress-and-log-error
       (trial/update {:id id :state "failed" :error "dispatch timeout"}) ; TODO -> aborted
       )))
 
@@ -43,7 +43,7 @@
                            WHERE " trial/sql-not-finished
                            " AND " trial/sql-in-terminal-state-timeout)])
                   (map #(:id %)))]
-    (with/suppress-and-log-error 
+    (catcher/wrap-with-suppress-and-log-error 
       (trial/update {:id id :state "failed" :error "terminal-state timeout"}) ; TODO -> aborted
       )))
 

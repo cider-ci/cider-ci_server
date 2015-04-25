@@ -9,7 +9,6 @@
     [cider-ci.auth.http-basic :as http-basic]
     [cider-ci.dispatcher.ping :as ping]
     [cider-ci.dispatcher.trial :as trial]
-    [cider-ci.utils.debug :as debug]
     [cider-ci.utils.http :as http]
     [cider-ci.utils.http-server :as http-server]
     [cider-ci.utils.messaging :as messaging]
@@ -21,6 +20,8 @@
     [clojure.tools.logging :as logging]
     [compojure.core :as cpj]
     [compojure.handler :as cpj.handler]
+    [drtom.logbug.debug :as debug]
+    [drtom.logbug.ring :refer [wrap-handler-with-logging]]
     [ring.adapter.jetty :as jetty]
     [ring.middleware.json]
     ))
@@ -81,15 +82,15 @@
 
 (defn build-main-handler [context]
   ( -> (cpj.handler/api (build-routes (:context (:web @conf))))
-       (routing/wrap-debug-logging 'cider-ci.dispatcher.web)
+       (wrap-handler-with-logging 'cider-ci.dispatcher.web)
        (ring.middleware.json/wrap-json-body {:keywords? true})
-       (routing/wrap-debug-logging 'cider-ci.dispatcher.web)
+       (wrap-handler-with-logging 'cider-ci.dispatcher.web)
        (routing/wrap-prefix context)
-       (routing/wrap-debug-logging 'cider-ci.dispatcher.web)
+       (wrap-handler-with-logging 'cider-ci.dispatcher.web)
        (auth/wrap-authenticate-and-authorize-service)
-       (routing/wrap-debug-logging 'cider-ci.dispatcher.web)
+       (wrap-handler-with-logging 'cider-ci.dispatcher.web)
        (http-basic/wrap {:executor true :user false :service true})
-       (routing/wrap-debug-logging 'cider-ci.dispatcher.web)
+       (wrap-handler-with-logging 'cider-ci.dispatcher.web)
        (routing/wrap-log-exception)))
 
 

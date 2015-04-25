@@ -7,10 +7,10 @@
     [cider-ci.dispatcher.job :as job]
     [cider-ci.dispatcher.result :as result]
     [cider-ci.dispatcher.stateful-entity :as stateful-entity]
-    [cider-ci.utils.debug :as debug]
+    [drtom.logbug.debug :as debug]
     [cider-ci.utils.messaging :as messaging]
     [cider-ci.utils.rdbms :as rdbms]
-    [cider-ci.utils.with :as with]
+    [drtom.logbug.catcher :as catcher]
     [clj-logging-config.log4j :as logging-config]
     [clojure.java.jdbc :as jdbc]
     [clojure.tools.logging :as logging]
@@ -53,7 +53,7 @@
         spec (get-task-spec task-id)
         scripts (:scripts spec) ]
     (logging/debug "INSERT" {:scripts scripts :task_id task-id})
-    (with/log-error
+    (catcher/wrap-with-log-error
       (jdbc/insert! (rdbms/get-ds) :trials
                     {:scripts scripts
                      :task_id task-id}))))
@@ -85,7 +85,7 @@
 
 (defn- evaluate-trials-and-update
   [task]
-  (with/log-error
+  (catcher/wrap-with-log-error
     (let [id (:id task)
           states (get-trial-states task)
           update-to #(stateful-entity/update-state 
@@ -119,7 +119,7 @@
 
 ;### initialize ###############################################################
 (defn initialize []
-  (with/log-error
+  (catcher/wrap-with-log-error
     (messaging/listen "task.create-trials" 
                       #'create-trials
                       "task.create-trials")

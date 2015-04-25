@@ -13,17 +13,19 @@
     [cider-ci.dispatcher.web :as web]
     [cider-ci.utils.config :as config :refer [get-db-spec]]
     [cider-ci.utils.http :as http]
-    [cider-ci.utils.messaging :as messaging]
     [cider-ci.utils.map :refer [deep-merge]]
+    [cider-ci.utils.messaging :as messaging]
     [cider-ci.utils.nrepl :as nrepl]
     [cider-ci.utils.rdbms :as rdbms]
-    [cider-ci.utils.with :as with]
     [clojure.java.jdbc :as jdbc]
     [clojure.tools.logging :as logging]
+    [drtom.logbug.catcher :as catcher]
+    [drtom.logbug.thrown]
     ))
 
 (defn -main [& args]
-  (with/log-error
+  (catcher/wrap-with-log-error
+    (drtom.logbug.thrown/reset-ns-filter-regex #".*cider-ci.*")
     (config/initialize)
     (rdbms/initialize (get-db-spec :dispatcher))
     (let [conf (config/get-config)]
