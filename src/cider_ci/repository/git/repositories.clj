@@ -9,10 +9,10 @@
     )
   (:require 
     [cider-ci.utils.config :as config :refer [get-config get-db-spec]]
-    [cider-ci.utils.debug :as debug]
+    [drtom.logbug.debug :as debug]
     [cider-ci.utils.fs :as ci-fs]
     [cider-ci.utils.system :as system]
-    [cider-ci.utils.with :as with]
+    [drtom.logbug.catcher :as catcher]
     [clojure.string :as string :refer [blank?]]
     [clojure.tools.logging :as logging]
     ))
@@ -44,7 +44,7 @@
   "Returns the content of the path or nil if not applicable."
   [repository id file-path]
   (let [git-dir-path (path repository)]
-    (:out (with/suppress-and-log-warn
+    (:out (catcher/wrap-with-suppress-and-log-warn
             (system/exec-with-success-or-throw  
               ["git" "show" (str id ":" file-path)]
               {:dir git-dir-path})))))

@@ -4,10 +4,9 @@
 
 (ns cider-ci.repository.sql.branches
   (:require 
-    [cider-ci.utils.sql :as sql]
     [clojure.tools.logging :as logging]
     [clojure.java.jdbc :as jdbc]
-  ))
+    ))
 
 
 (defn create! [ds params]
@@ -19,11 +18,16 @@
     ["SELECT * FROM branches WHERE repository_id = ? " canonic-id]))
 
 
+(defn placeholders [col]
+  (->> col
+       (map (fn [_] "?"))
+       (clojure.string/join  ", ")))
+
 (defn delete-removed [ds git-branches repository-id] 
   (logging/debug delete-removed ["ds" git-branches repository-id])
   (let [branch-names (map :name git-branches)
         where-clause (flatten [(str "branches.repository_id = ? 
-                                    AND branches.name NOT IN (" (sql/placeholders  branch-names) " )") 
+                                    AND branches.name NOT IN (" (placeholders  branch-names) " )") 
                                repository-id branch-names])
         res (jdbc/delete! ds :branches where-clause)]
     (logging/debug "deleted " res " branches")

@@ -5,7 +5,7 @@
 (ns cider-ci.repository.sql.repository
   (:refer-clojure :exclude [resolve])
   (:require
-    [cider-ci.utils.debug :as debug]
+    [drtom.logbug.debug :as debug]
     [clj-logging-config.log4j :as logging-config]
     [clojure.java.jdbc :as jdbc]
     [clojure.tools.logging :as logging]

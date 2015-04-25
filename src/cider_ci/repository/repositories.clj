@@ -8,14 +8,14 @@
     [cider-ci.repository.git.repositories :as git.repositories] 
     [cider-ci.repository.sql.branches :as sql.branches] 
     [cider-ci.utils.daemon :as daemon]
-    [cider-ci.utils.debug :as debug]
-    [cider-ci.utils.exception :as exception]
+    [drtom.logbug.debug :as debug]
+    [drtom.logbug.thrown :as thrown]
     [cider-ci.utils.fs :as ci-fs]
     [me.raynes.fs :as fs]
     [cider-ci.utils.messaging :as messaging]
     [cider-ci.utils.rdbms :as rdbms]
     [cider-ci.utils.system :as system]
-    [cider-ci.utils.with :as with]
+    [drtom.logbug.catcher :as catcher]
     [clj-logging-config.log4j :as logging-config]
     [clj-time.core :as time]
     [clojure.java.jdbc :as jdbc]
@@ -38,7 +38,7 @@
 ;### repositories processors ##################################################
 (defonce repository-processors-atom (atom {}))
 (defn repository-agent-error-handler [_agent ex]
-  (logging/warn ["Agent error" (exception/stringify _agent ex)]))
+  (logging/warn ["Agent error" (thrown/stringify _agent ex)]))
 
 (defn get-or-create-repository-processor 
   "Creates a repository processor (agent) given a (repository) hash with 
@@ -95,13 +95,13 @@
                  {:watchdog (* 10 60 1000), :dir repository-path, :env {"TERM" "VT-100"}})))
 
 (defn send-branch-update-notifications [branches]
-  (with/log-error
+  (catcher/wrap-with-log-error
     (logging/debug send-branch-update-notifications [branches])
     (doseq [branch branches]
       (messaging/publish "branch.updated" branch))))
 
 (defn git-update [repository]
-  (with/log-error
+  (catcher/wrap-with-log-error
     (let [updated-branches (atom nil)
           dir (git.repositories/path repository)]
       (assert-directory-exists! dir)
@@ -111,7 +111,7 @@
       (send-branch-update-notifications @updated-branches))))
 
 (defn git-initialize [repository]
-  (with/log-error
+  (catcher/wrap-with-log-error
     (let [dir (git.repositories/path repository)]
       (system/exec-with-success-or-throw ["rm" "-rf" dir])
       (system/exec-with-success-or-throw 
@@ -119,7 +119,7 @@
         {:watchdog (* 5 60 1000)}))))
 
 (defn git-fetch-or-initialize [repository]
-  (try (with/log-error
+  (try (catcher/wrap-with-log-error
          (let [repository-path (git.repositories/path repository)] 
            (if (fs/exists? repository-path)
              (git-initialize repository)

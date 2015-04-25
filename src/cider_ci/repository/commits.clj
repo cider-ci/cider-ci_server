@@ -7,7 +7,7 @@
   (:require
     [cider-ci.repository.git.commits :as git-commits]
     [cider-ci.repository.sql.commits :as sql.commits]
-    [cider-ci.utils.debug :as debug]
+    [drtom.logbug.debug :as debug]
     [clj-logging-config.log4j :as logging-config]
     [clojure.java.jdbc :as jdbc]
     [clojure.tools.logging :as logging]

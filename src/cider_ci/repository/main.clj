@@ -9,12 +9,15 @@
     [cider-ci.utils.messaging :as messaging]
     [cider-ci.utils.nrepl :as nrepl]
     [cider-ci.utils.rdbms :as rdbms]
-    [cider-ci.utils.with :as with]
+    [drtom.logbug.catcher :as catcher]
+    [drtom.logbug.thrown]
     [clojure.tools.logging :as logging]
+    [pg-types.all]
     ))
 
 (defn -main [& args]
-  (with/log-error
+  (catcher/wrap-with-log-error
+    (drtom.logbug.thrown/reset-ns-filter-regex #".*cider-ci.*")
     (config/initialize)
     (rdbms/initialize (get-db-spec :dispatcher))
     (nrepl/initialize (-> (get-config) :services :repository :nrepl))

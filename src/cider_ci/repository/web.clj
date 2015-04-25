@@ -9,8 +9,6 @@
     [cider-ci.auth.http-basic :as http-basic]
     [cider-ci.repository.git.repositories :as git.repositories]
     [cider-ci.repository.sql.repository :as sql.repository]
-    [cider-ci.utils.debug :as debug]
-    [cider-ci.utils.exception :as utils.execption]
     [cider-ci.utils.http-server :as http-server]
     [cider-ci.utils.messaging :as messaging]
     [cider-ci.utils.rdbms :as rdbms]
@@ -22,6 +20,8 @@
     [clojure.tools.logging :as logging]
     [compojure.core :as cpj]
     [compojure.handler :as cpj.handler]
+    [drtom.logbug.debug :as debug]
+    [drtom.logbug.ring :refer [wrap-handler-with-logging]]
     [ring.adapter.jetty :as jetty]
     [ring.middleware.json]
     [ring.util.response]
@@ -86,17 +86,17 @@
 
 (defn build-main-handler [context]
   ( -> (cpj.handler/api (build-routes context))
-       (routing/wrap-debug-logging 'cider-ci.repository.web)
+       (wrap-handler-with-logging 'cider-ci.repository.web)
        (ring.middleware.json/wrap-json-params)
-       (routing/wrap-debug-logging 'cider-ci.repository.web)
+       (wrap-handler-with-logging 'cider-ci.repository.web)
        (wrap-status-dispatch)
-       (routing/wrap-debug-logging 'cider-ci.repository.web)
+       (wrap-handler-with-logging 'cider-ci.repository.web)
        (routing/wrap-prefix context)
-       (routing/wrap-debug-logging 'cider-ci.repository.web)
+       (wrap-handler-with-logging 'cider-ci.repository.web)
        (auth/wrap-authenticate-and-authorize-service)
-       (routing/wrap-debug-logging 'cider-ci.repository.web)
+       (wrap-handler-with-logging 'cider-ci.repository.web)
        (http-basic/wrap {:executor true :user false :service true})
-       (routing/wrap-debug-logging 'cider-ci.repository.web)
+       (wrap-handler-with-logging 'cider-ci.repository.web)
        (routing/wrap-log-exception)
        ))
 
