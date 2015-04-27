@@ -6,10 +6,10 @@
   (:require 
     [cider-ci.builder.util :as util]
     [cider-ci.utils.config :as config :refer [get-config]]
-    [cider-ci.utils.debug :as debug]
+    [drtom.logbug.debug :as debug]
     [cider-ci.utils.http :as http]
     [cider-ci.utils.rdbms :as rdbms]
-    [cider-ci.utils.with :as with]
+    [drtom.logbug.catcher :as catcher]
     [clj-yaml.core :as yaml]
     [clojure.core.memoize :as memo]
     [clojure.java.jdbc :as jdbc]
@@ -18,7 +18,7 @@
 
 
 (defn- parse-path-content [path content]
-  (with/log :warn (yaml/parse-string content)))
+  (catcher/wrap-with-log :warn (yaml/parse-string content)))
 
 (defn- assert-path-spec
   "Raises an exception if path doesn't start with a '/'"
@@ -32,7 +32,7 @@
   (let [url (http/build-service-url 
               :repository  
               (str "/path-content/" git-ref-id (assert-path-spec path)))
-        res (try (with/log :warn (http/get url {})))
+        res (try (catcher/wrap-with-log :warn (http/get url {})))
         body (:body res)]
     (parse-path-content path body)))
 

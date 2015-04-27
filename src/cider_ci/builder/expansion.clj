@@ -6,9 +6,9 @@
   (:require 
     [cider-ci.builder.repository :as repository]
     [cider-ci.builder.util :as util]
-    [cider-ci.utils.debug :as debug]
+    [drtom.logbug.debug :as debug]
     [cider-ci.utils.rdbms :as rdbms]
-    [cider-ci.utils.with :as with]
+    [drtom.logbug.catcher :as catcher]
     [clj-yaml.core :as yaml]
     [clojure.java.jdbc :as jdbc]
     [clojure.tools.logging :as logging]
@@ -53,7 +53,7 @@
 
 (defn expand 
   ([git-ref-id spec]
-   (with/log :warn
+   (catcher/wrap-with-log-warn
      (cond 
        (map? spec) (if-let [include-value (:_cider-ci_include spec)]
                      (let [content (get-include-content git-ref-id include-value)]

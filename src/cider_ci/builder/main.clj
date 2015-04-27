@@ -11,12 +11,13 @@
     [cider-ci.builder.web :as web]
     [cider-ci.utils.http :as http]
     [cider-ci.utils.config :as config :refer [get-config get-db-spec]]
-    [cider-ci.utils.debug :as debug]
+    [drtom.logbug.debug :as debug]
     [cider-ci.utils.map :refer [deep-merge]]
     [cider-ci.utils.messaging :as messaging]
     [cider-ci.utils.nrepl :as nrepl]
     [cider-ci.utils.rdbms :as rdbms]
-    [cider-ci.utils.with :as with]
+    [drtom.logbug.catcher :as catcher]
+    [drtom.logbug.thrown]
     [clojure.java.jdbc :as jdbc]
     [clojure.tools.logging :as logging]
     [pg-types.all]
@@ -24,7 +25,8 @@
 
 
 (defn -main [& args]
-  (with/log :warn
+  (catcher/wrap-with-log-error
+    (drtom.logbug.thrown/reset-ns-filter-regex #".*cider.ci.*")
     (config/initialize)
     (rdbms/initialize (get-db-spec :builder))
     (nrepl/initialize (-> (get-config) :services :builder :nrepl))

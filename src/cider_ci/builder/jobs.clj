@@ -10,16 +10,16 @@
     [cider-ci.builder.repository :as repository]
     [cider-ci.builder.spec :as spec]
     [cider-ci.builder.tasks :as tasks]
-    [cider-ci.utils.debug :as debug]
     [cider-ci.utils.http :as http]
-    [cider-ci.utils.map :refer [deep-merge]]
+    [cider-ci.utils.map :refer [deep-merge convert-to-array]]
     [cider-ci.utils.messaging :as messaging]
     [cider-ci.utils.rdbms :as rdbms]
-    [cider-ci.utils.with :as with]
     [clj-logging-config.log4j :as logging-config]
     [clj-yaml.core :as yaml]
     [clojure.java.jdbc :as jdbc]
     [clojure.tools.logging :as logging]
+    [drtom.logbug.catcher :as catcher]
+    [drtom.logbug.debug :as debug]
     [honeysql.core :as hc]
     [honeysql.helpers :as hh]
     ))
@@ -29,10 +29,15 @@
 
 (defn try-to-add-specification-from-dotfile [params] 
   (try 
-    (-> (cider-ci.builder.dotfile/get-dotfile (:tree_id params))
-        :jobs
-        (get (keyword (:name params)))
-        ((fn [js] (assoc params :job_specification js))))
+    (->> (cider-ci.builder.dotfile/get-dotfile (:tree_id params))
+         (debug/identity-with-logging 'cider-ci.builder.jobs)
+         :jobs
+         (debug/identity-with-logging 'cider-ci.builder.jobs)
+         (into [])
+         (debug/identity-with-logging 'cider-ci.builder.jobs)
+         (some #(and (= (:name params) (:name %)) %)) 
+         (debug/identity-with-logging 'cider-ci.builder.jobs)
+         ((fn [js] (assoc params :job_specification js))))
     (catch clojure.lang.ExceptionInfo e
       (case (-> e ex-data :object :status)
         404 params
@@ -72,24 +77,21 @@
        (conj params)))
 
 (defn create [params]
-  (-> params 
-      add-specification-from-dofile-if-not-present
-      add-specification-id-if-not-present
-      persist-job
-      invoke-create-tasks-and-trials
-      tags/add-job-tags))
-
-
+  (catcher/wrap-with-log-error
+    (-> params 
+        add-specification-from-dofile-if-not-present
+        add-specification-id-if-not-present
+        persist-job
+        invoke-create-tasks-and-trials
+        tags/add-job-tags)))
 
 ;### available jobs #####################################################
 
 (defn available-jobs [tree-id]
   (->> (cider-ci.builder.dotfile/get-dotfile tree-id)
        :jobs
-       (into [])
-       (map (fn [[name_sym properties]] (assoc properties 
-                                               :name (name name_sym)
-                                               :tree_id tree-id)))
+       convert-to-array
+       (map #(assoc % :tree_id tree-id))
        (filter jobs.filter/dependencies-fullfiled?)
        ))
 

@@ -6,20 +6,47 @@
   (:require 
     [cider-ci.builder.expansion :as expansion]
     [cider-ci.builder.repository :as repository]
-    [cider-ci.utils.debug :as debug]
+    [cider-ci.utils.map :as map]
     [clj-logging-config.log4j :as logging-config]
     [clojure.core.memoize :as memo]
     [clojure.tools.logging :as logging]
+    [drtom.logbug.debug :as debug]
     ))
 
+
+
+;(defn map-to-arrays [spec]
+;  (doall 
+;  (let m2a-keys [:jobs :tasks :subcontexts :scripts]
+;    )
+;  )
+;
+
+(declare map-to-arrays)
+
+(defn map-key-val-to-array [k spec]
+  (if-let [moa (spec k)]
+    (assoc spec k (map map-to-arrays (map/convert-to-array moa)))
+    spec)) 
+
+
+(defn map-to-arrays [spec]
+  (->> spec
+       (map-key-val-to-array :jobs)
+       (map-key-val-to-array :tasks)
+       (map-key-val-to-array :subcontexts)))
 
 (defn- get-dotfile_ [tree-id]
   (->> 
     (repository/get-path-content tree-id "/.cider-ci.yml")
-    (expansion/expand tree-id)))
+    (expansion/expand tree-id)
+    map-to-arrays
+    ))
 
 (def get-dotfile (memo/lru #(get-dotfile_ %)
             :lru/threshold 500))
+
+;(def get-dotfile get-dotfile_)
 
 ;### Debug ####################################################################
 ;(logging-config/set-logger! :level :debug)

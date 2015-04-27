@@ -9,12 +9,12 @@
     [cider-ci.builder.spec :as spec]
     [cider-ci.builder.tasks :as tasks]
     [cider-ci.builder.util :as util]
-    [cider-ci.utils.debug :as debug]
+    [drtom.logbug.debug :as debug]
     [cider-ci.utils.http :as http]
     [cider-ci.utils.messaging :as messaging]
     [cider-ci.utils.rdbms :as rdbms]
-    [cider-ci.utils.with :as with]
-    [cider-ci.utils.map :refer [deep-merge]]
+    [drtom.logbug.catcher :as catcher]
+    [cider-ci.utils.map :refer [deep-merge convert-to-array]]
     [clj-logging-config.log4j :as logging-config]
     [clj-yaml.core :as yaml]
     [clojure.java.jdbc :as jdbc]
@@ -24,18 +24,9 @@
     ))
 
 
-;### filter jobs ########################################################
+;### branch filter ######################################################
 
-(defn add-state-filter-to-query [query-atom name state tree-id]
-  (reset! query-atom 
-          (-> @query-atom
-              (hh/merge-where 
-                [" EXISTS " 
-                 (-> (hh/select 1)
-                     (hh/from :jobs)
-                     (hh/merge-where [:= :jobs.name name])
-                     (hh/merge-where [:= :jobs.state state])
-                     (hh/merge-where [:= :jobs.tree_id tree-id]))]))))
+; TODO, not used right now, delete? 
 
 (defn branch-filter-sql-part [conditions]
   (when-let [branch-filter-str (:branch conditions)]
@@ -57,8 +48,9 @@
                  (hh/merge-join :commits [:= :branches.current_commit_id :commits.id])
                  (hh/merge-where [:= :commits.tree_id tree-id]))])))))
 
+;##############################################################################
+
 (defn add-self-name-filter-to-query [query-atom name tree-id]
-  (logging/debug add-self-name-filter-to-query [query-atom name] tree-id)
   (reset! query-atom
           (-> @query-atom
               (hh/merge-where
@@ -68,14 +60,32 @@
                      (hh/where [:= :jobs.name name])
                      (hh/merge-where [:= :jobs.tree_id tree-id]))]))))
 
+(defn add-job-depenency-to-query [query-atom dependency]
+  (reset! query-atom 
+          (-> @query-atom
+              (hh/merge-where 
+                [" EXISTS " 
+                 (-> (hh/select 1)
+                     (hh/from :jobs)
+                     (hh/merge-where [:= :jobs.name (:name dependency)])
+                     (hh/merge-where [:in :jobs.state (:states dependency)])
+                     (hh/merge-where [:= :jobs.tree_id (:tree_id dependency)]))]))))
+
+(defn add-depenency-to-query [query-atom dependency]
+  (case (:type dependency)
+    "job" (add-job-depenency-to-query query-atom dependency)
+    (do (logging/warn "failed to evaluate dependency" dependency)
+      (reset! query-atom (-> @query-atom (hh/merge-where false)))))) ; TODO false? 
+
+;##############################################################################
+
 (defn dependencies-fullfiled? [properties]
   (let [query-atom (atom (hh/select :true))
         tree-id (:tree_id properties)]
     (logging/debug {:properties properties :initial-sql (hc/format @query-atom)})
     (add-self-name-filter-to-query query-atom (:name properties) tree-id)
-    (doseq [[other-name-sym {state :state}](->> properties :dependencies :jobs)]
-      (add-state-filter-to-query query-atom (name other-name-sym) state tree-id))
-    (add-branch-filter-to-query (:tree_id properties) query-atom (:dependencies properties))
+    (doseq [dependency (-> properties :dependencies convert-to-array)]
+      (add-depenency-to-query query-atom dependency))
     (logging/debug {:final-sql (hc/format @query-atom)})
     (->> (-> @query-atom
              (hc/format))

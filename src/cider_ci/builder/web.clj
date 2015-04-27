@@ -6,21 +6,22 @@
   (:require 
     [cider-ci.auth.core :as auth]
     [cider-ci.auth.http-basic :as http-basic]
+    [cider-ci.builder.dotfile]
     [cider-ci.builder.jobs :as jobs]
     [cider-ci.utils.config :refer [get-config]]
-    [cider-ci.utils.debug :as debug]
     [cider-ci.utils.http-server :as http-server]
     [cider-ci.utils.messaging :as messaging]
     [cider-ci.utils.rdbms :as rdbms]
     [cider-ci.utils.routing :as routing]
-    [cider-ci.utils.with :as with]
     [clj-logging-config.log4j :as logging-config]
     [clojure.data.json :as json]
     [clojure.tools.logging :as logging]
-    [compojure.core :as cpj]
-    [ring.middleware.json]
-    [cider-ci.builder.dotfile]
     [clojure.walk :refer [keywordize-keys]]
+    [compojure.core :as cpj]
+    [drtom.logbug.catcher :as catcher]
+    [drtom.logbug.debug :as debug]
+    [drtom.logbug.ring :refer [wrap-handler-with-logging]]
+    [ring.middleware.json]
     ))
 
 
@@ -54,7 +55,7 @@
 ;##### jobs ############################################################# 
 
 (defn create-job [request]
-  (with/log :warn
+  (catcher/wrap-with-log-warn
     {:status 201 
      :body (jobs/create 
              (->> request
@@ -124,18 +125,18 @@
 (defn build-main-handler [context]
   ( -> top-handler
        wrap-status-dispatch
-       (routing/wrap-debug-logging 'cider-ci.builder.web)
+       (wrap-handler-with-logging 'cider-ci.builder.web)
        wrap-jobs
-       (routing/wrap-debug-logging 'cider-ci.builder.web)
+       (wrap-handler-with-logging 'cider-ci.builder.web)
        ring.middleware.json/wrap-json-response
        ring.middleware.json/wrap-json-body
-       (routing/wrap-debug-logging 'cider-ci.builder.web)
+       (wrap-handler-with-logging 'cider-ci.builder.web)
        (auth/wrap-authenticate-and-authorize-service)
-       (routing/wrap-debug-logging 'cider-ci.builder.web)
+       (wrap-handler-with-logging 'cider-ci.builder.web)
        (routing/wrap-prefix context)
-       (routing/wrap-debug-logging 'cider-ci.builder.web)
+       (wrap-handler-with-logging 'cider-ci.builder.web)
        (http-basic/wrap {:service true})
-       (routing/wrap-debug-logging 'cider-ci.builder.web)
+       (wrap-handler-with-logging 'cider-ci.builder.web)
        ))
 
 

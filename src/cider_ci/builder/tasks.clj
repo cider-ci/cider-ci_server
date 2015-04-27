@@ -9,16 +9,18 @@
     [cider-ci.builder.task :as task]
     [cider-ci.builder.util :as util]
     [cider-ci.utils.config-loader :as config-loader]
-    [cider-ci.utils.debug :as debug]
-    [cider-ci.utils.exception :as exception]
     [cider-ci.utils.map :as map]
+    [cider-ci.utils.map :refer [convert-to-array]]
     [cider-ci.utils.messaging :as messaging]
     [cider-ci.utils.rdbms :as rdbms]
-    [cider-ci.utils.with :as with]
     [clj-logging-config.log4j :as  logging-config]
     [clj-yaml.core :as yaml]
     [clojure.java.jdbc :as jdbc]
     [clojure.tools.logging :as logging]
+    [drtom.logbug.catcher :as catcher]
+    [drtom.logbug.debug :as debug]
+    [drtom.logbug.thrown :as thrown]
+    [drtom.logbug.thrown]
     [langohr.basic     :as lb]
     [langohr.channel   :as lch]
     [langohr.consumers :as lc]
@@ -35,7 +37,7 @@
      (catch Exception e#
        (let [row-data#  {:job_id (:id ~job) 
                          :title ~title
-                         :description (str (.getMessage e#) "\n\n"  (exception/stringify e# "\\n"))}]
+                         :description (str (.getMessage e#) "\n\n"  (thrown/stringify e#))}]
          (logging/warn ~job row-data# e#)
          (jdbc/insert! (rdbms/get-ds) "job_issues" row-data#)))))
 
@@ -55,13 +57,9 @@
 ;(build-scripts {:scripts [{:x 5}]} {:x 7 :y 9})
 ;(build-scripts {:scripts {:blah {:x 5}}} {:x 7 :y 9})
 
-(defn build-task [task-spec task-defaults script-defaults default-name]
+(defn build-task [task-spec task-defaults script-defaults]
   (let [merged-task (util/deep-merge task-defaults task-spec)]
-    ;(logging/debug {:merged-task merged-task})
-    (conj merged-task
-          {:scripts (build-scripts merged-task script-defaults)
-           :name (or (:name merged-task) (name default-name))
-           })))
+    (assoc merged-task :scripts (build-scripts merged-task script-defaults))))
 
 ; build-tasks-for-single-context and build-tasks-for-contexts-sequence 
 ; call each other recursively; no need for trampoline, sensible specs
@@ -69,13 +67,11 @@
 (declare build-tasks-for-contexts-sequence)
 (defn build-tasks-for-single-context [context task-defaults script-defaults]
   "Build the tasks for a single context."
-  (concat (map (fn [[default-name task-spec]]
-                 (logging/debug {:default-name default-name :task-spec task-spec})
-                 (build-task task-spec 
-                             task-defaults 
-                             script-defaults
-                             default-name))
-               (:tasks context))
+  (concat (->> (:tasks context)
+               convert-to-array
+               (map (fn [task-spec] (build-task task-spec 
+                                                task-defaults 
+                                                script-defaults))))
           (if-let [subcontexts-spec (:subcontexts context)]
             (build-tasks-for-contexts-sequence 
               subcontexts-spec task-defaults script-defaults)
@@ -152,7 +148,7 @@
 ;### initialization ###########################################################
 (defn initialize []
   (logging/debug "initialize")
-  (with/log :warn
+  (catcher/wrap-with-log-warn
     (messaging/listen "job.create-tasks-and-trials" 
                       #'create-tasks-and-trials 
                       "job.create-tasks-and-trials")))

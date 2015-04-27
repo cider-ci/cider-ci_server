@@ -11,12 +11,12 @@
     [cider-ci.builder.repository :as repository]
     [cider-ci.builder.spec :as spec]
     [cider-ci.builder.tasks :as tasks]
-    [cider-ci.utils.debug :as debug]
+    [drtom.logbug.debug :as debug]
     [cider-ci.utils.http :as http]
-    [cider-ci.utils.map :refer [deep-merge]]
+    [cider-ci.utils.map :refer [deep-merge convert-to-array]]
     [cider-ci.utils.messaging :as messaging]
     [cider-ci.utils.rdbms :as rdbms]
-    [cider-ci.utils.with :as with]
+    [drtom.logbug.catcher :as catcher]
     [clj-logging-config.log4j :as logging-config]
     [clj-yaml.core :as yaml]
     [clojure.java.jdbc :as jdbc]
@@ -40,20 +40,25 @@
            (jdbc/query (rdbms/get-ds))
            first 
            :bool)))
+
+(defn filter-triggers [jobs data]
+  (logging/info 'filter-triggers [jobs data])
+  jobs
+  )
   
-(defn trigger-jobs [tree-id]
-  (->> (dotfile/get-dotfile tree-id)
-       :jobs
-       (map (fn [[name_sym properties]] (assoc properties 
-                                               :name (name name_sym)
-                                               :tree_id tree-id)))
-       (filter #(-> % :triggers))
-       (filter jobs.filter/dependencies-fullfiled?)
-       (filter trigger-constraints-fullfilled?)
-       (map jobs/add-specification-from-dofile-if-not-present)
-       (map jobs/add-specification-id-if-not-present)
-       (map jobs/create)
-       doall))
+(defn- trigger-jobs [data]
+  (logging/debug 'trigger-jobs data)
+  (let [tree-id (:tree_id data)]
+    (->> (dotfile/get-dotfile tree-id)
+         :jobs
+         convert-to-array
+         (map #(assoc % :tree_id tree-id))
+         (filter #(-> % :triggers))
+         (filter jobs.filter/dependencies-fullfiled?)
+         (filter-triggers data)
+         ;(filter trigger-constraints-fullfilled?)
+         (map jobs/create)
+         doall)))
 
 ;(trigger-jobs "fd4f87460095ac66647e5bfc4fc56f7039a665c9") 
 ;(available-jobs "6ead70379661922505b6c8c3b0acfce93f79fe3e")
@@ -62,12 +67,15 @@
 ;### listen to branch updates #################################################
 
 (defn- evaluate-branch-updated-message [msg]
-  (-> (jdbc/query 
-        (rdbms/get-ds) 
-        ["SELECT tree_id FROM commits WHERE id = ? " (:current_commit_id msg)])
-      first
-      :tree_id
-      trigger-jobs))
+  (catcher/wrap-with-log-warn
+    (logging/debug 'evaluate-branch-updated-message {:msg msg})
+    (-> (jdbc/query 
+          (rdbms/get-ds) 
+          ["SELECT tree_id FROM commits WHERE id = ? " (:current_commit_id msg)])
+        first
+        (#(trigger-jobs (conj msg 
+                              (select-keys % [:tree_id]) 
+                              {:type "branch.updated"}))))))
 
 (defn listen-to-branch-updates-and-fire-trigger-jobs []
   (messaging/listen "branch.updated" evaluate-branch-updated-message))
@@ -80,8 +88,9 @@
         (rdbms/get-ds) 
         ["SELECT tree_id FROM jobs WHERE id = ? " (:id msg)])
       first
-      :tree_id
-      trigger-jobs))
+      (#(trigger-jobs (conj msg 
+                            (select-keys % [:tree_id]) 
+                            {:type "job.updated"})))))
 
 (defn listen-to-job-updates-and-fire-trigger-jobs []
   (messaging/listen "job.updated"  evaluate-job-update))

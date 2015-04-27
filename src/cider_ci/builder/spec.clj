@@ -5,7 +5,7 @@
 (ns cider-ci.builder.spec
   (:require 
     [cider-ci.builder.util :as util]
-    [cider-ci.utils.debug :as debug]
+    [drtom.logbug.debug :as debug]
     [cider-ci.utils.json-protocol]
     [cider-ci.utils.rdbms :as rdbms]
     [clj-uuid]
@@ -33,6 +33,7 @@
         (first(jdbc/insert! (rdbms/get-ds) :task_specifications {:id id :data data})))))
 
 ;### Debug ####################################################################
-;(debug/debug-ns *ns*)
 ;(logging-config/set-logger! :level :debug)
 ;(logging-config/set-logger! :level :info)
+;(debug/debug-ns *ns*)
+
