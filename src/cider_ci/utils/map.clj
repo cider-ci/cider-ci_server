@@ -16,9 +16,8 @@
 
 
 (defn convert-to-array 
-  "Converts a map of maps to an array of maps.
-  The key of will become the value of the :name 
-  property if it did no exists already."
+  "Converts a map of maps to an array of maps. The key becomes the value of the
+  :name property if and only if :name does no exists already."
   [map-or-array]
   (if (and (map? map-or-array)
            (every?  map? (map second map-or-array)))

@@ -1,6 +1,5 @@
 (ns cider-ci.utils.rdbms
   (:require 
-    [cider-ci.utils.rdbms.conversion :as conversion]
     [drtom.logbug.catcher :as catcher]
     [clojure.java.jdbc :as jdbc]
     [clojure.tools.logging :as logging]
@@ -93,8 +92,7 @@
     (logging/info initialize [db-conf])
     (reset! db-spec db-conf)
     (create-c3p0-datasources db-conf)
-    (set-tables-metadata db-conf)
-    (conversion/initialize @tables-metadata)))
+    (set-tables-metadata db-conf)))
 
 
 ;(initialize {:subprotocol "sqlite" :subname ":memory:"})
