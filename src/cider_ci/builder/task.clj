@@ -7,7 +7,6 @@
     [clojure.tools.logging :as logging]
     [drtom.logbug.debug :as debug]
     [cider-ci.utils.rdbms :as rdbms]
-    [cider-ci.utils.rdbms.conversion :as rdbms.conversion]
     [cider-ci.builder.spec :as spec]
     [clojure.java.jdbc :as jdbc]
     [cider-ci.builder.util :as util]
