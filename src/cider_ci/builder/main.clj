@@ -5,7 +5,7 @@
 (ns cider-ci.builder.main
   (:require 
     [cider-ci.auth.core :as auth]
-    [cider-ci.builder.jobs.chaining :as jobs.chaining]
+    [cider-ci.builder.jobs.trigger :as jobs.trigger]
     [cider-ci.builder.repository :as repository]
     [cider-ci.builder.tasks :as tasks]
     [cider-ci.builder.web :as web]
@@ -34,7 +34,7 @@
     (tasks/initialize)
     (auth/initialize (select-keys (get-config) [:secret :session :basic_auth]))
     (web/initialize)
-    (jobs.chaining/initialize)
+    (jobs.trigger/initialize)
     (http/initialize (get-config))))
 
 

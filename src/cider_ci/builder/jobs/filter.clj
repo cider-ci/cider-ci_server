@@ -60,7 +60,7 @@
                      (hh/where [:= :jobs.name name])
                      (hh/merge-where [:= :jobs.tree_id tree-id]))]))))
 
-(defn add-job-depenency-to-query [query-atom dependency]
+(defn add-job-depenency-to-query [query-atom dependency tree-id]
   (reset! query-atom 
           (-> @query-atom
               (hh/merge-where 
@@ -69,11 +69,12 @@
                      (hh/from :jobs)
                      (hh/merge-where [:= :jobs.name (:name dependency)])
                      (hh/merge-where [:in :jobs.state (:states dependency)])
-                     (hh/merge-where [:= :jobs.tree_id (:tree_id dependency)]))]))))
+                     (hh/merge-where [:= :jobs.tree_id tree-id]))]))))
 
-(defn add-depenency-to-query [query-atom dependency]
+; TODO, tree id is missing with the dependency
+(defn add-depenency-to-query [query-atom dependency tree-id]
   (case (:type dependency)
-    "job" (add-job-depenency-to-query query-atom dependency)
+    "job" (add-job-depenency-to-query query-atom dependency tree-id)
     (do (logging/warn "failed to evaluate dependency" dependency)
       (reset! query-atom (-> @query-atom (hh/merge-where false)))))) ; TODO false? 
 
@@ -85,7 +86,7 @@
     (logging/debug {:properties properties :initial-sql (hc/format @query-atom)})
     (add-self-name-filter-to-query query-atom (:name properties) tree-id)
     (doseq [dependency (-> properties :dependencies convert-to-array)]
-      (add-depenency-to-query query-atom dependency))
+      (add-depenency-to-query query-atom dependency tree-id))
     (logging/debug {:final-sql (hc/format @query-atom)})
     (->> (-> @query-atom
              (hc/format))

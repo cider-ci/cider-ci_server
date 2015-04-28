@@ -2,7 +2,7 @@
 ; Licensed under the terms of the GNU Affero General Public License v3.
 ; See the "LICENSE.txt" file provided with this software.
 
-(ns cider-ci.builder.jobs.chaining
+(ns cider-ci.builder.jobs.trigger
   (:require 
     [cider-ci.builder.dotfile :as dotfile]
     [cider-ci.builder.jobs :as jobs]
@@ -28,40 +28,51 @@
 
 ;### trigger jobs #######################################################
 
-(defn trigger-constraints-fullfilled? [properties] 
-    (let [query-atom (atom (hh/select :true))
-          tree-id (:tree_id properties)]
-      (logging/debug "trigger-constraints-fullfilled?" {:properties properties :initial-sql (hc/format @query-atom)})
-      (jobs.filter/add-self-name-filter-to-query query-atom (:name properties) tree-id)
-      (jobs.filter/add-branch-filter-to-query tree-id query-atom (-> properties :triggers))
-      (logging/debug "trigger-constraints-fullfilled?" {:final-sql (hc/format @query-atom)})
-      (->> (-> @query-atom
-               (hc/format))
-           (jdbc/query (rdbms/get-ds))
-           first 
-           :bool)))
+(defn event-branch-updated-fits-trigger? [event-data trigger]
+  (boolean 
+    (when-let [regex-str (:regex trigger)]
+      (re-find (re-pattern regex-str) (:name event-data)))))
 
-(defn filter-triggers [jobs data]
-  (logging/info 'filter-triggers [jobs data])
-  jobs
-  )
+(defn event-job-updated-fits-trigger? [event-data trigger]
+  true)
+
+(defn find-trigger-for-event [event-data triggers]
+  (some #(and (= (:type %) (:type event-data)) %) triggers))
+
+(defn some-job-trigger-matches-event? [event-data job]
+  (let [triggers (:triggers job)]
+    (if (= true triggers)
+      true
+      (when-let [matching-trigger (find-trigger-for-event event-data triggers)]
+        (case (:type event-data)
+          "branch.updated" (event-branch-updated-fits-trigger? event-data matching-trigger)
+          "job.updated" (event-job-updated-fits-trigger? event-data matching-trigger)
+          (do (logging/warn "not handled job-trigger event" event-data)
+            false))))))
+
+(defn filter-jobs-by-triggers [event-data jobs]
+  (filter #(some-job-trigger-matches-event? event-data %) jobs))
   
-(defn- trigger-jobs [data]
-  (logging/debug 'trigger-jobs data)
-  (let [tree-id (:tree_id data)]
+(defn- trigger-jobs [event-data]
+  (let [tree-id (:tree_id event-data)]
     (->> (dotfile/get-dotfile tree-id)
+         (debug/identity-with-logging 'cider-ci.builder.jobs.trigger)
          :jobs
+         (debug/identity-with-logging 'cider-ci.builder.jobs.trigger)
          convert-to-array
+         (into [])(debug/identity-with-logging 'cider-ci.builder.jobs.trigger)
          (map #(assoc % :tree_id tree-id))
+         (into [])(debug/identity-with-logging 'cider-ci.builder.jobs.trigger)
          (filter #(-> % :triggers))
+         (into [])(debug/identity-with-logging 'cider-ci.builder.jobs.trigger)
          (filter jobs.filter/dependencies-fullfiled?)
-         (filter-triggers data)
+         (into [])(debug/identity-with-logging 'cider-ci.builder.jobs.trigger)
+         (filter-jobs-by-triggers event-data)
+         (into [])(debug/identity-with-logging 'cider-ci.builder.jobs.trigger)
          ;(filter trigger-constraints-fullfilled?)
          (map jobs/create)
+         (debug/identity-with-logging 'cider-ci.builder.jobs.trigger)
          doall)))
-
-;(trigger-jobs "fd4f87460095ac66647e5bfc4fc56f7039a665c9") 
-;(available-jobs "6ead70379661922505b6c8c3b0acfce93f79fe3e")
 
 
 ;### listen to branch updates #################################################
@@ -86,11 +97,10 @@
 (defn evaluate-job-update [msg] 
   (-> (jdbc/query 
         (rdbms/get-ds) 
-        ["SELECT tree_id FROM jobs WHERE id = ? " (:id msg)])
+        ["SELECT * FROM jobs WHERE id = ? " (:id msg)])
       first
-      (#(trigger-jobs (conj msg 
-                            (select-keys % [:tree_id]) 
-                            {:type "job.updated"})))))
+      (#(trigger-jobs (conj % msg {:type "job.updated"})))))
+
 
 (defn listen-to-job-updates-and-fire-trigger-jobs []
   (messaging/listen "job.updated"  evaluate-job-update))
