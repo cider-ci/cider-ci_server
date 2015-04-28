@@ -3,20 +3,16 @@
 ; See the "LICENSE.txt" file provided with this software.
 
 
-(defproject cider-ci_dispatcher "2.2.0"
+(defproject cider-ci_dispatcher "3.0.0-rc.1"
   :description "Cider-CI Dispatcher"
   :license {:name "GNU AFFERO GENERAL PUBLIC LICENSE Version 3"
             :url "http://www.gnu.org/licenses/agpl-3.0.html"}
   :dependencies [
-                 [cider-ci/clj-auth "3.0.0-beta.7"]
-                 [cider-ci/clj-utils "3.0.0-beta.6"]
+                 [cider-ci/clj-auth "3.0.0-rc.1"]
+                 [cider-ci/clj-utils "3.0.0-rc.1"]
                  [drtom/honeysql "1.1.0"]
-                 [org.clojure/tools.nrepl "0.2.7"]
+                 [org.clojure/tools.nrepl "0.2.10"]
                  ]
-
-  ; :source-paths ["src" "../../clj-auth/src"]
-  ; :java-source-paths ["../../clj-auth/lib/bcrypt-ruby/ext/jruby"] 
-
   :profiles {:dev 
              {:dependencies [[midje "1.6.3"]]
               :plugins [[lein-midje "3.1.1"]]

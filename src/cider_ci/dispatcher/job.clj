@@ -22,12 +22,10 @@
                  WHERE job_id = ?" id])))
 
 
-
-
 (defn update-state-and-fire-if-changed [job-id new-state]
   (when (stateful-entity/update-state 
           :jobs job-id new-state {:assert-existence true})
-    (messaging/publish "job.updated" {:id job-id})))
+    (messaging/publish "job.updated" {:id job-id :state new-state})))
   
 (defn evaluate-and-update [job-id]
   (let [ states (get-task-states job-id)

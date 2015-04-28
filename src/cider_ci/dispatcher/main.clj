@@ -21,6 +21,7 @@
     [clojure.tools.logging :as logging]
     [drtom.logbug.catcher :as catcher]
     [drtom.logbug.thrown]
+    [pg-types.all]
     ))
 
 (defn -main [& args]
