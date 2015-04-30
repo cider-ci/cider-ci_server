@@ -20,18 +20,10 @@
 (defn- parse-path-content [path content]
   (catcher/wrap-with-log :warn (yaml/parse-string content)))
 
-(defn- assert-path-spec
-  "Raises an exception if path doesn't start with a '/'"
-  [path]
-  (if (re-find #"^\/" path) 
-    path
-    (throw (IllegalArgumentException. 
-             (str "The string value of `_cider-ci_include` must start with a slash '/'. " )))))
-
 (defn get-path-content_ [git-ref-id path]
   (let [url (http/build-service-url 
               :repository  
-              (str "/path-content/" git-ref-id (assert-path-spec path)))
+              (str "/path-content/" git-ref-id "/" path))
         res (try (catcher/wrap-with-log :warn (http/get url {})))
         body (:body res)]
     (parse-path-content path body)))
@@ -39,6 +31,9 @@
 
 (def get-path-content (memo/lru get-path-content_
                                 :lru/threshold 500))
+
+;(def get-path-content get-path-content_)
+
 
 ;### Debug ####################################################################
 ;(logging-config/set-logger! :level :debug)

@@ -38,7 +38,7 @@
 
 (defn- get-dotfile_ [tree-id]
   (->> 
-    (repository/get-path-content tree-id "/.cider-ci.yml")
+    (repository/get-path-content tree-id ".cider-ci.yml")
     (expansion/expand tree-id)
     map-to-arrays
     ))
@@ -46,7 +46,7 @@
 (def get-dotfile (memo/lru #(get-dotfile_ %)
             :lru/threshold 500))
 
-;(def get-dotfile get-dotfile_)
+(def get-dotfile get-dotfile_)
 
 ;### Debug ####################################################################
 ;(logging-config/set-logger! :level :debug)
