@@ -41,4 +41,5 @@
 ;### Debug ####################################################################
 ;(logging-config/set-logger! :level :debug)
 ;(logging-config/set-logger! :level :info)
+;(require (ns-name *ns*) :reload-all)
 ;(debug/debug-ns *ns*)

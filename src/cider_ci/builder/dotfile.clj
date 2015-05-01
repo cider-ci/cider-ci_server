@@ -14,14 +14,6 @@
     ))
 
 
-
-;(defn map-to-arrays [spec]
-;  (doall 
-;  (let m2a-keys [:jobs :tasks :subcontexts :scripts]
-;    )
-;  )
-;
-
 (declare map-to-arrays)
 
 (defn map-key-val-to-array [k spec]

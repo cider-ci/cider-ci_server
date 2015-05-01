@@ -72,28 +72,28 @@
                (map (fn [task-spec] (build-task task-spec 
                                                 task-defaults 
                                                 script-defaults))))
-          (if-let [subcontexts-spec (:subcontexts context)]
+          (if-let [subcontexts (:subcontexts context)]
             (build-tasks-for-contexts-sequence 
-              subcontexts-spec task-defaults script-defaults)
+              subcontexts task-defaults script-defaults)
             [])))
 
 (defn build-tasks-for-contexts-sequence
   "Build the tasks for a sequence of contexts."
-  [[context-id context-spec] inherited-task-defaults inherited-script-defaults]
+  [context inherited-task-defaults inherited-script-defaults]
   (apply concat 
          (map 
            (fn [context]
              (logging/debug {:context context})
              (let [task-defaults (util/deep-merge inherited-task-defaults
-                                             (or (:task_defaults context) 
-                                                 {}))
+                                                  (or (:task_defaults context) 
+                                                      {}))
                    script-defaults (util/deep-merge inherited-script-defaults
-                                               (or (:script_defaults context) 
-                                                   {}))]
+                                                    (or (:script_defaults context) 
+                                                        {}))]
                (build-tasks-for-single-context context 
                                                task-defaults 
                                                script-defaults)))
-           context-spec)))
+           context)))
 
 (defn build-tasks 
   "Build the tasks for the given top-level specification."
