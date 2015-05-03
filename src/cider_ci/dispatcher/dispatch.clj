@@ -73,7 +73,7 @@
         repository-id (:repository_id branch-and-commit)
         trial-id (:id trial)
         environment-variables (conj (or (:environment_variables task-spec) {})
-                                    {:CIDER_CI_EXECUTION_ID job-id
+                                    {:CIDER_CI_JOB_ID job-id
                                      :CIDER_CI_TASK_ID (:task_id trial)
                                      :CIDER_CI_TRIAL_ID trial-id
                                      :CIDER_CI_TREE_ID (:tree_id branch-and-commit)})
