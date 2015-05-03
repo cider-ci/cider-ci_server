@@ -20,8 +20,8 @@
     
 
 (defn response-data [request]
-  {:message "Welcome to the Cider-CI API!"}
-  )
+  {:message "Welcome to the Cider-CI API!"
+   :version "3.0.0-beta.1"})
 
 (defn get [request]
   {:body (response-data request)})
