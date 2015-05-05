@@ -21,6 +21,7 @@
     [drtom.logbug.catcher :as catcher]
     [drtom.logbug.debug :as debug]
     [drtom.logbug.ring :refer [wrap-handler-with-logging]]
+    [drtom.logbug.thrown :as thrown]
     [ring.middleware.json]
     ))
 
@@ -86,12 +87,12 @@
 
 (defn dotfile [request]
   (try 
-    {:status 200
-     :headers {"content-type" "application/json;charset=utf-8"}
-     :body (json/write-str 
-             (cider-ci.builder.dotfile/get-dotfile 
-               (-> request :route-params :tree_id)))
-     }
+    (let [dotfile-content (cider-ci.builder.dotfile/get-dotfile 
+                            (-> request :route-params :tree_id))]
+      (logging/debug {:dotfile-content dotfile-content})
+      {:status 200
+       :headers {"content-type" "application/json;charset=utf-8"}
+       :body (json/write-str dotfile-content)})
     (catch clojure.lang.ExceptionInfo e
       (logging/warn e)
       (logging/warn (-> e .getData :object ))
@@ -100,16 +101,11 @@
               :body (str "The dotfile itself or a included resource doesn't exist. \n\n"
                          (-> e .getData :object ))}
         {:status 500
-         :body "See the builder logs for details."
-         }
-        )
-      )
+         :body "See the builder logs for details."}))
     (catch Exception e
-      (logging/error e)
+      (logging/error (thrown/stringify e))
       {:status 500
-       :body "See the builder logs for details."
-       }
-      )))
+       :body "See the builder logs for details." })))
 
 (defn wrap-jobs [default-handler]
   (cpj/routes
