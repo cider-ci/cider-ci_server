@@ -65,7 +65,7 @@
         finished-count (->> states (filter #(terminal-states %)) count)
         in-progress-count (- (count states) finished-count)
         create-new-trials-count (min (- (or (:eager_trials spec) 1) in-progress-count)
-                                     (- (or (:auto_trials spec) 2) (count states)))
+                                     (- (or (:max_auto_trials spec) 2) (count states)))
         _range (range 0 create-new-trials-count)
         ]
     (logging/debug "CREATE-TRIALS" 
@@ -104,7 +104,7 @@
 (defn evaluate-and-create-trials
   "Evaluate task, evaluate state of trials and adjust state of task.
   Send \"task.state-changed\" message if state changed.
-  Create trials according to auto_trials and eager_trials properties
+  Create trials according to max_auto_trials and eager_trials properties
   if task is not in terminal state. The argument task must be a map 
   including an :id key" 
   [task]
