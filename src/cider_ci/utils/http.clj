@@ -75,7 +75,7 @@
    (str (get-base-url) (build-service-prefix service-name-or-keyword) path))
   ([service-name-or-keyword path query-params]
    (build-service-url service-name-or-keyword 
-                      (str "?" (build-url-query-string query-params)))))
+                      (str path "?" (build-url-query-string query-params)))))
 
 ;### Http request #############################################################
 
