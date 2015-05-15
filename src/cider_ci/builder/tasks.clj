@@ -4,7 +4,6 @@
 
 (ns cider-ci.builder.tasks
   (:require 
-    [cider-ci.builder.expansion :as expansion]
     [cider-ci.builder.spec :as spec]
     [cider-ci.builder.task :as task]
     [cider-ci.builder.util :as util]

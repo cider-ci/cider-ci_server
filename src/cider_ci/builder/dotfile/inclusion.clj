@@ -2,7 +2,7 @@
 ; Licensed under the terms of the GNU Affero General Public License v3.
 ; See the "LICENSE.txt" file provided with this software.
 
-(ns cider-ci.builder.expansion
+(ns cider-ci.builder.dotfile.inclusion
   (:require 
     [cider-ci.builder.repository :as repository]
     [cider-ci.builder.util :as util]
@@ -14,7 +14,7 @@
     [clojure.tools.logging :as logging]
     ))
 
-;### expand ###############################################################
+;### include ##############################################################
 
 (defn- get-include-content-for-path [git-ref-id path]
   (let [content (repository/get-path-content 
@@ -48,26 +48,26 @@
                    ))))
 
 
-;### expand ###############################################################
+;### include ##############################################################
 
 
-(defn expand 
+(defn include
   ([git-ref-id spec]
    (catcher/wrap-with-log-warn
      (cond 
        (map? spec) (if-let [include-value (:_cider-ci_include spec)]
                      (let [content (get-include-content git-ref-id include-value)]
-                       (expand git-ref-id (util/deep-merge (dissoc spec :_cider-ci_include)
+                       (include git-ref-id (util/deep-merge (dissoc spec :_cider-ci_include)
                                                            content)))
                      (into {} (map (fn [pair]
                                      (let [[k v] pair]
-                                       [k (expand git-ref-id v)]))
+                                       [k (include git-ref-id v)]))
                                    spec)))
        (coll? spec) (map (fn [spec-item]
                            (logging/debug {:spec-item spec-item})
                            (cond 
-                             (map? spec-item) (expand git-ref-id spec-item)
-                             (coll? spec-item) (expand git-ref-id spec-item)
+                             (map? spec-item) (include git-ref-id spec-item)
+                             (coll? spec-item) (include git-ref-id spec-item)
                              :else spec-item))
                          spec)
        :else spec)))) 

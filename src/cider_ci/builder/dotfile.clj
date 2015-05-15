@@ -4,7 +4,7 @@
 
 (ns cider-ci.builder.dotfile
   (:require 
-    [cider-ci.builder.expansion :as expansion]
+    [cider-ci.builder.dotfile.inclusion :as inclusion]
     [cider-ci.builder.repository :as repository]
     [cider-ci.utils.map :as map]
     [clj-logging-config.log4j :as logging-config]
@@ -31,7 +31,7 @@
 (defn- get-dotfile_ [tree-id]
   (->> 
     (repository/get-path-content tree-id ".cider-ci.yml")
-    (expansion/expand tree-id)
+    (inclusion/include tree-id)
     map-to-arrays
     ))
 
