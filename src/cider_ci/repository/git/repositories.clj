@@ -13,7 +13,7 @@
     [cider-ci.utils.fs :as ci-fs]
     [cider-ci.utils.system :as system]
     [drtom.logbug.catcher :as catcher]
-    [clojure.string :as string :refer [blank?]]
+    [clojure.string :as string :refer [blank? split trim]]
     [clojure.tools.logging :as logging]
     ))
 
@@ -44,11 +44,24 @@
   "Returns the content of the path or nil if not applicable."
   [repository id file-path]
   (let [git-dir-path (path repository)]
-    (:out (catcher/wrap-with-suppress-and-log-warn
+    (:out (catcher/wrap-with-log-warn
             (system/exec-with-success-or-throw  
               ["git" "show" (str id ":" file-path)]
               {:dir git-dir-path})))))
 
+
+(defn ls-tree [repository id include-regex exclude-regex]
+  (catcher/wrap-with-log-warn
+    (->> (-> (system/exec-with-success-or-throw  
+               ["git" "ls-tree" "-r" "--name-only" id]
+               {:dir (path repository)})
+             :out 
+             (split #"\n"))
+         (map trim)
+         (filter #(and include-regex 
+                       (re-find (re-pattern include-regex) %)))
+         (filter #(or (not exclude-regex) 
+                      (not (re-find (re-pattern exclude-regex) %)))))))
 
 ;#### debug ###################################################################
 ;(debug/debug-ns *ns*)

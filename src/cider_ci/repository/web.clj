@@ -24,6 +24,7 @@
     [drtom.logbug.ring :refer [wrap-handler-with-logging]]
     [ring.adapter.jetty :as jetty]
     [ring.middleware.json]
+    [ring.middleware.params]
     [ring.util.response]
     ))
 
@@ -54,6 +55,16 @@
         {:body content}))))
 
 
+(defn ls-tree [request]
+  (logging/info 'ls-tree request)
+  (let [id (-> request :params :id)
+        include-regex (-> request :params :include-match)
+        exclude-regex (-> request :params :exclude-match)]
+    (when-let [repository (sql.repository/resolve id)]
+      {:headers {"Content-Type" "application/json"}
+       :body (json/write-str (git.repositories/ls-tree repository id include-regex exclude-regex))}
+      )))
+
 ;##### status dispatch ######################################################## 
 
 (defn status-handler [request]
@@ -80,12 +91,16 @@
   (cpj/routes 
     (cpj/GET "/path-content/:id/*" request 
              (get-path-content request))
+    (cpj/GET "/ls-tree/:id/" _ ls-tree)
     (cpj/GET "/:id/git/*" request
              (get-git-file request)) 
+
     ))
 
 (defn build-main-handler [context]
   ( -> (cpj.handler/api (build-routes context))
+       (wrap-handler-with-logging 'cider-ci.repository.web)
+       (ring.middleware.params/wrap-params) 
        (wrap-handler-with-logging 'cider-ci.repository.web)
        (ring.middleware.json/wrap-json-params)
        (wrap-handler-with-logging 'cider-ci.repository.web)
