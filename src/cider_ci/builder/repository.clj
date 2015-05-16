@@ -14,6 +14,7 @@
     [clojure.core.memoize :as memo]
     [clojure.java.jdbc :as jdbc]
     [clojure.tools.logging :as logging]
+    [clojure.data.json :as json]
     ))
 
 
@@ -27,6 +28,18 @@
         res (try (catcher/wrap-with-log :warn (http/get url {})))
         body (:body res)]
     (parse-path-content path body)))
+
+; TODO replace regex with include-match; honor exclude-match
+(defn ls-tree [git-ref-id params]
+  (logging/info {:params params})
+  (let [url (http/build-service-url 
+              :repository  
+              (str "/ls-tree/" git-ref-id "/" )
+              params)
+        res (try (catcher/wrap-with-log :warn (http/get url {})))
+        body (:body res)]
+    (logging/info url)
+    (json/read-str body :key-fn keyword)))
 
 
 (def get-path-content (memo/lru get-path-content_
