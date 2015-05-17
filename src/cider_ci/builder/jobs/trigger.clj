@@ -26,15 +26,42 @@
     ))
 
 
+;### include-exclude-filter ###################################################
+
+
+(defprotocol Pattern
+  (to-pattern [x]))
+
+(extend-protocol Pattern
+  java.lang.String
+  (to-pattern [x] (re-pattern x))
+  java.util.regex.Pattern
+  (to-pattern [x] x)
+  nil
+  (to-pattern [x] nil)
+  java.lang.Boolean
+  (to-pattern [x] x))
+
+
+(defn include-exclude-filter [include-match exclude-match coll]
+  (->> coll
+       (filter #(and include-match
+                     (re-find (to-pattern include-match) (str %))))
+       (filter #(or (not exclude-match) 
+                    (not (re-find (to-pattern exclude-match) (str %)))))))
+
+;(include-exclude-filter "master" "^mk" ["ts_master" "mk_master" ])
+
 ;### trigger jobs #######################################################
 
 (defn event-branch-updated-fits-trigger? [event-data trigger]
-  (boolean 
-    (when-let [regex-str (:regex trigger)]
-      (re-find (re-pattern regex-str) (:name event-data)))))
+  (->> [(:name event-data)]
+       (include-exclude-filter 
+         (:include-match trigger)
+         (:exclude-match trigger))
+       first 
+       boolean))
 
-(defn event-job-updated-fits-trigger? [event-data trigger]
-  true)
 
 (defn find-trigger-for-event [event-data triggers]
   (some #(and (= (:type %) (:type event-data)) %) triggers))

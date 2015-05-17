@@ -29,7 +29,6 @@
         body (:body res)]
     (parse-path-content path body)))
 
-; TODO replace regex with include-match; honor exclude-match
 (defn ls-tree [git-ref-id params]
   (logging/info {:params params})
   (let [url (http/build-service-url 
