@@ -17,7 +17,7 @@
 
 
 (defn file-name-to-task [file-name]
-  [file-name {:environment_variables
+  [file-name {:environment-variables
               {:CIDER_CI_TASK_FILE file-name}}])
 
 (defn expand-tasks [git-ref-id context]

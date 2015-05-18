@@ -26,7 +26,7 @@
         task-row (conj (select-keys raw-spec [:name :state :error :priority])
                        {:job_id job-id
                         :traits (spec-map-to-array (or (:traits raw-spec) {}))
-                        :exclusive_resources (spec-map-to-array (or (:exclusive_resources raw-spec) {}))
+                        :exclusive_resources (spec-map-to-array (or (:exclusive-resources raw-spec) {}))
                         :task_specification_id (:id db-task-spec)
                         :id (util/idid2id job-id (:id db-task-spec))
                         })]

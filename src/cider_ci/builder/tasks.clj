@@ -84,10 +84,10 @@
            (fn [context]
              (logging/debug {:context context})
              (let [task-defaults (util/deep-merge inherited-task-defaults
-                                                  (or (:task_defaults context) 
+                                                  (or (:task-defaults context) 
                                                       {}))
                    script-defaults (util/deep-merge inherited-script-defaults
-                                                    (or (:script_defaults context) 
+                                                    (or (:script-defaults context) 
                                                         {}))]
                (build-tasks-for-single-context context 
                                                task-defaults 
@@ -100,9 +100,9 @@
   (let [spec (clojure.walk/keywordize-keys _spec)
         tasks (build-tasks-for-single-context 
                 spec
-                (conj (or (:task_defaults spec) {})
+                (conj (or (:task-defaults spec) {})
                       {:job_id (:id job)})
-                (or (:script_defaults spec) {}))] 
+                (or (:script-defaults spec) {}))] 
     (doseq [raw-task tasks]
       (wrap-exception-create-job-issue 
         job "Error during task creation" 
