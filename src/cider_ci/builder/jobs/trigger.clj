@@ -62,6 +62,9 @@
        first 
        boolean))
 
+(defn event-job-updated-fits-trigger? [event-data trigger]
+  ; TODO, there seems to be an implementation missing  ??? 
+  true)
 
 (defn find-trigger-for-event [event-data triggers]
   (some #(and (= (:type %) (:type event-data)) %) triggers))
