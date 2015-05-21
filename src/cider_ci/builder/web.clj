@@ -102,10 +102,11 @@
                          (-> e .getData :object ))}
         {:status 500
          :body "See the builder logs for details."}))
-    (catch Exception e
+    (catch Throwable e
       (logging/error (thrown/stringify e))
       {:status 500
-       :body "See the builder logs for details." })))
+       :body (str "See the builder logs for more details. " 
+                  "\n\n"  (thrown/stringify e))})))
 
 (defn wrap-jobs [default-handler]
   (cpj/routes
