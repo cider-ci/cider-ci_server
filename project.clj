@@ -24,4 +24,5 @@
   :aot [cider-ci.repository.main] 
   :main cider-ci.repository.main 
   :jvm-opts ["-Xmx256m"]
+  :repl-options {:timeout  120000}
   )
