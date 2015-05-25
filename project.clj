@@ -22,4 +22,5 @@
   :main cider-ci.storage.main 
   :repositories [["tmp" {:url "http://maven-repo-tmp.drtom.ch" :snapshots false}]]
   :jvm-opts ["-Xmx128m"]
+  :repl-options {:timeout  120000}
   )
