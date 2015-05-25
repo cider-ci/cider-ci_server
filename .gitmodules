@@ -1,6 +1,3 @@
-[submodule "resources/hal-browser"]
-	path = resources/hal-browser
-	url = https://github.com/cider-ci/hal-browser.git
 [submodule "json-roa_browser"]
 	path = resources/api-browser
 	url = https://github.com/json-roa/json-roa_browser_build.git
