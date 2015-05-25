@@ -30,6 +30,7 @@
   :aot [cider-ci.api.main] 
   :main cider-ci.api.main 
   :jvm-opts ["-Xmx128m"]
+  :repl-options {:timeout  120000}
   )
 
 ;(cemerick.pomegranate.aether/register-wagon-factory!  "scp" #(let [c (resolve 'org.apache.maven.wagon.providers.ssh.external.ScpExternalWagon)] (clojure.lang.Reflector/invokeConstructor c (into-array []))))
