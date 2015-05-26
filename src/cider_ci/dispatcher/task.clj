@@ -20,13 +20,6 @@
 ;### utils ####################################################################
 (defonce terminal-states #{"aborted" "failed" "passed"})
 
-(defn convert-scripts-to-array [scripts-map]
-  (sort-by #(or (:order %) 0) 
-           (for [[script-name properties] scripts-map]
-             (conj properties {:name script-name})))
-  ;(convert-scripts-to-array {:main {:order 5 :body "main body" } :prepare {:order 0 :body "prepare"}}) 
-  )
-
 (defn get-task [id]
   (first (jdbc/query (rdbms/get-ds) 
                                 ["SELECT * FROM tasks
