@@ -22,11 +22,14 @@
   (if (and (map? map-or-array)
            (every?  map? (map second map-or-array)))
     (map (fn [[k m]]
-           (if (:name m) 
-             m
-             (assoc m :name (name k))))
+           (conj m
+                 {:key (name k)}
+                 (when-not (:name m)
+                   {:name (name k)})))
          map-or-array)
     map-or-array))
+
+
 
 
 ;(convert-to-array {:x {:y 1}})
