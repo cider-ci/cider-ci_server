@@ -67,16 +67,15 @@
                 [" EXISTS " 
                  (-> (hh/select 1)
                      (hh/from :jobs)
-                     (hh/merge-where [:= :jobs.name (:name dependency)])
+                     (hh/merge-where [:= :jobs.key (:job-key dependency)])
                      (hh/merge-where [:in :jobs.state (:states dependency)])
                      (hh/merge-where [:= :jobs.tree_id tree-id]))]))))
 
-; TODO, tree id is missing with the dependency
 (defn add-depenency-to-query [query-atom dependency tree-id]
   (case (:type dependency)
     "job" (add-job-depenency-to-query query-atom dependency tree-id)
     (do (logging/warn "failed to evaluate dependency" dependency)
-      (reset! query-atom (-> @query-atom (hh/merge-where false)))))) ; TODO false? 
+      (reset! query-atom (-> @query-atom (hh/merge-where false))))))
 
 ;##############################################################################
 

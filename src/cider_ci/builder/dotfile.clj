@@ -5,7 +5,6 @@
 (ns cider-ci.builder.dotfile
   (:require 
     [cider-ci.builder.dotfile.inclusion :as inclusion]
-    [cider-ci.builder.dotfile.map-to-arrays :as map-to-arrays]
     [cider-ci.builder.repository :as repository]
     [clj-logging-config.log4j :as logging-config]
     [clojure.core.memoize :as memo]
@@ -18,8 +17,6 @@
   (->> 
     (repository/get-path-content tree-id ".cider-ci.yml")
     (inclusion/include tree-id)
-    ;(expansion/expand tree-id)
-    map-to-arrays/map-to-arrays
     ))
 
 (def get-dotfile (memo/lru #(get-dotfile_ %)

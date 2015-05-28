@@ -70,10 +70,10 @@
   (some #(and (= (:type %) (:type event-data)) %) triggers))
 
 (defn some-job-trigger-matches-event? [event-data job]
-  (let [triggers (:triggers job)]
+  (let [triggers (:start-on job)]
     (if (= true triggers)
       true
-      (when-let [matching-trigger (find-trigger-for-event event-data triggers)]
+      (when-let [matching-trigger (find-trigger-for-event event-data (convert-to-array triggers))]
         (case (:type event-data)
           "branch.updated" (event-branch-updated-fits-trigger? event-data matching-trigger)
           "job.updated" (event-job-updated-fits-trigger? event-data matching-trigger)
@@ -86,22 +86,13 @@
 (defn- trigger-jobs [event-data]
   (let [tree-id (:tree_id event-data)]
     (->> (dotfile/get-dotfile tree-id)
-         (debug/identity-with-logging 'cider-ci.builder.jobs.trigger)
          :jobs
-         (debug/identity-with-logging 'cider-ci.builder.jobs.trigger)
          convert-to-array
-         (into [])(debug/identity-with-logging 'cider-ci.builder.jobs.trigger)
          (map #(assoc % :tree_id tree-id))
-         (into [])(debug/identity-with-logging 'cider-ci.builder.jobs.trigger)
-         (filter #(-> % :triggers))
-         (into [])(debug/identity-with-logging 'cider-ci.builder.jobs.trigger)
+         (filter #(-> % :start-on))
          (filter jobs.filter/dependencies-fullfiled?)
-         (into [])(debug/identity-with-logging 'cider-ci.builder.jobs.trigger)
          (filter-jobs-by-triggers event-data)
-         (into [])(debug/identity-with-logging 'cider-ci.builder.jobs.trigger)
-         ;(filter trigger-constraints-fullfilled?)
          (map jobs/create)
-         (debug/identity-with-logging 'cider-ci.builder.jobs.trigger)
          doall)))
 
 

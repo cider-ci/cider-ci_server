@@ -27,17 +27,18 @@
 
 ;### create job #########################################################
 
+(defn- log-item [x]
+  x)
+
+(defn get-job-by-key [params dotfile]
+  (get (:jobs dotfile) (keyword (:key params))))
+
 (defn try-to-add-specification-from-dotfile [params] 
   (try 
-    (->> (cider-ci.builder.dotfile/get-dotfile (:tree_id params))
-         (debug/identity-with-logging 'cider-ci.builder.jobs)
-         :jobs
-         (debug/identity-with-logging 'cider-ci.builder.jobs)
-         (into [])
-         (debug/identity-with-logging 'cider-ci.builder.jobs)
-         (some #(and (= (:name params) (:name %)) %)) 
-         (debug/identity-with-logging 'cider-ci.builder.jobs)
-         ((fn [js] (assoc params :job_specification js))))
+    (let [spec (->> (cider-ci.builder.dotfile/get-dotfile (:tree_id params))
+                    (get-job-by-key params))]
+      (logging/debug {:params params :job_specification spec})
+      (conj  {:job_specification spec} params))
     (catch clojure.lang.ExceptionInfo e
       (case (-> e ex-data :object :status)
         404 params
@@ -54,12 +55,9 @@
 
 (defn add-specification-from-dofile-if-not-present [params]
   (if (and (not (:job_specification_id params))
-           (not (:job_specification params))
-           (:name params)
-           (:tree_id params))
+           (not (:job_specification params)))
     (try-to-add-specification-from-dotfile params)
-    params)
-  )
+    params))
 
 
 (defn invoke-create-tasks-and-trials [params]
@@ -72,7 +70,7 @@
          :jobs
          (select-keys params 
                       [:tree_id, :job_specification_id, 
-                       :name, :description, :priority]))
+                       :name, :description, :priority, :key]))
        first
        (conj params)))
 
@@ -93,6 +91,7 @@
        convert-to-array
        (map #(assoc % :tree_id tree-id))
        (filter jobs.filter/dependencies-fullfiled?)
+       (map #(select-keys % [:name :key :tree_id :description]))
        ))
 
 

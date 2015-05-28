@@ -46,12 +46,18 @@
 
 ;### build tasks ##############################################################
 
+(defn- assert-scripts-is-a-map! [scripts]
+  (if (map? scripts)
+    scripts
+    (throw (IllegalStateException. (str ":scripts must a map " scripts)))))
+
 (defn build-scripts [task script-defaults]
   (->> task 
        :scripts 
-       (#(or % []))
-       map/convert-to-array  
-       (map #(util/deep-merge script-defaults %))))
+       (#(or % {}))
+       assert-scripts-is-a-map!
+       (map (fn [[k v]] [k (util/deep-merge script-defaults v)]))
+       (into {})))
   
 ;(build-scripts {:scripts [{:x 5}]} {:x 7 :y 9})
 ;(build-scripts {:scripts {:blah {:x 5}}} {:x 7 :y 9})
@@ -73,7 +79,7 @@
                                                 script-defaults))))
           (if-let [subcontexts (:subcontexts context)]
             (build-tasks-for-contexts-sequence 
-              subcontexts task-defaults script-defaults)
+               (convert-to-array subcontexts) task-defaults script-defaults)
             [])))
 
 (defn build-tasks-for-contexts-sequence

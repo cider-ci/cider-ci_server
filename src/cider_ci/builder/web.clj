@@ -70,19 +70,23 @@
 
 (defn available-jobs [request]
   (try 
-    {:status 200 
-     :headers {"content-type" "application/json;charset=utf-8"}
-     :body (json/write-str 
-             (jobs/available-jobs 
-               (-> request :route-params :tree_id)))}
+    (catcher/wrap-with-log-warn 
+      {:status 200 
+       :headers {"content-type" "application/json;charset=utf-8"}
+       :body (json/write-str 
+               (jobs/available-jobs 
+                 (-> request :route-params :tree_id)))})
     (catch clojure.lang.ExceptionInfo e
       (case (-> e ex-data :object :status)
         404 {:status 404}
         (throw e)))
     (catch org.yaml.snakeyaml.parser.ParserException e
       {:status 422
-       :body "Failed to parse the YAML file."}
-      )))
+       :body "Failed to parse the YAML file."})
+    (catch Exception e
+      {:status 500
+       :body (str "Server error.\n\n"
+                  (thrown/stringify e))})))
 
 
 (defn dotfile [request]
