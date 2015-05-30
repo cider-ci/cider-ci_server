@@ -130,7 +130,8 @@
                                              (hh/from [:trials :active_trials])
                                              (hh/merge-join [:tasks :active_tasks] [:= :active_tasks.id :active_trials.task_id])
                                              (hh/merge-where [:in :active_trials.state  ["executing","dispatching"]])
-                                             (hh/merge-where (hc/raw "active_tasks.exclusive_resources && tasks.exclusive_resources")))])
+                                             (hh/merge-where (hc/raw (str "active_tasks.exclusive_global_resources " 
+                                                                          "&& tasks.exclusive_global_resources"))))])
           (hh/merge-join :tasks [:= :tasks.id :trials.task_id])
           (hh/merge-join :jobs [:= :jobs.id :tasks.job_id])
           (hh/order-by [:jobs.priority :desc] 
