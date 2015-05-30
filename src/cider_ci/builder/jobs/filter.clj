@@ -67,7 +67,7 @@
                 [" EXISTS " 
                  (-> (hh/select 1)
                      (hh/from :jobs)
-                     (hh/merge-where [:= :jobs.key (:job-key dependency)])
+                     (hh/merge-where [:= :jobs.key (:job dependency)])
                      (hh/merge-where [:in :jobs.state (:states dependency)])
                      (hh/merge-where [:= :jobs.tree_id tree-id]))]))))
 
