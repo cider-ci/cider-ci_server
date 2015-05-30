@@ -13,6 +13,7 @@
     [clj-logging-config.log4j :as logging-config]
     [clojure.java.jdbc :as jdbc]
     [clojure.tools.logging :as logging]
+    [cider-ci.utils.map :as map :refer [deep-merge]]
     ))
 
 
@@ -43,24 +44,32 @@
     (assert task-id)
     (task/evaluate-and-create-trials {:id task-id})))
 
+(defn compute-update-params [params id]
+  (conj {}
+        (select-keys params 
+                     [:error :finished_at :result
+                      :started_at :state ])
+        (when-let [params-scripts (:scripts params)]
+          (let [trial (get-trial id)]
+            {:scripts (deep-merge (:scripts trial)
+                                  params-scripts)}))))
+
 (defn update [params]
   (catcher/wrap-with-suppress-and-log-warn
     (let [id (:id params)]
       (try 
         (assert id)
-        (let [update-params (select-keys params
-                                         [:error :finished_at :result
-                                          :scripts :started_at :state ])]
+        (let [update-params (compute-update-params params id)]
           (jdbc/update! (rdbms/get-ds)
                         :trials update-params
-                        ["id = ?" id])
-          (dispatch-update (select-keys params [:id :task_id])))
+                        ["id = ?" id]))
         (catch Exception e
           (jdbc/update! (rdbms/get-ds)
                         :trials 
                         {:state "failed" 
                          :error (thrown/stringify e)}
-                        ["id = ?" id])
+                        ["id = ?" id]))
+        (finally 
           (dispatch-update (select-keys params [:id :task_id])))))))
 
 
