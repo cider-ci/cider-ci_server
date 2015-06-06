@@ -78,7 +78,7 @@
                  (-> request :route-params :tree_id)))})
     (catch clojure.lang.ExceptionInfo e
       (case (-> e ex-data :object :status)
-        404 {:status 404}
+        404 {:status 404 :body (-> e ex-data str)}
         (throw e)))
     (catch org.yaml.snakeyaml.parser.ParserException e
       {:status 422

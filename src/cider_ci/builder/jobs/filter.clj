@@ -84,7 +84,7 @@
         tree-id (:tree_id properties)]
     (logging/debug {:properties properties :initial-sql (hc/format @query-atom)})
     (add-self-name-filter-to-query query-atom (:name properties) tree-id)
-    (doseq [dependency (-> properties :dependencies convert-to-array)]
+    (doseq [dependency (-> properties :depends-on convert-to-array)]
       (add-depenency-to-query query-atom dependency tree-id))
     (logging/debug {:final-sql (hc/format @query-atom)})
     (->> (-> @query-atom

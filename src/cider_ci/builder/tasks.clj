@@ -123,7 +123,9 @@
     (let [spec (-> (jdbc/query (rdbms/get-ds) 
                                ["SELECT * FROM job_specifications WHERE id = ?" 
                                 (:job_specification_id job)])
-                   first :data)]
+                   first 
+                   :data
+                   :context)]
       (build-tasks job spec))))
 
 (defn- assert-tasks [job]
