@@ -48,11 +48,16 @@
 
 (defn get-path-content [request]
   (logging/info request)
-  (let [id (-> request :route-params :id)
-        path (-> request :route-params :*)]
-    (when-let [repository (sql.repository/resolve id)]
-      (when-let [content  (git.repositories/get-path-contents repository id path)]
-        {:body content}))))
+  (try 
+    (let [id (-> request :route-params :id)
+          path (-> request :route-params :*)]
+      (when-let [repository (sql.repository/resolve id)]
+        (when-let [content  (git.repositories/get-path-contents repository id path)]
+          {:body content})))
+
+    (catch clojure.lang.ExceptionInfo e
+      (cond (re-find #"does not exist in"  (str e)) {:status 404 :body (-> e ex-data :err)}
+            :else (throw e)))))
 
 
 (defn ls-tree [request]
@@ -96,6 +101,7 @@
              (get-git-file request)) 
 
     ))
+
 
 (defn build-main-handler [context]
   ( -> (cpj.handler/api (build-routes context))

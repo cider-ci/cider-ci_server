@@ -118,16 +118,17 @@
         ["git" "clone" "--mirror" (:origin_uri repository) dir]
         {:watchdog (* 5 60 1000)}))))
 
+(defn git-fetch [repository path]
+  (system/exec-with-success-or-throw 
+    ["git" "fetch" (:origin_uri repository) "--force" "--tags" "--prune"  "+*:*"]
+    {:watchdog (* 10 60 1000), :dir path, :env {"TERM" "VT-100"}}))
+
 (defn git-fetch-or-initialize [repository]
   (try (catcher/wrap-with-log-error
-         (let [repository-path (git.repositories/path repository)] 
-           (if (fs/exists? repository-path)
-             (git-initialize repository)
-             (system/exec-with-success-or-throw 
-               ["git" "fetch" (:origin_uri repository) "--force" "--tags" "--prune"  "+*:*"]
-               {:watchdog (* 10 60 1000), 
-                :dir repository-path, 
-                :env {"TERM" "VT-100"}})))
+         (let [path (git.repositories/path repository)] 
+           (if (fs/exists? path)
+             (git-fetch repository path)
+             (git-initialize repository)))
          (catch Exception _
            (git-initialize repository)))))
 

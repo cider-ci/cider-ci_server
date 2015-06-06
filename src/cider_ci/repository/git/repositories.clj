@@ -41,13 +41,14 @@
   
 
 (defn get-path-contents 
-  "Returns the content of the path or nil if not applicable."
   [repository id file-path]
-  (let [git-dir-path (path repository)]
-    (:out (catcher/wrap-with-log-warn
-            (system/exec-with-success-or-throw  
+  (let [git-dir-path (path repository)
+        res (system/exec
               ["git" "show" (str id ":" file-path)]
-              {:dir git-dir-path})))))
+              {:dir git-dir-path})]
+    (if (= (:exit res) 0) (:out res)
+      (throw (ex-info (:err res)
+                      res )))))
 
 
 (defn ls-tree [repository id include-regex exclude-regex]

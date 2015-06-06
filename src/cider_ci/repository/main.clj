@@ -17,7 +17,7 @@
 
 (defn -main [& args]
   (catcher/wrap-with-log-error
-    (drtom.logbug.thrown/reset-ns-filter-regex #".*cider-ci.*")
+    (drtom.logbug.thrown/reset-ns-filter-regex #".*cider.ci.*")
     (config/initialize)
     (rdbms/initialize (get-db-spec :dispatcher))
     (nrepl/initialize (-> (get-config) :services :repository :nrepl))
