@@ -149,23 +149,25 @@
                   ["SELECT count(*) FROM trial_issues WHERE trial_id = ? " (:id trial)] )
       first :count))
 
+(defn post-trial [url basic-auth-pw data]
+  (catcher/wrap-with-log-warn
+    (http-client/post url 
+                      {:content-type :json
+                       :body (json/write-str data)
+                       :insecure? true
+                       :basic-auth ["dispatcher" basic-auth-pw ]})))
+
 (defn dispatch [trial executor]
   (try
     (trial-utils/wrap-trial-with-issue-and-throw-again 
       trial  "Error during dispatch" 
       (let [data (build-dispatch-data trial executor)
-            protocol (if (:ssl executor) "https" "http")
-            url (str (:base_url executor)  "/execute")]
-
+            url (str (:base_url executor)  "/execute")
+            basic-auth-pw (executor-utils/http-basic-password executor)]
         (jdbc/update! (rdbms/get-ds) :trials 
                       {:state "dispatching" :executor_id (:id executor)} 
                       ["id = ?" (:id trial)])
-        (http-client/post url 
-                          {:content-type :json
-                           :body (json/write-str data)
-                           :insecure? true
-                           :basic-auth ["dispatcher" 
-                                        (executor-utils/http-basic-password executor)]})))
+        (post-trial url basic-auth-pw data)))
     (catch Exception e
       (let  [row (if (<= 3 (issues-count trial))
                    {:state "failed" :error "Too many issues, giving up to dispatch this trial " 

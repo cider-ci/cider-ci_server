@@ -31,7 +31,7 @@
      (catch Exception e#
        (let [row-data#  {:trial_id (:id ~trial) 
                          :title ~title
-                         :description (str (.getMessage e#) "\n\n"  (thrown/stringify e# "\\n"))}]
+                         :description (str (.getMessage e#) "\n\n"  (thrown/stringify e#))}]
          (logging/warn ~trial row-data# e#)
          (jdbc/insert! (rdbms/get-ds) "trial_issues" row-data#))
        (throw e#))))
@@ -99,8 +99,9 @@
 
 
 ;#### debug ###################################################################
-;(debug/debug-ns *ns*)
 ;(logging-config/set-logger! :level :debug)
 ;(logging-config/set-logger! :level :info)
+;(debug/debug-ns *ns*)
+
 
 
