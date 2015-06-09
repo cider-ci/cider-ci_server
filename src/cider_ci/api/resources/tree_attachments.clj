@@ -57,7 +57,7 @@
 ;### routes #####################################################################
 (def routes 
   (cpj/routes
-    (cpj/GET "/job/:job_id/tree-attachments/" request (get-attachments request))
+    (cpj/GET "/jobs/:job_id/tree-attachments/" request (get-attachments request))
     ))
 
 

@@ -59,7 +59,7 @@
 ;### routes #####################################################################
 (def routes 
   (cpj/routes
-    (cpj/GET "/task/:task_id/trials/" request (get-trials request))
+    (cpj/GET "/tasks/:task_id/trials/" request (get-trials request))
     ))
 
 

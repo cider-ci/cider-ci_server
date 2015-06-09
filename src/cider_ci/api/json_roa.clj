@@ -53,17 +53,17 @@
   (cpj/routes
     (cpj/GET "/" request (json-roa.root/build request))
     (cpj/GET "/jobs/" request (json-roa.jobs/build request json-response))
-    (cpj/GET "/job/:id" request (json-roa.job/build request json-response))
-    (cpj/GET "/job/:id/tasks/" request (json-roa.tasks/build request json-response))
-    (cpj/GET "/task/:id" request (json-roa.task/build request json-response))
-    (cpj/GET "/task/:id/trials/" request (json-roa.trials/build request json-response))
+    (cpj/GET "/jobs/:id" request (json-roa.job/build request json-response))
+    (cpj/GET "/jobs/:id/tasks/" request (json-roa.tasks/build request json-response))
+    (cpj/GET "/tasks/:id" request (json-roa.task/build request json-response))
+    (cpj/GET "/tasks/:id/trials/" request (json-roa.trials/build request json-response))
     (cpj/GET "/trial/:id" request (json-roa.trial/build request json-response))
 
     (cpj/ANY "/trial/:trial_id/trial-attachments/" request (json-roa.trial-attachments/build request json-response))
-    (cpj/ANY "/trial-attachment/:id" request (json-roa.trial-attachment/build request json-response))
+    (cpj/ANY "/trial-attachments/:id" request (json-roa.trial-attachment/build request json-response))
 
-    (cpj/ANY "/job/:id/tree-attachments/" request (json-roa.tree-attachments/build request json-response))
-    (cpj/ANY "/tree-attachment/:id" request (json-roa.tree-attachment/build request json-response))
+    (cpj/ANY "/jobs/:id/tree-attachments/" request (json-roa.tree-attachments/build request json-response))
+    (cpj/ANY "/tree-attachments/:id" request (json-roa.tree-attachment/build request json-response))
 
 
     ))

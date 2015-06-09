@@ -34,7 +34,7 @@
 ;### routes #####################################################################
 (def routes 
   (cpj/routes
-    (cpj/GET "/trial-attachment/:id" request (get-attachment request))
+    (cpj/GET "/trial-attachments/:id" request (get-attachment request))
     ))
 
 

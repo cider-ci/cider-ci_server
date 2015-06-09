@@ -67,19 +67,20 @@
     (cpj/GET "/" request (resources.root/get request))
 
     (cpj/ANY "/jobs/" [] jobs/routes)
-    (cpj/ANY "/job/*" [] job/routes)
+    (cpj/ANY "/jobs/:id/tasks/" [] tasks/routes)
+    (cpj/ANY "/jobs/:id" [] job/routes)
+    (cpj/ANY "/jobs/:id/*" [] job/routes)
 
-    (cpj/ANY "/job/:id/tasks/" [] tasks/routes)
-    (cpj/ANY "/task/*" [] task/routes)
+    (cpj/ANY "/tasks/:id" [] task/routes)
 
-    (cpj/ANY "/task/:id/trials/" [] trials/routes)
+    (cpj/ANY "/tasks/:id/trials/" [] trials/routes)
     (cpj/ANY "/trial/*" [] trial/routes)
 
     (cpj/ANY "/trial/:trial_id/trial-attachments/" [] trial-attachments/routes)
-    (cpj/ANY "/trial-attachment/*" [] trial-attachment/routes)
+    (cpj/ANY "/trial-attachments/*" [] trial-attachment/routes)
 
-    (cpj/ANY "/job/:id/tree-attachments/" [] tree-attachments/routes)
-    (cpj/ANY "/tree-attachment/*" [] tree-attachment/routes)
+    (cpj/ANY "/jobs/:id/tree-attachments/*" _ tree-attachments/routes)
+    (cpj/ANY "/tree-attachments/*" [] tree-attachment/routes)
 
     (cpj/ANY "*" request {:status 404 :body {:message "404 NOT FOUND"}})
     ))

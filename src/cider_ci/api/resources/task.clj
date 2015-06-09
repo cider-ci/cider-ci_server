@@ -35,7 +35,7 @@
 
 (def routes 
   (cpj/routes
-    (cpj/GET "/task/:id" request (get-task request))
+    (cpj/GET "/tasks/:id" request (get-task request))
     ))
 
 

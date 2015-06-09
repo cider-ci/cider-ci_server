@@ -58,8 +58,8 @@
 
 (def routes 
   (cpj/routes
-    (cpj/GET "/job/:id" request (get-job request))
-    (cpj/GET "/job/:id/stats" request (get-job-stats request))))
+    (cpj/GET "/jobs/:id" request (get-job request))
+    (cpj/GET "/jobs/:id/stats" request (get-job-stats request))))
 
 
 ;### init #####################################################################
