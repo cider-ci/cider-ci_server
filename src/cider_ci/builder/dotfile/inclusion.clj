@@ -137,7 +137,9 @@
     (cond 
       (map? spec) (->> spec
                        (include-map git-ref-id)
-                       (task-generation/generate-tasks git-ref-id))
+                       (#(if (:_cider-ci_generate-tasks %)
+                           (task-generation/generate-tasks git-ref-id %)
+                           %)))
       (coll? spec) (->> spec
                         (map #(if (coll? %) 
                                 (include git-ref-id %)

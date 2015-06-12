@@ -8,6 +8,7 @@
     [cider-ci.auth.http-basic :as http-basic]
     [cider-ci.builder.dotfile]
     [cider-ci.builder.jobs :as jobs]
+    [cider-ci.builder.util :as util]
     [cider-ci.utils.config :refer [get-config]]
     [cider-ci.utils.http-server :as http-server]
     [cider-ci.utils.messaging :as messaging]
@@ -73,7 +74,7 @@
     (catcher/wrap-with-log-warn 
       {:status 200 
        :headers {"content-type" "application/json;charset=utf-8"}
-       :body (json/write-str 
+       :body (util/json-write-str 
                (jobs/available-jobs 
                  (-> request :route-params :tree_id)))})
     (catch clojure.lang.ExceptionInfo e
@@ -96,7 +97,7 @@
       (logging/debug {:dotfile-content dotfile-content})
       {:status 200
        :headers {"content-type" "application/json;charset=utf-8"}
-       :body (json/write-str dotfile-content)})
+       :body (util/json-write-str dotfile-content)})
     (catch clojure.lang.ExceptionInfo e
       (logging/warn e)
       (logging/warn (-> e .getData :object ))

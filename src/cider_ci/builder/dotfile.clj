@@ -12,12 +12,10 @@
     [drtom.logbug.debug :as debug]
     ))
 
-
 (defn- get-dotfile_ [tree-id]
   (->> 
     (repository/get-path-content tree-id ".cider-ci.yml")
-    (inclusion/include tree-id)
-    ))
+    (inclusion/include tree-id)))
 
 (def get-dotfile (memo/lru #(get-dotfile_ %)
             :lru/threshold 500))

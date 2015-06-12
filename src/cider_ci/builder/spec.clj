@@ -25,15 +25,16 @@
 (defn get-or-create-job-specification [data]
   (let [id (util/id-hash data)]
     (or (first (jdbc/query (rdbms/get-ds) ["SELECT * FROM job_specifications WHERE id = ?" id]))
-        (first(jdbc/insert! (rdbms/get-ds) :job_specifications {:id id :data data})))))
+        (first (jdbc/insert! (rdbms/get-ds) :job_specifications {:id id 
+                                                                 :data (util/stringify-keys data)})))))
 
 (defn get-or-create-task-spec [data]
   (let [id (util/id-hash data)]
     (or (first (jdbc/query (rdbms/get-ds) ["SELECT * FROM task_specifications WHERE id = ?" id]))
-        (first(jdbc/insert! (rdbms/get-ds) :task_specifications {:id id :data data})))))
+        (first(jdbc/insert! (rdbms/get-ds) :task_specifications {:id id 
+                                                                 :data (util/stringify-keys data)})))))
 
 ;### Debug ####################################################################
 ;(logging-config/set-logger! :level :debug)
 ;(logging-config/set-logger! :level :info)
 ;(debug/debug-ns *ns*)
-

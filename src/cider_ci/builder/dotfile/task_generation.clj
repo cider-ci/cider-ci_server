@@ -7,11 +7,13 @@
   (:require 
     [cider-ci.builder.repository :as repository]
     [cider-ci.builder.util :as util :refer [deep-merge]]
-    [drtom.logbug.debug :as debug]
     [cider-ci.utils.rdbms :as rdbms]
-    [drtom.logbug.catcher :as catcher]
     [clojure.tools.logging :as logging]
+    [clojure.walk :refer [keywordize-keys]]
+    [drtom.logbug.catcher :as catcher]
+    [drtom.logbug.debug :as debug]
     ))
+
 
 
 ;##############################################################################
@@ -25,7 +27,8 @@
     (let [file-list (repository/ls-tree git-ref-id generate-spec)
           generated-tasks (->> file-list
                                (map file-name-to-task) 
-                               (into {}))
+                               (into {})
+                               clojure.walk/keywordize-keys)
           tasks (if-let [existing-tasks (:tasks context)]
                   (cond (map? existing-tasks) (deep-merge 
                                                 generated-tasks existing-tasks)
