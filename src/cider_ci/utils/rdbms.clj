@@ -59,16 +59,7 @@
       false)))
 
 
-(defn- create-c3p0-datasources [db-conf]
-  (logging/debug create-c3p0-datasources [db-conf])
-  (reset! ds 
-          {:datasource 
-           (doto (ComboPooledDataSource.)
-             (.setJdbcUrl (str "jdbc:" (:subprotocol db-conf) ":" (:subname db-conf)))
-             (#(when-let [user (:user db-conf)] (.setUser % user)))
-             (#(when-let [password (:password db-conf)] (.setPassword % password)))
-             (#(when-let [max-pool-size (:max_pool_size db-conf)](.setMaxPoolSize % max-pool-size))))})
-  )
+
 
 
 (defn amend-db-conf [db-conf]
@@ -82,17 +73,30 @@
            :password password})))
 
 (defn reset []
+  (logging/info "resetting c3p0 datasource")
   (reset! db-spec nil)
   (when @ds (.hardReset (:datasource @ds)))
   (reset! ds nil)
   (reset! tables-metadata nil))
+
+(defn- create-c3p0-datasources [db-conf]
+  (logging/info create-c3p0-datasources [db-conf])
+  (reset! ds 
+          {:datasource 
+           (doto (ComboPooledDataSource.)
+             (.setJdbcUrl (str "jdbc:" (:subprotocol db-conf) ":" (:subname db-conf)))
+             (#(when-let [user (:user db-conf)] (.setUser % user)))
+             (#(when-let [password (:password db-conf)] (.setPassword % password)))
+             (#(when-let [max-pool-size (:max_pool_size db-conf)](.setMaxPoolSize % max-pool-size))))}))
 
 (defn initialize [_db-conf]
   (let [db-conf (amend-db-conf _db-conf)]
     (logging/info initialize [db-conf])
     (reset! db-spec db-conf)
     (create-c3p0-datasources db-conf)
-    (set-tables-metadata db-conf)))
-
+    (set-tables-metadata db-conf))
+  (.addShutdownHook (Runtime/getRuntime)
+                    (Thread. (fn [] 
+                               (reset)))))
 
 ;(initialize {:subprotocol "sqlite" :subname ":memory:"})

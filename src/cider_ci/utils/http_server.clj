@@ -28,5 +28,7 @@
                           (select-keys conf [:port :host]))]
     (stop)
     (logging/info "starting server " server-conf)
-    (reset! _server (jetty/run-jetty main-handler server-conf))))
+    (reset! _server (jetty/run-jetty main-handler server-conf)))
+  (.addShutdownHook (Runtime/getRuntime)
+                    (Thread. (fn [] (stop)))))
 

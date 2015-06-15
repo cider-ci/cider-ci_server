@@ -33,7 +33,12 @@
                            (reset! done# true)
                            (future-cancel runner#)
                            ;@runner#
-                           (logging/info "daemon " ~daemon-name "stopped"))))))))
+                           (logging/info "daemon " ~daemon-name "stopped")))
+           
+           (.addShutdownHook (Runtime/getRuntime)
+                             (Thread. (fn [] (~stop-fn))))
+           
+           )))))
 
 
 ;(macroexpand-1 '(define "Blah" start stop 10 (logging/info "looping ...")))

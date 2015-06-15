@@ -36,5 +36,7 @@
       (let [args (flatten (seq (select-keys @conf [:port :bind])))]
         (do 
           (logging/info "starting server " (with-out-str (clojure.pprint/pprint args)))
-          (def server (apply nrepl-server/start-server args )))))))
+          (def server (apply nrepl-server/start-server args )))
+        (.addShutdownHook (Runtime/getRuntime)
+                          (Thread. (fn [] (stop-server))))))))
 
