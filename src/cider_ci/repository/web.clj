@@ -105,7 +105,9 @@
 
 (defn build-main-handler [context]
   ( -> (cpj.handler/api (build-routes context))
-       (wrap-handler-with-logging 'cider-ci.repository.web)
+       (wrap-handler-with-logging 'cider-ci.dispatcher.web)
+       routing/wrap-shutdown
+       (wrap-handler-with-logging 'cider-ci.dispatcher.web)
        (ring.middleware.params/wrap-params) 
        (wrap-handler-with-logging 'cider-ci.repository.web)
        (ring.middleware.json/wrap-json-params)
