@@ -74,6 +74,9 @@
 
 (defn build-main-handler [context]
   ( -> (resources/build-routes-handler)
+       routing/wrap-shutdown
+       (wrap-handler-with-logging 'cider-ci.api.web)
+       ring.middleware.json/wrap-json-params
        (wrap-handler-with-logging 'cider-ci.api.web)
        ring.middleware.json/wrap-json-params
        (wrap-handler-with-logging 'cider-ci.api.web)

@@ -10,7 +10,7 @@
   :dependencies [
                  [cheshire "5.4.0"]
                  [cider-ci/clj-auth "3.0.0-rc.1"]
-                 [cider-ci/clj-utils "3.0.0-rc.1"]
+                 [cider-ci/clj-utils "3.0.0-rc.4"]
                  [drtom/honeysql "1.1.0"]
                  [json-roa/clj-utils "1.0.0"]
                  [org.clojure/tools.nrepl "0.2.10"]
