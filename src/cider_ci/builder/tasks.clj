@@ -8,7 +8,7 @@
     [cider-ci.builder.task :as task]
     [cider-ci.builder.util :as util]
     [cider-ci.utils.config-loader :as config-loader]
-    [cider-ci.utils.map :as map]
+    [cider-ci.utils.map :as map :refer [deep-merge]]
     [cider-ci.utils.map :refer [convert-to-array]]
     [cider-ci.utils.messaging :as messaging]
     [cider-ci.utils.rdbms :as rdbms]
@@ -51,19 +51,35 @@
     scripts
     (throw (IllegalStateException. (str ":scripts must a map " scripts)))))
 
+(def ^:private script-base-defaults
+  {:timeout (* 15 60)
+   })
+
+(defn- coerce-script-value [value]
+  (cond
+    (map? value) (deep-merge script-base-defaults value)
+    (string? value) (deep-merge  script-base-defaults {:body value})
+    :else (throw (IllegalStateException. 
+                   (str "don't know how to handle type " (type value))))))
+
+(defn- build-base-script [[script-key value]]
+  [script-key (coerce-script-value value)])
+
+;(build-base-script (into [] {:x "test a = a"}))
+
 (defn build-scripts [task script-defaults]
   (->> task 
        :scripts 
        (#(or % {}))
-       assert-scripts-is-a-map!
-       (map (fn [[k v]] [k (util/deep-merge script-defaults v)]))
+       (map build-base-script)
+       (map (fn [[k v]] [k (deep-merge script-defaults v)]))
        (into {})))
   
 ;(build-scripts {:scripts [{:x 5}]} {:x 7 :y 9})
 ;(build-scripts {:scripts {:blah {:x 5}}} {:x 7 :y 9})
 
 (defn build-task [task-spec task-defaults script-defaults]
-  (let [merged-task (util/deep-merge task-defaults task-spec)]
+  (let [merged-task (deep-merge task-defaults task-spec)]
     (assoc merged-task :scripts (build-scripts merged-task script-defaults))))
 
 ; build-tasks-for-single-context and build-tasks-for-contexts-sequence 
@@ -89,10 +105,10 @@
          (map 
            (fn [context]
              (logging/debug {:context context})
-             (let [task-defaults (util/deep-merge inherited-task-defaults
+             (let [task-defaults (deep-merge inherited-task-defaults
                                                   (or (:task-defaults context) 
                                                       {}))
-                   script-defaults (util/deep-merge inherited-script-defaults
+                   script-defaults (deep-merge inherited-script-defaults
                                                     (or (:script-defaults context) 
                                                         {}))]
                (build-tasks-for-single-context context 
