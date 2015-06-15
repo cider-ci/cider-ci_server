@@ -53,7 +53,6 @@
     (cpj/GET "/status" request #'status-handler)
     (cpj/ANY "*" request default-handler)))
 
-
 ;##### jobs ############################################################# 
 
 (defn create-job [request]
@@ -126,6 +125,9 @@
 
 (defn build-main-handler [context]
   ( -> top-handler
+       (wrap-handler-with-logging 'cider-ci.builder.web)
+       routing/wrap-shutdown
+       (wrap-handler-with-logging 'cider-ci.builder.web)
        wrap-status-dispatch
        (wrap-handler-with-logging 'cider-ci.builder.web)
        wrap-jobs
