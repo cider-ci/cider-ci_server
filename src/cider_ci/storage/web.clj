@@ -114,21 +114,20 @@
      :body "The store for this path could not be found!"}))
 
 (defn build-routes []
-  (cpj/routes 
-    (cpj/GET "*" request
-             (get-file request)) 
-    (cpj/PUT "*" request
-             (put-file request)) 
-    (cpj/DELETE "*" request
-                (delete request))
-    ))
+  (-> (cpj/routes 
+        (cpj/GET "*" request
+                 (get-file request)) 
+        (cpj/PUT "*" request
+                 (put-file request)) 
+        (cpj/DELETE "*" request
+                    (delete request)))
+      routing/wrap-shutdown ))
 
 
 ;##### status dispatch ######################################################## 
 
 (defn status-handler [request]
-  (let [stati {:rdbms (rdbms/check-connection)
-               }]
+  (let [stati {:rdbms (rdbms/check-connection)}]
     (if (every? identity (vals stati))
       {:status 200
        :body (json/write-str stati)
@@ -188,7 +187,6 @@
   (let [http-conf (-> @conf :services :storage :http)
         context (str (:context http-conf) (:sub_context http-conf))]
     (http-server/start http-conf (build-main-handler context))))
-
 
 
 ;### Debug ####################################################################
