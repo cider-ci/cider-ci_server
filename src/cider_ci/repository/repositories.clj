@@ -37,8 +37,9 @@
 
 ;### repositories processors ##################################################
 (defonce repository-processors-atom (atom {}))
+
 (defn repository-agent-error-handler [_agent ex]
-  (logging/warn ["Agent error" (thrown/stringify _agent ex)]))
+  (logging/warn ["Agent error" _agent (thrown/stringify ex)]))
 
 (defn get-or-create-repository-processor 
   "Creates a repository processor (agent) given a (repository) hash with 
@@ -74,16 +75,17 @@
     branches))
 
 (defn update-or-create-branches [tx repository]
-  (let [repository-path (git.repositories/path repository)
-        git-branches (get-git-branches repository-path)
-        canonic-id (git.repositories/canonic-id repository)]
-    (logging/debug update-or-create-branches {:repository-path repository-path
-                                              :git-branches git-branches
-                                              :canonic-id canonic-id})
-    (sql.branches/delete-removed tx git-branches canonic-id)
-    (let [created (branches/create-new tx git-branches canonic-id repository-path)
-          updated (branches/update-outdated tx git-branches canonic-id repository-path)]
-      (concat created updated)))) 
+  (catcher/wrap-with-log-error
+    (let [repository-path (git.repositories/path repository)
+          git-branches (get-git-branches repository-path)
+          canonic-id (git.repositories/canonic-id repository)]
+      (logging/debug update-or-create-branches {:repository-path repository-path
+                                                :git-branches git-branches
+                                                :canonic-id canonic-id})
+      (sql.branches/delete-removed tx git-branches canonic-id)
+      (let [created (branches/create-new tx git-branches canonic-id repository-path)
+            updated (branches/update-outdated tx git-branches canonic-id repository-path)]
+        (concat created updated)))))
 
 
 ;### GIT Stuff ################################################################
@@ -124,13 +126,13 @@
     {:watchdog (* 10 60 1000), :dir path, :env {"TERM" "VT-100"}}))
 
 (defn git-fetch-or-initialize [repository]
-  (try (catcher/wrap-with-log-error
+  (try (catcher/wrap-with-log-warn
          (let [path (git.repositories/path repository)] 
            (if (fs/exists? path)
              (git-fetch repository path)
-             (git-initialize repository)))
-         (catch Exception _
-           (git-initialize repository)))))
+             (git-initialize repository))))
+       (catch Exception _
+         (git-initialize repository))))
 
 
 ;### Submit actions through agent #############################################
