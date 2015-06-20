@@ -3,7 +3,7 @@
 ; See the "LICENSE.txt" file provided with this software.
 
 (ns cider-ci.repository.web
-  (:require 
+  (:require
     [cider-ci.auth.core :as auth]
     [cider-ci.auth.core]
     [cider-ci.auth.http-basic :as http-basic]
@@ -22,6 +22,7 @@
     [compojure.handler :as cpj.handler]
     [drtom.logbug.debug :as debug]
     [drtom.logbug.ring :refer [wrap-handler-with-logging]]
+    [drtom.logbug.thrown :as thrown]
     [ring.adapter.jetty :as jetty]
     [ring.middleware.json]
     [ring.middleware.params]
@@ -35,29 +36,34 @@
   (logging/debug get-git-file [request])
   (let [repository-id (:id (:route-params request))
         relative-web-path (:* (:route-params request))
-        relative-file-path (str (-> @conf :services :repository :repositories :path) "/" repository-id "/" relative-web-path) 
+        relative-file-path (str (-> @conf :services :repository :repositories :path) "/" repository-id "/" relative-web-path)
         file (clojure.java.io/file relative-file-path)
         abs-path (.getAbsolutePath file)]
-    (logging/debug {:repositories-id repository-id 
-                    :relative-file-path relative-file-path 
+    (logging/debug {:repositories-id repository-id
+                    :relative-file-path relative-file-path
                     :abs-path abs-path
                     :file-exists? (.exists file)})
     (if (.exists file)
       (ring.util.response/file-response relative-file-path nil)
       {:status 404})))
 
+(defn respond-with-500 [request ex]
+  (logging/warn "RESPONDING WITH 500" {:exception (thrown/stringify ex) :request request})
+  {:status 500 :body (thrown/stringify ex)})
+
 (defn get-path-content [request]
   (logging/info request)
-  (try 
+  (try
     (let [id (-> request :route-params :id)
           path (-> request :route-params :*)]
       (when-let [repository (sql.repository/resolve id)]
         (when-let [content  (git.repositories/get-path-contents repository id path)]
           {:body content})))
-
     (catch clojure.lang.ExceptionInfo e
       (cond (re-find #"does not exist in"  (str e)) {:status 404 :body (-> e ex-data :err)}
-            :else (throw e)))))
+            :else (respond-with-500 request e)))
+    (catch Exception e
+      (respond-with-500 request e))))
 
 
 (defn ls-tree [request]
@@ -70,7 +76,7 @@
        :body (json/write-str (git.repositories/ls-tree repository id include-regex exclude-regex))}
       )))
 
-;##### status dispatch ######################################################## 
+;##### status dispatch ########################################################
 
 (defn status-handler [request]
   (let [stati {:rdbms (rdbms/check-connection)
@@ -90,15 +96,15 @@
     (cpj/ANY "*" request default-handler)))
 
 
-;##### routes ################################################################# 
+;##### routes #################################################################
 
 (defn build-routes [context]
-  (cpj/routes 
-    (cpj/GET "/path-content/:id/*" request 
+  (cpj/routes
+    (cpj/GET "/path-content/:id/*" request
              (get-path-content request))
     (cpj/GET "/ls-tree/:id/" _ ls-tree)
     (cpj/GET "/:id/git/*" request
-             (get-git-file request)) 
+             (get-git-file request))
 
     ))
 
@@ -108,7 +114,7 @@
        (wrap-handler-with-logging 'cider-ci.dispatcher.web)
        routing/wrap-shutdown
        (wrap-handler-with-logging 'cider-ci.dispatcher.web)
-       (ring.middleware.params/wrap-params) 
+       (ring.middleware.params/wrap-params)
        (wrap-handler-with-logging 'cider-ci.repository.web)
        (ring.middleware.json/wrap-json-params)
        (wrap-handler-with-logging 'cider-ci.repository.web)

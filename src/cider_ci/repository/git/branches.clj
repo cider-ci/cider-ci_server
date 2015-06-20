@@ -3,7 +3,7 @@
 ; See the "LICENSE.txt" file provided with this software.
 
 (ns cider-ci.repository.git.branches
-  (:require 
+  (:require
     [drtom.logbug.thrown :as thrown]
     [cider-ci.utils.system :as system]
     [clojure.tools.logging :as logging]
@@ -14,14 +14,14 @@
   the properities :branch_name and :current_commit_id"
   [repository-path]
   (let [res (system/exec
-              ["git" "branch" "--no-abbrev" "--no-color" "-v"] 
+              ["git" "branch" "--no-abbrev" "--no-color" "-v"]
               {:watchdog (* 1 60 1000), :dir repository-path, :env {"TERM" "VT-100"}})
         out (:out res)
         lines (clojure.string/split out #"\n")
         branches (map (fn [line]
-                        (let [[_ branch-name current-commit-id] 
+                        (let [[_ branch-name current-commit-id]
                               (re-find #"^?\s+(\S+)\s+(\S+)\s+(.*)$" line)]
-                          {:name branch-name 
+                          {:name branch-name
                            :current_commit_id current-commit-id}))
                       lines)]
     branches))

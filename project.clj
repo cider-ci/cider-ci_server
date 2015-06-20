@@ -3,26 +3,26 @@
 ; See the "LICENSE.txt" file provided with this software.
 
 
-(defproject cider-ci_repository "2.2.0"
+(defproject cider-ci_repository "3.0.0"
   :description "Cider-CI Repository"
   :license {:name "GNU AFFERO GENERAL PUBLIC LICENSE Version 3"
             :url "http://www.gnu.org/licenses/agpl-3.0.html"}
   :dependencies [
-                 [cider-ci/clj-auth "3.0.0-rc.1"]
-                 [cider-ci/clj-utils "3.0.0-rc.4"]
+                 [cider-ci/clj-auth "3.0.0"]
+                 [cider-ci/clj-utils "3.0.0"]
                  [me.raynes/fs "1.4.6"]
                  [org.clojure/tools.nrepl "0.2.10"]
                  ]
   :source-paths ["src"]
-  :profiles {:dev 
+  :profiles {:dev
              {:dependencies [[midje "1.6.3"]]
               :plugins [[lein-midje "3.1.1"]]
               :repositories [["tmp" {:url "http://maven-repo-tmp.drtom.ch" :snapshots false}]]
               :resource-paths ["../config" "./config" "./resources"]}
              :production
-             {:resource-paths ["/etc/cider-ci" "../config" "./config" "./resources"]}} 
-  :aot [cider-ci.repository.main] 
-  :main cider-ci.repository.main 
+             {:resource-paths ["/etc/cider-ci" "../config" "./config" "./resources"]}}
+  :aot [cider-ci.repository.main]
+  :main cider-ci.repository.main
   :jvm-opts ["-Xmx256m"]
   :repl-options {:timeout  120000}
   )

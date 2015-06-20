@@ -3,10 +3,10 @@
 ; See the "LICENSE.txt" file provided with this software.
 
 (ns cider-ci.repository.repositories
-  (:require 
-    [cider-ci.repository.branches :as branches] 
-    [cider-ci.repository.git.repositories :as git.repositories] 
-    [cider-ci.repository.sql.branches :as sql.branches] 
+  (:require
+    [cider-ci.repository.branches :as branches]
+    [cider-ci.repository.git.repositories :as git.repositories]
+    [cider-ci.repository.sql.branches :as sql.branches]
     [cider-ci.utils.daemon :as daemon]
     [drtom.logbug.debug :as debug]
     [drtom.logbug.thrown :as thrown]
@@ -26,8 +26,8 @@
 
 ;### helpers ##################################################################
 (defn directory-exists? [path]
-  (let [file (clojure.java.io/file path)] 
-    (and (.exists file) 
+  (let [file (clojure.java.io/file path)]
+    (and (.exists file)
          (.isDirectory file))))
 
 (defn assert-directory-exists! [path]
@@ -41,8 +41,8 @@
 (defn repository-agent-error-handler [_agent ex]
   (logging/warn ["Agent error" _agent (thrown/stringify ex)]))
 
-(defn get-or-create-repository-processor 
-  "Creates a repository processor (agent) given a (repository) hash with 
+(defn get-or-create-repository-processor
+  "Creates a repository processor (agent) given a (repository) hash with
   :id property"
   [repository]
   (if-let [id (str (:id repository))]
@@ -62,14 +62,14 @@
 ;### branches #################################################################
 (defn get-git-branches [repository-path]
   (let [res (system/exec-with-success-or-throw
-              ["git" "branch" "--no-abbrev" "--no-color" "-v"] 
+              ["git" "branch" "--no-abbrev" "--no-color" "-v"]
               {:watchdog (* 1 60 1000), :dir repository-path, :env {"TERM" "VT-100"}})
         out (:out res)
         lines (clojure.string/split out #"\n")
         branches (map (fn [line]
-                        (let [[_ branch-name current-commit-id] 
+                        (let [[_ branch-name current-commit-id]
                               (re-find #"^?\s+(\S+)\s+(\S+)\s+(.*)$" line)]
-                          {:name branch-name 
+                          {:name branch-name
                            :current_commit_id current-commit-id}))
                       lines)]
     branches))
@@ -93,7 +93,7 @@
   (logging/debug update-git-server-info [repository])
   (let [repository-path (git.repositories/path repository)
         id (git.repositories/canonic-id repository) ]
-    (system/exec-with-success-or-throw ["git" "update-server-info"] 
+    (system/exec-with-success-or-throw ["git" "update-server-info"]
                  {:watchdog (* 10 60 1000), :dir repository-path, :env {"TERM" "VT-100"}})))
 
 (defn send-branch-update-notifications [branches]
@@ -116,18 +116,18 @@
   (catcher/wrap-with-log-error
     (let [dir (git.repositories/path repository)]
       (system/exec-with-success-or-throw ["rm" "-rf" dir])
-      (system/exec-with-success-or-throw 
+      (system/exec-with-success-or-throw
         ["git" "clone" "--mirror" (:origin_uri repository) dir]
         {:watchdog (* 5 60 1000)}))))
 
 (defn git-fetch [repository path]
-  (system/exec-with-success-or-throw 
+  (system/exec-with-success-or-throw
     ["git" "fetch" (:origin_uri repository) "--force" "--tags" "--prune"  "+*:*"]
     {:watchdog (* 10 60 1000), :dir path, :env {"TERM" "VT-100"}}))
 
 (defn git-fetch-or-initialize [repository]
   (try (catcher/wrap-with-log-warn
-         (let [path (git.repositories/path repository)] 
+         (let [path (git.repositories/path repository)]
            (if (fs/exists? path)
              (git-fetch repository path)
              (git-initialize repository))))
@@ -150,8 +150,8 @@
 (defn submit-git-update [repository git-repository]
   (logging/debug submit-git-update [repository git-repository])
   (send-off (:agent git-repository)
-            (fn [state repository git-repository] 
-              ; possibly skip overflow of the queue 
+            (fn [state repository git-repository]
+              ; possibly skip overflow of the queue
               (if (git-update-is-due? repository git-repository)
                 (do (git-update repository)
                     (conj state {:git_updated_at (time/now)}))
@@ -161,8 +161,8 @@
 (defn submit-git-fetch-and-update [repository git-repository]
   (logging/debug submit-git-fetch-and-update [repository git-repository])
   (send-off (:agent git-repository)
-            (fn [state repository git-repository] 
-              ; possibly skip overflow of the queue 
+            (fn [state repository git-repository]
+              ; possibly skip overflow of the queue
               (if (git-fetch-is-due? repository git-repository)
                 (do (git-fetch-or-initialize repository)
                   (git-update repository)
@@ -172,7 +172,7 @@
 
 (defn submit-git-initialize [repository git-repository]
   (send-off (:agent git-repository)
-            (fn [state repository] 
+            (fn [state repository]
               (git-initialize repository)
               (git-fetch-or-initialize repository)
               (git-update repository)
@@ -192,7 +192,7 @@
           (submit-git-update repository repository-processor))))))
 
 
-(daemon/define "update-repositories" 
+(daemon/define "update-repositories"
   start-update-repositories
   stop-update-repositories
   1

@@ -35,11 +35,11 @@
     {:id id
      :tree_id (clojure.string/trim (nth lines 0))
      :author_name (clojure.string/trim (nth lines 1))
-     :author_email (clojure.string/trim (nth lines 2))   
+     :author_email (clojure.string/trim (nth lines 2))
      :author_date (parse-time (trim-line lines 3))
      :committer_name (clojure.string/trim (nth lines 4))
-     :committer_email (clojure.string/trim (nth lines 5)) 
-     :committer_date (parse-time (trim-line lines 6)) 
+     :committer_email (clojure.string/trim (nth lines 5))
+     :committer_date (parse-time (trim-line lines 6))
      :subject (clojure.string/trim (nth lines 7))
      :body (clojure.string/join "\n" (drop 8 lines))
      }))
@@ -68,18 +68,18 @@
           ["git" "ls-tree" "-r" commit-id]
           {:dir repository-path})))
 
-;(git-ls-tree-r "f03949538e290bc4e855c8f05fdac190813a9362" "./tmp/repositories/https-github-com-zhdk-leihs-git_873beeef-a3a1-5ae9-8a5c-b3f9870c1b54") 
+;(git-ls-tree-r "f03949538e290bc4e855c8f05fdac190813a9362" "./tmp/repositories/https-github-com-zhdk-leihs-git_873beeef-a3a1-5ae9-8a5c-b3f9870c1b54")
 
-(defn get-submodules 
+(defn get-submodules
   "Returns a seq of maps each containing a :submodule_commit_id and :path key"
   [commit-id repository-path]
   (let [out (git-ls-tree-r commit-id repository-path)]
     (if (clojure.string/blank? out)
       []
-      (->> out 
+      (->> out
            (#(split % #"\n"))
            (map #(split % #"\s+"))
-           (filter #(= "commit" (nth % 1))) 
+           (filter #(= "commit" (nth % 1)))
            (map #(hash-map :submodule_commit_id (nth % 2) :path (nth % 3)))))))
 
 ;(get-submodules "5f0430a5c7d3d399ad717c9d347b7a57d56a69c9" "./tmp/repositories/http-localhost-8888-cider-ci-demo-project-bash_e62bc7e0-81da-5cdb-bb04-58f429e9f7c1")

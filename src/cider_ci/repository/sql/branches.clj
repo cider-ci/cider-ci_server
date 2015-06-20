@@ -3,7 +3,7 @@
 ; See the "LICENSE.txt" file provided with this software.
 
 (ns cider-ci.repository.sql.branches
-  (:require 
+  (:require
     [clojure.tools.logging :as logging]
     [clojure.java.jdbc :as jdbc]
     ))
@@ -23,11 +23,11 @@
        (map (fn [_] "?"))
        (clojure.string/join  ", ")))
 
-(defn delete-removed [ds git-branches repository-id] 
+(defn delete-removed [ds git-branches repository-id]
   (logging/debug delete-removed ["ds" git-branches repository-id])
   (let [branch-names (map :name git-branches)
-        where-clause (flatten [(str "branches.repository_id = ? 
-                                    AND branches.name NOT IN (" (placeholders  branch-names) " )") 
+        where-clause (flatten [(str "branches.repository_id = ?
+                                    AND branches.name NOT IN (" (placeholders  branch-names) " )")
                                repository-id branch-names])
         res (jdbc/delete! ds :branches where-clause)]
     (logging/debug "deleted " res " branches")

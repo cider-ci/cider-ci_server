@@ -1,7 +1,7 @@
 # Cider-CI Repository
 
 
-Part of [Cider-CI](https://github.com/cider-ci/cider-ci). This component 
+Part of [Cider-CI](https://github.com/cider-ci/cider-ci). This component
 manages the git repositories.
 
 

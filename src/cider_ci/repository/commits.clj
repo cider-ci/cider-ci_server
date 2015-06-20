@@ -17,7 +17,7 @@
 
 (defn insert-submodules [tx id repository-path]
   (doseq [submodule (git-commits/get-submodules id repository-path)]
-    (jdbc/insert! tx :submodules 
+    (jdbc/insert! tx :submodules
                   (assoc submodule :commit_id id))))
 
 (defn- create [tx id repository-path]
@@ -30,12 +30,12 @@
 ;### arcs ######################################################################
 
 (defn find-arc [ds arc]
-  (first (jdbc/query ds ["SELECT * FROM commit_arcs 
-                         WHERE child_id = ? AND parent_id = ?", 
+  (first (jdbc/query ds ["SELECT * FROM commit_arcs
+                         WHERE child_id = ? AND parent_id = ?",
                  (:child_id arc), (:parent_id arc)])))
 
 (defn find-or-create-arc! [ds arc]
-  (or 
+  (or
     (find-arc  ds arc)
     (jdbc/insert! ds :commit_arcs arc)))
 

@@ -1,5 +1,5 @@
 (ns cider-ci.repository.main
-  (:require 
+  (:require
     [cider-ci.auth.core :as auth]
     [cider-ci.repository.repositories :as repositories]
     [cider-ci.repository.web :as web]

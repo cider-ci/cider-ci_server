@@ -19,13 +19,13 @@
   (set (map :name (set (sql.branches/for-repository tx repository-id)))))
 
 (defn- filter-to-be-created-branches [git-branches existing-db-branches]
-  (filter 
-    (fn [git-branch] (not (contains? existing-db-branches (:name git-branch)))) 
+  (filter
+    (fn [git-branch] (not (contains? existing-db-branches (:name git-branch))))
     git-branches))
 
 (defn- update-or-create-branches-commits [tx db-branch]
   ; call stored procedure to do this
-  (jdbc/query tx ["SELECT update_branches_commits(?,?,?)" 
+  (jdbc/query tx ["SELECT update_branches_commits(?,?,?)"
                   (:id db-branch)
                   (:current_commit_id db-branch)
                   nil]))
@@ -33,16 +33,16 @@
 (defn- create-new-db-branch [tx repository-path repository-id git-branch]
   (let [commit-id (:current_commit_id git-branch)
         current_commit (commits/import-recursively tx commit-id repository-path)
-        db-branch (first (sql.branches/create! 
+        db-branch (first (sql.branches/create!
                            tx (assoc git-branch :repository_id repository-id)))]
     (update-or-create-branches-commits tx db-branch)
     db-branch))
 
 (defn create-new [tx git-branches repository-id repository-path]
   (let [existing-db-branches (get-existing-db-branches tx repository-id)
-        to-be-created (filter-to-be-created-branches 
+        to-be-created (filter-to-be-created-branches
                         git-branches existing-db-branches)]
-    (doall (map #(create-new-db-branch tx repository-path repository-id %) 
+    (doall (map #(create-new-db-branch tx repository-path repository-id %)
                 to-be-created))))
 
 
@@ -52,8 +52,8 @@
   [git-branches existing-branches]
   (filter (fn [git-branch]
             (let [name (:name git-branch)
-                  corresponding-existing (first (filter 
-                                                  (fn [existing-branch] 
+                  corresponding-existing (first (filter
+                                                  (fn [existing-branch]
                                                     (= name (:name existing-branch)))
                                                   existing-branches))]
               ; TODO corresponding-existing has only name attribute
@@ -68,23 +68,23 @@
         to-be-updated (to-be-updated git-branches existing-branches)]
     (doall (map (fn [git-branch]
                   (let [branch (first (jdbc/query tx ["SELECT * FROM branches WHERE
-                                                      repository_id = ? AND name = ?" 
-                                                      canonic-id 
+                                                      repository_id = ? AND name = ?"
+                                                      canonic-id
                                                       (:name git-branch)]))
                         _ (commits/import-recursively tx (:current_commit_id git-branch) repository-path)
 
-                        update_result (jdbc/update! tx :branches 
-                                                    (select-keys git-branch [:current_commit_id]) 
+                        update_result (jdbc/update! tx :branches
+                                                    (select-keys git-branch [:current_commit_id])
                                                     ["repository_id = ? AND name = ?" canonic-id (:name git-branch)])
 
-                        update_branches_commits_result (jdbc/query tx ["SELECT update_branches_commits(?,?,?)" 
+                        update_branches_commits_result (jdbc/query tx ["SELECT update_branches_commits(?,?,?)"
                                                                        (:id branch)
                                                                        (:current_commit_id git-branch)
                                                                        (:current_commit_id branch)])
 
                         updated_branch (first (jdbc/query tx ["SELECT * FROM branches WHERE
-                                                              repository_id = ? AND name = ?" 
-                                                              canonic-id 
+                                                              repository_id = ? AND name = ?"
+                                                              canonic-id
                                                               (:name git-branch)]))]
                     updated_branch))
                 to-be-updated))))

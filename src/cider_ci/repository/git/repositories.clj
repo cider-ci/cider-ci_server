@@ -4,10 +4,10 @@
 
 
 (ns cider-ci.repository.git.repositories
-  (:import 
+  (:import
     [java.io File]
     )
-  (:require 
+  (:require
     [cider-ci.utils.config :as config :refer [get-config get-db-spec]]
     [drtom.logbug.debug :as debug]
     [cider-ci.utils.fs :as ci-fs]
@@ -18,19 +18,19 @@
     ))
 
 
-(defn canonic-id 
+(defn canonic-id
   "Returns the id as a java.lang.UUID of the repository.  Input can either be a
   String, a PersistentHashMap (representing a db row), or a java.lang.UUID."
   [_repository]
   ;(logging/debug repository-canonic-id [_repository])
   (case (.getName (type _repository))
     "clojure.lang.PersistentHashMap" (canonic-id (:id (clojure.walk/keywordize-keys _repository)))
-    "clojure.lang.PersistentArrayMap" (canonic-id (:id (clojure.walk/keywordize-keys _repository))) 
+    "clojure.lang.PersistentArrayMap" (canonic-id (:id (clojure.walk/keywordize-keys _repository)))
     "java.lang.String" (java.util.UUID/fromString _repository)
     "java.util.UUID" _repository))
 
 
-(defn path 
+(defn path
   "Returns the absolute path to the (git-)repository."
   [repository]
   (let [path  (-> (get-config) :services :repository :repositories :path)
@@ -38,9 +38,9 @@
     (assert (not (blank? path)))
     (assert (not (blank? origin-uri)))
     (str path (File/separator) (ci-fs/path-proof origin-uri))))
-  
 
-(defn get-path-contents 
+
+(defn get-path-contents
   [repository id file-path]
   (let [git-dir-path (path repository)
         res (system/exec
@@ -53,15 +53,15 @@
 
 (defn ls-tree [repository id include-regex exclude-regex]
   (catcher/wrap-with-log-warn
-    (->> (-> (system/exec-with-success-or-throw  
+    (->> (-> (system/exec-with-success-or-throw
                ["git" "ls-tree" "-r" "--name-only" id]
                {:dir (path repository)})
-             :out 
+             :out
              (split #"\n"))
          (map trim)
-         (filter #(and include-regex 
+         (filter #(and include-regex
                        (re-find (re-pattern include-regex) %)))
-         (filter #(or (not exclude-regex) 
+         (filter #(or (not exclude-regex)
                       (not (re-find (re-pattern exclude-regex) %)))))))
 
 ;#### debug ###################################################################

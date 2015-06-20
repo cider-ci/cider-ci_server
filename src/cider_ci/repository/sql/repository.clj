@@ -13,7 +13,7 @@
     ))
 
 
-(defn resolve 
+(defn resolve
   "Returns a repository given a sha1 commit-id or tree-id."
   [id]
   (first (jdbc/query (rdbms/get-ds)
