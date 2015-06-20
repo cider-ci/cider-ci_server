@@ -4,14 +4,14 @@
 
 
 (ns cider-ci.utils.routing
-  (:require 
+  (:require
     [drtom.logbug.catcher :as catcher]
     [clojure.tools.logging :as logging]
     [compojure.core :as cpj]
     ))
 
 
-(defn wrap-prefix 
+(defn wrap-prefix
   "Check for prefix match. Pass on and add :contex, or return 404 if it doesn't match."
   [default-handler prefix]
   (cpj/routes

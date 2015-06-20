@@ -1,14 +1,14 @@
 (ns cider-ci.utils.rdbms_spec
-  (:require 
+  (:require
     [clojure.tools.logging :as logging]
     [cider-ci.utils.rdbms :as rdbms]
     [clojure.java.jdbc :as jdbc]
     )
-  (:use 
+  (:use
     [midje.sweet])
   )
 
-(def db-spec {:adapter "postgresql" 
+(def db-spec {:adapter "postgresql"
               :classname "org.postgresl.Driver"
               :subname "//localhost:5432/cider-ci_development"
               :user "cider-ci"
@@ -16,7 +16,7 @@
               :subprotocol "postgresql"
               :max_pool_size 2 })
 
-(facts "using rdbms to create a pooled connection" 
+(facts "using rdbms to create a pooled connection"
 
        (rdbms/reset)
 
@@ -24,7 +24,7 @@
        (fact (rdbms/get-db-spec) => nil)
        (fact (rdbms/get-tables-metadata) => nil)
 
-       (rdbms/initialize {:subprotocol "sqlite" 
+       (rdbms/initialize {:subprotocol "sqlite"
                           :subname ":memory:"
                           :max_pool_size 7 })
 

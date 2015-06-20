@@ -4,7 +4,7 @@
 
 
 (ns cider-ci.utils.json-protocol
-  (:require 
+  (:require
     [clojure.data.json]
     [clj-time.core :as time]
     [clj-time.format :as time-format]
@@ -33,7 +33,7 @@
 
 (cheshire.generate/add-encoder org.joda.time.DateTime
                            (fn [date-time jsonGenerator]
-                             (.writeString jsonGenerator 
+                             (.writeString jsonGenerator
                                            (date-time-to-string date-time))))
 
 ;(cheshire.core/generate-string {:t (time/now)})

@@ -3,7 +3,7 @@
 ; See the "LICENSE.txt" file provided with this software.
 
 (ns cider-ci.utils.daemon
-  (:require 
+  (:require
     [clj-logging-config.log4j :as logging-config]
     [clojure.tools.logging :as logging]
     [drtom.logbug.catcher :as catcher]
@@ -12,7 +12,7 @@
 
 (defmacro define [daemon-name start-fn stop-fn secs-pause & body]
   (let [stop (gensym "_stop_")]
-    `(do 
+    `(do
 
        (defonce ~stop (atom (fn [])))
 
@@ -34,10 +34,10 @@
                            (future-cancel runner#)
                            ;@runner#
                            (logging/info "daemon " ~daemon-name "stopped")))
-           
+
            (.addShutdownHook (Runtime/getRuntime)
                              (Thread. (fn [] (~stop-fn))))
-           
+
            )))))
 
 

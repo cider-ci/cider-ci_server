@@ -4,7 +4,7 @@
 
 
 (ns cider-ci.utils.system
-  (:require 
+  (:require
     [drtom.logbug.debug :as debug]
     [clj-commons-exec :as commons-exec]
     [clj-logging-config.log4j :as logging-config]
@@ -12,27 +12,27 @@
     ))
 
 
-(defn exec 
+(defn exec
   ([command]
    (exec command {}))
   ([command opts]
-   (let [options (conj {:watchdog 1000} 
+   (let [options (conj {:watchdog 1000}
                        opts)]
      @(commons-exec/sh command options))))
-     
+
 
 (defn exec-with-success-or-throw [& args]
   (let [res (apply exec args)]
     (if (= 0 (:exit res))
       res
-      (throw (IllegalStateException. 
-               (str "Unsuccessful shell execution" 
+      (throw (IllegalStateException.
+               (str "Unsuccessful shell execution"
                     [args]
                     {:result res}))))))
 
 
 (defn exec-with-success? [& args]
-  (= 0 (:exit (apply exec args)))) 
+  (= 0 (:exit (apply exec args))))
 
 
 ;### Debug #####################################################################

@@ -3,7 +3,7 @@
 ; See the "LICENSE.txt" file provided with this software.
 
 (ns cider-ci.utils.config-loader
-  (:require 
+  (:require
     [clj-yaml.core :as yaml]
     [clojure.stacktrace :as stacktrace]
     [clojure.tools.logging :as logging]

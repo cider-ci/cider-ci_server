@@ -1,10 +1,10 @@
 ; Copyright (C) 2013, 2014, 2015 Dr. Thomas Schank  (DrTom@schank.ch, Thomas.Schank@algocon.ch)
 ; Licensed under the terms of the GNU Affero General Public License v3.
-; See the "LICENSE.txt" file provided with this software. 
+; See the "LICENSE.txt" file provided with this software.
 ;
 
 (ns cider-ci.utils.config
-  (:require 
+  (:require
     [clj-yaml.core :as yaml]
     [cider-ci.utils.daemon :as daemon]
     [drtom.logbug.debug :as debug]
@@ -24,7 +24,7 @@
     (logging/info "config changed to " conf)))
 
 (defn read-configs-and-merge [filenames]
-  (loop [config {} 
+  (loop [config {}
          filenames filenames]
     (if-let [filename (first filenames)]
       (if (.exists (io/as-file filename))
@@ -44,13 +44,13 @@
 (daemon/define "reload-config" start-read-config stop-read-config 1
   (read-configs-and-merge @filenames))
 
-(defn initialize 
+(defn initialize
   ([]
-   (initialize ["/etc/cider-ci/config_default.yml" 
-                "../config/config_default.yml" 
-                "./config/config_default.yml" 
-                "/etc/cider-ci/config.yml" 
-                "../config/config.yml" 
+   (initialize ["/etc/cider-ci/config_default.yml"
+                "../config/config_default.yml"
+                "./config/config_default.yml"
+                "/etc/cider-ci/config.yml"
+                "../config/config.yml"
                 "./config/config.yml"]))
   ([_filenames]
    (reset! filenames _filenames)
@@ -59,7 +59,7 @@
 
 (defn get-db-spec [service]
   (let [conf (get-config)]
-    (deep-merge 
+    (deep-merge
       (or (-> conf :database ) {} )
       (or (-> conf :services service :database ) {} ))))
 

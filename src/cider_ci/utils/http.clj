@@ -1,5 +1,5 @@
 (ns cider-ci.utils.http
-  (:refer-clojure 
+  (:refer-clojure
     :exclude [get])
   (:require
     [cider-ci.utils.config :refer [get-config]]
@@ -16,7 +16,7 @@
 ;### build url ##################################################################
 
 (defn sanitize-query-params [params]
-  (into {} (sort (for [[k v] params] 
+  (into {} (sort (for [[k v] params]
                    [(-> k name clojure.string/trim
                         clojure.string/lower-case
                         (clojure.string/replace " " "-")
@@ -26,29 +26,29 @@
                     v]))))
 
 (defn build-url-query-string [params]
-  (-> params sanitize-query-params 
+  (-> params sanitize-query-params
       http-client/generate-query-string))
 
-(defn build-url 
+(defn build-url
   ([config path]
    (logging/warn "you probably should rather use build-service-url instead of build-url")
-   (let [ protocol (cond 
-                     (= true (:server_ssl config)) "https" 
+   (let [ protocol (cond
+                     (= true (:server_ssl config)) "https"
                      (= true (:ssl config)) "https"
                      (= false (:server_ssl config)) "http"
                      (= false (:ssl config)) "http"
                      :else nil)
          host (or (:server_host config) (:host config))
          port (or (:server_port config) (:port config))
-         context (:context config) 
+         context (:context config)
          sub-context (:sub_context config)
          ]
      (str (when protocol (str protocol "://" ))
-          host 
-          (when port (str ":" port)) 
+          host
+          (when port (str ":" port))
           context sub-context path)))
   ([config path query-params]
-   (str (build-url config path) 
+   (str (build-url config path)
         "?" (build-url-query-string query-params))))
 
 ;### build-service-url ########################################################
@@ -70,11 +70,11 @@
 (defn build-server-url [path]
   (str (get-base-url) path))
 
-(defn build-service-url 
+(defn build-service-url
   ([service-name-or-keyword path]
    (str (get-base-url) (build-service-prefix service-name-or-keyword) path))
   ([service-name-or-keyword path query-params]
-   (build-service-url service-name-or-keyword 
+   (build-service-url service-name-or-keyword
                       (str path "?" (build-url-query-string query-params)))))
 
 ;### Http request #############################################################
@@ -86,12 +86,12 @@
       (logging/debug ("http/" method) {:url url :basic-auth basic-auth})
       (http-client/request
         (conj {:basic-auth [(:username basic-auth) (:password basic-auth)]
-               :url url 
+               :url url
                :method method
                :insecure? true
                :content-type :json
-               :accept :json 
-               :socket-timeout 1000  
+               :accept :json
+               :socket-timeout 1000
                :conn-timeout 1000 }
               params)))))
 

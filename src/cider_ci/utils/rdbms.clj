@@ -1,11 +1,11 @@
 (ns cider-ci.utils.rdbms
-  (:require 
+  (:require
     [drtom.logbug.catcher :as catcher]
     [clojure.java.jdbc :as jdbc]
     [clojure.tools.logging :as logging]
     [pg-types.all]
     )
-  (:import 
+  (:import
     [com.mchange.v2.c3p0 ComboPooledDataSource DataSources]
     ))
 
@@ -18,42 +18,42 @@
 
 (defonce ^:private tables-metadata (atom nil))
 
-(defn get-tables-metadata [] 
+(defn get-tables-metadata []
   (logging/warn get-tables-metadata " is deprecated")
   @tables-metadata)
 
 (defn- get-columns-metadata [table-name db-conf]
   (jdbc/with-db-metadata [md db-conf]
-    (into {} (sort 
+    (into {} (sort
                (map (fn [column-data]
                       [(keyword (:column_name column-data))
                        column-data])
-                    (jdbc/metadata-result 
+                    (jdbc/metadata-result
                       (.getColumns md nil nil table-name "")))))))
 
 (defn- set-tables-metadata [db-conf]
-  (reset! 
+  (reset!
     tables-metadata
-    (into {} (sort 
+    (into {} (sort
                (jdbc/with-db-metadata [md db-conf]
                  (map
                    (fn [table-data]
                      [(keyword (:table_name table-data))
                       (conj table-data
-                            {:columns (get-columns-metadata 
+                            {:columns (get-columns-metadata
                                         (:table_name table-data) db-conf)})])
-                   (jdbc/metadata-result 
+                   (jdbc/metadata-result
                      (.getTables md nil nil nil (into-array ["TABLE" "VIEW"])))
                    ))))))
 
 
-(defn check-connection 
+(defn check-connection
   "Performs a simple query an returns boolean true on success and
   false otherwise."
   []
-  (try 
+  (try
     (catcher/wrap-with-log-error
-      (->> (jdbc/query (get-ds) ["SELECT true AS state"]) 
+      (->> (jdbc/query (get-ds) ["SELECT true AS state"])
            first :state))
     (catch Exception _
       false)))
@@ -63,9 +63,9 @@
 
 
 (defn amend-db-conf [db-conf]
-  (let [user (or (:user db-conf)  
+  (let [user (or (:user db-conf)
                  (System/getenv "PGUSER"))
-        password (or 
+        password (or
                    (:password db-conf)
                    (System/getenv "PGPASSWORD"))]
     (conj db-conf
@@ -81,8 +81,8 @@
 
 (defn- create-c3p0-datasources [db-conf]
   (logging/info create-c3p0-datasources [db-conf])
-  (reset! ds 
-          {:datasource 
+  (reset! ds
+          {:datasource
            (doto (ComboPooledDataSource.)
              (.setJdbcUrl (str "jdbc:" (:subprotocol db-conf) ":" (:subname db-conf)))
              (#(when-let [user (:user db-conf)] (.setUser % user)))
@@ -96,7 +96,7 @@
     (create-c3p0-datasources db-conf)
     (set-tables-metadata db-conf))
   (.addShutdownHook (Runtime/getRuntime)
-                    (Thread. (fn [] 
+                    (Thread. (fn []
                                (reset)))))
 
 ;(initialize {:subprotocol "sqlite" :subname ":memory:"})

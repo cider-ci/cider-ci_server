@@ -28,8 +28,8 @@
                  [org.slf4j/slf4j-log4j12 "1.7.12"]
                  [org.yaml/snakeyaml "1.15"]
                  [pg-types "1.0.0"]
-                 [ring "1.3.2"] 
-                 [ring/ring-core "1.3.2"] 
+                 [ring "1.3.2"]
+                 [ring/ring-core "1.3.2"]
                  [ring/ring-jetty-adapter "1.3.2"]
                  [ring/ring-json "0.3.1"]
 

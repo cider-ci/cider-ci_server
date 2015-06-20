@@ -1,13 +1,13 @@
 (ns cider-ci.utils.http_spec
-  (:require 
+  (:require
     [clojure.tools.logging :as logging]
     [cider-ci.utils.http :as http]
     )
-  (:use 
+  (:use
     [midje.sweet])
   )
 
-(facts "http/build-url"  
+(facts "http/build-url"
        (facts "config without :ssl and without host"
               (let [config {:ssl nil
                             :host nil
@@ -16,7 +16,7 @@
                             :sub_context "/subcontext"}]
                 (fact (http/build-url config "/x") => ":80/context/subcontext/x"))))
 
-(facts "http/build-url"  
+(facts "http/build-url"
        (facts "config without :ssl "
               (let [config {:ssl nil
                             :host "localhost"
@@ -25,7 +25,7 @@
                             :sub_context "/subcontext"}]
                 (fact (http/build-url config "/x") => "localhost:80/context/subcontext/x"))))
 
-(facts "http/build-url"  
+(facts "http/build-url"
        (facts "config with :ssl true "
               (let [config {:ssl true
                             :host "localhost"

@@ -3,7 +3,7 @@
 ; See the "LICENSE.txt" file provided with this software.
 
 (ns cider-ci.utils.fs
-  (:require 
+  (:require
     [drtom.logbug.debug :as debug]
     [clj-logging-config.log4j :as logging-config]
     [clj-uuid]
@@ -12,8 +12,8 @@
     ))
 
 (defn directory? [path]
-  (let [file (clojure.java.io/file path)] 
-    (and (.exists file) 
+  (let [file (clojure.java.io/file path)]
+    (and (.exists file)
          (.isDirectory file))))
 
 (defn assert-directory [path]
@@ -23,10 +23,10 @@
 
 (defn path-proof
   "Returns a unique - whenever (str x) is unique - representation of x that can
-  be safely used as a filename or as a part of a path." 
+  be safely used as a filename or as a part of a path."
   [x]
   (str (-> x
-           str 
+           str
            (string/replace #"[\W_-]+" "-")
            (string/replace #"^-" "")
            (string/replace #"-$" "")

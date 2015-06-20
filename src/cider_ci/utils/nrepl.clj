@@ -1,5 +1,5 @@
 (ns cider-ci.utils.nrepl
-  (:require 
+  (:require
     [drtom.logbug.catcher :as catcher]
     [clj-logging-config.log4j :as logging-config]
     [clojure.tools.logging :as logging]
@@ -34,7 +34,7 @@
     (when server (stop-server))
     (if (:enabled @conf)
       (let [args (flatten (seq (select-keys @conf [:port :bind])))]
-        (do 
+        (do
           (logging/info "starting server " (with-out-str (clojure.pprint/pprint args)))
           (def server (apply nrepl-server/start-server args )))
         (.addShutdownHook (Runtime/getRuntime)

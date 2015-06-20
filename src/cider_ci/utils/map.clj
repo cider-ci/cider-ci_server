@@ -3,7 +3,7 @@
 ; See the "LICENSE.txt" file provided with this software.
 
 (ns cider-ci.utils.map
-  (:require 
+  (:require
     [drtom.logbug.debug :as debug]
     [clj-logging-config.log4j :as logging-config]
     [clojure.tools.logging :as logging]))
@@ -15,7 +15,7 @@
     (last vals)))
 
 
-(defn convert-to-array 
+(defn convert-to-array
   "Converts a map of maps to an array of maps. The key becomes the value of the
   :name property if and only if :name does no exists already."
   [map-or-array]

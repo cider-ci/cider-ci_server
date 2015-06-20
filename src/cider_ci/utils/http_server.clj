@@ -4,13 +4,13 @@
 
 
 (ns cider-ci.utils.http-server
-  (:require 
+  (:require
     [clj-logging-config.log4j :as logging-config]
     [clojure.tools.logging :as logging]
     [ring.adapter.jetty :as jetty]
-    ) 
-  (:import 
-    )) 
+    )
+  (:import
+    ))
 
 
 (defonce _server (atom nil))
@@ -24,7 +24,7 @@
 (defn start [conf main-handler ]
   "Starts (or stops and then starts) the webserver"
   (let [server-conf (conj {:ssl? false
-                           :join? false} 
+                           :join? false}
                           (select-keys conf [:port :host]))]
     (stop)
     (logging/info "starting server " server-conf)
