@@ -3,7 +3,7 @@
 ; See the "LICENSE.txt" file provided with this software.
 
 (ns cider-ci.builder.dotfile
-  (:require 
+  (:require
     [cider-ci.builder.dotfile.inclusion :as inclusion]
     [cider-ci.builder.repository :as repository]
     [clj-logging-config.log4j :as logging-config]
@@ -12,16 +12,17 @@
     [drtom.logbug.debug :as debug]
     ))
 
-(defn- get-dotfile_ [tree-id]
-  (->> 
+(defn- get-dotfile_unmemoized [tree-id]
+  (->>
     (repository/get-path-content tree-id ".cider-ci.yml")
     (inclusion/include tree-id)))
 
-(def get-dotfile (memo/lru #(get-dotfile_ %)
+(def get-dotfile (memo/lru #(get-dotfile_unmemoized %)
             :lru/threshold 500))
 
-; TODO re-enable caching when done
-(def get-dotfile get-dotfile_)
+; disable caching (temporarily)
+;(def get-dotfile get-dotfile_unmemoized)
+
 
 ;### Debug ####################################################################
 ;(logging-config/set-logger! :level :debug)

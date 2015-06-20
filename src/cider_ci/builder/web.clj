@@ -3,7 +3,7 @@
 ; See the "LICENSE.txt" file provided with this software.
 
 (ns cider-ci.builder.web
-  (:require 
+  (:require
     [cider-ci.auth.core :as auth]
     [cider-ci.auth.http-basic :as http-basic]
     [cider-ci.builder.dotfile]
@@ -34,7 +34,7 @@
    })
 
 
-;##### status dispatch ######################################################## 
+;##### status dispatch ########################################################
 
 (defn status-handler [request]
   (let [stati {:rdbms (rdbms/check-connection)
@@ -53,12 +53,12 @@
     (cpj/GET "/status" request #'status-handler)
     (cpj/ANY "*" request default-handler)))
 
-;##### jobs ############################################################# 
+;##### jobs #############################################################
 
 (defn create-job [request]
   (catcher/wrap-with-log-warn
-    {:status 201 
-     :body (jobs/create 
+    {:status 201
+     :body (jobs/create
              (->> request
                   :body
                   keywordize-keys
@@ -69,12 +69,12 @@
                   (into {})))}))
 
 (defn available-jobs [request]
-  (try 
-    (catcher/wrap-with-log-warn 
-      {:status 200 
+  (try
+    (catcher/wrap-with-log-warn
+      {:status 200
        :headers {"content-type" "application/json;charset=utf-8"}
-       :body (util/json-write-str 
-               (jobs/available-jobs 
+       :body (util/json-write-str
+               (jobs/available-jobs
                  (-> request :route-params :tree_id)))})
     (catch clojure.lang.ExceptionInfo e
       (case (-> e ex-data :object :status)
@@ -90,26 +90,25 @@
 
 
 (defn dotfile [request]
-  (try 
-    (let [dotfile-content (cider-ci.builder.dotfile/get-dotfile 
+  (try
+    (let [dotfile-content (cider-ci.builder.dotfile/get-dotfile
                             (-> request :route-params :tree_id))]
       (logging/debug {:dotfile-content dotfile-content})
       {:status 200
        :headers {"content-type" "application/json;charset=utf-8"}
        :body (util/json-write-str dotfile-content)})
     (catch clojure.lang.ExceptionInfo e
-      (logging/warn e)
-      (logging/warn (-> e .getData :object ))
+      (logging/warn "DOTFILE " (thrown/stringify e))
       (case (-> e .getData :object :status)
         404  {:status 404
               :body (str "The dotfile itself or a included resource doesn't exist. \n\n"
                          (-> e .getData :object ))}
         {:status 500
-         :body "See the builder logs for details."}))
+         :body (str "ERROR" (thrown/stringify e))}))
     (catch Throwable e
-      (logging/error (thrown/stringify e))
+      (logging/error "DOTFILE " (thrown/stringify e))
       {:status 500
-       :body (str "See the builder logs for more details. " 
+       :body (str "See the builder logs for more details. "
                   "\n\n"  (thrown/stringify e))})))
 
 (defn wrap-jobs [default-handler]

@@ -3,7 +3,7 @@
 ; See the "LICENSE.txt" file provided with this software.
 
 (ns cider-ci.builder.repository
-  (:require 
+  (:require
     [cider-ci.builder.util :as util]
     [cider-ci.utils.config :as config :refer [get-config]]
     [drtom.logbug.debug :as debug]
@@ -21,9 +21,9 @@
 (defn- parse-path-content [path content]
   (catcher/wrap-with-log :warn (yaml/parse-string content)))
 
-(defn get-path-content_ [git-ref-id path]
-  (let [url (http/build-service-url 
-              :repository  
+(defn- get-path-content_unmemoized [git-ref-id path]
+  (let [url (http/build-service-url
+              :repository
               (str "/path-content/" git-ref-id "/" path))
         res (try (catcher/wrap-with-log :warn (http/get url {})))
         body (:body res)]
@@ -31,8 +31,8 @@
 
 (defn ls-tree [git-ref-id params]
   (logging/info {:params params})
-  (let [url (http/build-service-url 
-              :repository  
+  (let [url (http/build-service-url
+              :repository
               (str "/ls-tree/" git-ref-id "/" )
               params)
         res (try (catcher/wrap-with-log :warn (http/get url {})))
@@ -41,10 +41,9 @@
     (json/read-str body :key-fn keyword)))
 
 
-(def get-path-content (memo/lru get-path-content_
-                                :lru/threshold 500))
+(def get-path-content (memo/lru get-path-content_unmemoized :lru/threshold 500))
 
-;(def get-path-content get-path-content_)
+;(def get-path-content get-path-content_unmemoized)
 
 
 ;### Debug ####################################################################
