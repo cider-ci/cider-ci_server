@@ -104,7 +104,7 @@
               :body (str "The dotfile itself or a included resource doesn't exist. \n\n"
                          (-> e .getData :object ))}
         {:status 500
-         :body (str "ERROR" (thrown/stringify e))}))
+         :body (str "ERROR " (thrown/stringify e))}))
     (catch Throwable e
       (logging/error "DOTFILE " (thrown/stringify e))
       {:status 500

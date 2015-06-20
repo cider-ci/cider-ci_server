@@ -4,7 +4,7 @@
 ; See the "LICENSE.txt" file provided with this software.
 
 (ns cider-ci.builder.dotfile.task-generation
-  (:require 
+  (:require
     [cider-ci.builder.repository :as repository]
     [cider-ci.builder.util :as util :refer [deep-merge]]
     [cider-ci.utils.rdbms :as rdbms]
@@ -26,15 +26,15 @@
   (if-let [generate-spec (:_cider-ci_generate-tasks context)]
     (let [file-list (repository/ls-tree git-ref-id generate-spec)
           generated-tasks (->> file-list
-                               (map file-name-to-task) 
+                               (map file-name-to-task)
                                (into {})
                                clojure.walk/keywordize-keys)
           tasks (if-let [existing-tasks (:tasks context)]
-                  (cond (map? existing-tasks) (deep-merge 
+                  (cond (map? existing-tasks) (deep-merge
                                                 generated-tasks existing-tasks)
-                        :else (throw (IllegalStateException. 
+                        :else (throw (IllegalStateException.
                                        "tasks must be a map to be merged with generated-tasks")))
-                  generated-tasks)] 
+                  generated-tasks)]
       (-> context
           (assoc :tasks tasks)
           (dissoc :_cider-ci_generate-tasks)))

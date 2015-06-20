@@ -3,7 +3,7 @@
 ; See the "LICENSE.txt" file provided with this software.
 
 (ns cider-ci.builder.jobs.trigger
-  (:require 
+  (:require
     [cider-ci.builder.dotfile :as dotfile]
     [cider-ci.builder.jobs :as jobs]
     [cider-ci.builder.jobs.filter :as jobs.filter]
@@ -47,7 +47,7 @@
   (->> coll
        (filter #(and include-match
                      (re-find (to-pattern include-match) (str %))))
-       (filter #(or (not exclude-match) 
+       (filter #(or (not exclude-match)
                     (not (re-find (to-pattern exclude-match) (str %)))))))
 
 ;(include-exclude-filter "master" "^mk" ["ts_master" "mk_master" ])
@@ -56,14 +56,14 @@
 
 (defn event-branch-updated-fits-trigger? [event-data trigger]
   (->> [(:name event-data)]
-       (include-exclude-filter 
+       (include-exclude-filter
          (:include-match trigger)
          (:exclude-match trigger))
-       first 
+       first
        boolean))
 
 (defn event-job-updated-fits-trigger? [event-data trigger]
-  ; TODO, there seems to be an implementation missing  ??? 
+  ; TODO, there seems to be an implementation missing  ???
   true)
 
 (defn find-trigger-for-event [event-data triggers]
@@ -82,7 +82,7 @@
 
 (defn filter-jobs-by-triggers [event-data jobs]
   (filter #(some-job-trigger-matches-event? event-data %) jobs))
-  
+
 (defn- trigger-jobs [event-data]
   (let [tree-id (:tree_id event-data)]
     (->> (dotfile/get-dotfile tree-id)
@@ -101,12 +101,12 @@
 (defn- evaluate-branch-updated-message [msg]
   (catcher/wrap-with-log-warn
     (logging/debug 'evaluate-branch-updated-message {:msg msg})
-    (-> (jdbc/query 
-          (rdbms/get-ds) 
+    (-> (jdbc/query
+          (rdbms/get-ds)
           ["SELECT tree_id FROM commits WHERE id = ? " (:current_commit_id msg)])
         first
-        (#(trigger-jobs (conj msg 
-                              (select-keys % [:tree_id]) 
+        (#(trigger-jobs (conj msg
+                              (select-keys % [:tree_id])
                               {:type "branch.updated"}))))))
 
 (defn listen-to-branch-updates-and-fire-trigger-jobs []
@@ -115,9 +115,9 @@
 
 ;### listen to job updates ##############################################
 
-(defn evaluate-job-update [msg] 
-  (-> (jdbc/query 
-        (rdbms/get-ds) 
+(defn evaluate-job-update [msg]
+  (-> (jdbc/query
+        (rdbms/get-ds)
         ["SELECT * FROM jobs WHERE id = ? " (:id msg)])
       first
       (#(trigger-jobs (conj % msg {:type "job.updated"})))))

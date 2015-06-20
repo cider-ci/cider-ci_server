@@ -3,7 +3,7 @@
 ; See the "LICENSE.txt" file provided with this software.
 
 (ns cider-ci.builder.jobs
-  (:require 
+  (:require
     [cider-ci.builder.dotfile]
     [cider-ci.builder.jobs.filter :as jobs.filter]
     [cider-ci.builder.jobs.tags :as tags]
@@ -33,8 +33,8 @@
 (defn get-job-by-key [params dotfile]
   (get (:jobs dotfile) (keyword (:key params))))
 
-(defn try-to-add-specification-from-dotfile [params] 
-  (try 
+(defn try-to-add-specification-from-dotfile [params]
+  (try
     (let [spec (->> (cider-ci.builder.dotfile/get-dotfile (:tree_id params))
                     (get-job-by-key params))]
       (logging/debug {:params params :job_specification spec})
@@ -47,10 +47,10 @@
 (defn add-specification-id-if-not-present [params]
   (if (:job_specification_id params)
     params
-    (assoc params :job_specification_id 
+    (assoc params :job_specification_id
            (-> params
                :job_specification
-               spec/get-or-create-job-specification 
+               spec/get-or-create-job-specification
                :id))))
 
 (defn add-specification-from-dofile-if-not-present [params]
@@ -65,18 +65,18 @@
   params)
 
 (defn persist-job [params]
-  (->> (jdbc/insert! 
+  (->> (jdbc/insert!
          (rdbms/get-ds)
          :jobs
-         (select-keys params 
-                      [:tree_id, :job_specification_id, 
+         (select-keys params
+                      [:tree_id, :job_specification_id,
                        :name, :description, :priority, :key]))
        first
        (conj params)))
 
 (defn create [params]
   (catcher/wrap-with-log-error
-    (-> params 
+    (-> params
         add-specification-from-dofile-if-not-present
         add-specification-id-if-not-present
         persist-job

@@ -3,7 +3,7 @@
 ; See the "LICENSE.txt" file provided with this software.
 
 (ns cider-ci.builder.util
-  (:require 
+  (:require
     [cider-ci.utils.json-protocol]
     [cider-ci.utils.rdbms :as rdbms]
     [clj-uuid]
@@ -22,7 +22,7 @@
 (defn idid2id [id1 id2]
   (clj-uuid/v5 clj-uuid/+null+ (str id1 id2)))
 
-(defn json-key-fn [k] 
+(defn json-key-fn [k]
   (if (keyword? k) (subs (str k) 1) (str k) ))
 
 (defn json-write-str [data]

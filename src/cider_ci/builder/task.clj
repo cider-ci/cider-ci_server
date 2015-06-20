@@ -3,7 +3,7 @@
 ; See the "LICENSE.txt" file provided with this software.
 
 (ns cider-ci.builder.task
-  (:require 
+  (:require
     [clojure.tools.logging :as logging]
     [drtom.logbug.debug :as debug]
     [cider-ci.utils.rdbms :as rdbms]

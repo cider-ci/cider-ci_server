@@ -3,7 +3,7 @@
 ; See the "LICENSE.txt" file provided with this software.
 
 (ns cider-ci.builder.dotfile.inclusion
-  (:require 
+  (:require
     [cider-ci.builder.dotfile.task-generation :as task-generation]
     [cider-ci.builder.repository :as repository]
     [cider-ci.builder.util :as util :refer [deep-merge]]
@@ -24,10 +24,10 @@
   (let [query (-> (hh/select :commits.id)
                   (hh/from :commits)
                   (hh/modifiers :distinct)
-                  (hh/merge-join :branches_commits [:= 
-                                                    :commits.id 
+                  (hh/merge-join :branches_commits [:=
+                                                    :commits.id
                                                     :branches_commits.commit_id])
-                  (hh/merge-where [:or 
+                  (hh/merge-where [:or
                                    [:in :id git-refs]
                                    [:in :tree_id git-refs]])
                   (hc/format))]
@@ -39,8 +39,8 @@
   (let [query (-> (hh/select :commits.tree_id :commits.committer_date)
                   (hh/from :commits)
                   (hh/merge-where [:in :commits.id commit-ids])
-                  (hh/merge-join :branches_commits [:= 
-                                                    :commits.id 
+                  (hh/merge-join :branches_commits [:=
+                                                    :commits.id
                                                     :branches_commits.commit_id])
                   (hh/limit 1)
                   (hh/order-by [:commits.committer_date :desc])
@@ -53,8 +53,8 @@
 (defn- get-commit-refs-for-submodule [commit-ids path]
   (let [query (-> (hh/select :submodules.submodule_commit_id)
                   (hh/from  :submodules)
-                  (hh/merge-join :branches_commits [:= 
-                                                    :submodules.submodule_commit_id  
+                  (hh/merge-join :branches_commits [:=
+                                                    :submodules.submodule_commit_id
                                                     :branches_commits.commit_id])
                   (hh/merge-where [:in :submodules.commit_id commit-ids])
                   (hh/merge-where [:= :submodules.path path])
@@ -69,7 +69,7 @@
            paths paths]
       (if-let [path (first paths)]
         (recur (get-commit-refs-for-submodule commit-ids path) (rest paths))
-        (resolve-tree-id-for-commit-ids commit-ids))))) 
+        (resolve-tree-id-for-commit-ids commit-ids)))))
 
 
 ;##############################################################################
@@ -79,8 +79,8 @@
   (assert path)
   (let [content (repository/get-path-content git-ref-id path)]
     (if-not (map? content)
-      (throw (IllegalStateException. 
-               (str "Only maps can be included. Given " 
+      (throw (IllegalStateException.
+               (str "Only maps can be included. Given "
                     (type content))))
       content)))
 
@@ -88,19 +88,19 @@
 ;##############################################################################
 
 (defn format-include-spec [include-spec]
-  (cond 
+  (cond
     (= (type include-spec) java.lang.String) {:path include-spec
                                               :submodule []}
     (map? include-spec) {:submodule (or (:submodule include-spec) [])
-                         :path (or (:path include-spec) 
-                                   (throw (IllegalStateException. 
+                         :path (or (:path include-spec)
+                                   (throw (IllegalStateException.
                                             (str "Can not determine :path for include-spec: "
                                                  include-spec))))}
-    :else (throw (IllegalStateException. (str "include-spec must be either a map or string, is " 
+    :else (throw (IllegalStateException. (str "include-spec must be either a map or string, is "
                                               (type include-spec))))))
 
 (defn- format-include-specs [include-specs]
-  (cond 
+  (cond
     (= (type include-specs) java.lang.String) [(format-include-spec include-specs)]
     (coll? include-specs) (map format-include-spec include-specs)))
 
@@ -109,7 +109,7 @@
 
 (declare include)
 (defn- get-inclusion [git-ref-id include-spec]
-  (let [submodule-ref (resolve-submodule-git-ref [git-ref-id] 
+  (let [submodule-ref (resolve-submodule-git-ref [git-ref-id]
                                                  (or (:submodule include-spec) []))
         content (get-include-content-for-path submodule-ref (:path include-spec))]
     (include submodule-ref content)))
@@ -125,7 +125,7 @@
 (defn include-map [git-ref-id spec]
   (if-let [include-specs (:_cider-ci_include spec)]
     (let [included (get-inclusions git-ref-id include-specs)]
-      (deep-merge 
+      (deep-merge
         (dissoc spec :_cider-ci_include)
         included))
     (->> spec
@@ -134,14 +134,14 @@
 
 (defn include [git-ref-id spec]
   (catcher/wrap-with-log-warn
-    (cond 
+    (cond
       (map? spec) (->> spec
                        (include-map git-ref-id)
                        (#(if (:_cider-ci_generate-tasks %)
                            (task-generation/generate-tasks git-ref-id %)
                            %)))
       (coll? spec) (->> spec
-                        (map #(if (coll? %) 
+                        (map #(if (coll? %)
                                 (include git-ref-id %)
                                 %)))
       :else spec)))

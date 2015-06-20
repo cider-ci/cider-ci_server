@@ -14,15 +14,15 @@
                  [org.clojure/core.memoize "0.5.7"]
                  [org.clojure/tools.nrepl "0.2.10"]
                  ]
-  :profiles {:dev 
+  :profiles {:dev
              {:dependencies [[midje "1.6.3"]]
               :plugins [[lein-midje "3.1.1"]]
               :repositories [["tmp" {:url "http://maven-repo-tmp.drtom.ch" :snapshots false}]]
               :resource-paths ["../config" "./config" "./resources"]}
              :production
-             {:resource-paths ["/etc/cider-ci" "../config" "./config" "./resources"]}} 
-  :aot [cider-ci.builder.main] 
-  :main cider-ci.builder.main 
+             {:resource-paths ["/etc/cider-ci" "../config" "./config" "./resources"]}}
+  :aot [cider-ci.builder.main]
+  :main cider-ci.builder.main
   :jvm-opts ["-Xmx128m"]
   :repl-options {:timeout  120000}
   ;:source-paths ["src" "./tmp/logbug/src"]

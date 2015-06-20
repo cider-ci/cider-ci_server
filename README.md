@@ -1,6 +1,6 @@
 # Cider-CI Builder
 
-Part of [Cider-CI](https://github.com/cider-ci/cider-ci). This component 
+Part of [Cider-CI](https://github.com/cider-ci/cider-ci). This component
 manages job (chaining etc.) and builds tasks from job specs.
 
 ## License

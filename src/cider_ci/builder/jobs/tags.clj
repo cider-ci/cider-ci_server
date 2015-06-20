@@ -3,7 +3,7 @@
 ; See the "LICENSE.txt" file provided with this software.
 
 (ns cider-ci.builder.jobs.tags
-  (:require 
+  (:require
     [cider-ci.builder.util :as util]
     [drtom.logbug.debug :as debug]
     [cider-ci.utils.rdbms :as rdbms]
@@ -14,7 +14,7 @@
     ))
 
 (defn get-or-insert-tag [tag]
-  (or (first (jdbc/query 
+  (or (first (jdbc/query
                (rdbms/get-ds)
                ["SELECT * FROM tags WHERE tag = ? " tag]))
       (first (jdbc/insert!
@@ -22,17 +22,17 @@
                {:tag tag}))))
 
 (defn add-exectutions-tags-link [job-params tag-params]
-  (or (first (jdbc/query 
+  (or (first (jdbc/query
                (rdbms/get-ds)
-               ["SELECT * FROM jobs_tags 
-                WHERE job_id = ? 
+               ["SELECT * FROM jobs_tags
+                WHERE job_id = ?
                 AND tag_id = ? " (:id job-params ) (:id tag-params)]))
       (first (jdbc/insert!
                (rdbms/get-ds) :jobs_tags
                {:job_id (:id job-params) :tag_id (:id tag-params)}))))
 
 (defn get-branch-tags [params]
-  (->> (jdbc/query 
+  (->> (jdbc/query
          (rdbms/get-ds)
          ["SELECT name FROM branches
           JOIN commits ON commits.id = branches.current_commit_id
@@ -40,7 +40,7 @@
        (map :name)))
 
 (defn get-repository-tags [params]
-  (->> (jdbc/query 
+  (->> (jdbc/query
          (rdbms/get-ds)
          ["SELECT repositories.name FROM repositories
           JOIN branches ON branches.repository_id = repositories.id
@@ -49,7 +49,7 @@
        (map :name)))
 
 (defn get-tags [params]
-  (concat 
+  (concat
     (get-branch-tags params)
     (get-repository-tags params)
     ))
