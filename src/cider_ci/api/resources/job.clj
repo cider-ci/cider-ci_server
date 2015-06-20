@@ -4,7 +4,7 @@
 
 
 (ns cider-ci.api.resources.job
-  (:require 
+  (:require
     [drtom.logbug.debug :as debug]
     [cider-ci.utils.http-server :as http-server]
     [cider-ci.utils.rdbms :as rdbms]
@@ -29,8 +29,8 @@
 
 (defn get-job-stats [request]
   (let [id (-> request :params :id)
-        data (first (jdbc/query 
-                      (rdbms/get-ds) ["SELECT * from job_stats 
+        data (first (jdbc/query
+                      (rdbms/get-ds) ["SELECT * from job_stats
                                       WHERE job_id = ?" id]))]
     {:data data}))
 
@@ -38,25 +38,25 @@
 ;### get-job ##############################################################
 
 (defn query-exeuction [id]
-  (first (jdbc/query (rdbms/get-ds) 
+  (first (jdbc/query (rdbms/get-ds)
                      ["SELECT * from jobs
                       WHERE id = ?" id])))
 
 (defn job-data [params]
   (let [id (:id params)
         job (query-exeuction id)]
-    (dissoc job 
+    (dissoc job
             :expanded_specification_id
             :specification_id
             )))
 
-(defn get-job [request] 
+(defn get-job [request]
   {:body (job-data (:params request))
    })
 
 ;### routes #####################################################################
 
-(def routes 
+(def routes
   (cpj/routes
     (cpj/GET "/jobs/:id" request (get-job request))
     (cpj/GET "/jobs/:id/stats" request (get-job-stats request))))

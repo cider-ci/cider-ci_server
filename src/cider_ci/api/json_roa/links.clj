@@ -25,34 +25,34 @@
   ([prefix]
    {:name "Root"
     :href (str prefix "/")
-    :relations 
+    :relations
     {:api-doc
      {:name "API Documentation for Cider-CI"
-      :href (str (api-docs-path) "#cider-ci-api-documentation") 
+      :href (str (api-docs-path) "#cider-ci-api-documentation")
       }}}))
 
 
 ;### next link #################################################################
 
 (defn next-link [url-path query-params]
-  {:next {:href (str url-path "?" 
-                     (http/build-url-query-string 
-                       (pagination/next-page-query-query-params 
+  {:next {:href (str url-path "?"
+                     (http/build-url-query-string
+                       (pagination/next-page-query-query-params
                          query-params)))}})
 
 (defn next-rel [link-builder query-params]
   {:next {:href
-          (link-builder (pagination/next-page-query-query-params 
+          (link-builder (pagination/next-page-query-query-params
                           query-params))}})
 
 
 ;### jobs #################################################################
 
-(defn jobs-path 
+(defn jobs-path
   ([prefix]
    (jobs-path prefix {}))
   ([prefix query-params]
-   (str prefix "/jobs/" 
+   (str prefix "/jobs/"
         (if (empty? query-params)
           "{?repository,branch,branchdescendants,state,treeid}"
           (str "?" (http/build-url-query-string query-params))
@@ -65,8 +65,8 @@
    {:name "Jobs"
     :href (jobs-path prefix query-params)
     :relations
-    {:api-doc 
-     {:name "API Documentation Jobs" 
+    {:api-doc
+     {:name "API Documentation Jobs"
       :href (str (api-docs-path) "#jobs")}}}))
 
 
@@ -79,8 +79,8 @@
    {:name "Job"
     :href (str prefix "/jobs/" id)
     :relations
-    {:api-doc 
-     {:name "API Documentation Job" 
+    {:api-doc
+     {:name "API Documentation Job"
       :href (str (api-docs-path) "#job")}
      }}))
 
@@ -97,14 +97,14 @@
    {:name "Task"
     :href (task-path prefix id)
     :relations
-    {:api-doc 
-     {:name "API Documentation Task" 
+    {:api-doc
+     {:name "API Documentation Task"
       :href (str (api-docs-path) "#task")}}}))
 
 
 ;### tasks #################################################################
 
-(defn tasks-path 
+(defn tasks-path
   ([prefix job-id]
    (tasks-path prefix job-id {}))
   ([prefix job-id query-params]
@@ -120,8 +120,8 @@
    {:name "Tasks"
     :href (tasks-path prefix job-id query-params)
     :relations
-    {:api-doc 
-     {:name "API Documentation Task" 
+    {:api-doc
+     {:name "API Documentation Task"
       :href (str (api-docs-path) "#tasks")}}}))
 
 
@@ -137,14 +137,14 @@
    {:name "Trial"
     :href (trial-path prefix id)
     :relations
-    {:api-doc 
-     {:name "API Documentation Trial" 
+    {:api-doc
+     {:name "API Documentation Trial"
       :href (str (api-docs-path) "#trial")}}}))
 
 
 ;### trials #################################################################
 
-(defn trials-path 
+(defn trials-path
   ([prefix task-id]
    (trials-path prefix task-id {}))
   ([prefix task-id query-params]
@@ -160,7 +160,7 @@
    {:name "Trials"
     :href (trials-path prefix task-id query-params)
     :relations
-    {:api-doc 
+    {:api-doc
      {:name "API Documentation Trials"
       :href (str (api-docs-path) "#trials")}}}))
 
@@ -171,14 +171,14 @@
   ([prefix attachment-id ]
    (str prefix "/trial-attachments/"  attachment-id)))
 
-(defn trial-attachment 
+(defn trial-attachment
   ([prefix ]
    (trial-attachment prefix "{id}"))
   ([prefix attachment-id]
    {:name "Trial-attachment"
     :href (trial-attachment-path prefix attachment-id)
     :relations
-    {:api-doc 
+    {:api-doc
      {:name "Trial-Attachments API Documentation"
       :href (str (api-docs-path) "#trial-attachments")}}
     }))
@@ -195,7 +195,7 @@
           "{?pathsegment}"
           (str "?" (http/build-url-query-string query-params))))))
 
-(defn trial-attachments 
+(defn trial-attachments
   ([prefix trial-id]
    (trial-attachments prefix trial-id {}))
   ([prefix trial-id query-params]
@@ -210,14 +210,14 @@
   ([prefix attachment-id]
    (str prefix "/tree-attachments/"  attachment-id)))
 
-(defn tree-attachment 
+(defn tree-attachment
   ([prefix ]
    (tree-attachment prefix "{attachment_id}"))
   ([prefix attachment-id]
    {:name "Tree-Attachment"
     :href (tree-attachment-path prefix attachment-id)
     :relations
-    {:api-doc 
+    {:api-doc
      {:name "Documentation Tree-Attachments"
       :href (str (api-docs-path) "#tree-attachments")}}
     }))
@@ -233,7 +233,7 @@
         (when-not  (empty? query-params)
           (str "?" (http/build-url-query-string query-params))))))
 
-(defn tree-attachments 
+(defn tree-attachments
   ([prefix job-id]
    (tree-attachments prefix job-id {}))
   ([prefix job-id query-params]
@@ -249,9 +249,9 @@
   {:name "Tree-Attachment Data"
    ; :href (str storage-service-prefix "/tree-attachments" path)
    :methods {:get {}
-             :delete {} 
+             :delete {}
              :put {} }
-   :relations {:api-doc 
+   :relations {:api-doc
                {:name "Tree-Attachment Storage Resources Documentation"
                 :href (str (storage-api-docs-path) "#tree-attachments")}}})
 
@@ -262,7 +262,7 @@
          ]
      (assoc-in (tree-attachment-data-stream-val context)
                [:href]
-               (str storage-service-prefix 
+               (str storage-service-prefix
                     "/tree-attachments/" tree-id "/" path-wo-slash)))))
 
 

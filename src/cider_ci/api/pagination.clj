@@ -4,7 +4,7 @@
 
 
 (ns cider-ci.api.pagination
-  (:require 
+  (:require
     [drtom.logbug.debug :as debug]
     [cider-ci.utils.http :as http]
     [clj-logging-config.log4j :as logging-config]
@@ -28,11 +28,11 @@
   (let [off (compute-offset params)]
     (-> query
         (hh/offset off)
-        (hh/limit 10))))  
+        (hh/limit 10))))
 
 (defn next-page-query-query-params [query-params]
   (let [i-page (page-number query-params)]
-    (assoc query-params 
+    (assoc query-params
            :page (+ i-page 1))))
 
 

@@ -3,7 +3,7 @@
 ; See the "LICENSE.txt" file provided with this software.
 
 (ns cider-ci.api.resources.tasks
-  (:require 
+  (:require
     [cider-ci.api.pagination :as pagination]
     [cider-ci.api.util :as util]
     [drtom.logbug.debug :as debug]
@@ -50,15 +50,15 @@
     (logging/debug {:query query})
     (jdbc/query (rdbms/get-ds) query)))
 
-(defn get-tasks [request] 
-  {:body 
+(defn get-tasks [request]
+  {:body
    {:tasks
     (tasks-data (-> request :params :job_id)
                 (-> request :query-params))}})
 
 
 ;### routes #####################################################################
-(def routes 
+(def routes
   (cpj/routes
     (cpj/GET "/jobs/:job_id/tasks/" request (get-tasks request))
     ))

@@ -3,7 +3,7 @@
 ; See the "LICENSE.txt" file provided with this software.
 
 (ns cider-ci.api.resources.task
-  (:require 
+  (:require
     [cider-ci.api.util :as util]
     [drtom.logbug.debug :as debug]
     [cider-ci.utils.http-server :as http-server]
@@ -33,7 +33,7 @@
 
 ;### routes #####################################################################
 
-(def routes 
+(def routes
   (cpj/routes
     (cpj/GET "/tasks/:id" request (get-task request))
     ))

@@ -8,7 +8,7 @@
            [clj-logging-config.log4j :as logging-config]
            [clojure.tools.logging :as logging]
            [drtom.logbug.debug :as debug]
-           )) 
+           ))
 
 ;(-> (select ":%lower(branches.name))" (from :foo) sql/format))
 
@@ -18,13 +18,13 @@
              :from [:foo]
              :where [:= :%lower.branch.name "?name"]})
 
-(def m2 (-> 
+(def m2 (->
           (select :jobs.id :jobs.created_at)
           (modifiers :distinct)
           (sql/format)
           ))
 
-(def base-query 
+(def base-query
   (->
     (select :jobs.id :jobs.created_at)
     (modifiers :distinct)
@@ -36,7 +36,7 @@
 
 
 (def double-join
-  (-> 
+  (->
     (join :t1 [:= :t0.x :t1.x])
     (merge-join :t1 [:= :t0.x :t1.x])
     (merge-join :t3 [:= :t3.x :t1.x])
@@ -55,9 +55,9 @@
 (reduce #(let [[k v] %2] (conj %1 k v)) []
   (distinct (partition 2 (:join double-join))))
 
-  
+
 (conj [] :x)
-        
+
 
 (into {} [[:a 1]])
 

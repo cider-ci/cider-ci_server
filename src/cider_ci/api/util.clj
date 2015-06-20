@@ -3,7 +3,7 @@
 ; See the "LICENSE.txt" file provided with this software.
 
 (ns cider-ci.api.util
-  (:require 
+  (:require
     [drtom.logbug.debug :as debug]
     [clj-logging-config.log4j :as logging-config]
     [clojure.tools.logging :as logging]
@@ -14,7 +14,7 @@
   (into {} (sort m)))
 
 (defn sort-map-recursive [m]
-  (->> m 
+  (->> m
        (clojure.walk/prewalk
          (fn [el]
            (if (map? el)

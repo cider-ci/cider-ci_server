@@ -13,14 +13,14 @@
   (let [context (:context request)]
     {:name "Root"
      :self-relation (json-roa.links/root context)
-     :relations 
+     :relations
      {:jobs (json-roa.links/jobs context)
       :job (json-roa.links/job context)
       :task (json-roa.links/task context)
       :trial (json-roa.links/trial context)
-      :tree-attachment-data-stream (json-roa.links/tree-attachment-data-stream 
+      :tree-attachment-data-stream (json-roa.links/tree-attachment-data-stream
                                      request "{treeid}" "{path}")
-      } 
+      }
      }))
 
 

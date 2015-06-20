@@ -18,16 +18,16 @@
         query-params (:query-prarams request)
         attachment-id (-> request :route-params :attachment_id)
         tree-id (->> response :body :path
-                     (re-find #"^\/(\w+)\/") 
+                     (re-find #"^\/(\w+)\/")
                      second)
         path-wo-slash (nth (->> response :body :path
-                                (re-find #"^\/(\w+)\/(.*)")) 
+                                (re-find #"^\/(\w+)\/(.*)"))
                            2)
         ]
     {:name "Tree-Attachment"
      :self-relation (links/tree-attachment context attachment-id)
      :relations
-     {:tree-attachment-data-stream (links/tree-attachment-data-stream 
+     {:tree-attachment-data-stream (links/tree-attachment-data-stream
                                      request tree-id path-wo-slash)
       :jobs (links/jobs context {:tree-id tree-id})
       }}))

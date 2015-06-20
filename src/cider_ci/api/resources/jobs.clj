@@ -3,7 +3,7 @@
 ; See the "LICENSE.txt" file provided with this software.
 
 (ns cider-ci.api.resources.jobs
-  (:require 
+  (:require
     [cider-ci.api.pagination :as pagination]
     [drtom.logbug.debug :as debug]
     [cider-ci.utils.http :as http]
@@ -22,8 +22,8 @@
     [ring.middleware.cookies :as cookies]
     [ring.middleware.json]
     [ring.util.response :as response]
-    ) 
-  (:use 
+    )
+  (:use
     [clojure.walk :only [keywordize-keys]]
     ))
 
@@ -109,7 +109,7 @@
   honeymap)
 
 (defn index [query-params]
-  (let [query (-> (build-jobs-base-query) 
+  (let [query (-> (build-jobs-base-query)
                   log-debug-honeymap
                   (pagination/add-offset-for-honeysql query-params)
                   log-debug-honeymap
@@ -130,7 +130,7 @@
         _ (logging/debug "GET /jobs " {:query query})]
     (jdbc/query (rdbms/get-ds) query)))
 
-(defn get-index [request] 
+(defn get-index [request]
   {:body {:jobs (index (:query-params request))}})
 
 ;### routes #####################################################################

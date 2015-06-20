@@ -3,7 +3,7 @@
 ; See the "LICENSE.txt" file provided with this software.
 
 (ns cider-ci.api.resources.trial-attachments
-  (:require 
+  (:require
     [cider-ci.api.pagination :as pagination]
     [cider-ci.api.util :as util]
     [drtom.logbug.debug :as debug]
@@ -46,13 +46,13 @@
 (defn get-attachments [request]
   (let [trial-id (-> request :route-params :trial_id)
         query-params (-> request :query-params)]
-    {:body 
+    {:body
      {:trial_attachments
       (attachments-data trial-id query-params)}}))
 
 
 ;### routes #####################################################################
-(def routes 
+(def routes
   (cpj/routes
     (cpj/GET "/trial/:trial_id/trial-attachments/" request (get-attachments request))
     ))

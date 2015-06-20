@@ -4,7 +4,7 @@
 
 
 (ns cider-ci.api.resources
-  (:require 
+  (:require
     [cider-ci.api.json-roa :as json-roa]
     [cider-ci.api.resources.job :as job]
     [cider-ci.api.resources.jobs :as jobs]
@@ -62,8 +62,8 @@
 ;### init #####################################################################
 
 
-(def routes 
-  (cpj/routes 
+(def routes
+  (cpj/routes
     (cpj/GET "/" request (resources.root/get request))
 
     (cpj/ANY "/jobs/" [] jobs/routes)
@@ -87,7 +87,7 @@
 
 (defn build-routes-handler []
   (catcher/wrap-with-log-warn
-    (-> routes 
+    (-> routes
         (wrap-handler-with-logging 'cider-ci.api.resources)
         (json-roa.ring-middleware.request/wrap json-roa/handler)
         (wrap-handler-with-logging 'cider-ci.api.resources)

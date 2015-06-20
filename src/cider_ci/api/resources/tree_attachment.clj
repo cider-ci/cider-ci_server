@@ -3,7 +3,7 @@
 ; See the "LICENSE.txt" file provided with this software.
 
 (ns cider-ci.api.resources.tree-attachment
-  (:require 
+  (:require
     [cider-ci.api.util :as util]
     [drtom.logbug.debug :as debug]
     [cider-ci.utils.http :as http]
@@ -20,8 +20,8 @@
 ;### get-attachment #############################################################
 
 (defn query-attachment [id]
-  (first (jdbc/query 
-           (rdbms/get-ds) 
+  (first (jdbc/query
+           (rdbms/get-ds)
            ["SELECT * from tree_attachments WHERE id = ?" id])))
 
 (defn get-attachment [request]
@@ -32,7 +32,7 @@
 
 
 ;### routes #####################################################################
-(def routes 
+(def routes
   (cpj/routes
     (cpj/GET "/tree-attachments/:id" request (get-attachment request))
     ))

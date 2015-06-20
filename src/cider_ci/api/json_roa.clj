@@ -4,7 +4,7 @@
 
 
 (ns cider-ci.api.json-roa
-  (:require 
+  (:require
     [cider-ci.api.json-roa.job :as json-roa.job]
     [cider-ci.api.json-roa.jobs :as json-roa.jobs]
     [cider-ci.api.json-roa.links :as json-roa.links]
@@ -32,14 +32,14 @@
 
 ;### Amend response ###########################################################
 
-(def about 
+(def about
   {:name "JSON-ROA"
    :description "A JSON extension for resource and relation oriented architectures providing explorable APIs for humans and machines."
    :relations{:json-roa_homepage
               {:ref "http://json-roa.github.io/"
                :name "JSON-ROA Homepage"}}})
 
- 
+
 (defn amend-json-roa [request json-roa-data]
   (-> {}
       (assoc-in [:_json-roa] json-roa-data)
@@ -70,13 +70,13 @@
 
 (defn handler [request json-response]
   (let [json-roa-handler (build-routes-handler json-response)
-        json-roa-data (select-keys (json-roa-handler request) [:self-relation :relations :collection :name]) 
+        json-roa-data (select-keys (json-roa-handler request) [:self-relation :relations :collection :name])
         amended-json-roa-data  (amend-json-roa request json-roa-data)]
     (logging/debug 'handler {:json-response json-response :json-roa-data json-roa-data})
-    (update-in json-response 
-               [:body] 
-               (fn [original-body json-road-data] 
-                 (into {} (sort (conj {} original-body json-road-data)))) 
+    (update-in json-response
+               [:body]
+               (fn [original-body json-road-data]
+                 (into {} (sort (conj {} original-body json-road-data))))
                amended-json-roa-data )))
 
 

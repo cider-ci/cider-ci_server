@@ -3,7 +3,7 @@
 ; See the "LICENSE.txt" file provided with this software.
 
 (ns cider-ci.api.resources.trials
-  (:require 
+  (:require
     [cider-ci.api.pagination :as pagination]
     [cider-ci.api.util :as util]
     [drtom.logbug.debug :as debug]
@@ -57,7 +57,7 @@
 
 
 ;### routes #####################################################################
-(def routes 
+(def routes
   (cpj/routes
     (cpj/GET "/tasks/:task_id/trials/" request (get-trials request))
     ))

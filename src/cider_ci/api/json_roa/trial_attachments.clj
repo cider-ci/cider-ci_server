@@ -23,17 +23,17 @@
      {
       :trial (links/trial context trial-id)
       }
-     :collection 
+     :collection
      (conj
-       {:relations (into {} 
-                         (map-indexed 
+       {:relations (into {}
+                         (map-indexed
                            (fn [i id]
                              [(+ 1 i (pagination/compute-offset query-params))
                               (links/trial-attachment context id) ])
                            ids))}
        (when (seq ids)
-         (links/next-link 
-           (links/trial-attachments-path context trial-id) 
+         (links/next-link
+           (links/trial-attachments-path context trial-id)
            query-params)))}))
 
 

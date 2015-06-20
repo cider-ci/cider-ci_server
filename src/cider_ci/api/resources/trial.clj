@@ -3,7 +3,7 @@
 ; See the "LICENSE.txt" file provided with this software.
 
 (ns cider-ci.api.resources.trial
-  (:require 
+  (:require
     [cider-ci.api.util :as util]
     [drtom.logbug.debug :as debug]
     [cider-ci.utils.http-server :as http-server]
@@ -36,7 +36,7 @@
 
 ;### routes #####################################################################
 
-(def routes 
+(def routes
   (cpj/routes
     (cpj/GET "/trial/:id" request (get-trial request))
     ))

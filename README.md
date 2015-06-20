@@ -1,7 +1,7 @@
 # Cider-CI API
 
 
-Part of [Cider-CI](https://github.com/cider-ci/cider-ci). 
+Part of [Cider-CI](https://github.com/cider-ci/cider-ci).
 
 ## License
 

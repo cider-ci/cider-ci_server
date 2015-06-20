@@ -24,8 +24,8 @@
         }
        :collection
        (conj
-         {:relations 
-          (into {} (map-indexed 
+         {:relations
+          (into {} (map-indexed
                      (fn [i id]
                        [(+ 1 i (pagination/compute-offset query-params))
                         (links/job context id)])

@@ -3,7 +3,7 @@
 ; See the "LICENSE.txt" file provided with this software.
 
 (ns cider-ci.api.resources.root
-  (:require 
+  (:require
     [drtom.logbug.debug :as debug]
     [cider-ci.utils.http-server :as http-server]
     [clj-logging-config.log4j :as logging-config]
@@ -17,7 +17,7 @@
     [ring.util.response :as response]
     )
   (:refer-clojure :exclude [get]))
-    
+
 
 (defn response-data [request]
   {:message "Welcome to the Cider-CI API!"

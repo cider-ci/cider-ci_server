@@ -18,10 +18,10 @@
         query-params (:query-prarams request)
         job-id (-> request :route-params :id)
         ids (->> response :body :tree_attachments (map :id))
-        tree-id (:tree_id 
-                  (first (jdbc/query 
-                           (rdbms/get-ds) 
-                           ["SELECT tree_id FROM jobs WHERE id = ?" 
+        tree-id (:tree_id
+                  (first (jdbc/query
+                           (rdbms/get-ds)
+                           ["SELECT tree_id FROM jobs WHERE id = ?"
                             job-id])))]
     {:name "Tree-Attachments"
      :self-relation (links/tree-attachments context job-id)
@@ -29,19 +29,19 @@
      {:job (links/job context job-id)
       :tree-attachment-data-stream (links/tree-attachment-data-stream request tree-id "{path}")
       }
-     :collection 
+     :collection
      (conj
-       {:relations 
-        (into {} 
-              (map-indexed 
+       {:relations
+        (into {}
+              (map-indexed
                 (fn [i id]
                   [(+ 1 i (pagination/compute-offset query-params))
                    (links/tree-attachment context id)
                    ])
                 ids))}
        (when (seq ids)
-         (links/next-link 
-           (links/tree-attachments-path context job-id) 
+         (links/next-link
+           (links/tree-attachments-path context job-id)
            query-params)))}))
 
 

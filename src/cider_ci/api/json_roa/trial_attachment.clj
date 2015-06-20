@@ -19,7 +19,7 @@
     {:name "Trial-Attachment Data"
      :href (str storage-service-prefix "/trial-attachments" path)
      :relations
-     {:api-doc 
+     {:api-doc
       {:name "Trial-Attachment Storage Resources Documentation"
        :href (str (links/storage-api-docs-path) "#trial-attachments")}}
      }))
@@ -28,10 +28,10 @@
   (let [context (:context request)
         query-params (:query-prarams request)
         attachment-id (-> request :route-params :attachment_id)
-        trial-id (->> response :body  :path 
-                      (re-find #"^\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})") 
+        trial-id (->> response :body  :path
+                      (re-find #"^\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})")
                       second)]
-    {:name "Trial-Attachment" 
+    {:name "Trial-Attachment"
      :self-relation (links/trial-attachment context attachment-id)
      :relations
      {:trial-attachment-data-stream (data-stream-link request response)

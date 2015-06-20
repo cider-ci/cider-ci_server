@@ -3,7 +3,7 @@
 ; See the "LICENSE.txt" file provided with this software.
 
 (ns cider-ci.api.web
-  (:require 
+  (:require
     [cider-ci.api.resources :as resources]
     [cider-ci.auth.core :as auth]
     [cider-ci.auth.http-basic :as http-basic]
@@ -29,12 +29,12 @@
     [ring.middleware.resource :as resource]
     [ring.util.response :as response]
     )
-  (:use 
+  (:use
     [clojure.walk :only [keywordize-keys]]
     ))
 
 
-;##### static resources ####################################################### 
+;##### static resources #######################################################
 
 (defn static-resources-handler [request]
   (let [context (:context request)
@@ -50,7 +50,7 @@
     (cpj/ANY "/api-browser*" request static-resources-handler)
     (cpj/ANY "*" request default-handler)))
 
-;##### status dispatch ######################################################## 
+;##### status dispatch ########################################################
 
 (defn status-handler [request]
   (let [stati {:rdbms (rdbms/check-connection)
@@ -70,7 +70,7 @@
     (cpj/ANY "*" request default-handler)))
 
 
-;##### routes and wrappers #################################################### 
+;##### routes and wrappers ####################################################
 
 (defn build-main-handler [context]
   ( -> (resources/build-routes-handler)

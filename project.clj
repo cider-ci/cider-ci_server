@@ -22,13 +22,13 @@
                  ]
   :source-paths ["src"]
   :test-paths ["test"]
-  :profiles {:dev 
+  :profiles {:dev
              {:dependencies [[midje "1.6.3"]]
               :plugins [[lein-midje "3.1.1"]]
               :repositories [["tmp" {:url "http://maven-repo-tmp.drtom.ch" :snapshots false}]]} }
   :resource-paths ["./config" "../config" "./resources"]
-  :aot [cider-ci.api.main] 
-  :main cider-ci.api.main 
+  :aot [cider-ci.api.main]
+  :main cider-ci.api.main
   :jvm-opts ["-Xmx128m"]
   :repl-options {:timeout  120000}
   )

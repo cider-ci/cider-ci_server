@@ -3,7 +3,7 @@
 ; See the "LICENSE.txt" file provided with this software.
 
 (ns cider-ci.api.resources.tree-attachments
-  (:require 
+  (:require
     [cider-ci.api.pagination :as pagination]
     [cider-ci.api.util :as util]
     [drtom.logbug.debug :as debug]
@@ -34,10 +34,10 @@
     query))
 
 (defn attachments-data [job-id query-params]
-  (let [ tree-id (:tree_id 
-                   (first (jdbc/query 
-                            (rdbms/get-ds) 
-                            ["SELECT tree_id FROM jobs WHERE id = ?" 
+  (let [ tree-id (:tree_id
+                   (first (jdbc/query
+                            (rdbms/get-ds)
+                            ["SELECT tree_id FROM jobs WHERE id = ?"
                              job-id])))
         query (-> (build-attachments-base-query tree-id)
                   (filter-by-path-segment tree-id query-params)
@@ -50,12 +50,12 @@
 (defn get-attachments [request]
   (let [job-id (-> request :route-params :job_id)
         query-params (-> request :query-params)]
-    {:body 
+    {:body
      {:tree_attachments
       (attachments-data job-id query-params)}}))
 
 ;### routes #####################################################################
-(def routes 
+(def routes
   (cpj/routes
     (cpj/GET "/jobs/:job_id/tree-attachments/" request (get-attachments request))
     ))
