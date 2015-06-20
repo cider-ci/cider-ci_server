@@ -16,17 +16,17 @@
     ))
 
 
-;#### 
+;####
 
 (defn sweep-scripts []
   (catcher/wrap-with-suppress-and-log-error
-    (jdbc/execute! 
+    (jdbc/execute!
       (rdbms/get-ds)
       [ (str "UPDATE trials SET scripts = '[]'
              WHERE " trial/sql-script-sweep-pending) ])))
 
 (defn sweep-in-dispatch-timeout []
-  (doseq [id (->> (jdbc/query 
+  (doseq [id (->> (jdbc/query
                     (rdbms/get-ds)
                     [ (str "SELECT id FROM trials
                            WHERE " trial/sql-to-be-dispatched
@@ -37,13 +37,13 @@
       )))
 
 (defn sweep-in-terminal-state-timeout []
-  (doseq [id (->> (jdbc/query 
+  (doseq [id (->> (jdbc/query
                     (rdbms/get-ds)
                     [ (str "SELECT id FROM trials
                            WHERE " trial/sql-not-finished
                            " AND " trial/sql-in-terminal-state-timeout)])
                   (map #(:id %)))]
-    (catcher/wrap-with-suppress-and-log-error 
+    (catcher/wrap-with-suppress-and-log-error
       (trial/update {:id id :state "failed" :error "terminal-state timeout"}) ; TODO -> aborted
       )))
 
@@ -51,23 +51,23 @@
 ;#### daemons ##################################################################
 
 
-(daemon/define "scripts-sweeper" 
-  start-scripts-sweeper 
-  stop-scripts-sweeper 
+(daemon/define "scripts-sweeper"
+  start-scripts-sweeper
+  stop-scripts-sweeper
   (* 5 60)
   (logging/debug "scripts-sweeper")
   (sweep-scripts))
 
-(daemon/define "terminal-state-timeout-sweeper" 
-  start-terminal-state-timeout-sweeper 
-  stop-terminal-state-timeout-sweeper 
+(daemon/define "terminal-state-timeout-sweeper"
+  start-terminal-state-timeout-sweeper
+  stop-terminal-state-timeout-sweeper
   1
   (logging/debug "terminal-state-timeout-sweeper")
   (sweep-in-terminal-state-timeout))
 
-(daemon/define "dispatch-timeout-sweeper" 
-  start-dispatch-timeout-sweeper 
-  stop-dispatch-timeout-sweeper 
+(daemon/define "dispatch-timeout-sweeper"
+  start-dispatch-timeout-sweeper
+  stop-dispatch-timeout-sweeper
   1
   (logging/debug "dispatch-timeout-sweeper")
   (sweep-in-dispatch-timeout))

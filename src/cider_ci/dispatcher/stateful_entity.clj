@@ -17,23 +17,23 @@
 
 (defn- assert-existence [tablename id]
   (when-not (first (jdbc/query (rdbms/get-ds)
-                               [(str "SELECT 1 FROM " (name tablename) 
+                               [(str "SELECT 1 FROM " (name tablename)
                                      " WHERE id = ?" ) id]))
-    (throw (IllegalArgumentException. 
+    (throw (IllegalArgumentException.
              (str "The entity does not exist" {:tablename tablename :id id})))))
 
-(defn update-state 
+(defn update-state
   "Updates the state. Returns true if state has changed and false otherwise.
   Asserts existence of the target row if and only if option is given and
-  (:assert-existence options) evaluates to true." 
+  (:assert-existence options) evaluates to true."
 
   ([tablename id state]
    (update-state tablename id state {}))
 
   ([tablename id state options]
    (when (:assert-existence options) (assert-existence tablename id))
-   (->> (jdbc/update! 
-          (rdbms/get-ds) 
+   (->> (jdbc/update!
+          (rdbms/get-ds)
           tablename
           {:state state}
           [(str "id = ? AND state != '" state "'") id])
@@ -43,7 +43,7 @@
 (defn evaluate-and-update [tablename id states]
   (catcher/wrap-with-log-error
     (let [update-to #(update-state tablename id % {:assert-existence true})]
-      (cond 
+      (cond
         (some #{"passed"} states) (update-to "passed")
         (every? #{"aborted"} states) (update-to "aborted")
         (every? #{"failed" "aborted"} states) (update-to "failed")

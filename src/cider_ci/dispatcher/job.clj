@@ -16,21 +16,21 @@
 
 
 (defn- get-task-states [id]
-  (map :state (jdbc/query 
+  (map :state (jdbc/query
                 (rdbms/get-ds)
                 ["SELECT state FROM tasks
                  WHERE job_id = ?" id])))
 
 
 (defn update-state-and-fire-if-changed [job-id new-state]
-  (when (stateful-entity/update-state 
+  (when (stateful-entity/update-state
           :jobs job-id new-state {:assert-existence true})
     (messaging/publish "job.updated" {:id job-id :state new-state})))
-  
+
 (defn evaluate-and-update [job-id]
   (let [ states (get-task-states job-id)
         update-to #(update-state-and-fire-if-changed job-id %)]
-    (cond 
+    (cond
       (every? #{"passed"} states) (update-to "passed")
       (every? #{"aborted"} states) (update-to "aborted")
       (every? #{"aborted" "failed" "passed"} states) (update-to "failed")

@@ -33,30 +33,30 @@
 
 (defn check-trials []
   (doseq [trial (trials-to-be-synced)]
-    (future 
-      (try 
+    (future
+      (try
         (let [executor (get-executor (:executor_id trial))
               url (trial-request-url executor trial)
               response (http/get
                          url
                          {:insecure? true
                           :accept :json
-                          :socket-timeout 3000 
+                          :socket-timeout 3000
                           :conn-timeout 3000
                           :basic-auth ["dispatcher" (executor-entity/http-basic-password executor)]})]
           ;TODO maybe implement some logic that considers the states 'success' and 'failed'
-          ; maybe after we move the API from TB to IM 
+          ; maybe after we move the API from TB to IM
           (logging/warn ["HANDLING TO BE IMPLEMENTED" check-trials response]))
-        (catch Exception e 
+        (catch Exception e
           (logging/warn e)
-          (let [trial-update {:id (:id trial) 
-                              :state "failed" 
+          (let [trial-update {:id (:id trial)
+                              :state "failed"
                               :error "The trial was lost on the executor."}]
             (trial-entity/update trial-update)))))))
 
 
 ;#### service #################################################################
-(daemon/define "check-trials" 
+(daemon/define "check-trials"
   start-check-trials
   stop-check-trials
   60

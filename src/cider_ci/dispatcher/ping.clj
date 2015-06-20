@@ -17,20 +17,20 @@
     ))
 
 
-(defn- update-when-changed [executor data] 
+(defn- update-when-changed [executor data]
 
   (when-not (= (sort (:traits executor)) (sort (:traits data)))
-    (jdbc/update! 
+    (jdbc/update!
       (rdbms/get-ds)
-      :executors 
+      :executors
       {:traits (sort (:traits data))}
       ["id = ?" (:id executor)]))
 
   (when-let [max-load (:max_load data)]
     (when-not (= (:max_load executor) max-load)
-      (jdbc/update! 
+      (jdbc/update!
         (rdbms/get-ds)
-        :executors 
+        :executors
         {:max_load max-load}
         ["id = ?" (:id executor)])))
 
@@ -38,9 +38,9 @@
 
 
 (defn- update-last-ping-at [executor]
-  (-> 
+  (->
     (jdbc/execute! (rdbms/get-ds)
-                   ["UPDATE executors SET last_ping_at = now() 
+                   ["UPDATE executors SET last_ping_at = now()
                     WHERE executors.id = ?" (:id executor)])
     first
     (> 0)))

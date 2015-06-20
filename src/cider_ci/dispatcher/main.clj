@@ -3,7 +3,7 @@
 ; See the "LICENSE.txt" file provided with this software.
 
 (ns cider-ci.dispatcher.main
-  (:require 
+  (:require
     [cider-ci.dispatcher.dispatch :as dispatch]
     [cider-ci.dispatcher.ping :as ping]
     [cider-ci.dispatcher.sweep :as sweep]
@@ -36,6 +36,6 @@
       (task/initialize)
       (sync-trials/initialize conf)
       (web/initialize conf)
-      (dispatch/initialize) 
+      (dispatch/initialize)
       (sweep/initialize))))
 

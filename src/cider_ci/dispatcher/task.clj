@@ -21,11 +21,11 @@
 (defonce terminal-states #{"aborted" "failed" "passed"})
 
 (defn get-task [id]
-  (first (jdbc/query (rdbms/get-ds) 
+  (first (jdbc/query (rdbms/get-ds)
                                 ["SELECT * FROM tasks
                                  WHERE id = ?" id])))
 (defn get-task-spec [task-id]
-  (let [ task_specifications (jdbc/query (rdbms/get-ds) 
+  (let [ task_specifications (jdbc/query (rdbms/get-ds)
                                 ["SELECT task_specifications.data FROM task_specifications
                                  JOIN tasks ON tasks.task_specification_id = task_specifications.id
                                  WHERE tasks.id = ?" task-id])
@@ -34,9 +34,9 @@
 
 (defn- get-trial-states [task]
   (let [id (:id task)]
-    (map :state 
-         (jdbc/query (rdbms/get-ds) 
-                     ["SELECT state FROM trials 
+    (map :state
+         (jdbc/query (rdbms/get-ds)
+                     ["SELECT state FROM trials
                       WHERE task_id = ?" id]))))
 
 
@@ -54,17 +54,17 @@
 (defn- create-trials [task]
   (let [id (:id task)
         spec (get-task-spec id)
-        states (get-trial-states task) 
+        states (get-trial-states task)
         finished-count (->> states (filter #(terminal-states %)) count)
         in-progress-count (- (count states) finished-count)
         create-new-trials-count (min (- (or (:eager-trials spec) 1) in-progress-count)
                                      (- (or (:max-auto-trials spec) 2) (count states)))
         _range (range 0 create-new-trials-count)
         ]
-    (logging/debug "CREATE-TRIALS" 
-                   {:id id :spec spec :states states 
+    (logging/debug "CREATE-TRIALS"
+                   {:id id :spec spec :states states
                     :finished-count finished-count
-                    :in-progress-count in-progress-count 
+                    :in-progress-count in-progress-count
                     :create-new-trials-count create-new-trials-count
                     :_range _range
                     })
@@ -81,10 +81,10 @@
   (catcher/wrap-with-log-error
     (let [id (:id task)
           states (get-trial-states task)
-          update-to #(stateful-entity/update-state 
+          update-to #(stateful-entity/update-state
                        :tasks id % {:assert-existence true})]
       (result/update-task-and-job-result id)
-      (cond 
+      (cond
         (some #{"passed"} states) (update-to "passed")
         (every? #{"aborted"} states) (update-to "aborted")
         (every? #{"failed" "aborted"} states) (update-to "failed")
@@ -98,8 +98,8 @@
   "Evaluate task, evaluate state of trials and adjust state of task.
   Send \"task.state-changed\" message if state changed.
   Create trials according to max-auto-trials and eager-trials properties
-  if task is not in terminal state. The argument task must be a map 
-  including an :id key" 
+  if task is not in terminal state. The argument task must be a map
+  including an :id key"
   [task]
   (create-trials task)
   (when (evaluate-trials-and-update task)
@@ -113,11 +113,11 @@
 ;### initialize ###############################################################
 (defn initialize []
   (catcher/wrap-with-log-error
-    (messaging/listen "task.create-trials" 
+    (messaging/listen "task.create-trials"
                       #'create-trials
                       "task.create-trials")
 
-    (messaging/listen "task.create-trial" 
+    (messaging/listen "task.create-trial"
                       #'create-trial
                       "task.create-trial"))
   )

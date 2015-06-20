@@ -30,9 +30,9 @@
   (http/build-service-path :repository (str "/" repository-id "/git")))
 
 (defn- git-url [repository-id]
-  ( -> 
-    (jdbc/query 
-      (rdbms/get-ds) 
+  ( ->
+    (jdbc/query
+      (rdbms/get-ds)
       ["SELECT origin_uri FROM repositories WHERE id = ?" repository-id])
     first
     :origin_uri))
@@ -47,15 +47,15 @@
   (http/build-service-path :dispatcher (str "/trials/" trial-id )))
 
 ;### dispatch data ############################################################
-(defn get-branch-and-commit [job-id] 
+(defn get-branch-and-commit [job-id]
   (first (jdbc/query (rdbms/get-ds)
-           ["SELECT branches.name, branches.repository_id, 
+           ["SELECT branches.name, branches.repository_id,
               commits.tree_id as tree_id,
-              commits.id as git_commit_id FROM branches 
-            INNER JOIN branches_commits ON branches.id = branches_commits.branch_id 
-            INNER JOIN commits ON branches_commits.commit_id = commits.id 
+              commits.id as git_commit_id FROM branches
+            INNER JOIN branches_commits ON branches.id = branches_commits.branch_id
+            INNER JOIN commits ON branches_commits.commit_id = commits.id
             INNER JOIN jobs ON commits.tree_id = jobs.tree_id
-            WHERE jobs.id = ? 
+            WHERE jobs.id = ?
             ORDER BY branches.updated_at DESC" job-id])))
 
 (defn add-git-url [data repository-id]
@@ -87,7 +87,7 @@
               :patch_path (patch-path executor trial-id)
               :ports (:ports task-spec)
               :repository_id repository-id
-              :scripts (:scripts trial) 
+              :scripts (:scripts trial)
               :task_id (:task_id trial)
               :tree-attachments (:tree-attachments task-spec)
               :tree-attachments-path (tree-attachments-path tree-id)
@@ -130,12 +130,12 @@
                                              (hh/from [:trials :active_trials])
                                              (hh/merge-join [:tasks :active_tasks] [:= :active_tasks.id :active_trials.task_id])
                                              (hh/merge-where [:in :active_trials.state  ["executing","dispatching"]])
-                                             (hh/merge-where (hc/raw (str "active_tasks.exclusive_global_resources " 
+                                             (hh/merge-where (hc/raw (str "active_tasks.exclusive_global_resources "
                                                                           "&& tasks.exclusive_global_resources"))))])
           (hh/merge-join :tasks [:= :tasks.id :trials.task_id])
           (hh/merge-join :jobs [:= :jobs.id :tasks.job_id])
-          (hh/order-by [:jobs.priority :desc] 
-                       [:jobs.created_at :asc] 
+          (hh/order-by [:jobs.priority :desc]
+                       [:jobs.created_at :asc]
                        [:tasks.priority :desc]
                        [:tasks.created_at :asc]
                        [:trials.created_at :asc])
@@ -145,13 +145,13 @@
       first))
 
 (defn- issues-count [trial]
-  (-> (jdbc/query (rdbms/get-ds) 
+  (-> (jdbc/query (rdbms/get-ds)
                   ["SELECT count(*) FROM trial_issues WHERE trial_id = ? " (:id trial)] )
       first :count))
 
 (defn post-trial [url basic-auth-pw data]
   (catcher/wrap-with-log-warn
-    (http-client/post url 
+    (http-client/post url
                       {:content-type :json
                        :body (json/write-str data)
                        :insecure? true
@@ -159,30 +159,30 @@
 
 (defn dispatch [trial executor]
   (try
-    (trial-utils/wrap-trial-with-issue-and-throw-again 
-      trial  "Error during dispatch" 
+    (trial-utils/wrap-trial-with-issue-and-throw-again
+      trial  "Error during dispatch"
       (let [data (build-dispatch-data trial executor)
             url (str (:base_url executor)  "/execute")
             basic-auth-pw (executor-utils/http-basic-password executor)]
-        (jdbc/update! (rdbms/get-ds) :trials 
-                      {:state "dispatching" :executor_id (:id executor)} 
+        (jdbc/update! (rdbms/get-ds) :trials
+                      {:state "dispatching" :executor_id (:id executor)}
                       ["id = ?" (:id trial)])
         (post-trial url basic-auth-pw data)))
     (catch Exception e
       (let  [row (if (<= 3 (issues-count trial))
-                   {:state "failed" :error "Too many issues, giving up to dispatch this trial " 
+                   {:state "failed" :error "Too many issues, giving up to dispatch this trial "
                     :executor_id nil}
                    {:state "pending" :executor_id nil})]
         (trial-utils/update (conj trial row))
         false))))
 
 (defn dispatch-trials []
-  (when-let [next-trial  (get-next-trial-to-be-dispatched)] 
+  (when-let [next-trial  (get-next-trial-to-be-dispatched)]
     (loop [trial next-trial
            executor (choose-executor-to-dispatch-to trial)]
-      (jdbc/update! (rdbms/get-ds) :trials 
-                    {:state "dispatching" 
-                     :executor_id (:id executor)} 
+      (jdbc/update! (rdbms/get-ds) :trials
+                    {:state "dispatching"
+                     :executor_id (:id executor)}
                     ["id = ?" (:id trial)])
       (future (dispatch trial executor))
       (when-let [trial (get-next-trial-to-be-dispatched)]
@@ -190,9 +190,9 @@
 
 
 ;#### dispatch service ########################################################
-(daemon/define "dispatch-service" 
-  start-dispatch-service 
-  stop-dispatch-service 
+(daemon/define "dispatch-service"
+  start-dispatch-service
+  stop-dispatch-service
   0.2
   (logging/debug "dispatch-service")
   (dispatch-trials))

@@ -21,15 +21,15 @@
 
 ;#### utils ###################################################################
 (defn get-trial [id]
-  (first (jdbc/query (rdbms/get-ds) 
+  (first (jdbc/query (rdbms/get-ds)
                      ["SELECT * FROM trials WHERE id = ?" id])))
 
 
 (defmacro wrap-trial-with-issue-and-throw-again [trial title & body]
-  `(try 
+  `(try
      ~@body
      (catch Exception e#
-       (let [row-data#  {:trial_id (:id ~trial) 
+       (let [row-data#  {:trial_id (:id ~trial)
                          :title ~title
                          :description (str (.getMessage e#) "\n\n"  (thrown/stringify e#))}]
          (logging/warn ~trial row-data# e#)
@@ -46,7 +46,7 @@
 
 (defn compute-update-params [params id]
   (conj {}
-        (select-keys params 
+        (select-keys params
                      [:error :finished_at :result
                       :started_at :state ])
         (when-let [params-scripts (:scripts params)]
@@ -57,7 +57,7 @@
 (defn update [params]
   (catcher/wrap-with-suppress-and-log-warn
     (let [id (:id params)]
-      (try 
+      (try
         (assert id)
         (let [update-params (compute-update-params params id)]
           (jdbc/update! (rdbms/get-ds)
@@ -65,29 +65,29 @@
                         ["id = ?" id]))
         (catch Exception e
           (jdbc/update! (rdbms/get-ds)
-                        :trials 
-                        {:state "failed" 
+                        :trials
+                        {:state "failed"
                          :error (thrown/stringify e)}
                         ["id = ?" id]))
-        (finally 
+        (finally
           (dispatch-update (select-keys params [:id :task_id])))))))
 
 
 ;#### sql helpers #############################################################
 (def sql-script-sweep-pending
   " scripts IS NOT NULL
-  AND trials.created_at < (SELECT now() - 
-  (SELECT max(trial_scripts_retention_time_days) FROM timeout_settings) 
+  AND trials.created_at < (SELECT now() -
+  (SELECT max(trial_scripts_retention_time_days) FROM timeout_settings)
   * interval '1 day') ")
 
-(def sql-in-dispatch-timeout 
-  " trials.created_at < (SELECT now() - 
-  (SELECT max(trial_dispatch_timeout_minutes)  FROM timeout_settings) 
+(def sql-in-dispatch-timeout
+  " trials.created_at < (SELECT now() -
+  (SELECT max(trial_dispatch_timeout_minutes)  FROM timeout_settings)
   * interval '1 Minute') ")
 
-(def sql-in-terminal-state-timeout 
-  " trials.created_at < (SELECT now() - 
-  (SELECT max(trial_end_state_timeout_minutes)  FROM timeout_settings) 
+(def sql-in-terminal-state-timeout
+  " trials.created_at < (SELECT now() -
+  (SELECT max(trial_end_state_timeout_minutes)  FROM timeout_settings)
   * interval '1 Minute') ")
 
 (def sql-not-finished

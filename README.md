@@ -3,7 +3,7 @@
 
 Part of [Cider-CI](https://github.com/cider-ci/cider-ci). This component
 dispatches trials to executors. It receives the results from the executors and
-processes those. 
+processes those.
 
 
 ## License

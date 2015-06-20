@@ -3,7 +3,7 @@
 ; See the "LICENSE.txt" file provided with this software.
 
 (ns cider-ci.dispatcher.web
-  (:require 
+  (:require
     [cider-ci.auth.core :as auth]
     [cider-ci.auth.core]
     [cider-ci.auth.http-basic :as http-basic]
@@ -29,14 +29,14 @@
 
 (defonce conf (atom nil))
 
-;##### update trial ########################################################### 
- 
+;##### update trial ###########################################################
+
 (defn update-trial [id params]
   (trial/update (assoc (clojure.walk/keywordize-keys params)
                        :id id))
   {:status 200})
 
-;##### status dispatch ######################################################## 
+;##### status dispatch ########################################################
 
 (defn status-handler [request]
   (let [stati {:rdbms (rdbms/check-connection)
@@ -66,12 +66,12 @@
 
 
 (defn build-routes [context]
-  (cpj/routes 
+  (cpj/routes
 
     (cpj/GET "/status" request #'status-handler)
 
-    (cpj/PATCH "/trials/:id" 
-               {{id :id} :params data :body} 
+    (cpj/PATCH "/trials/:id"
+               {{id :id} :params data :body}
                (update-trial id data))
 
     (cpj/GET "/" [] "OK")
