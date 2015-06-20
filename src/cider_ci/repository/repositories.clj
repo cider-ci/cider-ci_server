@@ -131,9 +131,8 @@
            (if (fs/exists? path)
              (git-fetch repository path)
              (git-initialize repository))))
-       (catch Exception _
-         (git-initialize repository))))
-
+       (catch Exception e
+         (logging/warn (thrown/stringify e)))))
 
 ;### Submit actions through agent #############################################
 (defn git-update-is-due? [repository git-repository]
