@@ -3,7 +3,7 @@
 ; See the "LICENSE.txt" file provided with this software.
 
 (ns cider-ci.storage.web
-  (:require 
+  (:require
     [cider-ci.auth.core :as auth]
     [cider-ci.auth.http-basic :as http-basic]
     [cider-ci.auth.session :as session]
@@ -26,7 +26,7 @@
     [ring.middleware.cookies :as cookies]
     [ring.util.response]
     )
-  (:use 
+  (:use
     [cider-ci.storage.shared :only [delete-file delete-row delete-file-and-row]]
     ))
 
@@ -35,8 +35,8 @@
 
 
 ;### helpers ##################################################################
-(defn without-prefix 
-  "Returns the reminder of the string s without the prefix p. 
+(defn without-prefix
+  "Returns the reminder of the string s without the prefix p.
   Returns nil if p is not a prefix of s."
   [s p]
   (let [length-s (count s)
@@ -76,7 +76,7 @@
                   out (io/output-stream file)]
         (clojure.java.io/copy in out))
       (jdbc/insert! tx (:db_table store)
-                    {:id id 
+                    {:id id
                      :path (without-prefix url-path (:url_path_prefix store))
                      :content_length (.length file)
                      :content_type (or content-type "application/octet-stream")}))))
@@ -88,7 +88,7 @@
   (if-let [[store url-path] (store-and-url-path request)]
     (do (when-let [row (get-row store url-path)]
           (delete-file-and-row store row))
-      (if (save-file-and-presist-row request store url-path) 
+      (if (save-file-and-presist-row request store url-path)
         {:status 204}
         {:status 500 :body "Save failed"}))
     {:status 422
@@ -96,11 +96,11 @@
 
 (defn get-file [request]
   (logging/debug get-file [request])
-  (catcher/wrap-with-suppress-and-log-warn 
+  (catcher/wrap-with-suppress-and-log-warn
     (when-let [[store url-path] (store-and-url-path request)]
       (when-let [storage-row (get-row store url-path)]
         (let [file-path (str (:file_path store) "/" (:id storage-row))]
-          (-> (ring.util.response/file-response file-path) 
+          (-> (ring.util.response/file-response file-path)
               (ring.util.response/header "X-Sendfile" file-path)
               (ring.util.response/header "content-type" (:content_type storage-row))))))))
 
@@ -114,17 +114,17 @@
      :body "The store for this path could not be found!"}))
 
 (defn build-routes []
-  (-> (cpj/routes 
+  (-> (cpj/routes
         (cpj/GET "*" request
-                 (get-file request)) 
+                 (get-file request))
         (cpj/PUT "*" request
-                 (put-file request)) 
+                 (put-file request))
         (cpj/DELETE "*" request
                     (delete request)))
       routing/wrap-shutdown ))
 
 
-;##### status dispatch ######################################################## 
+;##### status dispatch ########################################################
 
 (defn status-handler [request]
   (let [stati {:rdbms (rdbms/check-connection)}]
@@ -146,8 +146,8 @@
 ;#### routing #################################################################
 
 (defn build-base-handler []
-  ( -> (build-routes) 
-       cpj.handler/api  
+  ( -> (build-routes)
+       cpj.handler/api
        (wrap-handler-with-logging 'cider-ci.storage.web)
        wrap-status-dispatch
        (wrap-handler-with-logging 'cider-ci.storage.web)

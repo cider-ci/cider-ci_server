@@ -3,7 +3,7 @@
 ; See the "LICENSE.txt" file provided with this software.
 
 (ns cider-ci.storage.shared
-  (:require 
+  (:require
     [cider-ci.utils.rdbms :as rdbms]
     [drtom.logbug.debug :as debug]
     [drtom.logbug.catcher :as catcher]

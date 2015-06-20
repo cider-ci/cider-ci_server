@@ -3,7 +3,7 @@
 ; See the "LICENSE.txt" file provided with this software.
 
 (ns cider-ci.storage.sweeper
-  (:require 
+  (:require
     [cider-ci.utils.daemon :as daemon]
     [drtom.logbug.debug :as debug]
     [cider-ci.utils.rdbms :as rdbms]
@@ -14,7 +14,7 @@
     [clojure.tools.logging :as logging]
     [me.raynes.fs :as fsutils]
     )
-  (:use 
+  (:use
     [cider-ci.storage.shared :only [delete-file delete-row delete-file-and-row]]
     ))
 
@@ -53,7 +53,7 @@
                 (when (.isFile file)
                   (if-not (string-is-uuid? file-name)
                     (delete-file abs-path)
-                    (if-not (first (jdbc/query (rdbms/get-ds) 
+                    (if-not (first (jdbc/query (rdbms/get-ds)
                                                [ (str "SELECT * FROM " (:db_table store)
                                                       " WHERE id = ?::uuid " ) file-name]))
                       (delete-file abs-path))))

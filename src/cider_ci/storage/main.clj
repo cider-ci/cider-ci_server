@@ -3,7 +3,7 @@
 ; See the "LICENSE.txt" file provided with this software.
 
 (ns cider-ci.storage.main
-  (:require 
+  (:require
     [cider-ci.auth.core :as auth]
     [cider-ci.storage.shared :as shared]
     [cider-ci.storage.sweeper :as sweeper]

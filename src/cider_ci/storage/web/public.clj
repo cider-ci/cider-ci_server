@@ -3,7 +3,7 @@
 ; See the "LICENSE.txt" file provided with this software.
 
 (ns cider-ci.storage.web.public
-  (:require 
+  (:require
     [drtom.logbug.debug :as debug]
     [cider-ci.utils.rdbms :as rdbms]
     [clj-logging-config.log4j :as logging-config]
@@ -28,26 +28,26 @@
 
 (defn- tree-attachment-public-viewable? [request]
   (let [tree-id (-> request :route-params :tree_id)
-        query (-> (build-basequery) 
+        query (-> (build-basequery)
                   (hh/merge-where [:= :jobs.tree_id tree-id])
                   hc/format)
         qres (first (jdbc/query (rdbms/get-ds) query)) ]
     ; this is not used as a http response
-    ; we can't just return true/false because a ring 'response' is expected 
+    ; we can't just return true/false because a ring 'response' is expected
     (if qres
       {:public_viewable true, :status 200}
       {:public_viewable false, :status 401})))
 
 (defn- trial-attachment-public-viewable? [request]
   (let [trial-id (-> request :route-params :trial_id)
-        query (-> (build-basequery) 
+        query (-> (build-basequery)
                   (hh/merge-join :tasks [:= :tasks.job_id :jobs.id])
                   (hh/merge-join :trials [:= :trials.task_id :tasks.id])
                   (hh/merge-where [:= :trials.id trial-id])
                   hc/format)
         qres (first (jdbc/query (rdbms/get-ds) query)) ]
     ; this is not used as a http response
-    ; we can't just return true/false because a ring 'response' is expected 
+    ; we can't just return true/false because a ring 'response' is expected
     (if qres
       {:public_viewable true, :status 200}
       {:public_viewable false, :status 401})))
@@ -62,7 +62,7 @@
   (or (:public_viewable (public-viewable? request))
       false))
 
-(defn wrap-shortcut 
+(defn wrap-shortcut
   "Short-cuts to the `bare-handler` if the given tree-id/trial-id
   is related to a repository that has :public_view_permission. Uses
   authenticated-handler otherwise"
