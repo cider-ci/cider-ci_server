@@ -34,10 +34,10 @@
   "Returns the absolute path to the (git-)repository."
   [repository]
   (let [path  (-> (get-config) :services :repository :repositories :path)
-        origin-uri (:origin_uri repository)]
+        git-url (:git_url repository)]
     (assert (not (blank? path)))
-    (assert (not (blank? origin-uri)))
-    (str path (File/separator) (ci-fs/path-proof origin-uri))))
+    (assert (not (blank? git-url)))
+    (str path (File/separator) (ci-fs/path-proof git-url))))
 
 
 (defn get-path-contents

@@ -117,12 +117,12 @@
     (let [dir (git.repositories/path repository)]
       (system/exec-with-success-or-throw ["rm" "-rf" dir])
       (system/exec-with-success-or-throw
-        ["git" "clone" "--mirror" (:origin_uri repository) dir]
+        ["git" "clone" "--mirror" (:git_url repository) dir]
         {:watchdog (* 5 60 1000)}))))
 
 (defn git-fetch [repository path]
   (system/exec-with-success-or-throw
-    ["git" "fetch" (:origin_uri repository) "--force" "--tags" "--prune"  "+*:*"]
+    ["git" "fetch" (:git_url repository) "--force" "--tags" "--prune"  "+*:*"]
     {:watchdog (* 10 60 1000), :dir path, :env {"TERM" "VT-100"}}))
 
 (defn git-fetch-or-initialize [repository]
