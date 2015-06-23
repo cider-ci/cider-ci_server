@@ -25,13 +25,21 @@
                      ["SELECT * FROM trials WHERE id = ?" id])))
 
 
+(defn issue-description [ex]
+  (str (.getMessage ex) " "
+       (cond
+         (instance? clojure.lang.ExceptionInfo ex)
+         (or (-> ex ex-data :object :body)
+             (-> ex ex-data))
+         :else (str  "\n\n"  (thrown/stringify ex)))))
+
 (defmacro wrap-trial-with-issue-and-throw-again [trial title & body]
   `(try
      ~@body
      (catch Exception e#
        (let [row-data#  {:trial_id (:id ~trial)
                          :title ~title
-                         :description (str (.getMessage e#) "\n\n"  (thrown/stringify e#))}]
+                         :description (issue-description e#)}]
          (logging/warn ~trial row-data# e#)
          (jdbc/insert! (rdbms/get-ds) "trial_issues" row-data#))
        (throw e#))))
@@ -102,6 +110,4 @@
 ;(logging-config/set-logger! :level :debug)
 ;(logging-config/set-logger! :level :info)
 ;(debug/debug-ns *ns*)
-
-
 

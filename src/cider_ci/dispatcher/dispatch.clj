@@ -33,9 +33,9 @@
   ( ->
     (jdbc/query
       (rdbms/get-ds)
-      ["SELECT origin_uri FROM repositories WHERE id = ?" repository-id])
+      ["SELECT git_url FROM repositories WHERE id = ?" repository-id])
     first
-    :origin_uri))
+    :git_url))
 
 (defn- trial-attachments-path [trial-id]
   (http/build-service-path :storage  (str "/trial-attachments/" trial-id "/")))
@@ -169,12 +169,20 @@
                       ["id = ?" (:id trial)])
         (post-trial url basic-auth-pw data)))
     (catch Exception e
+      (def ^:dynamic *ex* e)
       (let  [row (if (<= 3 (issues-count trial))
                    {:state "failed" :error "Too many issues, giving up to dispatch this trial "
                     :executor_id nil}
                    {:state "pending" :executor_id nil})]
         (trial-utils/update (conj trial row))
         false))))
+
+(-> *ex* ex-data :object :body)
+
+
+(str
+  (ex-info "X" {:x 42})
+  )
 
 (defn dispatch-trials []
   (when-let [next-trial  (get-next-trial-to-be-dispatched)]
