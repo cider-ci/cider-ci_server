@@ -26,6 +26,13 @@
       {:traits (sort (:traits data))}
       ["id = ?" (:id executor)]))
 
+  (when-not (= (sort (:accepted_repositories executor)) (sort (:accepted_repositories data)))
+    (jdbc/update!
+      (rdbms/get-ds)
+      :executors
+      {:accepted_repositories (sort (:accepted_repositories data))}
+      ["id = ?" (:id executor)]))
+
   (when-let [max-load (:max_load data)]
     (when-not (= (:max_load executor) max-load)
       (jdbc/update!

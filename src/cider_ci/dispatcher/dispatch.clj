@@ -110,30 +110,79 @@
            (hh/merge-where (hc/raw "(last_ping_at > (now() - interval '1 Minutes'))"))
            (hh/merge-where [:= :enabled true])
            (hh/merge-where [:< :relative_load 1])
+           (hh/merge-join :jobs [:= :tasks.job_id :jobs.id])
+           (hh/merge-join :commits [:= :jobs.tree_id :commits.tree_id])
+           (hh/merge-join :branches_commits [:= :commits.id :branches_commits.commit_id])
+           (hh/merge-join :branches [:= :branches_commits.branch_id :branches.id])
+           (hh/merge-join :repositories [:= :branches.repository_id :repositories.id])
+           (hh/merge-join [:or
+                           (hc/raw "(executors_with_load.accepted_repositories = '{}')")
+                           (hc/raw " repositories.git_url = ANY(executors_with_load.accepted_repositories) ")])
            hc/format)
        (jdbc/query (rdbms/get-ds))
        (map (fn [e] (repeat (- (:max_load e) (:current_load e)) e)))
        flatten rand-nth))
 
+(def ^:private available-executor-exists-query
+  (->
+    (hh/select 1)
+    (hh/from :executors_with_load)
+    (hh/merge-where [:< :relative_load 1])
+    (hh/merge-where [:= :enabled true])
+    (hh/merge-where (hc/raw "(tasks.traits <@ executors_with_load.traits)"))
+    (hh/merge-where (hc/raw "(last_ping_at > (now() - interval '1 Minutes'))"))))
+
+(def ^:private join-trial-to-repo
+  (-> (hh/merge-join :tasks [:= :trials.task_id :tasks.id])
+      (hh/merge-join :jobs [:= :tasks.job_id :jobs.id])
+      (hh/merge-join :commits [:= :jobs.tree_id :commits.tree_id])
+      (hh/merge-join :branches_commits [:= :commits.id :branches_commits.commit_id])
+      (hh/merge-join :branches [:= :branches_commits.branch_id :branches.id])
+      (hh/merge-join :repositories [:= :branches.repository_id :repositories.id])))
+
+
+(def ^:private executor-with-accepted-repositories-part-query
+  (-> join-trial-to-repo
+      (hh/select 1)
+      (hh/from :executors_with_load)
+      (hh/merge-where (hc/raw " repositories.git_url = ANY(executors_with_load.accepted_repositories) "))))
+
+(def ^:private available-executor-exists
+  [:or [:exists (-> available-executor-exists-query
+                    (hh/merge-where (hc/raw "(executors_with_load.accepted_repositories = '{}')")))]
+   [:exists (merge
+              available-executor-exists-query
+              executor-with-accepted-repositories-part-query)]])
+
+(def ^:private without-or-with-available-global-resource
+  [ "NOT EXISTS" (-> (hh/select 1)
+                     (hh/from [:trials :active_trials])
+                     (hh/merge-join [:tasks :active_tasks] [:= :active_tasks.id :active_trials.task_id])
+                     (hh/merge-where [:in :active_trials.state  ["executing","dispatching"]])
+                     (hh/merge-where (hc/raw (str "active_tasks.exclusive_global_resources "
+                                                  "&& tasks.exclusive_global_resources"))))])
+
+; TODO use
+(def ^:private is-attached-to-a-repo
+  [:exists
+   (merge
+     (hh/select 1)
+     join-trial-to-repo
+     )])
+
 (defn get-next-trial-to-be-dispatched []
   (-> (-> (hh/select :trials.*)
           (hh/from :trials)
           (hh/merge-where [:= :trials.state "pending"])
-          (hh/merge-where [:exists  (-> (hh/select 1 )
-                                        (hh/from :executors_with_load)
-                                        (hh/merge-where [:< :relative_load 1])
-                                        (hh/merge-where [:= :enabled true])
-                                        (hh/merge-where (hc/raw "(tasks.traits <@ executors_with_load.traits)"))
-                                        (hh/merge-where (hc/raw "(last_ping_at > (now() - interval '1 Minutes'))"))
-                                        )])
-          (hh/merge-where [ "NOT EXISTS" (-> (hh/select 1)
-                                             (hh/from [:trials :active_trials])
-                                             (hh/merge-join [:tasks :active_tasks] [:= :active_tasks.id :active_trials.task_id])
-                                             (hh/merge-where [:in :active_trials.state  ["executing","dispatching"]])
-                                             (hh/merge-where (hc/raw (str "active_tasks.exclusive_global_resources "
-                                                                          "&& tasks.exclusive_global_resources"))))])
-          (hh/merge-join :tasks [:= :tasks.id :trials.task_id])
-          (hh/merge-join :jobs [:= :jobs.id :tasks.job_id])
+          (hh/merge-where available-executor-exists)
+          (hh/merge-where without-or-with-available-global-resource)
+          ;(hh/merge-where is-attached-to-a-repo)
+          (hh/merge-join :tasks [:= :trials.task_id :tasks.id])
+          (hh/merge-join :jobs [:= :tasks.job_id :jobs.id])
+          (hh/merge-join :commits [:= :jobs.tree_id :commits.tree_id])
+          (hh/merge-join :branches_commits [:= :commits.id :branches_commits.commit_id])
+          (hh/merge-join :branches [:= :branches_commits.branch_id :branches.id])
+          (hh/merge-join :repositories [:= :branches.repository_id :repositories.id])
           (hh/order-by [:jobs.priority :desc]
                        [:jobs.created_at :asc]
                        [:tasks.priority :desc]
@@ -169,7 +218,6 @@
                       ["id = ?" (:id trial)])
         (post-trial url basic-auth-pw data)))
     (catch Exception e
-      (def ^:dynamic *ex* e)
       (let  [row (if (<= 3 (issues-count trial))
                    {:state "failed" :error "Too many issues, giving up to dispatch this trial "
                     :executor_id nil}
@@ -177,12 +225,6 @@
         (trial-utils/update (conj trial row))
         false))))
 
-(-> *ex* ex-data :object :body)
-
-
-(str
-  (ex-info "X" {:x 42})
-  )
 
 (defn dispatch-trials []
   (when-let [next-trial  (get-next-trial-to-be-dispatched)]
