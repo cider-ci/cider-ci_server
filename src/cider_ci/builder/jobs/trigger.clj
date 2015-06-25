@@ -54,46 +54,63 @@
 
 ;### trigger jobs #######################################################
 
-(defn event-branch-updated-fits-trigger? [event-data trigger]
-  (->> [(:name event-data)]
-       (include-exclude-filter
-         (:include-match trigger)
-         (:exclude-match trigger))
-       first
-       boolean))
+(defn- job-trigger-fulfilled? [tree-id job trigger]
+  (logging/debug 'job-trigger-fulfilled? [tree-id job trigger])
+  (let [query (-> (-> (hh/select true)
+                      (hh/from :jobs)
+                      (hh/merge-where [:= :tree_id tree-id])
+                      (hh/merge-where [:= :key (:job trigger)])
+                      (hh/merge-where [:in :state (:states trigger)])
+                      (hh/limit 1)) hc/format) ]
+    (logging/debug query)
+    (->> query
+         (jdbc/query (rdbms/get-ds))
+         first
+         boolean)))
 
-(defn event-job-updated-fits-trigger? [event-data trigger]
-  ; TODO, there seems to be an implementation missing  ???
-  true)
 
-(defn find-trigger-for-event [event-data triggers]
-  (some #(and (= (:type %) (:type event-data)) %) triggers))
+(defn- branch-trigger-fulfilled? [tree-id job trigger]
+  (logging/warn 'TODO)
+  (logging/info 'branch-trigger-fulfilled? [tree-id job trigger])
+  (let [query (-> (-> (hh/select :name)
+                      (hh/from :branches)
+                      (hh/merge-join :commits [:= :branches.current_commit_id :commits.id])
+                      (hh/where [:= :commits.tree_id tree-id])) hc/format)
+        branch-names (->> query
+                          (jdbc/query (rdbms/get-ds))
+                          (map :name))]
+    (logging/info query)
+    (logging/info branch-names)
+    (->> branch-names
+         (include-exclude-filter
+           (:include-match trigger)
+           (:exclude-match trigger))
+         first
+         boolean)))
 
-(defn some-job-trigger-matches-event? [event-data job]
-  (let [triggers (:start-on job)]
+(defn trigger-fulfilled? [tree-id job trigger]
+  (logging/info 'trigger-fulfilled? [tree-id job trigger])
+  (case (:type trigger)
+    "job" (job-trigger-fulfilled? tree-id job trigger)
+    "branch" (branch-trigger-fulfilled? tree-id job trigger)
+    (do (logging/warn "unhandled run-on" trigger) false)))
+
+(defn some-job-trigger-fulfilled? [tree-id job]
+  (let [triggers (:run-on job)]
     (if (= true triggers)
       true
-      (when-let [matching-trigger (find-trigger-for-event event-data (convert-to-array triggers))]
-        (case (:type event-data)
-          "branch.updated" (event-branch-updated-fits-trigger? event-data matching-trigger)
-          "job.updated" (event-job-updated-fits-trigger? event-data matching-trigger)
-          (do (logging/warn "not handled job-trigger event" event-data)
-            false))))))
+      (some (fn [trigger]
+              (trigger-fulfilled? tree-id job trigger)) triggers))))
 
-(defn filter-jobs-by-triggers [event-data jobs]
-  (filter #(some-job-trigger-matches-event? event-data %) jobs))
-
-(defn- trigger-jobs [event-data]
-  (let [tree-id (:tree_id event-data)]
-    (->> (dotfile/get-dotfile tree-id)
-         :jobs
-         convert-to-array
-         (map #(assoc % :tree_id tree-id))
-         (filter #(-> % :start-on))
-         (filter jobs.filter/dependencies-fullfiled?)
-         (filter-jobs-by-triggers event-data)
-         (map jobs/create)
-         doall)))
+(defn- trigger-jobs [tree-id]
+  (->> (dotfile/get-dotfile tree-id)
+       :jobs
+       convert-to-array
+       (filter #(-> % :run-on))
+       (filter #(jobs.filter/dependencies-fulfilled? tree-id %))
+       (filter #(some-job-trigger-fulfilled? tree-id %))
+       (map #(jobs/create (assoc % :tree_id tree-id)))
+       doall))
 
 
 ;### listen to branch updates #################################################
@@ -105,9 +122,8 @@
           (rdbms/get-ds)
           ["SELECT tree_id FROM commits WHERE id = ? " (:current_commit_id msg)])
         first
-        (#(trigger-jobs (conj msg
-                              (select-keys % [:tree_id])
-                              {:type "branch.updated"}))))))
+        :tree_id
+        trigger-jobs)))
 
 (defn listen-to-branch-updates-and-fire-trigger-jobs []
   (messaging/listen "branch.updated" evaluate-branch-updated-message))
@@ -118,9 +134,10 @@
 (defn evaluate-job-update [msg]
   (-> (jdbc/query
         (rdbms/get-ds)
-        ["SELECT * FROM jobs WHERE id = ? " (:id msg)])
+        ["SELECT tree_id FROM jobs WHERE id = ? " (:id msg)])
       first
-      (#(trigger-jobs (conj % msg {:type "job.updated"})))))
+      :tree_id
+      trigger-jobs))
 
 
 (defn listen-to-job-updates-and-fire-trigger-jobs []

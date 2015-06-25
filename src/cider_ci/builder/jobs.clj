@@ -90,7 +90,7 @@
        :jobs
        convert-to-array
        (map #(assoc % :tree_id tree-id))
-       (filter jobs.filter/dependencies-fullfiled?)
+       (filter #(jobs.filter/dependencies-fulfilled? tree-id %))
        (map #(select-keys % [:name :key :tree_id :description]))
        ))
 

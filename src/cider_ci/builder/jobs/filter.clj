@@ -79,9 +79,8 @@
 
 ;##############################################################################
 
-(defn dependencies-fullfiled? [properties]
-  (let [query-atom (atom (hh/select :true))
-        tree-id (:tree_id properties)]
+(defn dependencies-fulfilled? [tree-id properties]
+  (let [query-atom (atom (hh/select :true))]
     (logging/debug {:properties properties :initial-sql (hc/format @query-atom)})
     (add-self-name-filter-to-query query-atom (:name properties) tree-id)
     (doseq [dependency (-> properties :depends-on convert-to-array)]
