@@ -8,6 +8,7 @@
     [cider-ci.auth.core]
     [cider-ci.auth.http-basic :as http-basic]
     [cider-ci.repository.git.repositories :as git.repositories]
+    [cider-ci.repository.repositories :as repositories]
     [cider-ci.repository.sql.repository :as sql.repository]
     [cider-ci.utils.http-server :as http-server]
     [cider-ci.utils.messaging :as messaging]
@@ -95,6 +96,20 @@
     (cpj/GET "/status" request #'status-handler)
     (cpj/ANY "*" request default-handler)))
 
+;#### repository update notification ##########################################
+
+(defn update-notification-handler [request]
+  (if-let [repository (sql.repository/get-repository-by-update-notification-token
+                        (-> request :params :update_notification_token))]
+    (do (repositories/update-repository repository)
+      {:status 202 :body "OK"})
+    {:status 404 :body "The corresponding repository was not found"}))
+
+(defn wrap-repositories-update-notifications [default-handler]
+  (cpj/routes
+    (cpj/POST "/update-notification/:update_notification_token"
+              _ #'update-notification-handler)
+    (cpj/ANY "*" _ default-handler)))
 
 ;##### routes #################################################################
 
@@ -120,11 +135,13 @@
        (wrap-handler-with-logging 'cider-ci.repository.web)
        (wrap-status-dispatch)
        (wrap-handler-with-logging 'cider-ci.repository.web)
-       (routing/wrap-prefix context)
-       (wrap-handler-with-logging 'cider-ci.repository.web)
        (auth/wrap-authenticate-and-authorize-service)
        (wrap-handler-with-logging 'cider-ci.repository.web)
        (http-basic/wrap {:executor true :user false :service true})
+       (wrap-handler-with-logging 'cider-ci.repository.web)
+       wrap-repositories-update-notifications
+       (wrap-handler-with-logging 'cider-ci.repository.web)
+       (routing/wrap-prefix context)
        (wrap-handler-with-logging 'cider-ci.repository.web)
        (routing/wrap-log-exception)
        ))

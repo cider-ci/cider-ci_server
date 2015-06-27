@@ -5,11 +5,12 @@
 (ns cider-ci.repository.sql.repository
   (:refer-clojure :exclude [resolve])
   (:require
-    [drtom.logbug.debug :as debug]
+    [cider-ci.utils.rdbms :as rdbms]
     [clj-logging-config.log4j :as logging-config]
     [clojure.java.jdbc :as jdbc]
     [clojure.tools.logging :as logging]
-    [cider-ci.utils.rdbms :as rdbms]
+    [drtom.logbug.catcher :as catcher]
+    [drtom.logbug.debug :as debug]
     ))
 
 
@@ -22,6 +23,13 @@
                            " JOIN branches_commits ON branches_commits.branch_id = branches.id"
                            " JOIN commits ON commits.id = branches_commits.commit_id"
                            " WHERE (commits.id = ? OR commits.tree_id = ?)") id id])))
+
+
+(defn get-repository-by-update-notification-token [token]
+  (catcher/wrap-with-suppress-and-log-warn
+    (->> (jdbc/query (rdbms/get-ds)
+                     ["SELECT * from repositories WHERE update_notification_token = ?"
+                      token]) first )))
 
 
 ;#### debug ###################################################################
