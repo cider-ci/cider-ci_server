@@ -157,17 +157,26 @@
                 state))
             repository git-repository))
 
+
+
+(defn- git-fetch-and-update-fn [state repository]
+  (catcher/wrap-with-suppress-and-log-warn
+    (git-fetch-or-initialize repository)
+    (git-update repository))
+  (conj state  {:git-fetched-at (time/now)}))
+
 (defn- submit-git-fetch-and-update [repository git-repository]
   (logging/debug submit-git-fetch-and-update [repository git-repository])
-  (send-off (:agent git-repository)
-            (fn [state repository git-repository]
-              ; possibly skip overflow of the queue
-              (if (git-fetch-is-due? repository git-repository)
-                (do (git-fetch-or-initialize repository)
-                  (git-update repository)
-                  (conj state {:git_fetched_at (time/now)}))
-                state))
-            repository git-repository))
+  (let [repo-agent (:agent git-repository)]
+    (send-off repo-agent
+              (fn [state repository git-repository]
+                (if-let [git-fetched-at (:git-fetched-at state)]
+                  ; skip if it has been fetched in the last 500ms
+                  (if (time/after? (time/now) (time/plus git-fetched-at (time/millis 500)))
+                    (git-fetch-and-update-fn state repository)
+                    state)
+                  (git-fetch-and-update-fn state repository)))
+              repository git-repository)))
 
 (defn- submit-git-initialize [repository git-repository]
   (send-off (:agent git-repository)
