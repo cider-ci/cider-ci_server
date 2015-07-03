@@ -240,12 +240,22 @@
 
 
 ;#### dispatch service ########################################################
+
+(defn get-dispatch-interval []
+  (try
+    (catcher/wrap-with-log-warn
+      (or (-> (get-config) :services :dispatcher :dispatch_interval)
+          1.0))
+    (catch Exception _
+      1.0)))
+
 (daemon/define "dispatch-service"
   start-dispatch-service
   stop-dispatch-service
-  0.2
+  (get-dispatch-interval)
   (logging/debug "dispatch-service")
   (dispatch-trials))
+
 
 ;### initialize ##############################################################
 (defn initialize []
