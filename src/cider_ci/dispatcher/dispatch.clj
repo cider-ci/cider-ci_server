@@ -115,7 +115,7 @@
            (hh/merge-join :branches_commits [:= :commits.id :branches_commits.commit_id])
            (hh/merge-join :branches [:= :branches_commits.branch_id :branches.id])
            (hh/merge-join :repositories [:= :branches.repository_id :repositories.id])
-           (hh/merge-join [:or
+           (hh/merge-where [:or
                            (hc/raw "(executors_with_load.accepted_repositories = '{}')")
                            (hc/raw " repositories.git_url = ANY(executors_with_load.accepted_repositories) ")])
            hc/format)
