@@ -2,9 +2,9 @@
 ; Licensed under the terms of the GNU Affero General Public License v3.
 ; See the "LICENSE.txt" file provided with this software.
 
-(ns cider-ci.builder.dotfile.inclusion
+(ns cider-ci.builder.configfile.inclusion
   (:require
-    [cider-ci.builder.dotfile.task-generation :as task-generation]
+    [cider-ci.builder.configfile.task-generation :as task-generation]
     [cider-ci.builder.repository :as repository]
     [cider-ci.builder.util :as util :refer [deep-merge]]
     [drtom.logbug.debug :as debug]

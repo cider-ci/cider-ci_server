@@ -6,7 +6,7 @@
   (:require
     [cider-ci.auth.core :as auth]
     [cider-ci.auth.http-basic :as http-basic]
-    [cider-ci.builder.dotfile]
+    [cider-ci.builder.configfile]
     [cider-ci.builder.jobs :as jobs]
     [cider-ci.builder.util :as util]
     [cider-ci.utils.config :refer [get-config]]
@@ -89,19 +89,19 @@
                   (thrown/stringify e))})))
 
 
-(defn dotfile [request]
+(defn configfile [request]
   (try
-    (let [dotfile-content (cider-ci.builder.dotfile/get-dotfile
+    (let [configfile-content (cider-ci.builder.configfile/get-configfile
                             (-> request :route-params :tree_id))]
-      (logging/debug {:dotfile-content dotfile-content})
+      (logging/debug {:configfile-content configfile-content})
       {:status 200
        :headers {"content-type" "application/json;charset=utf-8"}
-       :body (util/json-write-str dotfile-content)})
+       :body (util/json-write-str configfile-content)})
     (catch clojure.lang.ExceptionInfo e
       (logging/warn "DOTFILE " (thrown/stringify e))
       (case (-> e .getData :object :status)
         404  {:status 404
-              :body (str "The dotfile itself or a included resource doesn't exist. \n\n"
+              :body (str "The configfile itself or a included resource doesn't exist. \n\n"
                          (-> e .getData :object ))}
         {:status 500
          :body (str "ERROR " (thrown/stringify e))}))
@@ -116,7 +116,7 @@
     (cpj/GET "/jobs/available/:tree_id" request #'available-jobs)
     (cpj/POST "/jobs/" request #'create-job)
     (cpj/POST "/jobs" request #'create-job)
-    (cpj/GET "/dotfile/:tree_id" request #'dotfile)
+    (cpj/GET "/configfile/:tree_id" request #'configfile)
     (cpj/ANY "*" request default-handler)))
 
 

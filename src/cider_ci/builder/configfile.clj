@@ -2,9 +2,9 @@
 ; Licensed under the terms of the GNU Affero General Public License v3.
 ; See the "LICENSE.txt" file provided with this software.
 
-(ns cider-ci.builder.dotfile
+(ns cider-ci.builder.configfile
   (:require
-    [cider-ci.builder.dotfile.inclusion :as inclusion]
+    [cider-ci.builder.configfile.inclusion :as inclusion]
     [cider-ci.builder.repository :as repository]
     [clj-logging-config.log4j :as logging-config]
     [clojure.core.memoize :as memo]
@@ -12,16 +12,16 @@
     [drtom.logbug.debug :as debug]
     ))
 
-(defn- get-dotfile_unmemoized [tree-id]
+(defn- get-configfile_unmemoized [tree-id]
   (->>
     (repository/get-path-content tree-id ".cider-ci.yml")
     (inclusion/include tree-id)))
 
-(def get-dotfile (memo/lru #(get-dotfile_unmemoized %)
+(def get-configfile (memo/lru #(get-configfile_unmemoized %)
             :lru/threshold 500))
 
 ; disable caching (temporarily)
-;(def get-dotfile get-dotfile_unmemoized)
+;(def get-configfile get-configfile_unmemoized)
 
 
 ;### Debug ####################################################################

@@ -4,7 +4,7 @@
 
 (ns cider-ci.builder.jobs
   (:require
-    [cider-ci.builder.dotfile]
+    [cider-ci.builder.configfile]
     [cider-ci.builder.jobs.filter :as jobs.filter]
     [cider-ci.builder.jobs.tags :as tags]
     [cider-ci.builder.repository :as repository]
@@ -30,12 +30,12 @@
 (defn- log-item [x]
   x)
 
-(defn get-job-by-key [params dotfile]
-  (get (:jobs dotfile) (keyword (:key params))))
+(defn get-job-by-key [params configfile]
+  (get (:jobs configfile) (keyword (:key params))))
 
-(defn try-to-add-specification-from-dotfile [params]
+(defn try-to-add-specification-from-configfile [params]
   (try
-    (let [spec (->> (cider-ci.builder.dotfile/get-dotfile (:tree_id params))
+    (let [spec (->> (cider-ci.builder.configfile/get-configfile (:tree_id params))
                     (get-job-by-key params))]
       (logging/debug {:params params :job_specification spec})
       (conj  {:job_specification spec} params))
@@ -56,7 +56,7 @@
 (defn add-specification-from-dofile-if-not-present [params]
   (if (and (not (:job_specification_id params))
            (not (:job_specification params)))
-    (try-to-add-specification-from-dotfile params)
+    (try-to-add-specification-from-configfile params)
     params))
 
 
@@ -86,7 +86,7 @@
 ;### available jobs #####################################################
 
 (defn available-jobs [tree-id]
-  (->> (cider-ci.builder.dotfile/get-dotfile tree-id)
+  (->> (cider-ci.builder.configfile/get-configfile tree-id)
        :jobs
        convert-to-array
        (map #(assoc % :tree_id tree-id))

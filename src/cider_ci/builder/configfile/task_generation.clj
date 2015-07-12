@@ -3,7 +3,7 @@
 ; Licensed under the terms of the GNU Affero General Public License v3.
 ; See the "LICENSE.txt" file provided with this software.
 
-(ns cider-ci.builder.dotfile.task-generation
+(ns cider-ci.builder.configfile.task-generation
   (:require
     [cider-ci.builder.repository :as repository]
     [cider-ci.builder.util :as util :refer [deep-merge]]

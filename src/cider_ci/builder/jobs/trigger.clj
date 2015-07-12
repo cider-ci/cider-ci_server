@@ -4,7 +4,7 @@
 
 (ns cider-ci.builder.jobs.trigger
   (:require
-    [cider-ci.builder.dotfile :as dotfile]
+    [cider-ci.builder.configfile :as configfile]
     [cider-ci.builder.jobs :as jobs]
     [cider-ci.builder.jobs.filter :as jobs.filter]
     [cider-ci.builder.jobs.tags :as tags]
@@ -103,7 +103,7 @@
               (trigger-fulfilled? tree-id job trigger)) triggers))))
 
 (defn- trigger-jobs [tree-id]
-  (->> (dotfile/get-dotfile tree-id)
+  (->> (configfile/get-configfile tree-id)
        :jobs
        convert-to-array
        (filter #(-> % :run-on))
