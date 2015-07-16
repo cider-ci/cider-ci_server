@@ -19,13 +19,18 @@
 
 
 (defn- parse-path-content [path content]
-  (catcher/wrap-with-log :warn (yaml/parse-string content)))
+  (catcher/wrap-with-log-warn
+    (let [path (clojure.string/lower-case path)]
+      (cond
+        (re-matches #".*(yml|yaml)" path) (yaml/parse-string content)
+        (re-matches #".*json" path) (json/read-str content :key-fn keyword)
+        :else (throw (IllegalArgumentException. (str "Parsing " path " is not supported.")))))))
 
 (defn- get-path-content_unmemoized [git-ref-id path]
   (let [url (http/build-service-url
               :repository
               (str "/path-content/" git-ref-id "/" path))
-        res (try (catcher/wrap-with-log :warn (http/get url {})))
+        res (catcher/wrap-with-log :info (http/get url {}))
         body (:body res)]
     (parse-path-content path body)))
 
@@ -41,9 +46,11 @@
     (json/read-str body :key-fn keyword)))
 
 
-(def get-path-content (memo/lru get-path-content_unmemoized :lru/threshold 500))
+(def get-path-content
+  (memo/lru get-path-content_unmemoized :lru/threshold 500))
 
-;(def get-path-content get-path-content_unmemoized)
+; disable caching (temporarily)
+; (def get-path-content get-path-content_unmemoized)
 
 
 ;### Debug ####################################################################
