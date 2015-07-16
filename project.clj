@@ -10,8 +10,11 @@
   :dependencies [
                  [cider-ci/clj-auth "3.0.0"]
                  [cider-ci/clj-utils "3.0.0"]
+                 [honeysql "0.6.1"]
                  [me.raynes/fs "1.4.6"]
+                 [org.clojure/core.memoize "0.5.7"]
                  [org.clojure/tools.nrepl "0.2.10"]
+                 [drtom/logbug "1.2.0"]
                  ]
   :source-paths ["src"]
   :profiles {:dev

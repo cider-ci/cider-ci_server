@@ -8,8 +8,10 @@
     [cider-ci.auth.core]
     [cider-ci.auth.http-basic :as http-basic]
     [cider-ci.repository.git.repositories :as git.repositories]
+    [cider-ci.repository.project-configuration.core :as project-configuration]
     [cider-ci.repository.repositories :as repositories]
     [cider-ci.repository.sql.repository :as sql.repository]
+    [cider-ci.utils.config :as config :refer [get-config]]
     [cider-ci.utils.http-server :as http-server]
     [cider-ci.utils.messaging :as messaging]
     [cider-ci.utils.rdbms :as rdbms]
@@ -31,13 +33,11 @@
     ))
 
 
-(defonce conf (atom {}))
-
 (defn get-git-file [request]
   (logging/debug get-git-file [request])
   (let [repository-id (:id (:route-params request))
         relative-web-path (:* (:route-params request))
-        relative-file-path (str (-> @conf :services :repository :repositories :path) "/" repository-id "/" relative-web-path)
+        relative-file-path (str (-> (get-config) :services :repository :repositories :path) "/" repository-id "/" relative-web-path)
         file (clojure.java.io/file relative-file-path)
         abs-path (.getAbsolutePath file)]
     (logging/debug {:repositories-id repository-id
@@ -111,16 +111,20 @@
               _ #'update-notification-handler)
     (cpj/ANY "*" _ default-handler)))
 
+;##### project configuration ##################################################
+
+
+
 ;##### routes #################################################################
 
 (defn build-routes [context]
   (cpj/routes
+    (cpj/GET "/project-configuration/:id" _ project-configuration/get-via-http)
     (cpj/GET "/path-content/:id/*" request
              (get-path-content request))
     (cpj/GET "/ls-tree/:id/" _ ls-tree)
     (cpj/GET "/:id/git/*" request
              (get-git-file request))
-
     ))
 
 
@@ -149,9 +153,8 @@
 
 ;#### the server ##############################################################
 
-(defn initialize [new-conf]
-  (reset! conf new-conf)
-  (let [http-conf (-> @conf :services :repository :http)
+(defn initialize []
+  (let [http-conf (-> (get-config) :services :repository :http)
         context (str (:context http-conf) (:sub_context http-conf))]
     (http-server/start http-conf (build-main-handler context))))
 

@@ -25,5 +25,5 @@
     (messaging/initialize (:messaging (get-config)))
     (auth/initialize (select-keys (get-config) [:session :basic_auth :secret]))
     (repositories/initialize)
-    (web/initialize (get-config))))
+    (web/initialize)))
 
