@@ -88,35 +88,11 @@
        :body (str "Server error.\n\n"
                   (thrown/stringify e))})))
 
-
-(defn configfile [request]
-  (try
-    (let [configfile-content (cider-ci.builder.configfile/get-configfile
-                            (-> request :route-params :tree_id))]
-      (logging/debug {:configfile-content configfile-content})
-      {:status 200
-       :headers {"content-type" "application/json;charset=utf-8"}
-       :body (util/json-write-str configfile-content)})
-    (catch clojure.lang.ExceptionInfo e
-      (logging/warn "DOTFILE " (thrown/stringify e))
-      (case (-> e .getData :object :status)
-        404  {:status 404
-              :body (str "The configfile itself or a included resource doesn't exist. \n\n"
-                         (-> e .getData :object ))}
-        {:status 500
-         :body (str "ERROR " (thrown/stringify e))}))
-    (catch Throwable e
-      (logging/error "DOTFILE " (thrown/stringify e))
-      {:status 500
-       :body (str "See the builder logs for more details. "
-                  "\n\n"  (thrown/stringify e))})))
-
 (defn wrap-jobs [default-handler]
   (cpj/routes
     (cpj/GET "/jobs/available/:tree_id" request #'available-jobs)
     (cpj/POST "/jobs/" request #'create-job)
     (cpj/POST "/jobs" request #'create-job)
-    (cpj/GET "/configfile/:tree_id" request #'configfile)
     (cpj/ANY "*" request default-handler)))
 
 
