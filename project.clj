@@ -9,16 +9,15 @@
             :url "http://www.gnu.org/licenses/agpl-3.0.html"}
   :dependencies [
                  [cider-ci/clj-auth "3.0.0"]
-                 [cider-ci/clj-utils "3.0.0"]
+                 [cider-ci/clj-utils "3.0.1"]
                  [honeysql "0.6.1"]
                  [me.raynes/fs "1.4.6"]
                  [org.clojure/core.memoize "0.5.7"]
                  [org.clojure/tools.nrepl "0.2.10"]
-                 [drtom/logbug "1.2.0"]
                  ]
   :source-paths ["src"]
   :profiles {:dev
-             {:dependencies [[midje "1.6.3"]]
+             {:dependencies [[midje "1.7.0"]]
               :plugins [[lein-midje "3.1.1"]]
               :repositories [["tmp" {:url "http://maven-repo-tmp.drtom.ch" :snapshots false}]]
               :resource-paths ["../config" "./config" "./resources"]}
