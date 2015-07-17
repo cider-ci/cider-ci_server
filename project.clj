@@ -2,7 +2,7 @@
 ; Licensed under the terms of the GNU Affero General Public License v3.
 ; See the "LICENSE.txt" file provided with this software.
 
-(defproject cider-ci/clj-utils "3.0.0"
+(defproject cider-ci/clj-utils "3.0.1"
   :description "Shared Clojure Utils for Cider-CI"
   :url "https://github.com/cider-ci/cider-ci_clj-utils"
   :license {:name "GNU AFFERO GENERAL PUBLIC LICENSE Version 3"
@@ -10,13 +10,13 @@
   :dependencies [
                  [cheshire "5.5.0"]
                  [clj-http "1.1.2"]
-                 [clj-time "0.9.0"]
+                 [clj-time "0.10.0"]
                  [clj-yaml "0.4.0"]
                  [com.mchange/c3p0 "0.9.5"]
                  [com.novemberain/langohr "3.2.0"]
-                 [compojure "1.3.4"]
+                 [compojure "1.4.0"]
                  [drtom/clj-uuid "0.0.8"]
-                 [drtom/logbug "1.1.0"]
+                 [drtom/logbug "1.2.1"]
                  [joda-time "2.8.1"]
                  [log4j/log4j "1.2.17" :exclusions [javax.mail/mail javax.jms/jms com.sun.jdmk/jmxtools com.sun.jmx/jmxri]]
                  [org.clojars.hozumi/clj-commons-exec "1.2.0"]
@@ -28,9 +28,9 @@
                  [org.slf4j/slf4j-log4j12 "1.7.12"]
                  [org.yaml/snakeyaml "1.15"]
                  [pg-types "1.0.0"]
-                 [ring "1.3.2"]
-                 [ring/ring-core "1.3.2"]
-                 [ring/ring-jetty-adapter "1.3.2"]
+                 [ring "1.4.0"]
+                 [ring/ring-core "1.4.0"]
+                 [ring/ring-jetty-adapter "1.4.0"]
                  [ring/ring-json "0.3.1"]
 
                  ; explicit transient deps to force conflict resolution
@@ -38,7 +38,7 @@
                  ]
 
   :profiles {:dev {:dependencies [
-                                  [midje "1.6.3"]
+                                  [midje "1.7.0"]
                                   [org.xerial/sqlite-jdbc "3.8.10.1"]
                                   ]
                    :plugins [[lein-midje "3.1.1"]]
