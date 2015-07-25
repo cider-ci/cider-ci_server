@@ -5,7 +5,6 @@
 (ns cider-ci.dispatcher.main
   (:require
     [cider-ci.dispatcher.dispatch :as dispatch]
-    [cider-ci.dispatcher.ping :as ping]
     [cider-ci.dispatcher.sweep :as sweep]
     [cider-ci.dispatcher.sync-trials :as sync-trials]
     [cider-ci.dispatcher.task :as task]

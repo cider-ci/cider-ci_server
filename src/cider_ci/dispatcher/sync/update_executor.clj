@@ -2,7 +2,7 @@
 ; Licensed under the terms of the GNU Affero General Public License v3.
 ; See the "LICENSE.txt" file provided with this software.
 
-(ns cider-ci.dispatcher.ping
+(ns cider-ci.dispatcher.sync.update-executor
   (:require
     [cider-ci.dispatcher.executor :as executor-entity]
     [cider-ci.utils.daemon :as daemon]
@@ -17,7 +17,7 @@
     ))
 
 
-(defn- update-when-changed [executor data]
+(defn update-when-changed [executor data]
 
   (when-not (= (sort (:traits executor)) (sort (:traits data)))
     (jdbc/update!
@@ -44,21 +44,3 @@
   )
 
 
-(defn- update-last-ping-at [executor]
-  (->
-    (jdbc/execute! (rdbms/get-ds)
-                   ["UPDATE executors SET last_ping_at = now()
-                    WHERE executors.id = ?" (:id executor)])
-    first
-    (> 0)))
-
-
-(defn ping [executor data]
-  (update-when-changed executor data)
-  (update-last-ping-at executor))
-
-
-;#### debug ###################################################################
-;(logging-config/set-logger! :level :debug)
-;(logging-config/set-logger! :level :info)
-;(debug/debug-ns *ns*)

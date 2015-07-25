@@ -3,11 +3,12 @@
 ; See the "LICENSE.txt" file provided with this software.
 
 (ns cider-ci.dispatcher.web
+  (:refer-clojure :exclude [sync])
   (:require
     [cider-ci.auth.core :as auth]
     [cider-ci.auth.core]
     [cider-ci.auth.http-basic :as http-basic]
-    [cider-ci.dispatcher.ping :as ping]
+    [cider-ci.dispatcher.sync :as sync]
     [cider-ci.dispatcher.trial :as trial]
     [cider-ci.utils.http :as http]
     [cider-ci.utils.http-server :as http-server]
@@ -51,16 +52,14 @@
        :headers {"content-type" "application/json;charset=utf-8"} })))
 
 
-;#### ping ####################################################################
+;#### sync ####################################################################
 
-(defn ping [request]
+(defn sync [request]
   (let [executor (:authenticated-executor request)]
     (if-not (:id executor)
       {:status 403}
-      (if (ping/ping executor (:body request))
-        {:status 202}
-        {:status 422})
-      )))
+      (sync/sync executor (:body request)))))
+
 
 ;#### routing #################################################################
 
@@ -76,7 +75,7 @@
 
     (cpj/GET "/" [] "OK")
 
-    (cpj/POST "/ping" request #'ping)
+    (cpj/POST "/sync" _ #'sync)
 
     ))
 

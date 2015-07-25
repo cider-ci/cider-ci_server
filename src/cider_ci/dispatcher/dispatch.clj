@@ -44,6 +44,7 @@
       (let [data (build-data/build-dispatch-data trial executor)
             url (str (:base_url executor)  "/execute")
             basic-auth-pw (executor-utils/http-basic-password executor)]
+        ; TODO the following seems to be not necessary, remove?
         (jdbc/update! (rdbms/get-ds) :trials
                       {:state "dispatching" :executor_id (:id executor)}
                       ["id = ?" (:id trial)])
