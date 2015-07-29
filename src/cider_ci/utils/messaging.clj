@@ -71,7 +71,7 @@
                     (json/read-str (String. payload "UTF-8")))
                   (catch Exception _
                     "message decode failed")) ]
-    (logging/info ["MESSAGE LOGGING" {:metadata metadata
+    (logging/debug ["MESSAGE LOGGING" {:metadata metadata
                               :payload payload
                               :message message}])))
 (defn- bind-to-logging-queue [exchange-name]

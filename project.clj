@@ -2,7 +2,7 @@
 ; Licensed under the terms of the GNU Affero General Public License v3.
 ; See the "LICENSE.txt" file provided with this software.
 
-(defproject cider-ci/clj-utils "3.0.2"
+(defproject cider-ci/clj-utils "3.0.3"
   :description "Shared Clojure Utils for Cider-CI"
   :url "https://github.com/cider-ci/cider-ci_clj-utils"
   :license {:name "GNU AFFERO GENERAL PUBLIC LICENSE Version 3"
@@ -16,7 +16,7 @@
                  [com.novemberain/langohr "3.2.0"]
                  [compojure "1.4.0"]
                  [drtom/clj-uuid "0.0.8"]
-                 [drtom/logbug "1.2.2"]
+                 [drtom/logbug "1.2.3"]
                  [joda-time "2.8.1"]
                  [log4j/log4j "1.2.17" :exclusions [javax.mail/mail javax.jms/jms com.sun.jdmk/jmxtools com.sun.jmx/jmxri]]
                  [org.clojars.hozumi/clj-commons-exec "1.2.0"]
