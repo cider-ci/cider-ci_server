@@ -10,12 +10,12 @@
   :dependencies [
                  [cheshire "5.5.0"]
                  [cider-ci/clj-auth "3.0.0"]
-                 [cider-ci/clj-utils "3.0.0"]
-                 [drtom/honeysql "1.1.0"]
+                 [cider-ci/clj-utils "3.0.3"]
+                 [drtom/honeysql "1.2.0-beta.2"]
                  [json-roa/clj-utils "1.0.0"]
                  [org.clojure/tools.nrepl "0.2.10"]
                  [ring-middleware-accept "2.0.3"]
-                 [ring/ring-core "1.3.2"]
+                 [ring/ring-core "1.4.0"]
 
                  [org.clojure/java.classpath "0.2.2"]
                  [org.clojure/data.json "0.2.6"]
@@ -23,7 +23,7 @@
   :source-paths ["src"]
   :test-paths ["test"]
   :profiles {:dev
-             {:dependencies [[midje "1.6.3"]]
+             {:dependencies [[midje "1.7.0"]]
               :plugins [[lein-midje "3.1.1"]]
               :repositories [["tmp" {:url "http://maven-repo-tmp.drtom.ch" :snapshots false}]]} }
   :resource-paths ["./config" "../config" "./resources"]
