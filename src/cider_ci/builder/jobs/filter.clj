@@ -19,75 +19,103 @@
     [clj-yaml.core :as yaml]
     [clojure.java.jdbc :as jdbc]
     [clojure.tools.logging :as logging]
-    [honeysql.core :as hc]
-    [honeysql.helpers :as hh]
+    [honeysql.format :as hsql-format]
+    [honeysql.types :as hsql-types]
+    [honeysql.helpers :as hsql-helpers]
     ))
 
 
-;### branch filter ######################################################
+;### self filter ##############################################################
 
-; TODO, not used right now, delete?
+(defn- add-self-name-filter-to-query [query name tree-id]
+  (-> query
+      (hsql-helpers/merge-where
+        ["NOT EXISTS"
+         (-> (hsql-helpers/select 1)
+             (hsql-helpers/from :jobs)
+             (hsql-helpers/where [:= :jobs.name name])
+             (hsql-helpers/merge-where [:= :jobs.tree_id tree-id]))])))
 
-(defn branch-filter-sql-part [conditions]
-  (when-let [branch-filter-str (:branch conditions)]
-    (if (re-matches #"^\^.*" branch-filter-str)
-      (hh/merge-where [(keyword "~") :branches.name branch-filter-str])
-      (hh/merge-where [:= :branches.name branch-filter-str]))))
 
-(defn add-branch-filter-to-query [tree-id query-atom conditions]
-  (logging/debug "add-branch-filter" [tree-id query-atom conditions])
-  (when-let [where-condition (branch-filter-sql-part conditions)]
-    (reset!
-      query-atom
-      (-> @query-atom
-          (hh/merge-where
-            [" EXISTS "
-             (-> where-condition
-                 (hh/select 1)
-                 (hh/from :branches)
-                 (hh/merge-join :commits [:= :branches.current_commit_id :commits.id])
-                 (hh/merge-where [:= :commits.tree_id tree-id]))])))))
+
+;### job dependencies #########################################################
+
+(defn- submodule-reducer [[query submodule_tree_id_join_ref] submodule-path]
+  (let [commits_submodule_ref (str (gensym "commits_submodule_"))
+        submodule_ref (str (gensym "submodules_"))
+        commits_supermodule_ref (str (gensym "commits_supermodule_"))
+        updated-query (-> query
+
+               (hsql-helpers/merge-join
+                 [:commits commits_submodule_ref]
+                 [:= (hsql-types/raw (str commits_submodule_ref ".tree_id"))
+                  (hsql-types/raw (str submodule_tree_id_join_ref ".tree_id"))])
+
+               (hsql-helpers/merge-join
+                 [:submodules submodule_ref]
+                 [:= (hsql-types/raw (str submodule_ref ".submodule_commit_id"))
+                  (hsql-types/raw (str commits_submodule_ref ".id"))])
+
+               (hsql-helpers/merge-join
+                 [:commits commits_supermodule_ref]
+                 [:= (hsql-types/raw (str commits_supermodule_ref ".id"))
+                  (hsql-types/raw (str submodule_ref ".commit_id"))])
+
+               (hsql-helpers/merge-where
+                 [:= (hsql-types/raw (str submodule_ref ".path"))
+                  submodule-path])
+
+               )]
+    [updated-query commits_supermodule_ref]))
+
+(defn- subquery-for-job-depencency-in-submodules [base-query submodule-paths tree-id]
+  (let [ [intermediate-query join_ref] (reduce submodule-reducer [base-query "jobs"] submodule-paths)]
+    [" EXISTS "
+     (-> intermediate-query
+         (hsql-helpers/merge-where [:= (hsql-types/raw (str join_ref ".tree_id")) tree-id])) ]))
+
+(defn- subquery-for-job-depencency [base-query tree-id]
+  [" EXISTS "
+   (-> base-query
+       (hsql-helpers/merge-where [:= :jobs.tree_id tree-id]))])
+
+(defn- apply-job-depenency-to-query [query dependency tree-id]
+  (let [base-query (-> (hsql-helpers/select 1)
+                       (hsql-helpers/from :jobs)
+                       (hsql-helpers/merge-where [:= :jobs.key (:job dependency)])
+                       (hsql-helpers/merge-where [:in :jobs.state (:states dependency)]))
+        subquery (if-let [submodule-paths (-> dependency :submodule seq)]
+                   (subquery-for-job-depencency-in-submodules
+                     base-query (reverse submodule-paths) tree-id)
+                   (subquery-for-job-depencency base-query tree-id))]
+    (-> query (hsql-helpers/merge-where subquery))))
+
 
 ;##############################################################################
 
-(defn add-self-name-filter-to-query [query-atom name tree-id]
-  (reset! query-atom
-          (-> @query-atom
-              (hh/merge-where
-                ["NOT EXISTS"
-                 (-> (hh/select 1)
-                     (hh/from :jobs)
-                     (hh/where [:= :jobs.name name])
-                     (hh/merge-where [:= :jobs.tree_id tree-id]))]))))
-
-(defn add-job-depenency-to-query [query-atom dependency tree-id]
-  (reset! query-atom
-          (-> @query-atom
-              (hh/merge-where
-                [" EXISTS "
-                 (-> (hh/select 1)
-                     (hh/from :jobs)
-                     (hh/merge-where [:= :jobs.key (:job dependency)])
-                     (hh/merge-where [:in :jobs.state (:states dependency)])
-                     (hh/merge-where [:= :jobs.tree_id tree-id]))]))))
-
-(defn add-depenency-to-query [query-atom dependency tree-id]
+(defn- apply-dependency [query dependency tree-id]
   (case (:type dependency)
-    "job" (add-job-depenency-to-query query-atom dependency tree-id)
-    (do (logging/warn "failed to evaluate dependency" dependency)
-      (reset! query-atom (-> @query-atom (hh/merge-where false))))))
+    "job" (apply-job-depenency-to-query query dependency tree-id)
+    (throw (IllegalStateException. (str "Unknown dependency " dependency)))))
+
+(defn- build-dependency-reducer [tree-id]
+  (fn [query dependency]
+    (logging/debug 'dependency-reducer-invoke [query dependency tree-id])
+    (let [res-query (apply-dependency query dependency tree-id)]
+      (logging/debug 'dependency-reducer-result res-query)
+      res-query)))
+
+
 
 ;##############################################################################
 
 (defn dependencies-fulfilled? [tree-id properties]
-  (let [query-atom (atom (hh/select :true))]
-    (logging/debug {:properties properties :initial-sql (hc/format @query-atom)})
-    (add-self-name-filter-to-query query-atom (:name properties) tree-id)
-    (doseq [dependency (-> properties :depends-on convert-to-array)]
-      (add-depenency-to-query query-atom dependency tree-id))
-    (logging/debug {:final-sql (hc/format @query-atom)})
-    (->> (-> @query-atom
-             (hc/format))
+  (let [initial-query (add-self-name-filter-to-query (hsql-helpers/select :true) (:name properties) tree-id)
+        reducer (build-dependency-reducer tree-id)
+        final-query (reduce reducer initial-query (-> properties :depends-on convert-to-array))
+        formated-query (-> final-query hsql-format/format) ]
+    (logging/debug 'formated-query formated-query)
+    (->> formated-query
          (jdbc/query (rdbms/get-ds))
          first
          :bool)))

@@ -19,14 +19,13 @@
               (str "/project-configuration/" tree-id))
         res (try (catcher/wrap-with-log :warn (http/get url {})))
         body (:body res)]
-    (logging/info url)
     (json/read-str body :key-fn keyword)))
 
 (def get-configfile (memo/lru #(get-configfile_unmemoized %)
             :lru/threshold 500))
 
 ; disable caching (temporarily)
-(def get-configfile get-configfile_unmemoized)
+; (def get-configfile get-configfile_unmemoized)
 
 
 ;### Debug ####################################################################

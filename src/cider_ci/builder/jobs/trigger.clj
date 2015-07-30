@@ -21,13 +21,13 @@
     [clj-yaml.core :as yaml]
     [clojure.java.jdbc :as jdbc]
     [clojure.tools.logging :as logging]
-    [honeysql.core :as hc]
-    [honeysql.helpers :as hh]
+    [honeysql.format :as hsql-format]
+    [honeysql.types :as hsql-types]
+    [honeysql.helpers :as hsql-helpers]
     ))
 
 
 ;### include-exclude-filter ###################################################
-
 
 (defprotocol Pattern
   (to-pattern [x]))
@@ -42,7 +42,6 @@
   java.lang.Boolean
   (to-pattern [x] x))
 
-
 (defn include-exclude-filter [include-match exclude-match coll]
   (->> coll
        (filter #(and include-match
@@ -50,37 +49,32 @@
        (filter #(or (not exclude-match)
                     (not (re-find (to-pattern exclude-match) (str %)))))))
 
-;(include-exclude-filter "master" "^mk" ["ts_master" "mk_master" ])
+
 
 ;### trigger jobs #######################################################
 
 (defn- job-trigger-fulfilled? [tree-id job trigger]
   (logging/debug 'job-trigger-fulfilled? [tree-id job trigger])
-  (let [query (-> (-> (hh/select true)
-                      (hh/from :jobs)
-                      (hh/merge-where [:= :tree_id tree-id])
-                      (hh/merge-where [:= :key (:job trigger)])
-                      (hh/merge-where [:in :state (:states trigger)])
-                      (hh/limit 1)) hc/format) ]
+  (let [query (-> (-> (hsql-helpers/select true)
+                      (hsql-helpers/from :jobs)
+                      (hsql-helpers/merge-where [:= :tree_id tree-id])
+                      (hsql-helpers/merge-where [:= :key (:job trigger)])
+                      (hsql-helpers/merge-where [:in :state (:states trigger)])
+                      (hsql-helpers/limit 1)) hsql-format/format) ]
     (logging/debug query)
     (->> query
          (jdbc/query (rdbms/get-ds))
          first
          boolean)))
 
-
 (defn- branch-trigger-fulfilled? [tree-id job trigger]
-  (logging/warn 'TODO)
-  (logging/info 'branch-trigger-fulfilled? [tree-id job trigger])
-  (let [query (-> (-> (hh/select :name)
-                      (hh/from :branches)
-                      (hh/merge-join :commits [:= :branches.current_commit_id :commits.id])
-                      (hh/where [:= :commits.tree_id tree-id])) hc/format)
+  (let [query (-> (-> (hsql-helpers/select :name)
+                      (hsql-helpers/from :branches)
+                      (hsql-helpers/merge-join :commits [:= :branches.current_commit_id :commits.id])
+                      (hsql-helpers/where [:= :commits.tree_id tree-id])) hsql-format/format)
         branch-names (->> query
                           (jdbc/query (rdbms/get-ds))
                           (map :name))]
-    (logging/info query)
-    (logging/info branch-names)
     (->> branch-names
          (include-exclude-filter
            (:include-match trigger)
@@ -89,7 +83,6 @@
          boolean)))
 
 (defn trigger-fulfilled? [tree-id job trigger]
-  (logging/info 'trigger-fulfilled? [tree-id job trigger])
   (case (:type trigger)
     "job" (job-trigger-fulfilled? tree-id job trigger)
     "branch" (branch-trigger-fulfilled? tree-id job trigger)
@@ -102,15 +95,41 @@
       (some (fn [trigger]
               (trigger-fulfilled? tree-id job trigger)) triggers))))
 
+(declare trigger-supermodules-jobs)
+
 (defn- trigger-jobs [tree-id]
-  (->> (configfile/get-configfile tree-id)
-       :jobs
-       convert-to-array
-       (filter #(-> % :run-on))
-       (filter #(jobs.filter/dependencies-fulfilled? tree-id %))
-       (filter #(some-job-trigger-fulfilled? tree-id %))
-       (map #(jobs/create (assoc % :tree_id tree-id)))
-       doall))
+  (catcher/wrap-with-suppress-and-log-debug
+    (->> (configfile/get-configfile tree-id)
+         :jobs
+         convert-to-array
+         (filter #(-> % :run-on))
+         (filter #(jobs.filter/dependencies-fulfilled? tree-id %))
+         (filter #(some-job-trigger-fulfilled? tree-id %))
+         (map #(jobs/create (assoc % :tree_id tree-id)))
+         doall))
+  (catcher/wrap-with-suppress-and-log-debug
+    (trigger-supermodules-jobs tree-id))nil)
+
+(defn- trigger-supermodules-jobs [tree-id]
+  (->> (jdbc/query (rdbms/get-ds)
+              ["SELECT DISTINCT supermodules_commits.tree_id FROM commits AS supermodules_commits
+                JOIN submodules ON submodules.commit_id = supermodules_commits.id
+                JOIN commits AS submodule_commits ON submodule_commits.id = submodules.submodule_commit_id
+                WHERE submodule_commits.tree_id = ?" tree-id])
+       (map :tree_id)
+       (map trigger-jobs)
+       doall) nil)
+
+;(defn- trigger-supermodules-jobs [tree-id]
+;  (->> (jdbc/query (rdbms/get-ds)
+;              ["SELECT DISTINCT tree_id FROM submodules
+;                WHERE submodules.submodule_tree_id = ?" tree-id])
+;       (map :tree_id)
+;       (map trigger-jobs)
+;       doall) nil)
+
+;(trigger-jobs "f16b54b601575e20a508912a3f2502c8a43de183")
+
 
 
 ;### listen to branch updates #################################################
@@ -129,6 +148,7 @@
   (messaging/listen "branch.updated" evaluate-branch-updated-message))
 
 
+
 ;### listen to job updates ##############################################
 
 (defn evaluate-job-update [msg]
@@ -139,9 +159,10 @@
       :tree_id
       trigger-jobs))
 
-
 (defn listen-to-job-updates-and-fire-trigger-jobs []
   (messaging/listen "job.updated"  evaluate-job-update))
+
+
 
 ;### initialize ###############################################################
 
