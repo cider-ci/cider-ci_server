@@ -48,28 +48,11 @@
 
 
 ;### Submit actions through agent #############################################
-(defn- git-update-is-due? [repository git-repository]
-  (when-let [interval-value (:git_update_interval repository)]
-    (if-let [git-updated-at (:git_updated_at @(:agent git-repository))]
-      (time/after? (time/now) (time/plus git-updated-at (time/seconds interval-value)))
-      true)))
-
 (defn- git-fetch-is-due? [repository git-repository]
   (when-let [interval-value (:git_fetch_and_update_interval repository)]
     (if-let [git-fetched-at (:git_fetched_at @(:agent git-repository))]
       (time/after? (time/now) (time/plus git-fetched-at (time/seconds interval-value)))
       true)))
-
-(defn- submit-git-update [repository git-repository]
-  (logging/debug submit-git-update [repository git-repository])
-  (send-off (:agent git-repository)
-            (fn [state repository git-repository]
-              ; possibly skip overflow of the queue
-              (if (git-update-is-due? repository git-repository)
-                (do (fetch-and-update/git-update repository)
-                    (conj state {:git_updated_at (time/now)}))
-                state))
-            repository git-repository))
 
 (defn- git-fetch-and-update-fn [state repository]
   (catcher/wrap-with-suppress-and-log-warn
@@ -108,8 +91,7 @@
       ;(logging/debug "check for git-fetch-is-due?" {:repository repository :repository-processor repository-processor})
       (if (git-fetch-is-due? repository repository-processor)
         (submit-git-fetch-and-update repository repository-processor)
-        (when (git-update-is-due? repository repository-processor)
-          (submit-git-update repository repository-processor))))))
+        ))))
 
 
 (daemon/define "update-repositories"
