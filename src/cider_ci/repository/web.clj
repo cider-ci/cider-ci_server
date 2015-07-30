@@ -53,7 +53,7 @@
   {:status 500 :body (thrown/stringify ex)})
 
 (defn get-path-content [request]
-  (logging/info request)
+  (logging/debug request)
   (try
     (let [id (-> request :route-params :id)
           path (-> request :route-params :*)]
@@ -68,7 +68,7 @@
 
 
 (defn ls-tree [request]
-  (logging/info 'ls-tree request)
+  (logging/debug 'ls-tree request)
   (let [id (-> request :params :id)
         include-regex (-> request :params :include-match)
         exclude-regex (-> request :params :exclude-match)]

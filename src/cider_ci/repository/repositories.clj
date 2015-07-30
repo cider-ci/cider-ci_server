@@ -40,9 +40,9 @@
                   (conj git-repositories
                         {id {:id id
                              :initial-properties repository
-                             :agent (agent {:repository repository}
-                                           :error-handler repository-agent-error-handler)
-                             :state-atom (atom {})}}))
+                             :agent (agent {:repository repository
+                                            :fetch-and-update-is-queued (atom false) }
+                                           :error-handler repository-agent-error-handler)}}))
                 id) id))
     (logging/warn "could not create repositorie-processor" repository)))
 
@@ -50,7 +50,7 @@
 ;### Submit actions through agent #############################################
 (defn- git-fetch-is-due? [repository git-repository]
   (when-let [interval-value (:git_fetch_and_update_interval repository)]
-    (if-let [git-fetched-at (:git_fetched_at @(:agent git-repository))]
+    (if-let [git-fetched-at (:git-fetched-at @(:agent git-repository))]
       (time/after? (time/now) (time/plus git-fetched-at (time/seconds interval-value)))
       true)))
 
@@ -63,15 +63,16 @@
 (defn- submit-git-fetch-and-update [repository git-repository]
   (logging/debug submit-git-fetch-and-update [repository git-repository])
   (let [repo-agent (:agent git-repository)]
-    (send-off repo-agent
-              (fn [state repository git-repository]
-                (if-let [git-fetched-at (:git-fetched-at state)]
-                  ; skip if it has been fetched in the last 500ms
-                  (if (time/after? (time/now) (time/plus git-fetched-at (time/millis 500)))
-                    (git-fetch-and-update-fn state repository)
-                    state)
-                  (git-fetch-and-update-fn state repository)))
-              repository git-repository)))
+    (logging/debug 'submit-git-fetch-and-update "evaluating submit")
+    (when-not (-> @repo-agent :fetch-and-update-is-queued deref)
+      (logging/debug 'submit-git-fetch-and-update "sending-off git-fetch-and-updat")
+      (swap! (-> @repo-agent :fetch-and-update-is-queued) (fn [_] true))
+      (send-off repo-agent
+                (fn [state repository git-repository]
+                  (logging/debug 'submit-git-fetch-and-update "executing git-fetch-and-updat")
+                  (swap! (-> state :fetch-and-update-is-queued) (fn [_] false))
+                  (git-fetch-and-update-fn state repository))
+                repository git-repository))))
 
 (defn- submit-git-initialize [repository git-repository]
   (send-off (:agent git-repository)

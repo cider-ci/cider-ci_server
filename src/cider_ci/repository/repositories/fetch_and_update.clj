@@ -101,13 +101,11 @@
     {:watchdog (* 10 60 1000), :dir path, :env {"TERM" "VT-100"}}))
 
 (defn  git-fetch-or-initialize [repository]
-  (try (catcher/wrap-with-log-warn
-         (let [path (git.repositories/path repository)]
-           (if (fs/exists? path)
-             (git-fetch repository path)
-             (git-initialize repository))))
-       (catch Exception e
-         (logging/warn (thrown/stringify e)))))
+  (catcher/wrap-with-suppress-and-log-warn
+    (let [path (git.repositories/path repository)]
+      (if (fs/exists? path)
+        (git-fetch repository path)
+        (git-initialize repository)))))
 
 
 ;#### debug ###################################################################
