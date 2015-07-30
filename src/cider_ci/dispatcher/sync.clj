@@ -17,7 +17,7 @@
 
 (defn sync [executor data]
   (catcher/wrap-with-log-warn
-    (logging/info 'sync executor data)
+    (logging/debug 'sync executor data)
     (update-executor/update-when-changed executor data)
     (ping/update-last-ping-at executor)
     ;jobs-to-execute (get-jobs-to-execute executor (:body request))]
