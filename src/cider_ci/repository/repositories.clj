@@ -4,6 +4,7 @@
 
 (ns cider-ci.repository.repositories
   (:require
+    [cider-ci.repository.repositories.fetch-and-update :as fetch-and-update]
     [cider-ci.repository.branches :as branches]
     [cider-ci.repository.git.repositories :as git.repositories]
     [cider-ci.repository.sql.branches :as sql.branches]
@@ -23,20 +24,8 @@
     ))
 
 
-
-;### helpers ##################################################################
-(defn- directory-exists? [path]
-  (let [file (clojure.java.io/file path)]
-    (and (.exists file)
-         (.isDirectory file))))
-
-(defn- assert-directory-exists! [path]
-  (when-not (directory-exists? path)
-    (throw (IllegalStateException. "Directory does not exist."))))
-
 ;### repositories processors ##################################################
 (defonce repository-processors-atom (atom {}))
-
 (defn- repository-agent-error-handler [_agent ex]
   (logging/warn ["Agent error" _agent (thrown/stringify ex)]))
 
@@ -58,81 +47,6 @@
     (logging/warn "could not create repositorie-processor" repository)))
 
 
-;### branches #################################################################
-(defn- get-git-branches [repository-path]
-  (let [res (system/exec-with-success-or-throw
-              ["git" "branch" "--no-abbrev" "--no-color" "-v"]
-              {:watchdog (* 1 60 1000), :dir repository-path, :env {"TERM" "VT-100"}})
-        out (:out res)
-        lines (clojure.string/split out #"\n")
-        branches (map (fn [line]
-                        (let [[_ branch-name current-commit-id]
-                              (re-find #"^?\s+(\S+)\s+(\S+)\s+(.*)$" line)]
-                          {:name branch-name
-                           :current_commit_id current-commit-id}))
-                      lines)]
-    branches))
-
-(defn- update-or-create-branches [tx repository]
-  (catcher/wrap-with-log-error
-    (let [repository-path (git.repositories/path repository)
-          git-branches (get-git-branches repository-path)
-          canonic-id (git.repositories/canonic-id repository)]
-      (logging/debug update-or-create-branches {:repository-path repository-path
-                                                :git-branches git-branches
-                                                :canonic-id canonic-id})
-      (sql.branches/delete-removed tx git-branches canonic-id)
-      (let [created (branches/create-new tx git-branches canonic-id repository-path)
-            updated (branches/update-outdated tx git-branches canonic-id repository-path)]
-        (concat created updated)))))
-
-
-;### GIT Stuff ################################################################
-(defn- update-git-server-info [repository]
-  (logging/debug update-git-server-info [repository])
-  (let [repository-path (git.repositories/path repository)
-        id (git.repositories/canonic-id repository) ]
-    (system/exec-with-success-or-throw ["git" "update-server-info"]
-                 {:watchdog (* 10 60 1000), :dir repository-path, :env {"TERM" "VT-100"}})))
-
-(defn- send-branch-update-notifications [branches]
-  (catcher/wrap-with-log-error
-    (logging/debug send-branch-update-notifications [branches])
-    (doseq [branch branches]
-      (messaging/publish "branch.updated" branch))))
-
-(defn- git-update [repository]
-  (catcher/wrap-with-log-error
-    (let [updated-branches (atom nil)
-          dir (git.repositories/path repository)]
-      (assert-directory-exists! dir)
-      (jdbc/with-db-transaction [tx (rdbms/get-ds)]
-        (update-git-server-info repository)
-        (reset! updated-branches (update-or-create-branches tx repository)))
-      (send-branch-update-notifications @updated-branches))))
-
-(defn- git-initialize [repository]
-  (catcher/wrap-with-log-error
-    (let [dir (git.repositories/path repository)]
-      (system/exec-with-success-or-throw ["rm" "-rf" dir])
-      (system/exec-with-success-or-throw
-        ["git" "clone" "--mirror" (:git_url repository) dir]
-        {:watchdog (* 5 60 1000)}))))
-
-(defn- git-fetch [repository path]
-  (system/exec-with-success-or-throw
-    ["git" "fetch" (:git_url repository) "--force" "--tags" "--prune"  "+*:*"]
-    {:watchdog (* 10 60 1000), :dir path, :env {"TERM" "VT-100"}}))
-
-(defn- git-fetch-or-initialize [repository]
-  (try (catcher/wrap-with-log-warn
-         (let [path (git.repositories/path repository)]
-           (if (fs/exists? path)
-             (git-fetch repository path)
-             (git-initialize repository))))
-       (catch Exception e
-         (logging/warn (thrown/stringify e)))))
-
 ;### Submit actions through agent #############################################
 (defn- git-update-is-due? [repository git-repository]
   (when-let [interval-value (:git_update_interval repository)]
@@ -152,17 +66,15 @@
             (fn [state repository git-repository]
               ; possibly skip overflow of the queue
               (if (git-update-is-due? repository git-repository)
-                (do (git-update repository)
+                (do (fetch-and-update/git-update repository)
                     (conj state {:git_updated_at (time/now)}))
                 state))
             repository git-repository))
 
-
-
 (defn- git-fetch-and-update-fn [state repository]
   (catcher/wrap-with-suppress-and-log-warn
-    (git-fetch-or-initialize repository)
-    (git-update repository))
+    (fetch-and-update/git-fetch-or-initialize repository)
+    (fetch-and-update/git-update repository))
   (conj state  {:git-fetched-at (time/now)}))
 
 (defn- submit-git-fetch-and-update [repository git-repository]
@@ -181,9 +93,9 @@
 (defn- submit-git-initialize [repository git-repository]
   (send-off (:agent git-repository)
             (fn [state repository]
-              (git-initialize repository)
-              (git-fetch-or-initialize repository)
-              (git-update repository)
+              (fetch-and-update/git-initialize repository)
+              (fetch-and-update/git-fetch-or-initialize repository)
+              (fetch-and-update/git-update repository)
               (conj state {:git-initialized-at (time/now)}))
             repository))
 
