@@ -2,7 +2,7 @@
 ; Licensed under the terms of the GNU Affero General Public License v3.
 ; See the "LICENSE.txt" file provided with this software.
 
-(ns cider-ci.repository.project-configuration.core
+(ns cider-ci.repository.project-configuration
   (:require
     [cider-ci.repository.git.repositories :as git.repositories]
     [cider-ci.repository.project-configuration.expansion :as expansion]
@@ -52,23 +52,6 @@
 
 ; disable caching for now
 (def build-project-configuration build-project-configuration_unmemoized)
-
-(defn get-via-http [request]
-  (logging/info request)
-  (catcher/wrap-with-log-warn
-    (-> (try
-          (when-let [content (build-project-configuration
-                               (-> request :params :id))]
-            {:body (json/write-str content)
-             :headers {"Content-Type" "application/json"}})
-          (catch clojure.lang.ExceptionInfo e
-            (case (-> e ex-data :status )
-              404 {:status 404
-                   :body (thrown/stringify e)}
-              422 {:status 422
-                   :body (thrown/stringify e)}
-              (throw e))))
-        (charset "UTF-8"))))
 
 
 ;### Debug ####################################################################

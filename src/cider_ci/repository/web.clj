@@ -8,7 +8,7 @@
     [cider-ci.auth.core]
     [cider-ci.auth.http-basic :as http-basic]
     [cider-ci.repository.git.repositories :as git.repositories]
-    [cider-ci.repository.project-configuration.core :as project-configuration]
+    [cider-ci.repository.project-configuration :as project-configuration]
     [cider-ci.repository.repositories :as repositories]
     [cider-ci.repository.sql.repository :as sql.repository]
     [cider-ci.utils.config :as config :refer [get-config]]
@@ -29,6 +29,7 @@
     [ring.adapter.jetty :as jetty]
     [ring.middleware.json]
     [ring.middleware.params]
+    [ring.util.response :refer [charset]]
     [ring.util.response]
     ))
 
@@ -113,13 +114,30 @@
 
 ;##### project configuration ##################################################
 
+(defn get-project-configuration [request]
+  (logging/info request)
+  (-> (try
+        (when-let [content (project-configuration/build-project-configuration
+                             (-> request :params :id))]
+          {:body (json/write-str content)
+           :headers {"Content-Type" "application/json"}})
+        (catch clojure.lang.ExceptionInfo e
+          (case (-> e ex-data :status )
+            404 {:status 404
+                 :body (thrown/stringify e)}
+            422 {:status 422
+                 :body (thrown/stringify e)}
+            (respond-with-500 request e)))
+        (catch Throwable e
+          (respond-with-500 request e)))
+      (charset "UTF-8")))
 
 
 ;##### routes #################################################################
 
 (defn build-routes [context]
   (cpj/routes
-    (cpj/GET "/project-configuration/:id" _ project-configuration/get-via-http)
+    (cpj/GET "/project-configuration/:id" _ get-project-configuration)
     (cpj/GET "/path-content/:id/*" request
              (get-path-content request))
     (cpj/GET "/ls-tree/:id/" _ ls-tree)

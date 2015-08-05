@@ -45,6 +45,7 @@
                   (hh/limit 1)
                   (hh/order-by [:commits.committer_date :desc])
                   (hc/format))]
+    (logging/warn 'query query)
     (->> query
          (jdbc/query  (rdbms/get-ds))
          (map :tree_id)
@@ -58,13 +59,23 @@
                                                     :branches_commits.commit_id])
                   (hh/merge-where [:in :submodules.commit_id commit-ids])
                   (hh/merge-where [:= :submodules.path path])
-                  (hc/format))]
-    (->> query
-         (jdbc/query  (rdbms/get-ds))
-         (map :submodule_commit_id))))
+                  (hc/format))
+        res (->> query
+                 (jdbc/query  (rdbms/get-ds))
+                 (map :submodule_commit_id))]
+    (if-not (seq res)
+      (throw (ex-info (str "The commit id for submodule path '" path
+                           "' and commits '" (seq commit-ids)
+                           "' could not be resolved! Is a git push pending?")
+                      {:status 404}))
+      res)))
 
 (defn- resolve-submodule-git-ref [git-refs paths]
   (let [commit-ids (get-commit-ids git-refs)]
+    (when-not (seq commit-ids)
+      (throw (ex-info (str "the commit for " git-refs " was not found,"
+                           " is a git push pending?")
+                      {:status 404})))
     (loop [commit-ids commit-ids
            paths paths]
       (if-let [path (first paths)]
