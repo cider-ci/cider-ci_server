@@ -11,6 +11,7 @@
     [cider-ci.utils.map :refer [deep-merge]]
     [clojure.tools.logging :as logging]
     [clojure.java.io :as io]
+    [cider-ci.utils.rdbms :as rdbms]
     ))
 
 
