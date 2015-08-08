@@ -39,8 +39,14 @@
                      ["SELECT state FROM trials
                       WHERE task_id = ?" id]))))
 
+(defn- get-job-for-task [task]
+  (->> (jdbc/query (rdbms/get-ds)
+                   ["SELECT jobs.* FROM jobs
+                    JOIN tasks ON tasks.job_id = jobs.id
+                    WHERE tasks.id = ? " (:id task)]) first))
 
 ;### create trial #############################################################
+
 (defn create-trial [task]
   (let [task-id (:id task)
         spec (get-task-spec task-id)
@@ -53,6 +59,7 @@
 
 (defn- create-trials [task]
   (let [id (:id task)
+        job (get-job-for-task task)
         spec (get-task-spec id)
         states (get-trial-states task)
         finished-count (->> states (filter #(terminal-states %)) count)
@@ -68,7 +75,8 @@
                     :create-new-trials-count create-new-trials-count
                     :_range _range
                     })
-    (when-not (some #{"passed"} states)
+    (when-not (or (some #{"passed"} states)
+                  (some #{(:state job)} ["aborted" "aborting"]))
       (logging/debug "seqing and creating trials" )
       (doseq [_ _range]
         (create-trial task)))))
@@ -77,22 +85,22 @@
 ;### re-evaluate  #############################################################
 
 (defn- evaluate-trials-and-update
+  "Returns a truthy value when the state of the task has changed."
   [task]
   (catcher/wrap-with-log-error
     (let [id (:id task)
-          states (get-trial-states task)
-          update-to #(stateful-entity/update-state
-                       :tasks id % {:assert-existence true})]
-      (result/update-task-and-job-result id)
-      (cond
-        (some #{"passed"} states) (update-to "passed")
-        (every? #{"aborted"} states) (update-to "aborted")
-        (every? #{"failed" "aborted"} states) (update-to "failed")
-        (some #{"executing"} states) (update-to "executing")
-        (some #{"pending" "dispatching"} states) (update-to "pending")
-        (empty? states) false
-        :else (throw (IllegalStateException. "NOOOO"))
-        ))))
+          states (get-trial-states task)]
+      (when-let [ new-state (cond
+                              (some #{"passed"} states) "passed"
+                              (every? #{"failed" "aborted"} states) "failed"
+                              (some #{"executing" "dispatching"} states) "executing"
+                              (some #{"pending"} states) "pending"
+                              (some #{"aborting"} states) nil
+                              (empty? states) nil
+                              :else (throw (ex-info (str "Missing case in " 'evaluate-trials-and-update)
+                                                    {:states states :task task} )))]
+        (result/update-task-and-job-result id)
+        (stateful-entity/update-state :tasks id new-state {:assert-existence true})))))
 
 (defn evaluate-and-create-trials
   "Evaluate task, evaluate state of trials and adjust state of task.

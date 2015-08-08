@@ -52,22 +52,40 @@
     (assert task-id)
     (task/evaluate-and-create-trials {:id task-id})))
 
-(defn compute-update-params [params id]
-  (conj {}
-        (select-keys params
-                     [:error :finished_at :result
-                      :started_at :state ])
-        (when-let [params-scripts (:scripts params)]
-          (let [trial (get-trial id)]
-            {:scripts (deep-merge (:scripts trial)
-                                  params-scripts)}))))
+
+(defn- new-state [trial update-params]
+  ; prevent executing, pending, etc when state is  aborted or aborting
+  (case (:state trial)
+    "aborted"  (case (:state update-params)
+                 "passed" "passed"
+                 "failed" "failed"
+                 "aborted")
+    "aborting" (case (:state update-params)
+                 "passed" "passed"
+                 "failed" "failed"
+                 "aborted" "aborted"
+                 "aborting")
+    (:state update-params)))
+
+(defn- compute-update-params [params id]
+  (when-let [trial (get-trial id)]
+    (conj {}
+          (select-keys params
+                       [:error :finished_at :result
+                        :started_at :state])
+          (when-let [params-scripts (:scripts params)]
+            (let [trial (get-trial id)]
+              {:scripts (deep-merge (:scripts trial)
+                                    params-scripts)}))
+          (when-let [new-state (new-state trial params)]
+            {:state new-state}))))
 
 (defn update [params]
   (catcher/wrap-with-suppress-and-log-warn
     (let [id (:id params)]
       (try
         (assert id)
-        (let [update-params (compute-update-params params id)]
+        (when-let [update-params (compute-update-params params id)]
           (jdbc/update! (rdbms/get-ds)
                         :trials update-params
                         ["id = ?" id]))

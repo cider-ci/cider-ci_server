@@ -6,7 +6,6 @@
   (:require
     [cider-ci.dispatcher.dispatch :as dispatch]
     [cider-ci.dispatcher.sweep :as sweep]
-    [cider-ci.dispatcher.sync-trials :as sync-trials]
     [cider-ci.dispatcher.task :as task]
     [cider-ci.dispatcher.trial :as trial]
     [cider-ci.dispatcher.web :as web]
@@ -33,7 +32,6 @@
       (messaging/initialize (:messaging conf))
       (http/initialize conf)
       (task/initialize)
-      (sync-trials/initialize conf)
       (web/initialize conf)
       (dispatch/initialize)
       (sweep/initialize))))

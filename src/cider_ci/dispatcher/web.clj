@@ -8,6 +8,7 @@
     [cider-ci.auth.core :as auth]
     [cider-ci.auth.core]
     [cider-ci.auth.http-basic :as http-basic]
+    [cider-ci.dispatcher.abort-job :as abort-job]
     [cider-ci.dispatcher.sync :as sync]
     [cider-ci.dispatcher.trial :as trial]
     [cider-ci.utils.http :as http]
@@ -23,6 +24,7 @@
     [compojure.handler :as cpj.handler]
     [drtom.logbug.debug :as debug]
     [drtom.logbug.ring :refer [wrap-handler-with-logging]]
+    [drtom.logbug.thrown :as thrown]
     [ring.adapter.jetty :as jetty]
     [ring.middleware.json]
     ))
@@ -63,11 +65,28 @@
 
 ;#### routing #################################################################
 
+(defn abort-job [request]
+  (try
+    (-> request :params :id abort-job/abort)
+    {:status 202}
+    (catch clojure.lang.ExceptionInfo e
+      (if-let [status (-> e ex-data :status)]
+        {:status status
+         :body (.getMessage e)}
+        {:status 500
+         :body (thrown/stringify e)}))
+    (catch Throwable th
+      {:status 500
+       :body (thrown/stringify th)})))
+
+;#### routing #################################################################
 
 (defn build-routes [context]
   (cpj/routes
 
     (cpj/GET "/status" request #'status-handler)
+
+    (cpj/POST "/jobs/:id/abort" _ #'abort-job)
 
     (cpj/PATCH "/trials/:id"
                {{id :id} :params data :body}
