@@ -74,7 +74,7 @@
               available-executor-exists-query
               executor-with-accepted-repositories-part-query)]])
 
-(def ^:private without-or-with-available-global-resource
+(def without-or-with-available-global-resource
   [ "NOT EXISTS" (-> (hsql-helpers/select 1)
                      (hsql-helpers/from [:trials :active_trials])
                      (hsql-helpers/merge-join [:tasks :active_tasks] [:= :active_tasks.id :active_trials.task_id])
@@ -82,34 +82,29 @@
                      (hsql-helpers/merge-where (hsql-types/raw (str "active_tasks.exclusive_global_resources "
                                                   "&& tasks.exclusive_global_resources"))))])
 
-; TODO use
-(def ^:private is-attached-to-a-repo
-  [:exists
-   (merge
-     (hsql-helpers/select 1)
-     join-trial-to-repo
-     )])
+(def next-trial-to-be-dispatched-base-query
+  (-> (hsql-helpers/select :trials.*)
+      (hsql-helpers/from :trials)
+      (hsql-helpers/merge-where [:= :trials.state "pending"])
+      (hsql-helpers/merge-where without-or-with-available-global-resource)
+      (hsql-helpers/merge-join :tasks [:= :trials.task_id :tasks.id])
+      (hsql-helpers/merge-join :jobs [:= :tasks.job_id :jobs.id])
+      (hsql-helpers/merge-join :commits [:= :jobs.tree_id :commits.tree_id])
+      (hsql-helpers/merge-join :branches_commits [:= :commits.id :branches_commits.commit_id])
+      (hsql-helpers/merge-join :branches [:= :branches_commits.branch_id :branches.id])
+      (hsql-helpers/merge-join :repositories [:= :branches.repository_id :repositories.id])
+      (hsql-helpers/order-by [:jobs.priority :desc]
+                             [:jobs.created_at :asc]
+                             [:tasks.priority :desc]
+                             [:tasks.created_at :asc]
+                             [:trials.created_at :asc])
+      (hsql-helpers/limit 1)))
+
 
 (defn get-next-trial-to-be-dispatched []
-  (-> (-> (hsql-helpers/select :trials.*)
-          (hsql-helpers/from :trials)
-          (hsql-helpers/merge-where [:= :trials.state "pending"])
-          (hsql-helpers/merge-where available-executor-exists)
-          (hsql-helpers/merge-where without-or-with-available-global-resource)
-          ;(hsql-helpers/merge-where is-attached-to-a-repo)
-          (hsql-helpers/merge-join :tasks [:= :trials.task_id :tasks.id])
-          (hsql-helpers/merge-join :jobs [:= :tasks.job_id :jobs.id])
-          (hsql-helpers/merge-join :commits [:= :jobs.tree_id :commits.tree_id])
-          (hsql-helpers/merge-join :branches_commits [:= :commits.id :branches_commits.commit_id])
-          (hsql-helpers/merge-join :branches [:= :branches_commits.branch_id :branches.id])
-          (hsql-helpers/merge-join :repositories [:= :branches.repository_id :repositories.id])
-          (hsql-helpers/order-by [:jobs.priority :desc]
-                       [:jobs.created_at :asc]
-                       [:tasks.priority :desc]
-                       [:tasks.created_at :asc]
-                       [:trials.created_at :asc])
-          (hsql-helpers/limit 1)
-          hsql-format/format)
+  (-> next-trial-to-be-dispatched-base-query
+      (hsql-helpers/merge-where available-executor-exists)
+      hsql-format/format
       (#(jdbc/query (rdbms/get-ds) %))
       first))
 

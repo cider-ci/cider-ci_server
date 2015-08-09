@@ -6,6 +6,7 @@
 (ns cider-ci.dispatcher.sync.sync-trials
   (:require
     [cider-ci.dispatcher.dispatch.build-data :as build-data]
+    [cider-ci.dispatcher.dispatch.next-trial]
     [cider-ci.dispatcher.executor :as executor-entity]
     [cider-ci.dispatcher.sync.ping :as ping]
     [cider-ci.dispatcher.sync.update-executor :as update-executor]
@@ -43,26 +44,11 @@
                    )])
 
 (defn- next-trial-to-be-dispatched-query [params]
-  (-> (sql-helpers/select :trials.*)
-      (sql-helpers/from :trials)
-      (sql-helpers/merge-where [:= :trials.state "pending"])
+  (->  cider-ci.dispatcher.dispatch.next-trial/next-trial-to-be-dispatched-base-query
       (sql-helpers/merge-where (next-trial-query-part-for-executor params))
       (sql-helpers/merge-where (next-trial-to-be-dispatched-query-traits-part params))
       (sql-helpers/merge-where (next-trial-to-be-dispatched-query-repositories-part params))
-      (sql-helpers/merge-join :tasks [:= :trials.task_id :tasks.id])
-      (sql-helpers/merge-join :jobs [:= :tasks.job_id :jobs.id])
-      (sql-helpers/merge-join :commits [:= :jobs.tree_id :commits.tree_id])
-      (sql-helpers/merge-join :branches_commits [:= :commits.id :branches_commits.commit_id])
-      (sql-helpers/merge-join :branches [:= :branches_commits.branch_id :branches.id])
-      (sql-helpers/merge-join :repositories [:= :branches.repository_id :repositories.id])
-      (sql-helpers/order-by [:jobs.priority :desc]
-                   [:jobs.created_at :asc]
-                   [:tasks.priority :desc]
-                   [:tasks.created_at :asc]
-                   [:trials.created_at :asc])
-      (sql-helpers/limit 1)
-      sql-format/format
-      ))
+      sql-format/format))
 
 (defn- get-and-set-next-trial-to-be-dispatched [tx executor params]
   (let [query (next-trial-to-be-dispatched-query params)]
