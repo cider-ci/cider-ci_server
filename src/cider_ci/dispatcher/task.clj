@@ -84,21 +84,41 @@
 
 ;### re-evaluate  #############################################################
 
+(defn- throw-no-matching-case [task states]
+  (throw (ex-info  "No matching case!" {:states states :task task})))
+
+(defn- evaluate-new-state-for-aborting [task states]
+  (cond
+    (some #{"passed"} states) "passed"
+    (some #{"aborting"} states) "aborting"
+    (every? #{"failed" "aborted"} states) "aborted"
+    (some #{"executing" "dispatching"} states) "executing"
+    (some #{"pending"} states) "pending"
+    (empty? states) nil
+    :else (throw-no-matching-case task states)))
+
+(defn- evaluate-new-state-default [task states]
+  (cond
+    (some #{"passed"} states) "passed"
+    (every? #{"aborted"} states) "aborted"
+    (every? #{"failed" "aborted"} states) "failed"
+    (some #{"executing" "dispatching"} states) "executing"
+    (some #{"pending"} states) "pending"
+    (some #{"aborting"} states) "aborting"
+    (empty? states) nil
+    :else (throw-no-matching-case task states)))
+
 (defn- evaluate-trials-and-update
   "Returns a truthy value when the state of the task has changed."
   [task]
   (catcher/wrap-with-log-error
     (let [id (:id task)
-          states (get-trial-states task)]
-      (when-let [ new-state (cond
-                              (some #{"passed"} states) "passed"
-                              (every? #{"failed" "aborted"} states) "failed"
-                              (some #{"executing" "dispatching"} states) "executing"
-                              (some #{"pending"} states) "pending"
-                              (some #{"aborting"} states) nil
-                              (empty? states) nil
-                              :else (throw (ex-info (str "Missing case in " 'evaluate-trials-and-update)
-                                                    {:states states :task task} )))]
+          task (get-task id)
+          trial-states (get-trial-states task)]
+      (when-let [new-state (case (:state task)
+                             ("aborted" "aborting") (evaluate-new-state-for-aborting
+                                                      task trial-states)
+                             (evaluate-new-state-default task trial-states))]
         (result/update-task-and-job-result id)
         (stateful-entity/update-state :tasks id new-state {:assert-existence true})))))
 
@@ -119,6 +139,7 @@
 
 
 ;### initialize ###############################################################
+
 (defn initialize []
   (catcher/wrap-with-log-error
     (messaging/listen "task.create-trials"

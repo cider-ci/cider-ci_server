@@ -62,7 +62,7 @@
                  "aborted")
     "aborting" (case (:state update-params)
                  "passed" "passed"
-                 "failed" "failed"
+                 "failed" "aborted"
                  "aborted" "aborted"
                  "aborting")
     (:state update-params)))

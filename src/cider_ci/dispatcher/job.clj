@@ -38,8 +38,8 @@
   (let [states (get-task-states job)]
     (if-let [new-state (cond
                          (every? #{"passed"} states) "passed"
-                         (every? #{"passed" "failed"} states) "aborted"
-                         (some #{"pending" "dispatching" "executing"} states) nil
+                         (every? #{"passed" "failed" "aborted"} states) "aborted"
+                         (some #{"pending" "dispatching" "executing" "aborting"} states) nil
                          :else (throw (ex-info (str "No matching case in "
                                                     'evaluate-aborting)
                                                {:states states :job job})) )]
@@ -50,6 +50,7 @@
     (if-let [new-state (cond
                          (every? #{"passed"} states) "passed"
                          (every? #{"failed" "passed"} states) "failed"
+                         (every? #{"failed" "passed" "aborted"} states) "aborted"
                          (some #{"executing"} states) "executing"
                          (some #{"pending"} states)"pending"
                          (empty? states) nil
@@ -57,7 +58,6 @@
                                                     'evaluate-standard)
                                                {:states states :job job})))]
       (update-state-and-fire-if-changed (:id job) new-state))))
-
 
 (defn evaluate-and-update [job-id]
   (catcher/wrap-with-log-warn
