@@ -9,6 +9,7 @@
     [cider-ci.auth.core]
     [cider-ci.auth.http-basic :as http-basic]
     [cider-ci.dispatcher.abort-job :as abort-job]
+    [cider-ci.dispatcher.retry-and-resume :as retry-and-resume]
     [cider-ci.dispatcher.sync :as sync]
     [cider-ci.dispatcher.trial :as trial]
     [cider-ci.utils.http :as http]
@@ -79,6 +80,23 @@
       {:status 500
        :body (thrown/stringify th)})))
 
+
+;#### routing #################################################################
+
+(defn retry-and-resume [request]
+  (try
+    (-> request :params :id retry-and-resume/retry-and-resume)
+    {:status 202}
+    (catch clojure.lang.ExceptionInfo e
+      (if-let [status (-> e ex-data :status)]
+        {:status status
+         :body (.getMessage e)}
+        {:status 500
+         :body (thrown/stringify e)}))
+    (catch Throwable th
+      {:status 500
+       :body (thrown/stringify th)})))
+
 ;#### routing #################################################################
 
 (defn build-routes [context]
@@ -87,6 +105,8 @@
     (cpj/GET "/status" request #'status-handler)
 
     (cpj/POST "/jobs/:id/abort" _ #'abort-job)
+
+    (cpj/POST "/jobs/:id/retry-and-resume" _ #'retry-and-resume)
 
     (cpj/PATCH "/trials/:id"
                {{id :id} :params data :body}
