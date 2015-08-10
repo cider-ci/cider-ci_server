@@ -34,37 +34,27 @@
                    ["SELECT * FROM jobs WHERE id = ?" job-id])
        first))
 
-(defn- evaluate-aborting [job]
-  (let [states (get-task-states job)]
-    (if-let [new-state (cond
-                         (every? #{"passed"} states) "passed"
-                         (every? #{"passed" "failed" "aborted"} states) "aborted"
-                         (some #{"pending" "dispatching" "executing" "aborting"} states) nil
-                         :else (throw (ex-info (str "No matching case in "
-                                                    'evaluate-aborting)
-                                               {:states states :job job})) )]
-      (update-state-and-fire-if-changed (:id job) new-state))))
+(defn evalute-new-state [job task-states]
+  (case (:state job)
+    "aborted" "aborted"
+    "aborting" (cond (every? #{"passed"} task-states) "passed"
+                     (some #{"aborting"} task-states) "aborting"
+                     (every? #{"passed" "failed" "aborted"} task-states) "aborted"
+                     :else "aborting")
+    (cond (every? #{"passed"} task-states) "passed"
+          (every? #{"failed" "passed" "aborted"} task-states) "failed"
+          (some #{"executing"} task-states) "executing"
+          (some #{"pending"} task-states) "pending"
+          :else (:state job))))
 
-(defn- evaluate-standard [job]
-  (let [states (get-task-states job)]
-    (if-let [new-state (cond
-                         (every? #{"passed"} states) "passed"
-                         (every? #{"failed" "passed"} states) "failed"
-                         (every? #{"failed" "passed" "aborted"} states) "aborted"
-                         (some #{"executing"} states) "executing"
-                         (some #{"pending"} states)"pending"
-                         (empty? states) nil
-                         :else (throw (ex-info (str "No matching case in "
-                                                    'evaluate-standard)
-                                               {:states states :job job})))]
-      (update-state-and-fire-if-changed (:id job) new-state))))
 
 (defn evaluate-and-update [job-id]
   (catcher/wrap-with-log-warn
-    (let [job (get-job job-id)]
-      (case (:state job)
-        ("aborted" "aborting") (evaluate-aborting job)
-        (evaluate-standard job)))))
+    (let [job (get-job job-id)
+          task-states (get-task-states job)
+          new-state (evalute-new-state job task-states)]
+      (update-state-and-fire-if-changed (:id job) new-state))))
+
 
 
 ;#### debug ###################################################################

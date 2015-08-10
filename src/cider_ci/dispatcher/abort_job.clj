@@ -20,10 +20,6 @@
 
 ;#### abort ###################################################################
 
-; TODO don't use transactions; update trial via trial/update;
-; rewrite job evaluation, prevent change from aborted anything else (maybe passed though?)
-; rewrite task evaluation;
-
 (defn- trials-to-be-set-to-aborting [job-id]
   (jdbc/query (get-ds)
               ["SELECT trials.id FROM trials
