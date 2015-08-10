@@ -5,7 +5,8 @@
 (ns cider-ci.dispatcher.retry-and-resume
   (:require
     [cider-ci.dispatcher.stateful-entity :as stateful-entity]
-    [cider-ci.dispatcher.trial :as trial]
+    [cider-ci.dispatcher.job :as job]
+    [cider-ci.dispatcher.task :as task]
     [cider-ci.utils.config :as config :refer [get-config]]
     [cider-ci.utils.messaging :as messaging]
     [cider-ci.utils.rdbms :as rdbms :refer [get-ds]]
@@ -18,8 +19,26 @@
 
 
 
+(defn retry-unpassed-tasks [job]
+  (->> (jdbc/query (rdbms/get-ds)
+                   ["SELECT id FROM tasks
+                    WHERE job_id = ?
+                    AND state IN ('failed','aborted','aborting')" (:id job)])
+       (map task/create-trial)
+       doall))
+
 (defn retry-and-resume [job-id]
-  )
+  (let [job (job/get-job job-id)
+        job-id (:id job) ]
+    (when-not job
+      (throw (ex-info "Job not found" {:status 422})))
+    (jdbc/execute! (get-ds)
+                   ["UPDATE jobs
+                    SET state = 'pending'
+                    WHERE id = ? " job-id])
+    (retry-unpassed-tasks job)
+    (job/evaluate-and-update job-id)
+    ))
 
 
 ;#### debug ###################################################################

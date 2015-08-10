@@ -29,7 +29,7 @@
           :jobs job-id new-state {:assert-existence true})
     (messaging/publish "job.updated" {:id job-id :state new-state})))
 
-(defn- get-job [job-id]
+(defn get-job [job-id]
   (->> (jdbc/query (rdbms/get-ds)
                    ["SELECT * FROM jobs WHERE id = ?" job-id])
        first))
