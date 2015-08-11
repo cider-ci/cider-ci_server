@@ -4,6 +4,7 @@
 
 (ns cider-ci.dispatcher.abort-job
   (:require
+    [cider-ci.dispatcher.job :as job]
     [cider-ci.dispatcher.stateful-entity :as stateful-entity]
     [cider-ci.dispatcher.trial :as trial]
     [cider-ci.utils.config :as config :refer [get-config]]
@@ -67,12 +68,10 @@
   (jdbc/execute! (get-ds)
                  ["UPDATE jobs
                   SET state = 'aborting'
-                  WHERE id = ?
-                  AND state NOT IN (?)
-                  " job-id, (->> (get-config) :constants :STATES :FINISHED (clojure.string/join ", "))])
+                  WHERE id = ? " job-id])
   (set-pending-trials-to-aborted job-id)
   (set-processing-trials-to-aborted job-id)
-  )
+  (job/evaluate-and-update job-id))
 
 ;#### debug ###################################################################
 ;(debug/debug-ns *ns*)

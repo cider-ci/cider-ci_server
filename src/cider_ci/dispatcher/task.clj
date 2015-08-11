@@ -45,42 +45,6 @@
                     JOIN tasks ON tasks.job_id = jobs.id
                     WHERE tasks.id = ? " (:id task)]) first))
 
-;### create trial #############################################################
-
-(defn create-trial [task]
-  (let [task-id (:id task)
-        spec (get-task-spec task-id)
-        scripts (:scripts spec) ]
-    (logging/debug "INSERT" {:scripts scripts :task_id task-id})
-    (catcher/wrap-with-log-error
-      (jdbc/insert! (rdbms/get-ds) :trials
-                    {:scripts scripts
-                     :task_id task-id}))))
-
-(defn- create-trials [task]
-  (let [id (:id task)
-        job (get-job-for-task task)
-        spec (get-task-spec id)
-        states (get-trial-states task)
-        finished-count (->> states (filter #(terminal-states %)) count)
-        in-progress-count (- (count states) finished-count)
-        create-new-trials-count (min (- (or (:eager-trials spec) 1) in-progress-count)
-                                     (- (or (:max-auto-trials spec) 2) (count states)))
-        _range (range 0 create-new-trials-count)
-        ]
-    (logging/debug "CREATE-TRIALS"
-                   {:id id :spec spec :states states
-                    :finished-count finished-count
-                    :in-progress-count in-progress-count
-                    :create-new-trials-count create-new-trials-count
-                    :_range _range
-                    })
-    (when-not (or (some #{"passed"} states)
-                  (some #{(:state job)} ["aborted" "aborting"]))
-      (logging/debug "seqing and creating trials" )
-      (doseq [_ _range]
-        (create-trial task)))))
-
 
 ;### re-evaluate  #############################################################
 
@@ -107,6 +71,48 @@
       (result/update-task-and-job-result id)
       (stateful-entity/update-state :tasks id new-state {:assert-existence true}))))
 
+
+;### create trial #############################################################
+
+(defn create-trial [task]
+  (let [task-id (:id task)
+        spec (get-task-spec task-id)
+        scripts (:scripts spec) ]
+    (catcher/wrap-with-log-error
+      (let [trial (-> (jdbc/insert! (rdbms/get-ds) :trials
+                                    {:scripts scripts
+                                     :task_id task-id})
+                      first)]
+        (evaluate-trials-and-update task)
+        trial))))
+
+(defn- create-trials [task]
+  (let [id (:id task)
+        job (get-job-for-task task)
+        spec (get-task-spec id)
+        states (get-trial-states task)
+        finished-count (->> states (filter #(terminal-states %)) count)
+        in-progress-count (- (count states) finished-count)
+        create-new-trials-count (min (- (or (:eager-trials spec) 1) in-progress-count)
+                                     (- (or (:max-auto-trials spec) 2) (count states)))
+        _range (range 0 create-new-trials-count)
+        ]
+    (logging/debug "CREATE-TRIALS"
+                   {:id id :spec spec :states states
+                    :finished-count finished-count
+                    :in-progress-count in-progress-count
+                    :create-new-trials-count create-new-trials-count
+                    :_range _range
+                    })
+    (when-not (or (some #{"passed"} states)
+                  (some #{(:state job)} ["aborted" "aborting"]))
+      (logging/debug "seqing and creating trials" )
+      (doseq [_ _range]
+        (create-trial task)))))
+
+
+;### eval and create trials ###################################################
+
 (defn evaluate-and-create-trials
   "Evaluate task, evaluate state of trials and adjust state of task.
   Send \"task.state-changed\" message if state changed.
@@ -129,12 +135,7 @@
   (catcher/wrap-with-log-error
     (messaging/listen "task.create-trials"
                       #'create-trials
-                      "task.create-trials")
-
-    (messaging/listen "task.create-trial"
-                      #'create-trial
-                      "task.create-trial"))
-  )
+                      "task.create-trials")))
 
 ;(messaging/publish "task.create-trials" {:id "de10e33c-c13f-5aba-94aa-db1dca1e5932"})
 
