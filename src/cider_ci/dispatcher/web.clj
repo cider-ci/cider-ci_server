@@ -8,7 +8,7 @@
     [cider-ci.auth.core :as auth]
     [cider-ci.auth.core]
     [cider-ci.auth.http-basic :as http-basic]
-    [cider-ci.dispatcher.abort-job :as abort-job]
+    [cider-ci.dispatcher.abort :as abort]
     [cider-ci.dispatcher.retry :as retry]
     [cider-ci.dispatcher.sync :as sync]
     [cider-ci.dispatcher.trial :as trial]
@@ -68,7 +68,7 @@
 
 (defn abort-job [request]
   (try
-    (-> request :params :id abort-job/abort)
+    (-> request :params :id abort/abort-job)
     {:status 202}
     (catch clojure.lang.ExceptionInfo e
       (if-let [status (-> e ex-data :status)]
