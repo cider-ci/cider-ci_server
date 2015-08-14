@@ -6,7 +6,6 @@
   (:require
     [cider-ci.repository.branches :as branches]
     [cider-ci.repository.git.repositories :as git.repositories]
-    [cider-ci.repository.sql.branches :as sql.branches]
     [cider-ci.utils.daemon :as daemon]
     [cider-ci.utils.fs :as ci-fs]
     [cider-ci.utils.messaging :as messaging]
@@ -19,9 +18,21 @@
     [drtom.logbug.catcher :as catcher]
     [drtom.logbug.debug :as debug]
     [drtom.logbug.thrown :as thrown]
+    [honeysql.format :as hsql-format]
+    [honeysql.util :refer [defalias]]
+    [honeysql.helpers :as hsql-helpers]
+    [honeysql.types :as hsql-types]
     [me.raynes.fs :as fs]
     ))
 
+
+;### sql helpers ##############################################################
+
+(defalias sql-format hsql-format/format)
+(defalias sql-using hsql-helpers/using)
+(defalias sql-returning honeysql.helpers/returning)
+(defalias sql-merge-where honeysql.helpers/merge-where)
+(defalias sql-delete-from hsql-helpers/delete-from)
 
 ;### helpers ##################################################################
 (defn- directory-exists? [path]
@@ -32,6 +43,25 @@
 (defn- assert-directory-exists! [path]
   (when-not (directory-exists? path)
     (throw (IllegalStateException. "Directory does not exist."))))
+
+
+;### delete branches ##########################################################
+(defn- branches-delete-query [git-url existing-branches-names]
+  (-> (sql-delete-from :branches)
+      (sql-using :repositories)
+      (sql-merge-where [:= :repositories.id :branches.repository_id])
+      (sql-merge-where [:= :repositories.git-url git-url])
+      (sql-merge-where [:not-in :branches.name existing-branches-names])
+      (sql-returning :branches.name :repositories.id :repositories.git_url)
+      sql-format
+      ))
+
+(defn- delete-removed-branches [tx keep-git-branches git-url]
+  (let [keep-branch-names (map :name keep-git-branches)
+        query (branches-delete-query git-url keep-branch-names)
+        res (jdbc/query tx query)]
+    (logging/debug "deleted " res " branches")
+    res))
 
 
 ;### branches #################################################################
@@ -49,18 +79,15 @@
                       lines)]
     branches))
 
-(defn- update-or-create-branches [tx repository]
+(defn- update-branches [repository]
   (catcher/wrap-with-log-error
-    (let [repository-path (git.repositories/path repository)
-          git-branches (get-git-branches repository-path)
-          canonic-id (git.repositories/canonic-id repository)]
-      (logging/debug update-or-create-branches {:repository-path repository-path
-                                                :git-branches git-branches
-                                                :canonic-id canonic-id})
-      (sql.branches/delete-removed tx git-branches canonic-id)
-      (let [created (branches/create-new tx git-branches canonic-id repository-path)
-            updated (branches/update-outdated tx git-branches canonic-id repository-path)]
-        (concat created updated)))))
+    (jdbc/with-db-transaction [tx (rdbms/get-ds)]
+      (let [repository-path (git.repositories/path repository)
+            git-branches (get-git-branches repository-path)
+            canonic-id (git.repositories/canonic-id repository)]
+        {:created (branches/create-new tx git-branches canonic-id repository-path)
+         :updated (branches/update-outdated tx git-branches canonic-id repository-path)
+         :deleted (delete-removed-branches tx git-branches (:git_url repository))}))))
 
 
 ;### GIT Stuff ################################################################
@@ -69,23 +96,30 @@
   (let [repository-path (git.repositories/path repository)
         id (git.repositories/canonic-id repository) ]
     (system/exec-with-success-or-throw ["git" "update-server-info"]
-                 {:watchdog (* 10 60 1000), :dir repository-path, :env {"TERM" "VT-100"}})))
+                                       {:watchdog (* 10 60 1000), :dir repository-path, :env {"TERM" "VT-100"}})))
 
-(defn- send-branch-update-notifications [branches]
+(defn- send-branch-update-notifications [updated-branches]
   (catcher/wrap-with-log-error
-    (logging/debug send-branch-update-notifications [branches])
-    (doseq [branch branches]
-      (messaging/publish "branch.updated" branch))))
+    (for [action [:created :deleted :updated]]
+      (->> (action updated-branches)
+           (map #(messaging/publish (str "branch." (name action)) %))
+           doall))))
 
-(defn  git-update [repository]
+(defn send-repository-update-notification [repository]
+  (messaging/publish "repository.updated"
+                     (select-keys repository [:git_url :name])))
+
+(defn git-update [repository]
   (catcher/wrap-with-log-error
-    (let [updated-branches (atom nil)
-          dir (git.repositories/path repository)]
-      (assert-directory-exists! dir)
-      (jdbc/with-db-transaction [tx (rdbms/get-ds)]
-        (update-git-server-info repository)
-        (reset! updated-branches (update-or-create-branches tx repository)))
-      (send-branch-update-notifications @updated-branches))))
+    (let [dir (git.repositories/path repository)
+          _ (assert-directory-exists! dir)
+          updated-branches (update-branches repository)]
+      (update-git-server-info repository)
+      (send-branch-update-notifications updated-branches)
+      (when (or (seq (:created updated-branches))
+                (seq (:deleted updated-branches))
+                (seq (:updated updated-branches)))
+        (send-repository-update-notification repository)))))
 
 (defn git-initialize [repository]
   (catcher/wrap-with-log-error

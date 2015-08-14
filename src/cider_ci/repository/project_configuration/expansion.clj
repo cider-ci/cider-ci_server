@@ -45,7 +45,6 @@
                   (hh/limit 1)
                   (hh/order-by [:commits.committer_date :desc])
                   (hc/format))]
-    (logging/warn 'query query)
     (->> query
          (jdbc/query  (rdbms/get-ds))
          (map :tree_id)
