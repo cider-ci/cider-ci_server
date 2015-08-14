@@ -3,49 +3,17 @@
     [drtom.logbug.catcher :as catcher]
     [clojure.java.jdbc :as jdbc]
     [clojure.tools.logging :as logging]
+    [ring.util.codec]
     [pg-types.all]
     )
   (:import
+    [java.net.URI]
     [com.mchange.v2.c3p0 ComboPooledDataSource DataSources]
     ))
 
 
-(defonce ^:private db-spec (atom nil))
-(defn get-db-spec [] @db-spec)
-
 (defonce ^:private ds (atom nil))
 (defn get-ds [] @ds)
-
-(defonce ^:private tables-metadata (atom nil))
-
-(defn get-tables-metadata []
-  (logging/warn get-tables-metadata " is deprecated")
-  @tables-metadata)
-
-(defn- get-columns-metadata [table-name db-conf]
-  (jdbc/with-db-metadata [md db-conf]
-    (into {} (sort
-               (map (fn [column-data]
-                      [(keyword (:column_name column-data))
-                       column-data])
-                    (jdbc/metadata-result
-                      (.getColumns md nil nil table-name "")))))))
-
-(defn- set-tables-metadata [db-conf]
-  (reset!
-    tables-metadata
-    (into {} (sort
-               (jdbc/with-db-metadata [md db-conf]
-                 (map
-                   (fn [table-data]
-                     [(keyword (:table_name table-data))
-                      (conj table-data
-                            {:columns (get-columns-metadata
-                                        (:table_name table-data) db-conf)})])
-                   (jdbc/metadata-result
-                     (.getTables md nil nil nil (into-array ["TABLE" "VIEW"])))
-                   ))))))
-
 
 (defn check-connection
   "Performs a simple query an returns boolean true on success and
@@ -60,41 +28,59 @@
 
 
 
-
-
-(defn amend-db-conf [db-conf]
-  (let [user (or (:user db-conf)
-                 (System/getenv "PGUSER"))
-        password (or
-                   (:password db-conf)
-                   (System/getenv "PGPASSWORD"))]
-    (conj db-conf
-          {:user user
-           :password password})))
-
 (defn reset []
   (logging/info "resetting c3p0 datasource")
-  (reset! db-spec nil)
   (when @ds (.hardReset (:datasource @ds)))
-  (reset! ds nil)
-  (reset! tables-metadata nil))
+  (reset! ds nil))
+
+(defn- get-url [db-conf]
+  (str "jdbc:"
+       (or (:url db-conf)
+           (str (:subprotocol db-conf) ":" (:subname db-conf)))))
+
+(defn- get-url-param [db-conf name]
+  (when-let [url-string (:url db-conf)]
+    (when-let [query (-> url-string java.net.URI/create .getQuery)]
+      (-> query ring.util.codec/form-decode (get name)))))
+
+;(get-url-param {:url "postgresql://localhost:5432/madek-v3_development?user=thomas"} "user")
+
+
+(defn- get-user [db-conf]
+  "Retrieves first non nil value of :user of db-conf,
+  :username db-conf, user parameter of the url, PGUSER from env or nil"
+  (or (:user db-conf)
+      (:username db-conf)
+      (get-url-param db-conf "user")
+      (System/getenv "PGUSER")))
+
+(defn- get-password [db-conf]
+  "Retrieves first non nil value of :password of db-conf,
+  password parameter of the url, PGPASSWORD from env or nil"
+  (or (:password db-conf)
+      (get-url-param db-conf "password")
+      (System/getenv "PGPASSWORD")))
+
+(defn- get-max-pool-size [db-conf]
+  (when-let [ps (or (:max_pool_size db-conf)
+                    (get-url-param db-conf "max-pool-size")
+                    (get-url-param db-conf "max_pool_size")
+                    (get-url-param db-conf "pool"))]
+    (Integer. ps)))
 
 (defn- create-c3p0-datasources [db-conf]
   (logging/info create-c3p0-datasources [db-conf])
   (reset! ds
           {:datasource
            (doto (ComboPooledDataSource.)
-             (.setJdbcUrl (str "jdbc:" (:subprotocol db-conf) ":" (:subname db-conf)))
-             (#(when-let [user (:user db-conf)] (.setUser % user)))
-             (#(when-let [password (:password db-conf)] (.setPassword % password)))
-             (#(when-let [max-pool-size (:max_pool_size db-conf)](.setMaxPoolSize % max-pool-size))))}))
+             (.setJdbcUrl (get-url db-conf))
+             (#(when-let [user (get-user db-conf)] (.setUser % user)))
+             (#(when-let [password (get-password db-conf)] (.setPassword % password)))
+             (#(when-let [max-pool-size (get-max-pool-size db-conf)](.setMaxPoolSize % max-pool-size))))}))
 
-(defn initialize [_db-conf]
-  (let [db-conf (amend-db-conf _db-conf)]
-    (logging/info initialize [db-conf])
-    (reset! db-spec db-conf)
-    (create-c3p0-datasources db-conf)
-    (set-tables-metadata db-conf))
+(defn initialize [db-conf]
+  (logging/info initialize [db-conf])
+  (create-c3p0-datasources db-conf)
   (.addShutdownHook (Runtime/getRuntime)
                     (Thread. (fn []
                                (reset)))))
