@@ -101,7 +101,8 @@
 
 (defn initialize []
   (catcher/wrap-with-log-error
-    (messaging/listen "branch.updated" #'abort-running-detached-jobs)))
+    (messaging/listen "repository.updated" #'abort-running-detached-jobs)))
+
 
 ;#### debug ###################################################################
 ;(debug/debug-ns *ns*)
