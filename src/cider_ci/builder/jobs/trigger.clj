@@ -96,7 +96,6 @@
               (trigger-fulfilled? tree-id job trigger)) triggers))))
 
 (declare trigger-supermodules-jobs)
-
 (defn- trigger-jobs [tree-id]
   (catcher/wrap-with-suppress-and-log-debug
     (->> (configfile/get-configfile tree-id)
@@ -120,16 +119,6 @@
        (map trigger-jobs)
        doall) nil)
 
-;(defn- trigger-supermodules-jobs [tree-id]
-;  (->> (jdbc/query (rdbms/get-ds)
-;              ["SELECT DISTINCT tree_id FROM submodules
-;                WHERE submodules.submodule_tree_id = ?" tree-id])
-;       (map :tree_id)
-;       (map trigger-jobs)
-;       doall) nil)
-
-;(trigger-jobs "f16b54b601575e20a508912a3f2502c8a43de183")
-
 
 
 ;### listen to branch updates #################################################
@@ -146,6 +135,9 @@
 
 (defn listen-to-branch-updates-and-fire-trigger-jobs []
   (messaging/listen "branch.updated" evaluate-branch-updated-message))
+
+(defn listen-to-branch-updates-and-fire-trigger-jobs []
+  (messaging/listen "branch.created" evaluate-branch-updated-message))
 
 
 
