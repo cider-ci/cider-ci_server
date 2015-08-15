@@ -19,9 +19,7 @@
     [clj-yaml.core :as yaml]
     [clojure.java.jdbc :as jdbc]
     [clojure.tools.logging :as logging]
-    [honeysql.format :as hsql-format]
-    [honeysql.types :as hsql-types]
-    [honeysql.helpers :as hsql-helpers]
+    [honeysql.sql :refer :all]
     ))
 
 
@@ -29,13 +27,12 @@
 
 (defn- add-self-name-filter-to-query [query name tree-id]
   (-> query
-      (hsql-helpers/merge-where
+      (sql-merge-where
         ["NOT EXISTS"
-         (-> (hsql-helpers/select 1)
-             (hsql-helpers/from :jobs)
-             (hsql-helpers/where [:= :jobs.name name])
-             (hsql-helpers/merge-where [:= :jobs.tree_id tree-id]))])))
-
+         (-> (sql-select 1)
+             (sql-from :jobs)
+             (sql-where [:= :jobs.name name])
+             (sql-merge-where [:= :jobs.tree_id tree-id]))])))
 
 
 ;### job dependencies #########################################################
@@ -46,23 +43,23 @@
         commits_supermodule_ref (str (gensym "commits_supermodule_"))
         updated-query (-> query
 
-               (hsql-helpers/merge-join
+               (sql-merge-join
                  [:commits commits_submodule_ref]
-                 [:= (hsql-types/raw (str commits_submodule_ref ".tree_id"))
-                  (hsql-types/raw (str submodule_tree_id_join_ref ".tree_id"))])
+                 [:= (sql-raw (str commits_submodule_ref ".tree_id"))
+                  (sql-raw (str submodule_tree_id_join_ref ".tree_id"))])
 
-               (hsql-helpers/merge-join
+               (sql-merge-join
                  [:submodules submodule_ref]
-                 [:= (hsql-types/raw (str submodule_ref ".submodule_commit_id"))
-                  (hsql-types/raw (str commits_submodule_ref ".id"))])
+                 [:= (sql-raw (str submodule_ref ".submodule_commit_id"))
+                  (sql-raw (str commits_submodule_ref ".id"))])
 
-               (hsql-helpers/merge-join
+               (sql-merge-join
                  [:commits commits_supermodule_ref]
-                 [:= (hsql-types/raw (str commits_supermodule_ref ".id"))
-                  (hsql-types/raw (str submodule_ref ".commit_id"))])
+                 [:= (sql-raw (str commits_supermodule_ref ".id"))
+                  (sql-raw (str submodule_ref ".commit_id"))])
 
-               (hsql-helpers/merge-where
-                 [:= (hsql-types/raw (str submodule_ref ".path"))
+               (sql-merge-where
+                 [:= (sql-raw (str submodule_ref ".path"))
                   submodule-path])
 
                )]
@@ -72,23 +69,23 @@
   (let [ [intermediate-query join_ref] (reduce submodule-reducer [base-query "jobs"] submodule-paths)]
     [" EXISTS "
      (-> intermediate-query
-         (hsql-helpers/merge-where [:= (hsql-types/raw (str join_ref ".tree_id")) tree-id])) ]))
+         (sql-merge-where [:= (sql-raw (str join_ref ".tree_id")) tree-id])) ]))
 
 (defn- subquery-for-job-depencency [base-query tree-id]
   [" EXISTS "
    (-> base-query
-       (hsql-helpers/merge-where [:= :jobs.tree_id tree-id]))])
+       (sql-merge-where [:= :jobs.tree_id tree-id]))])
 
 (defn- apply-job-depenency-to-query [query dependency tree-id]
-  (let [base-query (-> (hsql-helpers/select 1)
-                       (hsql-helpers/from :jobs)
-                       (hsql-helpers/merge-where [:= :jobs.key (:job dependency)])
-                       (hsql-helpers/merge-where [:in :jobs.state (:states dependency)]))
+  (let [base-query (-> (sql-select 1)
+                       (sql-from :jobs)
+                       (sql-merge-where [:= :jobs.key (:job dependency)])
+                       (sql-merge-where [:in :jobs.state (:states dependency)]))
         subquery (if-let [submodule-paths (-> dependency :submodule seq)]
                    (subquery-for-job-depencency-in-submodules
                      base-query (reverse submodule-paths) tree-id)
                    (subquery-for-job-depencency base-query tree-id))]
-    (-> query (hsql-helpers/merge-where subquery))))
+    (-> query (sql-merge-where subquery))))
 
 
 ;##############################################################################
@@ -110,10 +107,10 @@
 ;##############################################################################
 
 (defn dependencies-fulfilled? [tree-id properties]
-  (let [initial-query (add-self-name-filter-to-query (hsql-helpers/select :true) (:name properties) tree-id)
+  (let [initial-query (add-self-name-filter-to-query (sql-select :true) (:name properties) tree-id)
         reducer (build-dependency-reducer tree-id)
         final-query (reduce reducer initial-query (-> properties :depends-on convert-to-array))
-        formated-query (-> final-query hsql-format/format) ]
+        formated-query (-> final-query sql-format) ]
     (logging/debug 'formated-query formated-query)
     (->> formated-query
          (jdbc/query (rdbms/get-ds))

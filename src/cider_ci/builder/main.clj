@@ -5,21 +5,22 @@
 (ns cider-ci.builder.main
   (:require
     [cider-ci.auth.core :as auth]
+    [cider-ci.builder.jobs.sweeper :as jobs.sweeper]
     [cider-ci.builder.jobs.trigger :as jobs.trigger]
     [cider-ci.builder.repository :as repository]
     [cider-ci.builder.tasks :as tasks]
     [cider-ci.builder.web :as web]
-    [cider-ci.utils.http :as http]
     [cider-ci.utils.config :as config :refer [get-config get-db-spec]]
-    [drtom.logbug.debug :as debug]
+    [cider-ci.utils.http :as http]
     [cider-ci.utils.map :refer [deep-merge]]
     [cider-ci.utils.messaging :as messaging]
     [cider-ci.utils.nrepl :as nrepl]
     [cider-ci.utils.rdbms :as rdbms]
-    [drtom.logbug.catcher :as catcher]
-    [drtom.logbug.thrown]
     [clojure.java.jdbc :as jdbc]
     [clojure.tools.logging :as logging]
+    [drtom.logbug.catcher :as catcher]
+    [drtom.logbug.debug :as debug]
+    [drtom.logbug.thrown]
     [pg-types.all]
     ))
 
@@ -35,6 +36,7 @@
     (auth/initialize (select-keys (get-config) [:secret :session :basic_auth]))
     (web/initialize)
     (jobs.trigger/initialize)
+    (jobs.sweeper/initialize)
     (http/initialize (get-config))))
 
 
