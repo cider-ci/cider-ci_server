@@ -5,7 +5,6 @@
 (ns cider-ci.dispatcher.sync.ping
   (:require
     [cider-ci.dispatcher.executor :as executor-entity]
-    [cider-ci.utils.daemon :as daemon]
     [drtom.logbug.debug :as debug]
     [cider-ci.utils.http :as http]
     [cider-ci.utils.rdbms :as rdbms]

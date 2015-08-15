@@ -5,8 +5,8 @@
 (ns cider-ci.dispatcher.main
   (:require
     [cider-ci.dispatcher.dispatch :as dispatch]
+    [cider-ci.dispatcher.dispatch.timeout-sweeper]
     [cider-ci.dispatcher.abort :as abort]
-    [cider-ci.dispatcher.sweep :as sweep]
     [cider-ci.dispatcher.task :as task]
     [cider-ci.dispatcher.trial :as trial]
     [cider-ci.dispatcher.web :as web]
@@ -36,5 +36,5 @@
       (web/initialize conf)
       (dispatch/initialize)
       (abort/initialize)
-      (sweep/initialize))))
+      (cider-ci.dispatcher.dispatch.timeout-sweeper/initialize))))
 

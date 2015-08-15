@@ -12,7 +12,6 @@
     [cider-ci.dispatcher.sync.update-executor :as update-executor]
     [cider-ci.dispatcher.trial :as trial-entity]
     [cider-ci.dispatcher.trial :as trial-utils]
-    [cider-ci.utils.daemon :as daemon]
     [cider-ci.utils.http :as http]
     [cider-ci.utils.rdbms :as rdbms]
     [clj-logging-config.log4j :as logging-config]
