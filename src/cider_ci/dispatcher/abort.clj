@@ -8,6 +8,7 @@
     [cider-ci.dispatcher.stateful-entity :as stateful-entity]
     [cider-ci.dispatcher.trial :as trial]
     [cider-ci.utils.config :as config :refer [get-config]]
+    [cider-ci.utils.daemon :as daemon :refer [defdaemon]]
     [cider-ci.utils.messaging :as messaging]
     [cider-ci.utils.rdbms :as rdbms :refer [get-ds]]
     [clj-logging-config.log4j :as logging-config]
@@ -15,12 +16,8 @@
     [clojure.tools.logging :as logging]
     [drtom.logbug.catcher :as catcher]
     [drtom.logbug.debug :as debug]
-    [honeysql.format :as hsql-format]
-    [honeysql.helpers :as hsql-helpers]
-    [honeysql.types :as hsql-types]
+    [honeysql.sql :refer :all]
     ))
-
-
 
 ;#### abort ###################################################################
 
@@ -78,19 +75,19 @@
 
 (def ^:private detached-jobs-subquery-part
   [ "NOT EXISTS"
-   (-> (hsql-helpers/select 1)
-       (hsql-helpers/from :commits)
-       (hsql-helpers/merge-join :branches_commits [:= :commits.id :branches_commits.commit_id])
-       (hsql-helpers/merge-join :branches [:= :branches_commits.branch_id :branches.id])
-       (hsql-helpers/merge-join :repositories [:= :branches.repository_id :repositories.id])
-       (hsql-helpers/merge-where [:= :jobs.tree_id  :commits.tree_id]))])
+   (-> (sql-select 1)
+       (sql-from :commits)
+       (sql-merge-join :branches_commits [:= :commits.id :branches_commits.commit_id])
+       (sql-merge-join :branches [:= :branches_commits.branch_id :branches.id])
+       (sql-merge-join :repositories [:= :branches.repository_id :repositories.id])
+       (sql-merge-where [:= :jobs.tree_id  :commits.tree_id]))])
 
 (def ^:private detached-jobs-query
-  (-> (hsql-helpers/select :id)
-      (hsql-helpers/from :jobs)
-      (hsql-helpers/merge-where [:in :jobs.state  ["executing","pending"]])
-      (hsql-helpers/merge-where detached-jobs-subquery-part)
-      hsql-format/format))
+  (-> (sql-select :id)
+      (sql-from :jobs)
+      (sql-merge-where [:in :jobs.state  ["executing","pending"]])
+      (sql-merge-where detached-jobs-subquery-part)
+      sql-format))
 
 (defn- abort-running-detached-jobs [_]
   (catcher/wrap-with-suppress-and-log-error
@@ -99,9 +96,46 @@
          (map abort-job)
          doall)))
 
+
+;#### abort executing trails for dead executors ###############################
+
+(def ^:private executor-dead-condition-query-part
+  "(executors.last_ping_at < (now() - interval '1 Minutes'))")
+
+(def ^:private exists-dead-executor-trials-query-part
+  [:exists (-> (sql-select 1)
+               (sql-from :executors)
+               (sql-merge-where [:= :trials.executor_id :executors.id])
+               (sql-merge-where (sql-raw executor-dead-condition-query-part)))])
+
+(def ^:private not-exists-executor-query-part
+  [:not [:exists
+         (-> (sql-select 1)
+             (sql-from :executors)
+             (sql-merge-where [:= :trials.executor_id :executors.id]))]])
+
+(def ^:private lost-executor-trials-query
+  (-> (-> (sql-select :trials.*)
+          (sql-from :trials)
+          (sql-merge-where [:= :trials.state "executing"])
+          (sql-merge-where [:or exists-dead-executor-trials-query-part
+                            not-exists-executor-query-part ]))
+      sql-format))
+
+(defn set-lost-executor-trials-abrted []
+  (->> (jdbc/query (get-ds) lost-executor-trials-query)
+       (map #(trial/update (assoc % :state "aborted" :error "Executor went dead or was removed." )))
+       doall))
+
+(defdaemon "dead-executor-trials-aborter" 3 (set-lost-executor-trials-abrted))
+
+
+;#### initialize ##############################################################
+
 (defn initialize []
   (catcher/wrap-with-log-error
-    (messaging/listen "repository.updated" #'abort-running-detached-jobs)))
+    (messaging/listen "repository.updated" #'abort-running-detached-jobs)
+    (start-dead-executor-trials-aborter)))
 
 
 ;#### debug ###################################################################

@@ -20,10 +20,10 @@
 (defonce terminal-states #{"aborted" "failed" "passed"})
 
 ;#### utils ###################################################################
+
 (defn get-trial [id]
   (first (jdbc/query (rdbms/get-ds)
                      ["SELECT * FROM trials WHERE id = ?" id])))
-
 
 (defn issue-description [ex]
   (str (.getMessage ex) " "
@@ -46,12 +46,12 @@
 
 
 ;#### update trial ############################################################
+
 (defn dispatch-update [trial]
   (let [task-id (or (:task_id trial)
                     (:task_id (get-trial (:id trial))))]
     (assert task-id)
     (task/evaluate-and-create-trials {:id task-id})))
-
 
 (defn- new-state [trial update-params]
   ; prevent executing, pending, etc when state is  aborted or aborting
@@ -100,6 +100,7 @@
 
 
 ;#### sql helpers #############################################################
+
 (def sql-script-sweep-pending
   " scripts IS NOT NULL
   AND trials.created_at < (SELECT now() -
