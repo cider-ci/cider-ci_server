@@ -101,12 +101,6 @@
 
 ;#### sql helpers #############################################################
 
-(def sql-script-sweep-pending
-  " scripts IS NOT NULL
-  AND trials.created_at < (SELECT now() -
-  (SELECT max(trial_scripts_retention_time_days) FROM timeout_settings)
-  * interval '1 day') ")
-
 (def sql-in-dispatch-timeout
   " trials.created_at < (SELECT now() -
   (SELECT max(trial_dispatch_timeout_minutes)  FROM timeout_settings)

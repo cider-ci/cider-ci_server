@@ -16,15 +16,6 @@
     ))
 
 
-;####
-
-(defn sweep-scripts []
-  (catcher/wrap-with-suppress-and-log-error
-    (jdbc/execute!
-      (rdbms/get-ds)
-      [ (str "UPDATE trials SET scripts = '[]'
-             WHERE " trial/sql-script-sweep-pending) ])))
-
 (defn sweep-in-dispatch-timeout []
   (doseq [id (->> (jdbc/query
                     (rdbms/get-ds)
@@ -50,14 +41,6 @@
 
 ;#### daemons ##################################################################
 
-
-(daemon/define "scripts-sweeper"
-  start-scripts-sweeper
-  stop-scripts-sweeper
-  (* 5 60)
-  (logging/debug "scripts-sweeper")
-  (sweep-scripts))
-
 (daemon/define "terminal-state-timeout-sweeper"
   start-terminal-state-timeout-sweeper
   stop-terminal-state-timeout-sweeper
@@ -78,7 +61,6 @@
 (defn initialize []
   (start-dispatch-timeout-sweeper)
   (start-terminal-state-timeout-sweeper)
-  (start-scripts-sweeper)
   )
 
 ;#### debug ###################################################################
