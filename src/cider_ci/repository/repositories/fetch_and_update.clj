@@ -18,21 +18,10 @@
     [drtom.logbug.catcher :as catcher]
     [drtom.logbug.debug :as debug]
     [drtom.logbug.thrown :as thrown]
-    [honeysql.format :as hsql-format]
-    [honeysql.util :refer [defalias]]
-    [honeysql.helpers :as hsql-helpers]
-    [honeysql.types :as hsql-types]
+    [honeysql.sql :refer :all]
     [me.raynes.fs :as fs]
     ))
 
-
-;### sql helpers ##############################################################
-
-(defalias sql-format hsql-format/format)
-(defalias sql-using hsql-helpers/using)
-(defalias sql-returning honeysql.helpers/returning)
-(defalias sql-merge-where honeysql.helpers/merge-where)
-(defalias sql-delete-from hsql-helpers/delete-from)
 
 ;### helpers ##################################################################
 (defn- directory-exists? [path]
@@ -98,11 +87,17 @@
     (system/exec-with-success-or-throw ["git" "update-server-info"]
                                        {:watchdog (* 10 60 1000), :dir repository-path, :env {"TERM" "VT-100"}})))
 
+
+(defn- send-branch-update-notification [action branch]
+  (let [queue-name (str "branch." (name action))]
+    (messaging/publish queue-name branch)))
+
 (defn- send-branch-update-notifications [updated-branches]
   (catcher/wrap-with-log-error
-    (for [action [:created :deleted :updated]]
+    (doseq [action [:created :deleted :updated]]
       (->> (action updated-branches)
-           (map #(messaging/publish (str "branch." (name action)) %))
+           (map #(send-branch-update-notification action %))
+           ;(map #(messaging/publish (str "branch." (name action)) %))
            doall))))
 
 (defn send-repository-update-notification [repository]
