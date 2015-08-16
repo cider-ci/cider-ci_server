@@ -136,9 +136,8 @@
 (defn listen-to-branch-updates-and-fire-trigger-jobs []
   (messaging/listen "branch.updated" evaluate-branch-updated-message))
 
-(defn listen-to-branch-updates-and-fire-trigger-jobs []
+(defn listen-to-branch-creations-and-fire-trigger-jobs []
   (messaging/listen "branch.created" evaluate-branch-updated-message))
-
 
 
 ;### listen to job updates ##############################################
@@ -160,8 +159,8 @@
 
 (defn initialize []
   (listen-to-branch-updates-and-fire-trigger-jobs)
-  (listen-to-job-updates-and-fire-trigger-jobs)
-  )
+  (listen-to-branch-creations-and-fire-trigger-jobs)
+  (listen-to-job-updates-and-fire-trigger-jobs))
 
 
 ;### Debug ####################################################################
