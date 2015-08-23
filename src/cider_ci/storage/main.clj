@@ -37,7 +37,7 @@
     (http/initialize (select-keys (get-config) [:basic_auth]))
     (create-dirs (-> (get-config) :services :storage :stores))
     (auth/initialize (select-keys (get-config) [:secret :session :basic_auth]))
-    (web/initialize (get-config))
+    (web/initialize)
     (sweeper/initialize (-> (get-config) :services :storage :stores))))
 
 

@@ -23,20 +23,6 @@
 
 ;##############################################################################
 
-(defn delete-expired []
-  (doseq [store @conf]
-    (logging/info "cleaning rows without to_be_retained_before not set in " store)
-    (doseq [file-row (jdbc/query (rdbms/get-ds) [ (str "SELECT * FROM " (:db_table store)
-                                                    " WHERE to_be_retained_before IS NULL "
-                                                    " AND created_at < now() - interval '"
-                                                    (:retention_time_days store) "  Day' ")])]
-      (delete-file-and-row store file-row))
-    (logging/info "cleaning rows without to_be_retained_before set in " store)
-    (doseq [file-row (jdbc/query (rdbms/get-ds) [ (str "SELECT * FROM " (:db_table store)
-                                                   " WHERE to_be_retained_before IS NOT NULL "
-                                                   " AND to_be_retained_before < now() ")])]
-      (delete-file-and-row store file-row))))
-
 (defn string-is-uuid? [string]
   (re-matches #"[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}" string))
 
@@ -70,10 +56,6 @@
           (logging/debug "file not found, deleting row ...")
           (delete-row table-name id))))))
 
-(daemon/define "delete-expired" start-delete-expired stop-delete-expired (* 5 60)
-  (logging/info "Deleting expired ...")
-  (delete-expired))
-
 (daemon/define "delete-orphans" start-delete-orphans stop-delete-orphans (* 20 60 60)
   (logging/info "Deleting orphans ...")
   (delete-row-orphans)
@@ -84,7 +66,6 @@
 
 (defn initialize [new-conf]
   (reset! conf new-conf)
-  (start-delete-expired)
   (start-delete-orphans))
 
 

@@ -25,48 +25,38 @@
     [drtom.logbug.ring :refer [wrap-handler-with-logging]]
     [ring.middleware.cookies :as cookies]
     [ring.util.response]
+    [cider-ci.utils.config :as config :refer [get-config]]
     )
   (:use
     [cider-ci.storage.shared :only [delete-file delete-row delete-file-and-row]]
     ))
 
+;### new helper ###############################################################
 
-(defonce conf (atom {}))
+(defn find-store [request]
+  (let [prefix (-> request :route-params :prefix)]
+    (->> (get-config)
+         :services :storage :stores
+         (filter #(= (str "/" prefix) (:url_path_prefix %)))
+         first)))
 
+(defn get-table-and-id-name [request]
+  (let [prefix (-> request :route-params :prefix)]
+    (case prefix
+      "tree-attachments" ["tree_attachments" "tree_id"]
+      "trial-attachments" ["trial_attachments" "trial_id"])))
 
-;### helpers ##################################################################
-(defn without-prefix
-  "Returns the reminder of the string s without the prefix p.
-  Returns nil if p is not a prefix of s."
-  [s p]
-  (let [length-s (count s)
-        length-p (count p)]
-    (when (>= length-s length-p)
-      (let [ s-prefix (clojure.string/join (take length-p s))
-            s-postix (clojure.string/join (drop length-p s))]
-        (when (= s-prefix p)
-          s-postix)))))
+(defn get-row [request]
+  (logging/info 'get-row {:request request})
+  (let [path (-> request :route-params :*)
+        id (-> request :route-params :id)
+        [table-name id-name] (get-table-and-id-name request)
+        query [(str "SELECT * FROM " table-name
+                    "  WHERE " id-name " = ? AND path = ?") id path]]
+    (-> (jdbc/query (rdbms/get-ds) query)
+        first)))
 
-(defn first-matching-store [url-path]
-  (->> (-> @conf :services :storage :stores)
-       (some (fn [store]
-               (let [url-path-prefix (:url_path_prefix store)
-                     path (without-prefix url-path url-path-prefix)]
-                 (when (not (clojure.string/blank? path))
-                   store))))))
-
-(defn store-and-url-path [request]
-  (let [url-path (:* (:route-params request))]
-    (when-let [store (first-matching-store url-path)]
-      [store url-path])))
-
-(defn get-row [store url-path]
-  (let [query-str (str "SELECT * FROM " (:db_table store) " WHERE path = ? ")
-        path (without-prefix url-path (:url_path_prefix store))]
-    (logging/debug {:query-str query-str})
-    (first (jdbc/query (rdbms/get-ds) [query-str path]))))
-
-(defn save-file-and-presist-row [request store url-path]
+(defn save-file-and-presist-row [request store]
   (let [id (java.util.UUID/randomUUID)
         file-path (str (:file_path store) "/" id)
         file (io/file file-path)
@@ -75,53 +65,44 @@
       (with-open [in (io/input-stream (:body request))
                   out (io/output-stream file)]
         (clojure.java.io/copy in out))
-      (jdbc/insert! tx (:db_table store)
-                    {:id id
-                     :path (without-prefix url-path (:url_path_prefix store))
-                     :content_length (.length file)
-                     :content_type (or content-type "application/octet-stream")}))))
+      (let [[table-name id-name] (get-table-and-id-name request)
+            path-id (-> request :route-params :id)
+            path (-> request :route-params :*)]
+        (jdbc/insert! tx table-name
+                      {:id id
+                       id-name path-id
+                       :path path
+                       :content_length (.length file)
+                       :content_type (or content-type "application/octet-stream")})))))
 
 
 ;### actions ##################################################################
+
 (defn put-file [request]
   (logging/debug put-file [request])
-  (if-let [[store url-path] (store-and-url-path request)]
-    (do (when-let [row (get-row store url-path)]
+  (if-let [store (find-store request)]
+    (do (when-let [row (get-row request)]
           (delete-file-and-row store row))
-      (if (save-file-and-presist-row request store url-path)
-        {:status 204}
-        {:status 500 :body "Save failed"}))
+        (if (save-file-and-presist-row request store)
+          {:status 204}
+          {:status 500 :body "Save failed"}))
     {:status 422
      :body "The store for this path could not be found!"}))
 
 (defn get-file [request]
-  (logging/debug get-file [request])
   (catcher/wrap-with-suppress-and-log-warn
-    (when-let [[store url-path] (store-and-url-path request)]
-      (when-let [storage-row (get-row store url-path)]
-        (let [file-path (str (:file_path store) "/" (:id storage-row))]
+    (when-let [store (find-store request)]
+      (when-let [row (get-row request)]
+        (let [file-path (str (:file_path store) "/" (:id row))]
           (-> (ring.util.response/file-response file-path)
               (ring.util.response/header "X-Sendfile" file-path)
-              (ring.util.response/header "content-type" (:content_type storage-row))))))))
-
-(defn delete [request]
-  (if-let [[store url-path] (store-and-url-path request)]
-    (if-let [row (get-row store url-path)]
-      (and (delete-file-and-row store row)
-           {:status 204})
-      {:status 204})
-    {:status 422
-     :body "The store for this path could not be found!"}))
+              (ring.util.response/header "content-type" (:content_type row))))))))
 
 (defn build-routes []
   (-> (cpj/routes
-        (cpj/GET "*" request
-                 (get-file request))
-        (cpj/PUT "*" request
-                 (put-file request))
-        (cpj/DELETE "*" request
-                    (delete request)))
-      routing/wrap-shutdown ))
+        (cpj/GET "/:prefix/:id/*" _ get-file)
+        (cpj/PUT "/:prefix/:id/*" _ put-file))
+      routing/wrap-shutdown))
 
 
 ;##### status dispatch ########################################################
@@ -140,7 +121,6 @@
   (cpj/routes
     (cpj/GET "/status" request #'status-handler)
     (cpj/ANY "*" request default-handler)))
-
 
 
 ;#### routing #################################################################
@@ -182,9 +162,8 @@
 
 ;#### the server ##############################################################
 
-(defn initialize [new-conf]
-  (reset! conf new-conf)
-  (let [http-conf (-> @conf :services :storage :http)
+(defn initialize []
+  (let [http-conf (-> (get-config) :services :storage :http)
         context (str (:context http-conf) (:sub_context http-conf))]
     (http-server/start http-conf (build-main-handler context))))
 
