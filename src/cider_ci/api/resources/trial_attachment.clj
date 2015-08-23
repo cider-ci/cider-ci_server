@@ -15,9 +15,7 @@
     [compojure.core :as cpj]
     ))
 
-
 ;### get-attachment #############################################################
-
 
 (defn query-attachment [id]
   (first (jdbc/query
@@ -30,13 +28,12 @@
     (when attachment
       {:body attachment})))
 
-
 ;### routes #####################################################################
+
 (def routes
   (cpj/routes
     (cpj/GET "/trial-attachments/:id" request (get-attachment request))
     ))
-
 
 
 ;### Debug ####################################################################

@@ -256,14 +256,13 @@
                 :href (str (storage-api-docs-path) "#tree-attachments")}}})
 
 (defn tree-attachment-data-stream
-  ([request tree-id path-wo-slash]
+  ([request tree-id path]
    (let [context (:context request)
-         storage-service-prefix (-> request :storage_service_prefix)
-         ]
+         storage-service-prefix (-> request :storage_service_prefix) ]
      (assoc-in (tree-attachment-data-stream-val context)
                [:href]
                (str storage-service-prefix
-                    "/tree-attachments/" tree-id "/" path-wo-slash)))))
+                    "/tree-attachments/" tree-id "/" path)))))
 
 
 ;### Debug ####################################################################

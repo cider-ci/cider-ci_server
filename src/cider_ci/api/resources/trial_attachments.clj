@@ -13,33 +13,30 @@
     [clojure.data.json :as json]
     [clojure.java.jdbc :as jdbc]
     [clojure.tools.logging :as logging]
+    [honeysql.sql :refer :all]
     [compojure.core :as cpj]
-    [honeysql.core :as hc]
-    [honeysql.helpers :as hh]
     [ring.util.response :as response]
     ))
 
-
-
 ;### get-attachments ############################################################
-(defn build-attachments-base-query  [trial-id]
-  (-> (hh/from :trial_attachments)
-      (hh/select :id :path)
-      (hh/where [:like :path (str "/"trial-id"/%")])
-      (hh/order-by [:path :asc])))
 
+(defn build-attachments-base-query  [trial-id]
+  (-> (sql-from :trial_attachments)
+      (sql-select :id :path)
+      (sql-where [:= :trial_id trial-id])
+      (sql-order-by [:path :asc])))
 
 (defn filter-by-path-segment [query trial-id query-params]
   (if-let [pathsegment (:pathsegment query-params)]
     (-> query
-        (hh/merge-where [:like :path (str "/" trial-id "/%" pathsegment "%")]))
+        (sql-merge-where [:like :path ("%" pathsegment "%")]))
     query))
 
 (defn attachments-data [trial-id query-params]
   (let [query (-> (build-attachments-base-query trial-id)
                   (filter-by-path-segment trial-id query-params)
                   (pagination/add-offset-for-honeysql query-params)
-                  hc/format)]
+                  sql-format)]
     (logging/debug {:query query})
     (jdbc/query (rdbms/get-ds) query)))
 
@@ -52,6 +49,7 @@
 
 
 ;### routes #####################################################################
+
 (def routes
   (cpj/routes
     (cpj/GET "/trial/:trial_id/trial-attachments/" request (get-attachments request))

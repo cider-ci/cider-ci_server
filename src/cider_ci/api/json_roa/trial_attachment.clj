@@ -11,13 +11,14 @@
   )
 
 
-
 (defn data-stream-link [request response]
   (let [context (:context request)
+        trial-id (-> response :body :trial_id)
         path (-> response :body :path)
         storage-service-prefix (-> request :storage_service_prefix)]
+    (logging/info 'data-stream-link {:trial-id trial-id})
     {:name "Trial-Attachment Data"
-     :href (str storage-service-prefix "/trial-attachments" path)
+     :href (str storage-service-prefix "/trial-attachments/" trial-id "/" path)
      :relations
      {:api-doc
       {:name "Trial-Attachment Storage Resources Documentation"

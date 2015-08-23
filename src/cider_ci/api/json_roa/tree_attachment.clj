@@ -10,25 +10,17 @@
     [clojure.tools.logging :as logging])
   )
 
-
-
-
 (defn build [request response]
   (let [context (:context request)
         query-params (:query-prarams request)
         attachment-id (-> request :route-params :attachment_id)
-        tree-id (->> response :body :path
-                     (re-find #"^\/(\w+)\/")
-                     second)
-        path-wo-slash (nth (->> response :body :path
-                                (re-find #"^\/(\w+)\/(.*)"))
-                           2)
-        ]
+        tree-id (-> response :body :tree_id)
+        path (-> response :body :path)]
     {:name "Tree-Attachment"
      :self-relation (links/tree-attachment context attachment-id)
      :relations
      {:tree-attachment-data-stream (links/tree-attachment-data-stream
-                                     request tree-id path-wo-slash)
+                                     request tree-id path)
       :jobs (links/jobs context {:tree-id tree-id})
       }}))
 

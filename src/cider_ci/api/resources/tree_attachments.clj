@@ -14,27 +14,26 @@
     [clojure.java.jdbc :as jdbc]
     [clojure.tools.logging :as logging]
     [compojure.core :as cpj]
-    [honeysql.core :as hc]
-    [honeysql.helpers :as hh]
+    [honeysql.sql :refer :all]
     [ring.util.response :as response]
     ))
 
 
 ;### get-attachments ############################################################
 (defn build-attachments-base-query [tree-id]
-  (-> (hh/from :tree_attachments)
-      (hh/select :id :path)
-      (hh/where [:like :path (str "/"tree-id"/%")])
-      (hh/order-by [:path :asc])))
+  (-> (sql-from :tree_attachments)
+      (sql-select :id :path)
+      (sql-where [:= :tree_id tree-id])
+      (sql-order-by [:path :asc])))
 
 (defn filter-by-path-segment [query tree-id query-params]
   (if-let [pathsegment (:pathsegment query-params)]
     (-> query
-        (hh/merge-where [:like :path (str "/" tree-id "/%" pathsegment "%")]))
+        (sql-merge-where [:like :path (str "%" pathsegment "%")]))
     query))
 
 (defn attachments-data [job-id query-params]
-  (let [ tree-id (:tree_id
+  (let [tree-id (:tree_id
                    (first (jdbc/query
                             (rdbms/get-ds)
                             ["SELECT tree_id FROM jobs WHERE id = ?"
@@ -42,10 +41,9 @@
         query (-> (build-attachments-base-query tree-id)
                   (filter-by-path-segment tree-id query-params)
                   (pagination/add-offset-for-honeysql  query-params)
-                  hc/format)]
+                  sql-format)]
     (logging/debug {:query query})
     (jdbc/query (rdbms/get-ds) query)))
-
 
 (defn get-attachments [request]
   (let [job-id (-> request :route-params :job_id)

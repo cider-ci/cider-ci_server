@@ -10,8 +10,8 @@
   :dependencies [
                  [cheshire "5.5.0"]
                  [cider-ci/clj-auth "3.0.0"]
-                 [cider-ci/clj-utils "3.0.3"]
-                 [drtom/honeysql "1.2.0-beta.2"]
+                 [cider-ci/clj-utils "3.2.0-beta.1"]
+                 [drtom/honeysql "1.3.0-beta.2"]
                  [json-roa/clj-utils "1.0.0"]
                  [org.clojure/tools.nrepl "0.2.10"]
                  [ring-middleware-accept "2.0.3"]
