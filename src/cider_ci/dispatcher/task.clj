@@ -52,10 +52,9 @@
   (cond (some #{"passed"} trial-states) "passed"
         (every? #{"aborted"} trial-states ) "aborted"
         (every? #{"failed" "aborted"} trial-states) "failed"
-        (some #{"executing"} trial-states) "executing"
+        (some #{"executing" "dispatching"} trial-states) "executing"
         (some #{"pending"} trial-states) "pending"
         (some #{"aborting"} trial-states) "aborting"
-        (every? #{"aborted"} trial-states) "aborted"
         :else (do (logging/warn 'eval-new-state "Unmatched condition"
                                 {:task task :trial-states trial-states})
                 "failed")))
