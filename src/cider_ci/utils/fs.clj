@@ -33,3 +33,9 @@
            )
        "_"
        (clj-uuid/v5 clj-uuid/+null+ (str x))))
+
+(defn system-path [& args]
+  (clojure.string/join (File/separator) args))
+
+(defn system-path-abs [& args]
+  (str (File/separator) (apply system-path args)))

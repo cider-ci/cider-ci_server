@@ -12,8 +12,8 @@
     [clojure.tools.logging :as logging]
     [clojure.java.io :as io]
     [cider-ci.utils.rdbms :as rdbms]
+    [cider-ci.utils.fs :refer :all]
     ))
-
 
 (defonce ^:private conf (atom {}))
 
@@ -47,12 +47,12 @@
 
 (defn initialize
   ([]
-   (initialize ["/etc/cider-ci/config_default.yml"
-                "../config/config_default.yml"
-                "./config/config_default.yml"
-                "/etc/cider-ci/config.yml"
-                "../config/config.yml"
-                "./config/config.yml"]))
+   (initialize [(system-path-abs "etc" "cider-ci" "config_default.yml")
+                (system-path ".." "config" "config_default.yml")
+                (system-path "config" "config_default.yml")
+                (system-path-abs "etc" "cider-ci" "config.yml")
+                (system-path ".." "config" "config.yml")
+                (system-path "config" "config.yml")]))
   ([_filenames]
    (reset! filenames _filenames)
    (read-configs-and-merge _filenames)
