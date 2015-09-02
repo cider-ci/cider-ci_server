@@ -6,7 +6,7 @@
 (ns cider-ci.utils.config
   (:require
     [clj-yaml.core :as yaml]
-    [cider-ci.utils.daemon :as daemon]
+    [cider-ci.utils.daemon :as daemon :refer [defdaemon]]
     [drtom.logbug.debug :as debug]
     [cider-ci.utils.map :refer [deep-merge]]
     [clojure.tools.logging :as logging]
@@ -19,13 +19,17 @@
 
 (defn get-config [] @conf)
 
-(defn set-config [config]
-  (when-not (= config @conf)
-    (reset! conf config)
-    (logging/info "config changed to " conf)))
+(defn merge-in-config [params]
+  (when-not (= (get-config)
+               (deep-merge (get-config) params))
+    (let [new-config (swap! conf
+                            (fn [current-config params]
+                              (deep-merge current-config params))
+                            params)]
+      (logging/info "config changed to " new-config))))
 
-(defn read-configs-and-merge [filenames]
-  (loop [config {}
+(defn read-configs-and-merge-in [filenames]
+  (loop [config (get-config)
          filenames filenames]
     (if-let [filename (first filenames)]
       (if (.exists (io/as-file filename))
@@ -37,26 +41,28 @@
                       config))
                (rest filenames))
         (recur config (rest filenames)))
-      (set-config config))))
+      (merge-in-config config))))
 
 
 (defonce ^:private filenames (atom nil))
 
-(daemon/define "reload-config" start-read-config stop-read-config 1
-  (read-configs-and-merge @filenames))
+(defdaemon "reload-config" 1
+  (read-configs-and-merge-in @filenames))
 
 (defn initialize
   ([]
-   (initialize [(system-path-abs "etc" "cider-ci" "config_default.yml")
-                (system-path ".." "config" "config_default.yml")
-                (system-path "config" "config_default.yml")
-                (system-path-abs "etc" "cider-ci" "config.yml")
-                (system-path ".." "config" "config.yml")
-                (system-path "config" "config.yml")]))
+   (initialize (filter identity
+                       [(system-path-abs "etc" "cider-ci" "config_default.yml")
+                        (system-path ".." "config" "config_default.yml")
+                        (system-path "config" "config_default.yml")
+                        (system-path-abs "etc" "cider-ci" "config.yml")
+                        (system-path ".." "config" "config.yml")
+                        (system-path "config" "config.yml")])))
   ([_filenames]
    (reset! filenames _filenames)
-   (read-configs-and-merge _filenames)
-   (start-read-config)))
+   (read-configs-and-merge-in _filenames)
+   (start-reload-config)))
+
 
 (defn get-db-spec [service]
   (let [conf (get-config)]
