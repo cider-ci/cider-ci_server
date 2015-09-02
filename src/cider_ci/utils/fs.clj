@@ -9,6 +9,10 @@
     [clj-uuid]
     [clojure.string :as string]
     [clojure.tools.logging :as logging]
+    )
+  (:import
+    [java.io File]
+    [org.apache.commons.lang3 SystemUtils]
     ))
 
 (defn directory? [path]
@@ -35,7 +39,10 @@
        (clj-uuid/v5 clj-uuid/+null+ (str x))))
 
 (defn system-path [& args]
+  "Returns a path (segment) by joining the arguments
+  with the system specific file separator."
   (clojure.string/join (File/separator) args))
 
 (defn system-path-abs [& args]
-  (str (File/separator) (apply system-path args)))
+  (when-not SystemUtils/IS_OS_WINDOWS
+    (str (File/separator) (apply system-path args))))
