@@ -13,11 +13,15 @@
     [clojure.java.io :as io]
     [cider-ci.utils.rdbms :as rdbms]
     [cider-ci.utils.fs :refer :all]
+    [duckling.core :as duckling]
     ))
+
 
 (defonce ^:private conf (atom {}))
 
 (defn get-config [] @conf)
+
+;##############################################################################
 
 (defn merge-in-config [params]
   (when-not (= (get-config)
@@ -27,6 +31,7 @@
                               (deep-merge current-config params))
                             params)]
       (logging/info "config changed to " new-config))))
+
 
 (defn read-configs-and-merge-in [filenames]
   (loop [config (get-config)
@@ -46,8 +51,9 @@
 
 (defonce ^:private filenames (atom nil))
 
-(defdaemon "reload-config" 1
-  (read-configs-and-merge-in @filenames))
+(defdaemon "reload-config" 1 (read-configs-and-merge-in @filenames))
+
+;##############################################################################
 
 (defn initialize
   ([]
@@ -64,6 +70,8 @@
    (start-reload-config)))
 
 
+;### DB #######################################################################
+
 (defn get-db-spec [service]
   (let [conf (get-config)]
     (deep-merge
@@ -71,7 +79,17 @@
       (or (-> conf :services service :database ) {} ))))
 
 
-;(initialize ["./config/executor_default_config.yml" "./config/executor_config.yml"])
+
+;### duration #################################################################
+
+(duckling/load! {:en$core {:corpus ["en.numbers"]
+                           :rules ["en.numbers" "en.duration"]}})
+
+(defn parse-config-duration-to-seconds [& ks]
+  (-> (get-config) (get-in ks)
+      (#(duckling/parse :en$core % [:duration]))
+      first :value :normalized :value))
+
 
 
 ;### Debug ####################################################################
