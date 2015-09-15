@@ -51,14 +51,10 @@
     scripts
     (throw (IllegalStateException. (str ":scripts must a map " scripts)))))
 
-(def ^:private script-base-defaults
-  {:timeout (* 15 60)
-   })
-
 (defn- coerce-script-value [value]
   (cond
-    (map? value) (deep-merge script-base-defaults value)
-    (string? value) (deep-merge  script-base-defaults {:body value})
+    (map? value) value
+    (string? value) {:body value}
     :else (throw (IllegalStateException.
                    (str "don't know how to handle type " (type value))))))
 
@@ -116,6 +112,10 @@
                                                script-defaults)))
            context)))
 
+(def ^:private script-base-defaults
+  {:timeout (* 15 60)
+   })
+
 (defn build-tasks
   "Build the tasks for the given top-level specification."
   [job _spec]
@@ -124,7 +124,7 @@
                 spec
                 (conj (or (:task-defaults spec) {})
                       {:job_id (:id job)})
-                (or (:script-defaults spec) {}))]
+                (deep-merge script-base-defaults (or (:script-defaults spec) {})))]
     (doseq [raw-task tasks]
       (wrap-exception-create-job-issue
         job "Error during task creation"
