@@ -11,10 +11,8 @@
     [pandect.algo.sha1 :refer [sha1-hmac]]
     ))
 
-
 (defn http-basic-password [executor]
-  (sha1-hmac (:name executor) (:secret (config/get-config))))
-
+  (sha1-hmac (str (:id executor)) (:secret (config/get-config))))
 
 ;#### debug ###################################################################
 ;(debug/debug-ns *ns*)

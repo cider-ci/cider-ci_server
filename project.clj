@@ -2,16 +2,14 @@
 ; Licensed under the terms of the GNU Affero General Public License v3.
 ; See the "LICENSE.txt" file provided with this software.
 
-
 (defproject cider-ci_dispatcher "3.0.0"
   :description "Cider-CI Dispatcher"
   :license {:name "GNU AFFERO GENERAL PUBLIC LICENSE Version 3"
             :url "http://www.gnu.org/licenses/agpl-3.0.html"}
   :dependencies [
-                 [drtom/honeysql "1.3.0-beta.1"]
-                 [cider-ci/clj-utils "3.2.0-beta.1"]
-
-                 [cider-ci/clj-auth "3.0.0"]
+                 [drtom/honeysql "1.3.0-beta.2"]
+                 [cider-ci/clj-utils "3.2.1"]
+                 [cider-ci/clj-auth "3.1.0"]
                  [org.clojure/tools.nrepl "0.2.10"]
                  ]
   :profiles {:dev
