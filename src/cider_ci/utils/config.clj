@@ -86,10 +86,18 @@
                            :rules ["en.numbers" "en.duration"]}})
 
 (defn parse-config-duration-to-seconds [& ks]
-  (-> (get-config) (get-in ks)
-      (#(duckling/parse :en$core % [:duration]))
-      first :value :normalized :value))
-
+  (try (if-let [duration-config-value (-> (get-config) (get-in ks))]
+         (or (-> duration-config-value
+                 (#(duckling/parse :en$core % [:duration]))
+                 first :value :normalized :value)
+             (throw (ex-info "Duration parsing error."
+                             {:config-keys ks
+                              :duration-config-value duration-config-value})))
+         (logging/warn (str "No value to parse duration for " ks " was found.")))
+       (catch Exception ex
+         (cond (instance? clojure.lang.IExceptionInfo ex) (throw ex)
+               :else (throw (ex-info "Duration parsing error."
+                                     {:config-keys ks} ex))))))
 
 
 ;### Debug ####################################################################
