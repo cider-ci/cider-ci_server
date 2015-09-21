@@ -68,16 +68,6 @@
       (respond-with-500 request e))))
 
 
-(defn ls-tree [request]
-  (logging/debug 'ls-tree request)
-  (let [id (-> request :params :id)
-        include-regex (-> request :params :include-match)
-        exclude-regex (-> request :params :exclude-match)]
-    (when-let [repository (sql.repository/resolve id)]
-      {:headers {"Content-Type" "application/json"}
-       :body (json/write-str (git.repositories/ls-tree repository id include-regex exclude-regex))}
-      )))
-
 ;##### status dispatch ########################################################
 
 (defn status-handler [request]
@@ -140,7 +130,6 @@
     (cpj/GET "/project-configuration/:id" _ get-project-configuration)
     (cpj/GET "/path-content/:id/*" request
              (get-path-content request))
-    (cpj/GET "/ls-tree/:id/" _ ls-tree)
     (cpj/GET "/:id/git/*" request
              (get-git-file request))
     ))
