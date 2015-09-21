@@ -19,7 +19,7 @@
 
 ;##############################################################################
 
-(defn file-name-to-task [file-name]
+(defn- file-name-to-task [file-name]
   [file-name {:environment-variables
               {:CIDER_CI_TASK_FILE file-name}}])
 

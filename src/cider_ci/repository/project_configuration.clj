@@ -45,13 +45,12 @@
   (->> (get-either-configfile-content id)
        (expansion/expand id)))
 
-
 (def build-project-configuration
   (memo/lru #(build-project-configuration_unmemoized %)
             :lru/threshold 500))
 
 ; disable caching for now
-(def build-project-configuration build-project-configuration_unmemoized)
+;(def build-project-configuration build-project-configuration_unmemoized)
 
 
 ;### Debug ####################################################################

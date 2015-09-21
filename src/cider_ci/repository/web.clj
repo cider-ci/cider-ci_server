@@ -87,6 +87,7 @@
     (cpj/GET "/status" request #'status-handler)
     (cpj/ANY "*" request default-handler)))
 
+
 ;#### repository update notification ##########################################
 
 (defn update-notification-handler [request]
@@ -102,6 +103,7 @@
               _ #'update-notification-handler)
     (cpj/ANY "*" _ default-handler)))
 
+
 ;##### project configuration ##################################################
 
 (defn get-project-configuration [request]
@@ -109,7 +111,7 @@
   (-> (try
         (when-let [content (project-configuration/build-project-configuration
                              (-> request :params :id))]
-          {:body (json/write-str content)
+          {:body (json/write-str content :key-fn #(subs (str %) 1))
            :headers {"Content-Type" "application/json"}})
         (catch clojure.lang.ExceptionInfo e
           (case (-> e ex-data :status )
@@ -131,9 +133,7 @@
     (cpj/GET "/path-content/:id/*" request
              (get-path-content request))
     (cpj/GET "/:id/git/*" request
-             (get-git-file request))
-    ))
-
+             (get-git-file request))))
 
 (defn build-main-handler [context]
   ( -> (cpj.handler/api (build-routes context))
