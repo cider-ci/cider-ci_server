@@ -15,6 +15,10 @@
     (last vals)))
 
 
+(defn k2str [k]
+  (if (keyword? k) (subs (str k) 1) (str k) ))
+
+
 (defn convert-to-array
   "Converts a map of maps to an array of maps. The key becomes the value of the
   :name property if and only if :name does no exists already."
@@ -23,17 +27,9 @@
            (every?  map? (map second map-or-array)))
     (map (fn [[k m]]
            (conj m
-                 {:key (name k)}
+                 {:key (k2str k)}
                  (when-not (:name m)
-                   {:name (name k)})))
+                   {:name (k2str k)})))
          map-or-array)
     map-or-array))
-
-
-
-
-;(convert-to-array {:x {:y 1}})
-;(convert-to-array {:x {:name 1}})
-;(convert-to-array [{:name "x"}])
-
 
