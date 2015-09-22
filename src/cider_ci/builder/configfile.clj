@@ -25,11 +25,10 @@
             :lru/threshold 500))
 
 ; disable caching (temporarily)
-; (def get-configfile get-configfile_unmemoized)
+;(def get-configfile get-configfile_unmemoized)
 
 
 ;### Debug ####################################################################
 ;(logging-config/set-logger! :level :debug)
 ;(logging-config/set-logger! :level :info)
 ;(debug/debug-ns *ns*)
-

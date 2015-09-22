@@ -11,25 +11,23 @@
     [clojure.walk :refer [postwalk]]
     ))
 
-(defn deep-merge [& vals]
-  (if (every? map? vals)
-    (apply merge-with deep-merge vals)
-    (last vals)))
-
-(defn id-hash [data]
-  (clj-uuid/v5 clj-uuid/+null+ (json/write-str data)))
-
-(defn idid2id [id1 id2]
-  (clj-uuid/v5 clj-uuid/+null+ (str id1 id2)))
-
 (defn json-key-fn [k]
   (if (keyword? k) (subs (str k) 1) (str k) ))
 
 (defn json-write-str [data]
   (json/write-str data :key-fn json-key-fn))
 
+(defn deep-merge [& vals]
+  (if (every? map? vals)
+    (apply merge-with deep-merge vals)
+    (last vals)))
+
+(defn id-hash [data]
+  (clj-uuid/v5 clj-uuid/+null+ (json-write-str data)))
+
+(defn idid2id [id1 id2]
+  (clj-uuid/v5 clj-uuid/+null+ (str id1 id2)))
 
 (defn stringify-keys [m]
   (let [f (fn [[k v]] [(json-key-fn k) v])]
     (postwalk (fn [x] (if (map? x) (into {} (map f x)) x)) m)))
-

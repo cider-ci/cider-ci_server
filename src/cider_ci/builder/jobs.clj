@@ -50,7 +50,7 @@
     (assoc params :job_specification_id
            (-> params
                :job_specification
-               spec/get-or-create-job-specification
+               spec/get-or-create-job-spec
                :id))))
 
 (defn add-specification-from-dofile-if-not-present [params]
