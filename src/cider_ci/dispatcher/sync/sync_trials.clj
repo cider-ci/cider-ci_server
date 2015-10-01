@@ -6,13 +6,8 @@
 (ns cider-ci.dispatcher.sync.sync-trials
   (:require
     [cider-ci.dispatcher.dispatch.build-data :as build-data]
-    [cider-ci.dispatcher.dispatch.next-trial]
-    [cider-ci.dispatcher.executor :as executor-entity]
-    [cider-ci.dispatcher.sync.ping :as ping]
-    [cider-ci.dispatcher.sync.update-executor :as update-executor]
-    [cider-ci.dispatcher.trial :as trial-entity]
+    [cider-ci.dispatcher.dispatch.next-trial :as next-trial]
     [cider-ci.dispatcher.trial :as trial-utils]
-    [cider-ci.utils.http :as http]
     [cider-ci.utils.rdbms :as rdbms]
     [clj-logging-config.log4j :as logging-config]
     [clojure.java.jdbc :as jdbc]
@@ -27,51 +22,28 @@
 
 ;### next trials to be processed ##############################################
 
-(defn- next-trial-query-part-for-executor [params]
-  )
-
-(defn- next-trial-to-be-dispatched-query-repositories-part [params]
-  (when-let [accepted-repositories (-> params :accepted_repositories seq)]
-    [:= :repositories.git_url
-     (sql-types/call :ANY (sql-types/call :cast (honeysql.types/array accepted-repositories)
-                                          (keyword "varchar[]")))]))
-
-(defn- next-trial-to-be-dispatched-query-traits-part [params]
-  [(keyword "<@") :tasks.traits
-   (sql-types/call :cast (honeysql.types/array (-> params :traits))
-                   (keyword "varchar[]")
-                   )])
-
-(defn- next-trial-to-be-dispatched-query [params]
-  (->  cider-ci.dispatcher.dispatch.next-trial/next-trial-to-be-dispatched-base-query
-      (sql-helpers/merge-where (next-trial-query-part-for-executor params))
-      (sql-helpers/merge-where (next-trial-to-be-dispatched-query-traits-part params))
-      (sql-helpers/merge-where (next-trial-to-be-dispatched-query-repositories-part params))
-      sql-format/format))
-
-(defn- get-and-set-next-trial-to-be-dispatched [tx executor params]
-  (let [query (next-trial-to-be-dispatched-query params)]
-    (when-let  [trial (-> query (#(jdbc/query tx %)) first)]
-      (trial-utils/wrap-trial-with-issue-and-throw-again
-        trial  "Error during dispatch"
-        (jdbc/update! tx :trials
-                      {:state "dispatching" :executor_id (:id executor)}
-                      ["id = ?" (:id trial)]))
-      (first (jdbc/query tx ["SELECT * FROM trials WHERE id = ?" (:id trial)])))))
+(defn- get-and-set-next-trial [tx executor params]
+  (when-let [{trial-id :id} (next-trial/next-trial-for-pull tx executor)]
+    (trial-utils/wrap-trial-with-issue-and-throw-again
+      {:id trial-id}  "Error during dispatch"
+      (jdbc/update! tx :trials
+                    {:state "dispatching" :executor_id (:id executor)}
+                    ["id = ?" trial-id]))
+    (first (jdbc/query tx ["SELECT * FROM trials WHERE id = ?" trial-id]))))
 
 (defn- get-trials-to-be-dispatched [executor data]
   (let [available-load (-> data :available_load)]
-    (if (or (>= 0 available-load) (not (clojure.string/blank? (:base_url executor))))
+    (if (or (>= 0 available-load)
+            (not (clojure.string/blank? (:base_url executor))))
       []
       (jdbc/with-db-transaction [tx (rdbms/get-ds)]
         (loop [trials []]
-          (if-let [trial (get-and-set-next-trial-to-be-dispatched tx executor data)]
+          (if-let [trial (get-and-set-next-trial tx executor data)]
             (let [trials (conj trials trial)]
               (if (< (count trials) available-load)
                 (recur trials)
                 trials))
             trials))))))
-
 
 
 ;### trials beeing currently processed ########################################
@@ -89,7 +61,6 @@
        (map #(dissoc % :scripts))))
 
 
-
 ;##############################################################################
 
 (defn sync-trials [executor data]
@@ -99,7 +70,6 @@
 
 
 ;#### debug ###################################################################
-;(debug/debug-ns 'cider-ci.auth.http-basic)
 ;(logging-config/set-logger! :level :debug)
 ;(logging-config/set-logger! :level :info)
 ;(debug/debug-ns *ns*)

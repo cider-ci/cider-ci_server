@@ -10,9 +10,9 @@
     [cider-ci.dispatcher.task :as task]
     [cider-ci.dispatcher.trial :as trial-utils]
     [cider-ci.utils.config :refer [get-config]]
-    [cider-ci.utils.daemon :as daemon]
+    [cider-ci.utils.daemon :refer [defdaemon]]
     [cider-ci.utils.http :as http]
-    [cider-ci.utils.rdbms :as rdbms]
+    [cider-ci.utils.rdbms :as rdbms :refer [get-ds]]
     [clj-http.client :as http-client]
     [clj-logging-config.log4j :as logging-config]
     [clojure.data.json :as json]
@@ -25,9 +25,9 @@
 ;### dispatch #################################################################
 
 (defn- issues-count [trial]
-  (-> (jdbc/query (rdbms/get-ds)
-                  ["SELECT count(*) FROM trial_issues WHERE trial_id = ? " (:id trial)] )
-      first :count))
+  (-> (jdbc/query (get-ds)
+                  ["SELECT count(*) FROM trial_issues WHERE trial_id = ? "
+                   (:id trial)]) first :count))
 
 (defn post-trial [url basic-auth-pw data]
   (catcher/wrap-with-log-warn
@@ -37,61 +37,54 @@
                        :insecure? true
                        :basic-auth ["dispatcher" basic-auth-pw ]})))
 
-(defn dispatch [trial executor]
-  (try
-    (trial-utils/wrap-trial-with-issue-and-throw-again
-      trial  "Error during dispatch"
-      (let [data (build-data/build-dispatch-data trial executor)
-            url (str (:base_url executor)  "/execute")
-            basic-auth-pw (executor-utils/http-basic-password executor)]
-        ; TODO the following seems to be not necessary, remove?
-        (jdbc/update! (rdbms/get-ds) :trials
-                      {:state "dispatching" :executor_id (:id executor)}
-                      ["id = ?" (:id trial)])
-        (post-trial url basic-auth-pw data)))
-    (catch Exception e
-      (let  [row (if (<= 3 (issues-count trial))
-                   {:state "failed" :error "Too many issues, giving up to dispatch this trial "
-                    :executor_id nil}
-                   {:state "pending" :executor_id nil})]
-        (trial-utils/update (conj trial row))
-        false))))
+(defn- get-entity-or-throw [table-name id]
+  (or (first (jdbc/query
+               (get-ds) [(str "SELECT * FROM " table-name " WHERE id = ?") id]))
+      (throw (ex-info "Entity not found." {:table-name table-name :id id}))))
+
+(defn dispatch [trial-id executor-id]
+  (catcher/wrap-with-log-error
+    (let [trial (get-entity-or-throw "trials" trial-id)
+          executor (get-entity-or-throw "executors" executor-id)]
+      (try (trial-utils/wrap-trial-with-issue-and-throw-again
+             trial  "Error during dispatch"
+             (let [data (build-data/build-dispatch-data trial executor)
+                   url (str (:base_url executor)  "/execute")
+                   basic-auth-pw (executor-utils/http-basic-password executor)]
+               (jdbc/update! (get-ds) :trials
+                             {:state "dispatching" :executor_id (:id executor)}
+                             ["id = ?" (:id trial)])
+               (post-trial url basic-auth-pw data)))
+           (catch Exception e
+             (let  [row (if (<= 3 (issues-count trial))
+                          {:state "failed" :error "Too many issues, giving up to dispatch this trial "
+                           :executor_id nil}
+                          {:state "pending" :executor_id nil})]
+               (trial-utils/update (conj trial row))
+               false))))))
 
 
 (defn dispatch-trials []
-  (when-let [next-trial  (next-trial/get-next-trial-to-be-dispatched)]
-    (loop [trial next-trial
-           executor (next-trial/choose-executor-to-dispatch-to trial)]
-      (jdbc/update! (rdbms/get-ds) :trials
+  (loop []
+    (when-let [{trial-id :id executor-id :executor_id}
+               (next-trial/next-trial-with-executor-for-push)]
+      (jdbc/update! (get-ds) :trials
                     {:state "dispatching"
-                     :executor_id (:id executor)}
-                    ["id = ?" (:id trial)])
-      (future (dispatch trial executor))
-      (when-let [trial (next-trial/get-next-trial-to-be-dispatched)]
-        (recur trial (next-trial/choose-executor-to-dispatch-to trial))))))
+                     :executor_id executor-id}
+                    ["id = ?" trial-id])
+      (future (dispatch trial-id executor-id))
+      (recur))))
 
 
 ;#### dispatch service ########################################################
 
-(defn get-dispatch-interval []
-  (try
-    (catcher/wrap-with-log-warn
-      (or (-> (get-config) :services :dispatcher :dispatch_interval)
-          1.0))
-    (catch Exception _
-      1.0)))
-
-(daemon/define "dispatch-service"
-  start-dispatch-service
-  stop-dispatch-service
-  (get-dispatch-interval)
-  (logging/debug "dispatch-service")
-  (dispatch-trials))
+(defdaemon "dispatch-service" 0.3 (dispatch-trials))
 
 
 ;### initialize ##############################################################
 (defn initialize []
-  (start-dispatch-service))
+  (start-dispatch-service)
+  )
 
 ;#### debug ###################################################################
 ;(logging-config/set-logger! :level :debug)

@@ -17,6 +17,7 @@
     [clojure.set :refer [difference]]
     [clojure.tools.logging :as logging]
     [drtom.logbug.catcher :as catcher]
+    [drtom.logbug.debug :as debug]
     ))
 
 
