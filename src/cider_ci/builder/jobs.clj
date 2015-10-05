@@ -5,7 +5,7 @@
 (ns cider-ci.builder.jobs
   (:require
     [cider-ci.builder.configfile]
-    [cider-ci.builder.jobs.filter :as jobs.filter]
+    [cider-ci.builder.jobs.dependencies :as jobs.dependencies]
     [cider-ci.builder.jobs.tags :as tags]
     [cider-ci.builder.repository :as repository]
     [cider-ci.builder.spec :as spec]
@@ -89,9 +89,9 @@
   (->> (cider-ci.builder.configfile/get-configfile tree-id)
        :jobs
        convert-to-array
-       (map #(assoc % :tree_id tree-id))
-       (filter #(jobs.filter/dependencies-fulfilled? tree-id %))
-       (map #(select-keys % [:name :key :tree_id :description]))
+       (map #(assoc % :tree_id tree-id :runnable true :reasons []))
+       jobs.dependencies/evaluate
+       (map #(select-keys % [:name :key :tree_id :description :runnable :reasons]))
        ))
 
 

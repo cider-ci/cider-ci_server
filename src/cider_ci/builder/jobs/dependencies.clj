@@ -1,0 +1,129 @@
+; Copyright (C) 2013, 2014, 2015 Dr. Thomas Schank  (DrTom@schank.ch, Thomas.Schank@algocon.ch)
+; Licensed under the terms of the GNU Affero General Public License v3.
+; See the "LICENSE.txt" file provided with this software.
+
+(ns cider-ci.builder.jobs.dependencies
+  (:require
+    [cider-ci.builder.repository :as repository]
+    [cider-ci.builder.jobs.tags :as tags]
+    [cider-ci.builder.spec :as spec]
+    [cider-ci.builder.tasks :as tasks]
+    [cider-ci.builder.util :as util]
+    [drtom.logbug.debug :as debug]
+    [cider-ci.utils.http :as http]
+    [cider-ci.utils.messaging :as messaging]
+    [cider-ci.utils.rdbms :as rdbms :refer [get-ds]]
+    [drtom.logbug.catcher :as catcher]
+    [cider-ci.utils.map :refer [deep-merge convert-to-array]]
+    [clj-logging-config.log4j :as logging-config]
+    [clj-yaml.core :as yaml]
+    [clojure.java.jdbc :as jdbc]
+    [clojure.tools.logging :as logging]
+    [honeysql.sql :refer :all]
+    ))
+
+
+(defn- evaluate-name-clash [job]
+  (if (seq (jdbc/query (get-ds)
+                       ["SELECT 1 FROM jobs WHERE tree_id = ? AND name = ?"
+                        (:tree_id job) (:name job)]))
+    (assoc job
+           :runnable false
+           :reasons (conj (:reasons[])
+                         "A job with the **same name** already exists for this tree-id."))
+    job))
+
+;##############################################################################
+
+(defn- submodule-reducer [[query submodule_tree_id_join_ref] submodule-path]
+  (let [commits_submodule_ref (str (gensym "commits_submodule_"))
+        submodule_ref (str (gensym "submodules_"))
+        commits_supermodule_ref (str (gensym "commits_supermodule_"))
+        updated-query (-> query
+
+               (sql-merge-join
+                 [:commits commits_submodule_ref]
+                 [:= (sql-raw (str commits_submodule_ref ".tree_id"))
+                  (sql-raw (str submodule_tree_id_join_ref ".tree_id"))])
+
+               (sql-merge-join
+                 [:submodules submodule_ref]
+                 [:= (sql-raw (str submodule_ref ".submodule_commit_id"))
+                  (sql-raw (str commits_submodule_ref ".id"))])
+
+               (sql-merge-join
+                 [:commits commits_supermodule_ref]
+                 [:= (sql-raw (str commits_supermodule_ref ".id"))
+                  (sql-raw (str submodule_ref ".commit_id"))])
+
+               (sql-merge-where
+                 [:= (sql-raw (str submodule_ref ".path"))
+                  submodule-path])
+
+               )]
+    [updated-query commits_supermodule_ref]))
+
+(defn- subquery-for-job-depencency-in-submodules [base-query submodule-paths tree-id]
+  (let [ [intermediate-query join_ref] (reduce submodule-reducer [base-query "jobs"] submodule-paths)]
+    [" EXISTS "
+     (-> intermediate-query
+         (sql-merge-where [:= (sql-raw (str join_ref ".tree_id")) tree-id])) ]))
+
+(defn- subquery-for-job-depencency [base-query tree-id]
+  [" EXISTS "
+   (-> base-query
+       (sql-merge-where [:= :jobs.tree_id tree-id]))])
+
+
+(defn- build-job-dependency-query [tree-id dependency]
+  (let [base-query (-> (sql-select 1)
+                       (sql-from :jobs)
+                       (sql-merge-where [:= :jobs.key (:job dependency)])
+                       (sql-merge-where [:in :jobs.state (:states dependency)]))
+        subquery (if-let [submodule-paths (-> dependency :submodule seq)]
+                   (subquery-for-job-depencency-in-submodules
+                     base-query (reverse submodule-paths) tree-id)
+                   (subquery-for-job-depencency base-query tree-id))]
+    (-> base-query
+        (sql-merge-where subquery)
+        sql-format)))
+
+(defn- evaluate-job-dependency [job dependency]
+  (let [tree-id (:tree_id job)
+        query (build-job-dependency-query tree-id dependency)]
+    (if-not (seq (jdbc/query (get-ds) query))
+      (assoc job
+             :runnable false
+             :reasons (conj (:reasons[])
+                            (str "The dependency `" dependency "` is not fulfilled!")))
+      job)))
+
+;##############################################################################
+
+(defn- evaluate-dependency [job dependency]
+  (case (:type dependency)
+    "job" (evaluate-job-dependency job dependency)
+    (assoc job
+           :runnable false
+           :reasons (conj (:reasons[])
+                          (str "The type of the dependency `"
+                               dependency "` is not applicable!")))))
+
+(defn- evaluate-dependencies [job]
+  (if-let [dependencies (-> job :depends-on seq)]
+    (reduce evaluate-job-dependency job dependencies)
+    job))
+
+;##############################################################################
+
+
+(defn evaluate [jobs]
+  (->> jobs
+       (map evaluate-name-clash)
+       (map evaluate-dependencies)))
+
+
+;### Debug ####################################################################
+;(logging-config/set-logger! :level :debug)
+;(logging-config/set-logger! :level :info)
+(debug/debug-ns *ns*)
