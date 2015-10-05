@@ -23,14 +23,20 @@
     ))
 
 
+;##############################################################################
+
+(defn set-un-runnable [job message]
+  (assoc job
+         :runnable false
+         :reasons (conj (or (:reasons job) []) message)))
+
+;##############################################################################
+
 (defn- evaluate-name-clash [job]
   (if (seq (jdbc/query (get-ds)
                        ["SELECT 1 FROM jobs WHERE tree_id = ? AND name = ?"
                         (:tree_id job) (:name job)]))
-    (assoc job
-           :runnable false
-           :reasons (conj (:reasons[])
-                         "A job with the **same name** already exists for this tree-id."))
+    (set-un-runnable job "A job with the **same name** already exists for this tree-id.")
     job))
 
 ;##############################################################################
@@ -74,7 +80,6 @@
    (-> base-query
        (sql-merge-where [:= :jobs.tree_id tree-id]))])
 
-
 (defn- build-job-dependency-query [tree-id dependency]
   (let [base-query (-> (sql-select 1)
                        (sql-from :jobs)
@@ -92,10 +97,7 @@
   (let [tree-id (:tree_id job)
         query (build-job-dependency-query tree-id dependency)]
     (if-not (seq (jdbc/query (get-ds) query))
-      (assoc job
-             :runnable false
-             :reasons (conj (:reasons[])
-                            (str "The dependency `" dependency "` is not fulfilled!")))
+      (set-un-runnable job (str "The dependency `" dependency "` is not fulfilled!"))
       job)))
 
 ;##############################################################################
@@ -103,11 +105,8 @@
 (defn- evaluate-dependency [job dependency]
   (case (:type dependency)
     "job" (evaluate-job-dependency job dependency)
-    (assoc job
-           :runnable false
-           :reasons (conj (:reasons[])
-                          (str "The type of the dependency `"
-                               dependency "` is not applicable!")))))
+    (set-un-runnable job (str "The type of the dependency `"
+                              dependency "` is not applicable!"))))
 
 (defn- evaluate-dependencies [job]
   (if-let [dependencies (-> job :depends-on seq)]
@@ -116,14 +115,19 @@
 
 ;##############################################################################
 
-
 (defn evaluate [jobs]
   (->> jobs
        (map evaluate-name-clash)
        (map evaluate-dependencies)))
 
+(defn fulfilled? [job]
+  (-> job
+      (assoc :runnable true)
+      evaluate-name-clash
+      evaluate-dependencies
+      :runnable))
 
 ;### Debug ####################################################################
 ;(logging-config/set-logger! :level :debug)
 ;(logging-config/set-logger! :level :info)
-(debug/debug-ns *ns*)
+;(debug/debug-ns *ns*)

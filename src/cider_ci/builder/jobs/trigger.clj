@@ -6,7 +6,7 @@
   (:require
     [cider-ci.builder.configfile :as configfile]
     [cider-ci.builder.jobs :as jobs]
-    [cider-ci.builder.jobs.filter :as jobs.filter]
+    [cider-ci.builder.jobs.dependencies :as jobs.dependencies]
     [cider-ci.builder.jobs.tags :as tags]
     [cider-ci.builder.repository :as repository]
     [cider-ci.builder.spec :as spec]
@@ -48,7 +48,6 @@
                      (re-find (to-pattern include-match) (str %))))
        (filter #(or (not exclude-match)
                     (not (re-find (to-pattern exclude-match) (str %)))))))
-
 
 
 ;### trigger jobs #######################################################
@@ -96,18 +95,20 @@
               (trigger-fulfilled? tree-id job trigger)) triggers))))
 
 (declare trigger-supermodules-jobs)
+
 (defn- trigger-jobs [tree-id]
   (catcher/wrap-with-suppress-and-log-debug
     (->> (configfile/get-configfile tree-id)
          :jobs
          convert-to-array
          (filter #(-> % :run-on))
-         (filter #(jobs.filter/dependencies-fulfilled? tree-id %))
          (filter #(some-job-trigger-fulfilled? tree-id %))
-         (map #(jobs/create (assoc % :tree_id tree-id)))
+         (map #(assoc % :tree_id tree-id))
+         (filter jobs.dependencies/fulfilled?)
+         (map jobs/create)
          doall))
   (catcher/wrap-with-suppress-and-log-debug
-    (trigger-supermodules-jobs tree-id))nil)
+    (trigger-supermodules-jobs tree-id)) nil)
 
 (defn- trigger-supermodules-jobs [tree-id]
   (->> (jdbc/query (rdbms/get-ds)
@@ -118,7 +119,6 @@
        (map :tree_id)
        (map trigger-jobs)
        doall) nil)
-
 
 
 ;### listen to branch updates #################################################
@@ -152,7 +152,6 @@
 
 (defn listen-to-job-updates-and-fire-trigger-jobs []
   (messaging/listen "job.updated"  evaluate-job-update))
-
 
 
 ;### initialize ###############################################################
