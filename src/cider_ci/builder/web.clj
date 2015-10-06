@@ -6,7 +6,6 @@
   (:require
     [cider-ci.auth.core :as auth]
     [cider-ci.auth.http-basic :as http-basic]
-    [cider-ci.builder.configfile]
     [cider-ci.builder.jobs :as jobs]
     [cider-ci.builder.util :as util]
     [cider-ci.utils.config :refer [get-config]]

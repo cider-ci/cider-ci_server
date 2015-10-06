@@ -4,7 +4,7 @@
 
 (ns cider-ci.builder.jobs.trigger
   (:require
-    [cider-ci.builder.configfile :as configfile]
+    [cider-ci.builder.project-configuration :as project-configuration]
     [cider-ci.builder.jobs :as jobs]
     [cider-ci.builder.jobs.dependencies :as jobs.dependencies]
     [cider-ci.builder.jobs.tags :as tags]
@@ -98,7 +98,7 @@
 
 (defn- trigger-jobs [tree-id]
   (catcher/wrap-with-suppress-and-log-debug
-    (->> (configfile/get-configfile tree-id)
+    (->> (project-configuration/get-project-configuration tree-id)
          :jobs
          convert-to-array
          (filter #(-> % :run-on))

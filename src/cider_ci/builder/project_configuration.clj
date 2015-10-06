@@ -2,7 +2,7 @@
 ; Licensed under the terms of the GNU Affero General Public License v3.
 ; See the "LICENSE.txt" file provided with this software.
 
-(ns cider-ci.builder.configfile
+(ns cider-ci.builder.project-configuration
   (:require
     [cider-ci.utils.http :as http]
     [clj-logging-config.log4j :as logging-config]
@@ -13,7 +13,7 @@
     [clojure.data.json :as json]
     ))
 
-(defn- get-configfile_unmemoized [tree-id]
+(defn- get-project-configuration_unmemoized [tree-id]
   (let [url (http/build-service-url
               :repository
               (str "/project-configuration/" tree-id))
@@ -21,11 +21,11 @@
         body (:body res)]
     (json/read-str body :key-fn keyword)))
 
-(def get-configfile (memo/lru #(get-configfile_unmemoized %)
+(def get-project-configuration (memo/lru #(get-project-configuration_unmemoized %)
             :lru/threshold 500))
 
 ; disable caching (temporarily)
-;(def get-configfile get-configfile_unmemoized)
+;(def get-project-configuration get-project-configuration_unmemoized)
 
 
 ;### Debug ####################################################################
