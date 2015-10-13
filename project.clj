@@ -9,11 +9,11 @@
             :url "http://www.gnu.org/licenses/agpl-3.0.html"}
   :dependencies [
                  [cheshire "5.5.0"]
-                 [cider-ci/clj-auth "3.0.0"]
-                 [cider-ci/clj-utils "3.2.0-beta.1"]
-                 [drtom/honeysql "1.3.0-beta.2"]
+                 [cider-ci/clj-auth "3.1.0"]
+                 [cider-ci/clj-utils "3.2.2"]
+                 [drtom/honeysql "1.3.0-beta.3"]
                  [json-roa/clj-utils "1.0.0"]
-                 [org.clojure/tools.nrepl "0.2.10"]
+                 [org.clojure/tools.nrepl "0.2.11"]
                  [ring-middleware-accept "2.0.3"]
                  [ring/ring-core "1.4.0"]
 
