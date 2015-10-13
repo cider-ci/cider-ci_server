@@ -4,6 +4,7 @@
 
 (ns cider-ci.dispatcher.dispatch.build-data
   (:require
+    [cider-ci.utils.map :refer [convert-to-array]]
     [cider-ci.dispatcher.task :as task]
     [cider-ci.utils.http :as http]
     [cider-ci.utils.rdbms :as rdbms]
@@ -42,6 +43,13 @@
         {:git_path (git-path repository-id)
          :git_url (git-url repository-id) }))
 
+
+;### templates ################################################################
+
+(defn- templates-data [task-spec]
+  (if-let [templates (:templates task-spec)]
+    (-> templates convert-to-array)
+    []))
 
 ;### dispatch data ############################################################
 
@@ -82,6 +90,7 @@
               :repository_id repository-id
               :scripts (:scripts trial)
               :task_id (:task_id trial)
+              :templates (templates-data task-spec)
               :tree-attachments (:tree-attachments task-spec)
               :tree-attachments-path (tree-attachments-path tree-id)
               :trial-attachments (:trial-attachments task-spec)
@@ -91,4 +100,7 @@
     (-> data
         (add-git-url repository-id))))
 
-
+;#### debug ###################################################################
+;(logging-config/set-logger! :level :debug)
+;(logging-config/set-logger! :level :info)
+;(debug/debug-ns *ns*)
