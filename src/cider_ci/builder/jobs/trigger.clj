@@ -7,7 +7,6 @@
     [cider-ci.builder.project-configuration :as project-configuration]
     [cider-ci.builder.jobs :as jobs]
     [cider-ci.builder.jobs.dependencies :as jobs.dependencies]
-    [cider-ci.builder.jobs.tags :as tags]
     [cider-ci.builder.repository :as repository]
     [cider-ci.builder.spec :as spec]
     [cider-ci.builder.tasks :as tasks]

@@ -6,7 +6,6 @@
   (:require
     [cider-ci.builder.project-configuration]
     [cider-ci.builder.jobs.dependencies :as jobs.dependencies]
-    [cider-ci.builder.jobs.tags :as tags]
     [cider-ci.builder.repository :as repository]
     [cider-ci.builder.spec :as spec]
     [cider-ci.builder.tasks :as tasks]
@@ -80,8 +79,7 @@
         add-specification-from-dofile-if-not-present
         add-specification-id-if-not-present
         persist-job
-        invoke-create-tasks-and-trials
-        tags/add-job-tags)))
+        invoke-create-tasks-and-trials)))
 
 ;### available jobs #####################################################
 

@@ -5,7 +5,6 @@
 (ns cider-ci.builder.jobs.dependencies
   (:require
     [cider-ci.builder.repository :as repository]
-    [cider-ci.builder.jobs.tags :as tags]
     [cider-ci.builder.spec :as spec]
     [cider-ci.builder.tasks :as tasks]
     [cider-ci.builder.util :as util]
