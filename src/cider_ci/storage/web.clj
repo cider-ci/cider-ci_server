@@ -9,6 +9,7 @@
     [cider-ci.auth.session :as session]
     [cider-ci.open-session.cors :as cors]
     [cider-ci.storage.web.public :as public]
+    [cider-ci.utils.config :as config :refer [get-config]]
     [cider-ci.utils.http :as http]
     [cider-ci.utils.http-server :as http-server]
     [cider-ci.utils.rdbms :as rdbms]
@@ -23,9 +24,9 @@
     [drtom.logbug.catcher :as catcher]
     [drtom.logbug.debug :as debug]
     [drtom.logbug.ring :refer [wrap-handler-with-logging]]
+    [me.raynes.fs :as clj-fs]
     [ring.middleware.cookies :as cookies]
     [ring.util.response]
-    [cider-ci.utils.config :as config :refer [get-config]]
     )
   (:use
     [cider-ci.storage.shared :only [delete-file delete-row delete-file-and-row]]
@@ -93,7 +94,8 @@
   (catcher/wrap-with-suppress-and-log-warn
     (when-let [store (find-store request)]
       (when-let [row (get-row request)]
-        (let [file-path (str (:file_path store) "/" (:id row))]
+        (let [file-path (-> (str (:file_path store) "/" (:id row)) clj-fs/file
+                            clj-fs/absolute clj-fs/normalized .getAbsolutePath)]
           (-> (ring.util.response/file-response file-path)
               (ring.util.response/header "X-Sendfile" file-path)
               (ring.util.response/header "content-type" (:content_type row))))))))
