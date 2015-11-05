@@ -9,7 +9,9 @@
     [cider-ci.api.resources.job :as job]
     [cider-ci.api.resources.jobs :as jobs]
     [cider-ci.api.resources.root :as resources.root]
+    [cider-ci.api.resources.scripts :as scripts]
     [cider-ci.api.resources.task :as task]
+    [cider-ci.api.resources.task-specifications :as task-specifications]
     [cider-ci.api.resources.tasks :as tasks]
     [cider-ci.api.resources.tree-attachment :as tree-attachment]
     [cider-ci.api.resources.tree-attachments :as tree-attachments]
@@ -76,11 +78,15 @@
     (cpj/ANY "/tasks/:id/trials/" [] trials/routes)
     (cpj/ANY "/trial/*" [] trial/routes)
 
+    (cpj/ANY "/task-specifications/*" [] task-specifications/routes)
+
     (cpj/ANY "/trial/:trial_id/trial-attachments/" [] trial-attachments/routes)
     (cpj/ANY "/trial-attachments/*" [] trial-attachment/routes)
 
     (cpj/ANY "/jobs/:id/tree-attachments/*" _ tree-attachments/routes)
     (cpj/ANY "/tree-attachments/*" [] tree-attachment/routes)
+
+    (cpj/ANY "/scripts/*" _ scripts/routes)
 
     (cpj/ANY "*" request {:status 404 :body {:message "404 NOT FOUND"}})
     ))
