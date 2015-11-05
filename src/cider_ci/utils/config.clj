@@ -5,15 +5,16 @@
 
 (ns cider-ci.utils.config
   (:require
-    [clj-yaml.core :as yaml]
     [cider-ci.utils.daemon :as daemon :refer [defdaemon]]
-    [drtom.logbug.debug :as debug]
-    [cider-ci.utils.map :refer [deep-merge]]
-    [clojure.tools.logging :as logging]
-    [clojure.java.io :as io]
-    [cider-ci.utils.rdbms :as rdbms]
+    [cider-ci.utils.duration :refer [parse-string-to-seconds]]
     [cider-ci.utils.fs :refer :all]
-    [duckling.core :as duckling]
+    [cider-ci.utils.map :refer [deep-merge]]
+    [cider-ci.utils.rdbms :as rdbms]
+    [clj-yaml.core :as yaml]
+    [clojure.java.io :as io]
+    [clojure.tools.logging :as logging]
+    [drtom.logbug.debug :as debug]
+    [me.raynes.fs :as clj-fs]
     ))
 
 
@@ -79,20 +80,11 @@
       (or (-> conf :services service :database ) {} ))))
 
 
-
 ;### duration #################################################################
 
-(duckling/load! {:en$core {:corpus ["en.numbers"]
-                           :rules ["en.numbers" "en.duration"]}})
-
-(defn parse-config-duration-to-seconds [& ks]
+(defn parse-config-duration-string-to-seconds [& ks]
   (try (if-let [duration-config-value (-> (get-config) (get-in ks))]
-         (or (-> duration-config-value
-                 (#(duckling/parse :en$core % [:duration]))
-                 first :value :normalized :value)
-             (throw (ex-info "Duration parsing error."
-                             {:config-keys ks
-                              :duration-config-value duration-config-value})))
+         (parse-string-to-seconds duration-config-value)
          (logging/warn (str "No value to parse duration for " ks " was found.")))
        (catch Exception ex
          (cond (instance? clojure.lang.IExceptionInfo ex) (throw ex)
