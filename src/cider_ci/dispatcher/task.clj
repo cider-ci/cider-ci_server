@@ -27,6 +27,7 @@
   (first (jdbc/query (rdbms/get-ds)
                                 ["SELECT * FROM tasks
                                  WHERE id = ?" id])))
+
 (defn get-task-spec [task-id]
   (let [ task_specifications (jdbc/query (rdbms/get-ds)
                                 ["SELECT task_specifications.data FROM task_specifications

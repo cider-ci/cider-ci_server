@@ -51,10 +51,11 @@
              (let [data (build-data/build-dispatch-data trial executor)
                    url (str (:base_url executor)  "/execute")
                    basic-auth-pw (executor-utils/http-basic-password executor)]
-               (jdbc/update! (get-ds) :trials
-                             {:state "dispatching" :executor_id (:id executor)}
-                             ["id = ?" (:id trial)])
-               (post-trial url basic-auth-pw data)))
+               (trials/update-trial {:id (:id trial)
+                                     :state "dispatching"
+                                     :executor_id (:id executor)})
+               (post-trial url basic-auth-pw data)
+               (trials/update-trial {:id (:id trial) :state "executing"})))
            (catch Exception e
              (let  [row (if (<= 3 (issues-count trial))
                           {:state "failed"
@@ -63,7 +64,6 @@
                           {:state "pending" :executor_id nil})]
                (trials/update-trial (conj trial row))
                false))))))
-
 
 (defn dispatch-trials []
   (loop []
