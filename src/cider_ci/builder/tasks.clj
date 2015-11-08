@@ -112,9 +112,7 @@
                                                script-defaults)))
            context)))
 
-(def ^:private script-base-defaults
-  {:timeout (* 15 60)
-   })
+(def ^:private script-base-defaults {})
 
 (defn build-tasks
   "Build the tasks for the given top-level specification."
