@@ -7,7 +7,7 @@
   (:require
     [cider-ci.dispatcher.dispatch.build-data :as build-data]
     [cider-ci.dispatcher.dispatch.next-trial :as next-trial]
-    [cider-ci.dispatcher.trial :as trial-utils]
+    [cider-ci.dispatcher.trials :as trials]
     [cider-ci.utils.rdbms :as rdbms]
     [clj-logging-config.log4j :as logging-config]
     [clojure.java.jdbc :as jdbc]
@@ -24,7 +24,7 @@
 
 (defn- get-and-set-next-trial [tx executor params]
   (when-let [{trial-id :id} (next-trial/next-trial-for-pull tx executor)]
-    (trial-utils/wrap-trial-with-issue-and-throw-again
+    (trials/wrap-trial-with-issue-and-throw-again
       {:id trial-id}  "Error during dispatch"
       (jdbc/update! tx :trials
                     {:state "dispatching" :executor_id (:id executor)}

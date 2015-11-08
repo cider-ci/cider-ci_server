@@ -9,7 +9,7 @@
     [cider-ci.dispatcher.sync.ping :as ping]
     [cider-ci.dispatcher.sync.sync-trials :as sync-trials]
     [cider-ci.dispatcher.sync.update-executor :as update-executor]
-    [cider-ci.dispatcher.trial :as trial]
+    [cider-ci.dispatcher.trials :as trials]
     [cider-ci.utils.rdbms :as rdbms]
     [clj-logging-config.log4j :as logging-config]
     [clojure.data.json :as json]
@@ -38,9 +38,9 @@
         in-progress-trials-of-executor-ids (map #(-> % :id str) in-progress-trials-of-executor)]
     (doseq [lost-trial-id  (difference (set in-progress-trials-of-executor-ids)
                                        (set known-trial-ids-by-executor))]
-      (trial/update {:id lost-trial-id
+      (trials/update-trial {:id lost-trial-id
                      :state "aborted"
-                     :error (str "This trial was lost on executor " (:name executor))}))))
+                     :error [(str "This trial was lost on executor " (:name executor))]}))))
 
 (defn sync [executor data]
   (catcher/wrap-with-log-warn

@@ -2,7 +2,7 @@
 ; Licensed under the terms of the GNU Affero General Public License v3.
 ; See the "LICENSE.txt" file provided with this software.
 
-(ns cider-ci.dispatcher.trial
+(ns cider-ci.dispatcher.trials
   (:require
     [cider-ci.dispatcher.task :as task]
     [drtom.logbug.debug :as debug]
@@ -67,33 +67,34 @@
                  "aborting")
     (:state update-params)))
 
+(def ^:private permitted-update-keys
+  #{:error :result :started_at :finished_at})
+
 (defn- compute-update-params [params id]
   (when-let [trial (get-trial id)]
-    (conj {}
-          (select-keys params
-                       [:error :finished_at :result
-                        :started_at :state])
-          (when-let [params-scripts (:scripts params)]
-            (let [trial (get-trial id)]
-              {:scripts (deep-merge (:scripts trial)
-                                    params-scripts)}))
-          (when-let [new-state (new-state trial params)]
-            {:state new-state}))))
+    (merge (select-keys params permitted-update-keys)
+           (when-let [new-state (new-state trial params)]
+             {:state new-state}))))
 
-(defn update [params]
+(defn update-trial [params]
   (catcher/wrap-with-suppress-and-log-warn
     (let [id (:id params)]
       (try
         (assert id)
         (when-let [update-params (compute-update-params params id)]
-          (jdbc/update! (rdbms/get-ds)
-                        :trials update-params
-                        ["id = ?" id]))
+          (when-not (empty? update-params)
+            (jdbc/update! (rdbms/get-ds)
+                          :trials update-params
+                          ["id = ?" id])))
         (catch Exception e
+          (jdbc/insert! (rdbms/get-ds)
+                        :trial_issues {:trial_id id
+                                       :title "Updating the trial failed"
+                                       :type "warning"
+                                       :description (str (thrown/stringify e)
+                                                         "\n\n PARAMS:" params)})
           (jdbc/update! (rdbms/get-ds)
-                        :trials
-                        {:state "failed"
-                         :error (thrown/stringify e)}
+                        :trials {:state "failed" :error (thrown/stringify e)}
                         ["id = ?" id]))
         (finally
           (dispatch-update (select-keys params [:id :task_id])))))))
@@ -124,3 +125,6 @@
 ;(logging-config/set-logger! :level :info)
 ;(debug/debug-ns *ns*)
 
+;(debug/wrap-with-log-debug #'update-trial)
+;(debug/wrap-with-log-debug #'compute-update-params)
+;(debug/wrap-with-log-debug #'new-state)

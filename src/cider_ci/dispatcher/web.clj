@@ -10,8 +10,9 @@
     [cider-ci.auth.http-basic :as http-basic]
     [cider-ci.dispatcher.abort :as abort]
     [cider-ci.dispatcher.retry :as retry]
+    [cider-ci.dispatcher.scripts :refer [patch-script]]
     [cider-ci.dispatcher.sync :as sync]
-    [cider-ci.dispatcher.trial :as trial]
+    [cider-ci.dispatcher.trials :as trials]
     [cider-ci.utils.http :as http]
     [cider-ci.utils.http-server :as http-server]
     [cider-ci.utils.messaging :as messaging]
@@ -36,7 +37,7 @@
 ;##### update trial ###########################################################
 
 (defn update-trial [id params]
-  (trial/update (assoc (clojure.walk/keywordize-keys params)
+  (trials/update-trial (assoc (clojure.walk/keywordize-keys params)
                        :id id))
   {:status 200})
 
@@ -130,6 +131,10 @@
     (cpj/PATCH "/trials/:id"
                {{id :id} :params data :body}
                (update-trial id data))
+
+    (cpj/PATCH "/trials/:id/scripts/:key"
+               {{id :id key :key} :params data :body}
+               (patch-script id key data))
 
     (cpj/GET "/" [] "OK")
 

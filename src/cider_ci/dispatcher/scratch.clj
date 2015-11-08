@@ -4,8 +4,6 @@
 
 (ns cider-ci.dispatcher.scratch
   (:require
-    [cider-ci.dispatcher.executor :as executor-entity]
-    [cider-ci.dispatcher.trial :as trial-entity]
     [cider-ci.utils.http :as http]
     [cider-ci.utils.rdbms :as rdbms]
     [clj-logging-config.log4j :as logging-config]

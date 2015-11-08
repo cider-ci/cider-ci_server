@@ -6,7 +6,7 @@
   (:require
     [cider-ci.dispatcher.job :as job]
     [cider-ci.dispatcher.stateful-entity :as stateful-entity]
-    [cider-ci.dispatcher.trial :as trial]
+    [cider-ci.dispatcher.trials :as trials]
     [cider-ci.utils.config :as config :refer [get-config]]
     [cider-ci.utils.daemon :as daemon :refer [defdaemon]]
     [cider-ci.utils.messaging :as messaging]
@@ -52,13 +52,13 @@
 (defn- set-pending-trials-to-aborted [job-id]
   (loop []
     (when-let [trial (next-pending-trial job-id)]
-      (trial/update (assoc trial :state "aborted"))
+      (trials/update-trial (assoc trial :state "aborted"))
       (recur))))
 
 (defn- set-processing-trials-to-aborted [job-id]
   (loop []
     (when-let [trial (next-processing-trial job-id)]
-      (trial/update (assoc trial :state "aborting"))
+      (trials/update-trial (assoc trial :state "aborting"))
       (recur))))
 
 (defn abort-job [job-id]
@@ -124,7 +124,7 @@
 
 (defn set-lost-executor-trials-abrted []
   (->> (jdbc/query (get-ds) lost-executor-trials-query)
-       (map #(trial/update (assoc % :state "aborted" :error "Executor went dead or was removed." )))
+       (map #(trials/update-trial (assoc % :state "aborted" :error "Executor went dead or was removed." )))
        doall))
 
 (defdaemon "dead-executor-trials-aborter" 3 (set-lost-executor-trials-abrted))

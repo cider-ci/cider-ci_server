@@ -8,7 +8,6 @@
     [cider-ci.dispatcher.dispatch.timeout-sweeper]
     [cider-ci.dispatcher.abort :as abort]
     [cider-ci.dispatcher.task :as task]
-    [cider-ci.dispatcher.trial :as trial]
     [cider-ci.dispatcher.web :as web]
     [cider-ci.utils.config :as config :refer [get-db-spec]]
     [cider-ci.utils.http :as http]

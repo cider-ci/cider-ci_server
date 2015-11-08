@@ -7,13 +7,16 @@
     [cider-ci.dispatcher.job :as job]
     [cider-ci.dispatcher.result :as result]
     [cider-ci.dispatcher.stateful-entity :as stateful-entity]
-    [drtom.logbug.debug :as debug]
+    [cider-ci.utils.map :refer [convert-to-array]]
     [cider-ci.utils.messaging :as messaging]
     [cider-ci.utils.rdbms :as rdbms]
-    [drtom.logbug.catcher :as catcher]
     [clj-logging-config.log4j :as logging-config]
     [clojure.java.jdbc :as jdbc]
     [clojure.tools.logging :as logging]
+    [drtom.logbug.catcher :as catcher]
+    [drtom.logbug.debug :as debug]
+    [drtom.logbug.thrown :as thrown]
+    [cider-ci.dispatcher.scripts :refer [create-scripts]]
     ))
 
 
@@ -49,7 +52,8 @@
 ;### re-evaluate  #############################################################
 
 (defn- eval-new-state [task trial-states]
-  (cond (some #{"passed"} trial-states) "passed"
+  (cond (empty? trial-states) (:state task)
+        (some #{"passed"} trial-states) "passed"
         (every? #{"aborted"} trial-states ) "aborted"
         (every? #{"failed" "aborted"} trial-states) "failed"
         (some #{"executing" "dispatching"} trial-states) "executing"
@@ -73,17 +77,30 @@
 
 ;### create trial #############################################################
 
-(defn create-trial [task]
-  (let [task-id (:id task)
-        spec (get-task-spec task-id)
-        scripts (:scripts spec) ]
-    (catcher/wrap-with-log-error
-      (let [trial (-> (jdbc/insert! (rdbms/get-ds) :trials
-                                    {:scripts scripts
-                                     :task_id task-id})
-                      first)]
-        (evaluate-trials-and-update task)
-        trial))))
+(defn create-trial
+  ([task]
+   (create-trial
+     (first (jdbc/query (rdbms/get-ds)
+                        ["SELECT jobs.id AS id FROM jobs
+                         JOIN tasks ON jobs.id = tasks.job_id
+                         WHERE tasks.id = ?" (:id task)])) task))
+  ([job task]
+   (try
+     (jdbc/with-db-transaction [tx (rdbms/get-ds)]
+       (let [task-id (:id task)
+             spec (get-task-spec task-id)
+             scripts (:scripts spec)]
+         (catcher/wrap-with-log-error
+           (let [trial (-> (jdbc/insert! tx :trials {:task_id task-id}) first)]
+             (create-scripts tx trial scripts)
+             (evaluate-trials-and-update task)
+             trial))))
+     (catch Exception e
+       (let [row-data  {:job_id (:id job)
+                        :title "Error when creating trial and scripts."
+                        :description (thrown/stringify e)}]
+         (logging/warn row-data)
+         (jdbc/insert! (rdbms/get-ds) "job_issues" row-data))))))
 
 (defn- create-trials [task]
   (let [id (:id task)
@@ -107,7 +124,7 @@
                   (some #{(:state job)} ["aborted" "aborting"]))
       (logging/debug "seqing and creating trials" )
       (doseq [_ _range]
-        (create-trial task)))))
+        (create-trial job task)))))
 
 
 ;### eval and create trials ###################################################
@@ -139,6 +156,9 @@
 ;(messaging/publish "task.create-trials" {:id "de10e33c-c13f-5aba-94aa-db1dca1e5932"})
 
 ;#### debug ###################################################################
-;(debug/debug-ns *ns*)
 ;(logging-config/set-logger! :level :debug)
 ;(logging-config/set-logger! :level :info)
+;(debug/debug-ns *ns*)
+;(debug/wrap-with-log-debug #'evaluate-and-create-trials)
+;(debug/wrap-with-log-debug #'eval-new-state)
+;(debug/re-apply-last-argument #'get-trial-states)

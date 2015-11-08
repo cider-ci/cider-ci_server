@@ -4,7 +4,7 @@
 
 (ns cider-ci.dispatcher.dispatch.timeout-sweeper
   (:require
-    [cider-ci.dispatcher.trial :as trial]
+    [cider-ci.dispatcher.trials :as trials]
     [cider-ci.utils.config :as config :refer [get-config]]
     [cider-ci.utils.daemon :as daemon :refer [defdaemon]]
     [cider-ci.utils.rdbms :as rdbms :refer [get-ds]]
@@ -31,7 +31,7 @@
                     (jdbc/query (get-ds))
                     (map :id))]
       (catcher/wrap-with-suppress-and-log-error
-        (trial/update {:id id :state "aborted" :error "dispatch timeout"})))))
+        (trials/update-trial {:id id :state "aborted" :error ["dispatch timeout"]})))))
 
 
 (defdaemon "sweep-in-dispatch-timeout" 10 sweep-in-dispatch-timeout)

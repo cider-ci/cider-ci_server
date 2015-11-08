@@ -8,7 +8,7 @@
     [cider-ci.dispatcher.dispatch.next-trial :as next-trial]
     [cider-ci.dispatcher.executor :as executor-utils]
     [cider-ci.dispatcher.task :as task]
-    [cider-ci.dispatcher.trial :as trial-utils]
+    [cider-ci.dispatcher.trials :as trials]
     [cider-ci.utils.config :refer [get-config]]
     [cider-ci.utils.daemon :refer [defdaemon]]
     [cider-ci.utils.http :as http]
@@ -43,10 +43,10 @@
       (throw (ex-info "Entity not found." {:table-name table-name :id id}))))
 
 (defn dispatch [trial-id executor-id]
-  (catcher/wrap-with-log-error
+  (catcher/wrap-with-suppress-and-log-error
     (let [trial (get-entity-or-throw "trials" trial-id)
           executor (get-entity-or-throw "executors" executor-id)]
-      (try (trial-utils/wrap-trial-with-issue-and-throw-again
+      (try (trials/wrap-trial-with-issue-and-throw-again
              trial  "Error during dispatch"
              (let [data (build-data/build-dispatch-data trial executor)
                    url (str (:base_url executor)  "/execute")
@@ -57,10 +57,11 @@
                (post-trial url basic-auth-pw data)))
            (catch Exception e
              (let  [row (if (<= 3 (issues-count trial))
-                          {:state "failed" :error "Too many issues, giving up to dispatch this trial "
+                          {:state "failed"
+                           :warnings ["Too many issues, giving up to dispatch this trial."]
                            :executor_id nil}
                           {:state "pending" :executor_id nil})]
-               (trial-utils/update (conj trial row))
+               (trials/update-trial (conj trial row))
                false))))))
 
 

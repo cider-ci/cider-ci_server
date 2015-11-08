@@ -4,6 +4,7 @@
 
 (ns cider-ci.dispatcher.dispatch.build-data
   (:require
+    [cider-ci.dispatcher.scripts :refer [get-scripts]]
     [cider-ci.utils.map :refer [convert-to-array]]
     [cider-ci.dispatcher.task :as task]
     [cider-ci.utils.http :as http]
@@ -88,7 +89,7 @@
               :patch_path (patch-path executor trial-id)
               :ports (:ports task-spec)
               :repository_id repository-id
-              :scripts (:scripts trial)
+              :scripts (get-scripts trial)
               :task_id (:task_id trial)
               :templates (templates-data task-spec)
               :tree-attachments (:tree-attachments task-spec)
