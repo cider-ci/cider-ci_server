@@ -5,7 +5,7 @@
 (ns cider-ci.api.json-roa.root
   (:require
     [cider-ci.api.json-roa.links :as json-roa.links]
-    [drtom.logbug.debug :as debug]
+    [logbug.debug :as debug]
     [clj-logging-config.log4j :as logging-config]
     [clojure.tools.logging :as logging]))
 
@@ -16,10 +16,13 @@
      :relations
      {:jobs (json-roa.links/jobs context)
       :job (json-roa.links/job context)
+      :job-specification  (json-roa.links/job-specification context)
       :task (json-roa.links/task context)
+      :tasks (json-roa.links/tasks context)
+      :task-specification  (json-roa.links/task-specification context)
       :trial (json-roa.links/trial context)
       :tree-attachment-data-stream (json-roa.links/tree-attachment-data-stream
-                                     request "{treeid}" "{path}")
+                                     request "{tree_id}" "{path}")
       }
      }))
 

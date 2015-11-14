@@ -6,7 +6,7 @@
   (:require
     [cider-ci.api.json-roa.links :as links]
     [cider-ci.api.pagination :as pagination]
-    [drtom.logbug.debug :as debug]
+    [logbug.debug :as debug]
     [cider-ci.utils.rdbms :as rdbms]
     [clj-logging-config.log4j :as logging-config]
     [clojure.java.jdbc :as jdbc]

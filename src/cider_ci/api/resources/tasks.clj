@@ -6,7 +6,7 @@
   (:require
     [cider-ci.api.pagination :as pagination]
     [cider-ci.api.util :as util]
-    [drtom.logbug.debug :as debug]
+    [logbug.debug :as debug]
     [cider-ci.utils.http :as http]
     [cider-ci.utils.http-server :as http-server]
     [cider-ci.utils.rdbms :as rdbms]
@@ -23,50 +23,56 @@
     [ring.middleware.cookies :as cookies]
     [ring.middleware.json]
     [ring.util.response :as response]
+    [honeysql.sql :refer :all]
     ))
 
-(defonce conf (atom nil))
+;##############################################################################
 
-;### get tasks ##################################################################
-(defn build-tasks-base-query [job-id]
-  (-> (hh/select :tasks.id :tasks.name)
-      (hh/modifiers :distinct)
-      (hh/from :tasks)
-      (hh/where [:= :tasks.job_id job-id])
-      (hh/order-by [:tasks.name :desc] [:tasks.id :desc])))
+(def base-query
+  (-> (sql-select :tasks.id)
+      (sql-from :tasks)
+      (sql-order-by [:tasks.created_at :asc] [:tasks.id :asc])))
 
-
-(defn filter-by-state [query params]
-  (if-let [state (:state params)]
+(defn filter-by-job-id [query query-params]
+  (if-let [job-id (:job-id query-params)]
     (-> query
-        (hh/merge-where [:= :tasks.state state]))
+        (sql-merge-where [:= :tasks.job_id job-id]))
     query))
 
-(defn tasks-data [job-id query-params]
-  (let [query (-> (build-tasks-base-query job-id)
-                  (filter-by-state query-params)
-                  (pagination/add-offset-for-honeysql query-params)
-                  hc/format)]
-    (logging/debug {:query query})
-    (jdbc/query (rdbms/get-ds) query)))
+(defn filter-by-state [query query-params]
+  (if-let [state (:state query-params)]
+    (-> query
+        (sql-merge-where [:= :tasks.state state]))
+    query))
 
-(defn get-tasks [request]
-  {:body
-   {:tasks
-    (tasks-data (-> request :params :job_id)
-                (-> request :query-params))}})
+(defn filter-by-task-specification-id [query query-params]
+  (if-let [task-specification-id (:task-specification-id query-params)]
+    (-> query
+        (sql-merge-where [:= :tasks.task_specification_id
+                          task-specification-id]))
+    query))
+
+(defn- tasks-query [query-params]
+  (-> base-query
+      (filter-by-job-id query-params)
+      (filter-by-state query-params)
+      (filter-by-task-specification-id query-params)
+      (pagination/add-offset-for-honeysql query-params)
+      sql-format))
+
+(defn- tasks [query-params]
+    (jdbc/query (rdbms/get-ds) (tasks-query query-params)))
+
+(defn- get-tasks [request]
+  {:body {:tasks (tasks (:query-params request))}})
 
 
 ;### routes #####################################################################
 (def routes
   (cpj/routes
-    (cpj/GET "/jobs/:job_id/tasks/" request (get-tasks request))
+    (cpj/GET "/tasks/" request (get-tasks request))
     ))
 
-
-;### init #####################################################################
-(defn initialize [new-conf]
-  (reset! conf new-conf))
 
 
 ;### Debug ####################################################################

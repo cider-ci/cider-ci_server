@@ -7,7 +7,7 @@
            [honeysql.helpers :refer :all]
            [clj-logging-config.log4j :as logging-config]
            [clojure.tools.logging :as logging]
-           [drtom.logbug.debug :as debug]
+           [logbug.debug :as debug]
            ))
 
 ;(-> (select ":%lower(branches.name))" (from :foo) sql/format))

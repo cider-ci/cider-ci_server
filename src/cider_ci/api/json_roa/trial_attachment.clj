@@ -5,7 +5,7 @@
 (ns cider-ci.api.json-roa.trial-attachment
   (:require
     [cider-ci.api.json-roa.links :as links]
-    [drtom.logbug.debug :as debug]
+    [logbug.debug :as debug]
     [clj-logging-config.log4j :as logging-config]
     [clojure.tools.logging :as logging])
   )

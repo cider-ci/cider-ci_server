@@ -2,10 +2,11 @@
 ; Licensed under the terms of the GNU Affero General Public License v3.
 ; See the "LICENSE.txt" file provided with this software.
 
-(ns cider-ci.api.resources.task
+(ns cider-ci.api.resources.job-specifications
   (:require
     [cider-ci.api.util :as util]
     [logbug.debug :as debug]
+    [cider-ci.utils.http :as http]
     [cider-ci.utils.http-server :as http-server]
     [cider-ci.utils.rdbms :as rdbms]
     [clj-http.client :as http-client]
@@ -15,6 +16,8 @@
     [clojure.tools.logging :as logging]
     [compojure.core :as cpj]
     [compojure.handler :as cpj.handler]
+    [honeysql.core :as hc]
+    [honeysql.helpers :as hh]
     [ring.adapter.jetty :as jetty]
     [ring.middleware.cookies :as cookies]
     [ring.middleware.json]
@@ -23,27 +26,24 @@
 
 (defonce conf (atom nil))
 
-;### get task ###################################################################
-
-(defn get-task [request]
-  (let [id (-> request :params :id)
-        task (first (jdbc/query (rdbms/get-ds) ["SELECT * from tasks WHERE id = ?" id]))]
-    (when task
-      {:body task})))
+;### get jobs ##################################################################
+(defn- get-spec [request]
+  {:body
+   (first (jdbc/query (rdbms/get-ds)
+                      ["SELECT * FROM job_specifications WHERE id = ? "
+                       (-> request :route-params :id)]))
+   })
 
 ;### routes #####################################################################
-
 (def routes
   (cpj/routes
-    (cpj/GET "/tasks/:id" request (get-task request))
+    (cpj/GET "/job-specifications/:id" _ get-spec)
     ))
 
 
 ;### init #####################################################################
-
 (defn initialize [new-conf]
   (reset! conf new-conf))
-
 
 
 ;### Debug ####################################################################

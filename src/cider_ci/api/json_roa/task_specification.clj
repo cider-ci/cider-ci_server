@@ -2,25 +2,22 @@
 ; Licensed under the terms of the GNU Affero General Public License v3.
 ; See the "LICENSE.txt" file provided with this software.
 
-(ns cider-ci.api.json-roa.trial
+(ns cider-ci.api.json-roa.task-specification
   (:require
     [cider-ci.api.json-roa.links :as links]
     [logbug.debug :as debug]
     [clj-logging-config.log4j :as logging-config]
-    [clojure.tools.logging :as logging])
-  )
+    [clojure.tools.logging :as logging]))
 
 
 (defn build [request response]
   (let [context (:context request)
         query-params (:query-prarams request)
         id (-> response :body :id)]
-    {:name "Trial"
-     :self-relation (links/trial context id)
+    {:name "Task-Specification"
+     :self-relation (links/task-specification context id)
      :relations
-     {:trial-attachments (links/trial-attachments context id)
-      :trials (links/trials context (-> response :body :task_id))
-      :task (links/task context (-> response :body :task_id))
+     {:tasks (links/tasks context {:task_specification_id id})
       }}))
 
 

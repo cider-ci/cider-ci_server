@@ -7,6 +7,7 @@
   (:require
     [cider-ci.api.json-roa :as json-roa]
     [cider-ci.api.resources.job :as job]
+    [cider-ci.api.resources.job-specifications :as job-specifications]
     [cider-ci.api.resources.jobs :as jobs]
     [cider-ci.api.resources.root :as resources.root]
     [cider-ci.api.resources.scripts :as scripts]
@@ -29,11 +30,11 @@
     [compojure.core :as cpj]
     [compojure.handler :as cpj.handler]
     [compojure.route :as cpj.route]
-    [drtom.logbug.catcher :as catcher]
-    [drtom.logbug.debug :as debug]
-    [drtom.logbug.ring :refer [wrap-handler-with-logging]]
     [json-roa.ring-middleware.request]
     [json-roa.ring-middleware.response]
+    [logbug.catcher :as catcher]
+    [logbug.debug :as debug]
+    [logbug.ring :as logbug-ring :refer [wrap-handler-with-logging o->]]
     [ring.adapter.jetty :as jetty]
     [ring.middleware.cookies :as cookies]
     [ring.middleware.json]
@@ -69,21 +70,22 @@
     (cpj/GET "/" request (resources.root/get request))
 
     (cpj/ANY "/jobs/" [] jobs/routes)
-    (cpj/ANY "/jobs/:id/tasks/" [] tasks/routes)
     (cpj/ANY "/jobs/:id" [] job/routes)
+    (cpj/ANY "/jobs/:id/tree-attachments/*" _ tree-attachments/routes)
     (cpj/ANY "/jobs/:id/*" [] job/routes)
 
-    (cpj/ANY "/tasks/:id" [] task/routes)
-
     (cpj/ANY "/tasks/:id/trials/" [] trials/routes)
-    (cpj/ANY "/trial/*" [] trial/routes)
-
-    (cpj/ANY "/task-specifications/*" [] task-specifications/routes)
+    (cpj/ANY "/tasks/:id" [] task/routes)
+    (cpj/ANY "/tasks/" [] tasks/routes)
 
     (cpj/ANY "/trial/:trial_id/trial-attachments/" [] trial-attachments/routes)
+    (cpj/ANY "/trial/*" [] trial/routes)
     (cpj/ANY "/trial-attachments/*" [] trial-attachment/routes)
 
-    (cpj/ANY "/jobs/:id/tree-attachments/*" _ tree-attachments/routes)
+    (cpj/ANY "/job-specifications/*" [] job-specifications/routes)
+    (cpj/ANY "/task-specifications/*" [] task-specifications/routes)
+
+
     (cpj/ANY "/tree-attachments/*" [] tree-attachment/routes)
 
     (cpj/ANY "/scripts/*" _ scripts/routes)
@@ -91,22 +93,31 @@
     (cpj/ANY "*" request {:status 404 :body {:message "404 NOT FOUND"}})
     ))
 
+; TODO: generalize this and place it into logbug
+; TODO: expand it so return-expr can something callable which accepts the exception
+(defmacro catch* [level return-expr & expressions]
+  `(try
+     ~@expressions
+     (catch Throwable e#
+       (logging/log ~level (logbug.thrown/stringify e#))
+       ~return-expr)))
+
+(defn wrapp-error [handler]
+  (fn [request]
+    (catch* :warn
+            {:status 500 :body {:message "An unexpected error occurred. See the server logs for details."} }
+            (handler request)
+            )))
+
 (defn build-routes-handler []
-  (catcher/wrap-with-log-warn
-    (-> routes
-        (wrap-handler-with-logging 'cider-ci.api.resources)
+  ( o-> wrap-handler-with-logging
+        routes
         (json-roa.ring-middleware.request/wrap json-roa/handler)
-        (wrap-handler-with-logging 'cider-ci.api.resources)
         json-roa.ring-middleware.response/wrap
-        (wrap-handler-with-logging 'cider-ci.api.resources)
         wrap-includ-storage-service-prefix
-        (wrap-handler-with-logging 'cider-ci.api.resources)
+        wrapp-error
         ring.middleware.json/wrap-json-response
-        wrap-sanitize-request-params
-        (wrap-handler-with-logging 'cider-ci.api.resources)
-        )))
-
-
+        wrap-sanitize-request-params))
 
 
 ;### Debug ####################################################################

@@ -6,37 +6,37 @@
   (:require
     [cider-ci.api.json-roa.links :as links]
     [cider-ci.api.pagination :as pagination]
-    [drtom.logbug.debug :as debug]
+    [logbug.debug :as debug]
     [clj-logging-config.log4j :as logging-config]
     [clojure.tools.logging :as logging])
   )
 
 
 (defn build [request response]
-  (let [context (:context request)
-        query-params (:query-params request)
-        job-id (-> request :params :id)
-        ]
-    (logging/debug build {:context context :job-id job-id :query-prarams query-params})
+  (let [query-params (-> request :query-params)
+        context (:context request)
+        {job-id :job-id
+         state :state
+         task-specification-id :task-specification-id} query-params]
     (let [ids (->> response :body :tasks (map :id))]
       {:name "Tasks"
-       :self-relation (links/tasks context job-id query-params)
-       :relations
-       {:job (links/job context job-id)
-        }
-       :collection
-       (conj
-         {:relations
-          (into {}
-                (map-indexed
-                  (fn [i id]
-                    [(+ 1 i (pagination/compute-offset query-params))
-                     (links/task context id)])
-                  ids))}
-         (when (seq ids)
-           (links/next-rel
-             #(links/tasks-path context job-id %)
-             query-params)))})))
+       :self-relation (links/tasks context query-params)
+       :relations (merge {:root (links/root context)}
+                         (when-not (clojure.string/blank? job-id)
+                           {:job (links/job context job-id) }))
+       :collection (conj
+                     {:relations
+                      (into {}
+                            (map-indexed
+                              (fn [i id]
+                                [(+ 1 i (pagination/compute-offset query-params))
+                                 (links/task context id)])
+                              ids))}
+                     (when (seq ids)
+                       (links/next-rel
+                         (fn [query-params]
+                           (links/jobs-path context query-params))
+                         query-params)))})))
 
 
 

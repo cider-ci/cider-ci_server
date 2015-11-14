@@ -6,7 +6,7 @@
   (:require
     [cider-ci.api.pagination :as pagination]
     [cider-ci.utils.http :as http]
-    [drtom.logbug.debug :as debug]
+    [logbug.debug :as debug]
     [clj-logging-config.log4j :as logging-config]
     [clojure.tools.logging :as logging]
     [ring.util.codec :refer [form-encode]]
@@ -54,7 +54,7 @@
   ([prefix query-params]
    (str prefix "/jobs/"
         (if (empty? query-params)
-          "{?repository,branch,branchdescendants,state,treeid}"
+          "{?repository_url,branch_head,branch_descendants,state,tree_id,job_specification_id}"
           (str "?" (http/build-url-query-string query-params))
           ))))
 
@@ -85,6 +85,18 @@
      }}))
 
 
+;### job ##################################################################
+
+(defn job-specification
+  ([prefix]
+   (job prefix "{id}"))
+  ([prefix id]
+   {:name "Job-Specification"
+    :href (str prefix "/job-specifications/" id)
+    :relations {}
+    }))
+
+
 ;### task #######################################################################
 
 (defn task-path [prefix id]
@@ -101,24 +113,30 @@
      {:name "API Documentation Task"
       :href (str (api-docs-path) "#task")}}}))
 
+(defn task-specification
+  ([prefix]
+   (task-specification prefix "{id}"))
+  ([prefix id]
+   {:name "task-Specification"
+    :href (str prefix "/task-specifications/" id)
+    :relations {}
+    }))
 
 ;### tasks #################################################################
 
-(defn tasks-path
-  ([prefix job-id]
-   (tasks-path prefix job-id {}))
-  ([prefix job-id query-params]
-   (str prefix "/jobs/"  job-id "/tasks/"
-        (if (empty? query-params)
-          "{?state}"
-          (str "?" (http/build-url-query-string query-params))))))
+(defn tasks-path [prefix query-params]
+  (str prefix "/tasks/"
+       (if (empty? query-params)
+         "{?job_id,state,task_specification_id}"
+         (str "?" (http/build-url-query-string query-params)
+              "{?job_id,state,task_specification_id}"))))
 
 (defn tasks
-  ([prefix job-id ]
-   (tasks  prefix job-id {}))
-  ([prefix job-id query-params]
+  ([prefix]
+   (tasks prefix {}))
+  ([prefix query-params]
    {:name "Tasks"
-    :href (tasks-path prefix job-id query-params)
+    :href (tasks-path prefix query-params)
     :relations
     {:api-doc
      {:name "API Documentation Task"

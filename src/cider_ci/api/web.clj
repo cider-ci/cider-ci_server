@@ -19,9 +19,9 @@
     [clojure.tools.logging :as logging]
     [compojure.core :as cpj]
     [compojure.handler :as cpj.handler]
-    [drtom.logbug.catcher :as catcher]
-    [drtom.logbug.debug :as debug]
-    [drtom.logbug.ring :refer [wrap-handler-with-logging]]
+    [logbug.catcher :as catcher]
+    [logbug.debug :as debug]
+    [logbug.ring :as logbug-ring :refer [wrap-handler-with-logging o->]]
     [ring.adapter.jetty :as jetty]
     [ring.middleware.content-type :as content-type]
     [ring.middleware.cookies :as cookies]
@@ -73,35 +73,22 @@
 ;##### routes and wrappers ####################################################
 
 (defn build-main-handler [context]
-  ( -> (resources/build-routes-handler)
-       routing/wrap-shutdown
-       (wrap-handler-with-logging 'cider-ci.api.web)
-       ring.middleware.json/wrap-json-params
-       (wrap-handler-with-logging 'cider-ci.api.web)
-       ring.middleware.json/wrap-json-params
-       (wrap-handler-with-logging 'cider-ci.api.web)
-       (ring.middleware.params/wrap-params)
-       (wrap-handler-with-logging 'cider-ci.api.web)
-       wrap-status-dispatch
-       (wrap-handler-with-logging 'cider-ci.api.web)
-       (auth/wrap-authenticate-and-authorize-service-or-user)
-       (wrap-handler-with-logging 'cider-ci.api.web)
-       (http-basic/wrap {:user true :service true})
-       (wrap-handler-with-logging 'cider-ci.api.web)
-       session/wrap
-       (wrap-handler-with-logging 'cider-ci.api.web)
-       cookies/wrap-cookies
-       (wrap-handler-with-logging 'cider-ci.api.web)
-       wrap-static-resources-dispatch
-       (wrap-handler-with-logging 'cider-ci.api.web)
-       content-type/wrap-content-type
-       (wrap-handler-with-logging 'cider-ci.api.web)
-       cors/wrap
-       (wrap-handler-with-logging 'cider-ci.api.web)
-       (routing/wrap-prefix context)
-       (wrap-handler-with-logging 'cider-ci.api.web)
-       (routing/wrap-log-exception)
-       ))
+  ( o-> wrap-handler-with-logging
+        (resources/build-routes-handler)
+        routing/wrap-shutdown
+        ring.middleware.json/wrap-json-params
+        ring.middleware.json/wrap-json-params
+        (ring.middleware.params/wrap-params)
+        wrap-status-dispatch
+        (auth/wrap-authenticate-and-authorize-service-or-user)
+        (http-basic/wrap {:user true :service true})
+        session/wrap
+        cookies/wrap-cookies
+        wrap-static-resources-dispatch
+        content-type/wrap-content-type
+        cors/wrap
+        (routing/wrap-prefix context)
+        (routing/wrap-log-exception)))
 
 
 ;#### the server ##############################################################

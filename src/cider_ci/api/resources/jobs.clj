@@ -5,7 +5,7 @@
 (ns cider-ci.api.resources.jobs
   (:require
     [cider-ci.api.pagination :as pagination]
-    [drtom.logbug.debug :as debug]
+    [logbug.debug :as debug]
     [cider-ci.utils.http :as http]
     [cider-ci.utils.http-server :as http-server]
     [cider-ci.utils.rdbms :as rdbms]
@@ -66,7 +66,7 @@
 
 
 (defn filter-by-branch [query params]
-  (if-let [branch-name (:branch params)]
+  (if-let [branch-name (:branch-head params)]
     (-> query
         (hh/merge-join :commits [:= :commits.tree_id :jobs.tree_id])
         (hh/merge-join :branches [:= :branches.current_commit_id :commits.id])
@@ -74,7 +74,7 @@
     query))
 
 (defn filter-by-branch-descendants [query params]
-  (if-let [branch-name (:branchdescendants params)]
+  (if-let [branch-name (:branch-descendants params)]
     (-> query
         (hh/merge-join :commits [:= :commits.tree_id :jobs.tree_id])
         (hh/merge-join :branches_commits [:= :branches_commits.commit_id :commits.id])
@@ -83,13 +83,19 @@
     query))
 
 (defn filter-by-repository [query params]
-  (if-let [repository-name (:repository params)]
+  (if-let [repository-url (:repository-url params)]
     (-> query
         (hh/merge-join :commits [:= :commits.tree_id :jobs.tree_id])
         (hh/merge-join :branches_commits [:= :branches_commits.commit_id :commits.id])
         (hh/merge-join [:branches :branches_via_branches_commits] [:= :branches_via_branches_commits.id :branches_commits.branch_id])
         (hh/merge-join :repositories [:= :repositories.id :branches_via_branches_commits.repository_id])
-        (hh/merge-where [:= :%lower.repositories.name (clojure.string/lower-case repository-name)]))
+        (hh/merge-where [:= :%lower.repositories.git_url (clojure.string/lower-case repository-url)]))
+    query))
+
+(defn filter-by-job-specification-id [query params]
+  (if-let [job-specification-id (:job-specification-id params)]
+    (-> query
+        (hh/merge-where [:= :jobs.job_specification_id job-specification-id]))
     query))
 
 (defn filter-by-state [query params]
@@ -99,7 +105,7 @@
     query))
 
 (defn filter-by-tree-id [query params]
-  (if-let [tree-id (:treeid params)]
+  (if-let [tree-id (:tree-id params)]
     (-> query
         (hh/merge-where [:= :jobs.tree_id tree-id]))
     query))
@@ -114,6 +120,9 @@
                   (pagination/add-offset-for-honeysql query-params)
                   log-debug-honeymap
                   (filter-by-state query-params)
+                  log-debug-honeymap
+                  (filter-by-job-specification-id query-params)
+                  log-debug-honeymap
                   (filter-by-tree-id query-params)
                   log-debug-honeymap
                   (filter-by-repository query-params)

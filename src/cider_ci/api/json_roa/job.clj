@@ -5,7 +5,7 @@
 (ns cider-ci.api.json-roa.job
   (:require
     [cider-ci.api.json-roa.links :as links]
-    [drtom.logbug.debug :as debug]
+    [logbug.debug :as debug]
     [clj-logging-config.log4j :as logging-config]
     [clojure.tools.logging :as logging])
   )
@@ -14,13 +14,15 @@
 (defn build [request response]
   (let [context (:context request)
         query-params (:query-prarams request)
-        id (-> response :body :id)]
+        id (-> response :body :id)
+        job-specification-id (-> response :body :job_specification_id)]
     {:name "Job"
      :self-relation (links/job context id)
      :relations
      {:tree-attachments (links/tree-attachments context id)
       :jobs (links/jobs context)
-      :tasks (links/tasks context id)}}))
+      :job-specification (links/job-specification context job-specification-id)
+      :tasks (links/tasks context {:job_id id})}}))
 
 
 ;### Debug ####################################################################

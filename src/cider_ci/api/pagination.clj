@@ -5,7 +5,7 @@
 
 (ns cider-ci.api.pagination
   (:require
-    [drtom.logbug.debug :as debug]
+    [logbug.debug :as debug]
     [cider-ci.utils.http :as http]
     [clj-logging-config.log4j :as logging-config]
     [clojure.tools.logging :as logging]

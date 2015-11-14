@@ -4,7 +4,7 @@
 
 (ns cider-ci.api.resources.root
   (:require
-    [drtom.logbug.debug :as debug]
+    [logbug.debug :as debug]
     [cider-ci.utils.http-server :as http-server]
     [clj-logging-config.log4j :as logging-config]
     [clojure.data.json :as json]
