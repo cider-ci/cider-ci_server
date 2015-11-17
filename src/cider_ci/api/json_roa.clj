@@ -10,6 +10,7 @@
     [cider-ci.api.json-roa.jobs :as json-roa.jobs]
     [cider-ci.api.json-roa.links :as json-roa.links]
     [cider-ci.api.json-roa.root :as json-roa.root]
+    [cider-ci.api.json-roa.script :as json-roa.script]
     [cider-ci.api.json-roa.task :as json-roa.task]
     [cider-ci.api.json-roa.task-specification :as json-roa.task-specification]
     [cider-ci.api.json-roa.tasks :as json-roa.tasks]
@@ -21,13 +22,14 @@
     [cider-ci.api.json-roa.trials :as json-roa.trials]
     [cider-ci.utils.http :as http]
     [cider-ci.utils.routing :as routing]
-    [clj-logging-config.log4j :as logging-config]
-    [clojure.tools.logging :as logging]
     [compojure.core :as cpj]
-    [logbug.debug :as debug]
-    [logbug.ring :refer [wrap-handler-with-logging]]
     [ring.middleware.accept]
     [ring.util.response :as response]
+
+    [clj-logging-config.log4j :as logging-config]
+    [clojure.tools.logging :as logging]
+    [logbug.debug :as debug]
+    [logbug.ring :refer [wrap-handler-with-logging]]
     ))
 
 
@@ -67,13 +69,14 @@
     (cpj/GET "/job-specifications/:id" request (json-roa.job-specification/build request json-response))
     (cpj/GET "/task-specifications/:id" request (json-roa.task-specification/build request json-response))
 
+    (cpj/GET "/scripts/:id" request (json-roa.script/build request json-response))
+
     (cpj/GET "/trial/:id" request (json-roa.trial/build request json-response))
     (cpj/ANY "/trial/:trial_id/trial-attachments/" request (json-roa.trial-attachments/build request json-response))
     (cpj/ANY "/trial-attachments/:id" request (json-roa.trial-attachment/build request json-response))
 
     (cpj/ANY "/jobs/:id/tree-attachments/" request (json-roa.tree-attachments/build request json-response))
     (cpj/ANY "/tree-attachments/:id" request (json-roa.tree-attachment/build request json-response))
-
 
     ))
 

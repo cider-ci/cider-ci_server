@@ -96,6 +96,23 @@
     :relations {}
     }))
 
+;### script #######################################################################
+
+(defn script-path [prefix id]
+  (str prefix "/scripts/" id ))
+
+(defn script
+  ([prefix]
+   (script prefix "{id}"))
+  ([prefix id]
+   {:name "script"
+    :href (script-path prefix id)
+    :relations
+    {:api-doc
+     {:name "API Documentation script"
+      :href (str (api-docs-path) "#script")}}}))
+
+
 
 ;### task #######################################################################
 
