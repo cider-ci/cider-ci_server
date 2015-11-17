@@ -10,7 +10,7 @@
     [cider-ci.auth.http-basic :as http-basic]
     [cider-ci.dispatcher.abort :as abort]
     [cider-ci.dispatcher.retry :as retry]
-    [cider-ci.dispatcher.scripts :refer [patch-script]]
+    [cider-ci.dispatcher.scripts :refer [script-routes]]
     [cider-ci.dispatcher.sync :as sync]
     [cider-ci.dispatcher.trials :as trials]
     [cider-ci.utils.http :as http]
@@ -18,17 +18,18 @@
     [cider-ci.utils.messaging :as messaging]
     [cider-ci.utils.rdbms :as rdbms]
     [cider-ci.utils.routing :as routing]
-    [clj-logging-config.log4j :as logging-config]
     [clojure.data :as data]
     [clojure.data.json :as json]
-    [clojure.tools.logging :as logging]
     [compojure.core :as cpj]
     [compojure.handler :as cpj.handler]
+    [ring.adapter.jetty :as jetty]
+    [ring.middleware.json]
+
+    [clj-logging-config.log4j :as logging-config]
+    [clojure.tools.logging :as logging]
     [drtom.logbug.debug :as debug]
     [drtom.logbug.ring :refer [wrap-handler-with-logging]]
     [drtom.logbug.thrown :as thrown]
-    [ring.adapter.jetty :as jetty]
-    [ring.middleware.json]
     ))
 
 
@@ -117,7 +118,7 @@
 
 ;#### routing #################################################################
 
-(defn build-routes [context]
+(def routes
   (cpj/routes
 
     (cpj/GET "/status" request #'status-handler)
@@ -132,9 +133,7 @@
                {{id :id} :params data :body}
                (update-trial id data))
 
-    (cpj/PATCH "/trials/:id/scripts/:key"
-               {{id :id key :key} :params data :body}
-               (patch-script id key data))
+    (cpj/ANY "/trials/:id/scripts/*" _ script-routes)
 
     (cpj/GET "/" [] "OK")
 
@@ -145,7 +144,7 @@
 
 
 (defn build-main-handler [context]
-  ( -> (cpj.handler/api (build-routes (:context (:web @conf))))
+  ( -> (cpj.handler/api routes)
        (wrap-handler-with-logging 'cider-ci.dispatcher.web)
        routing/wrap-shutdown
        (wrap-handler-with-logging 'cider-ci.dispatcher.web)
