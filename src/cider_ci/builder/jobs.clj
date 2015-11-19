@@ -4,7 +4,7 @@
 
 (ns cider-ci.builder.jobs
   (:require
-    [cider-ci.builder.project-configuration]
+    [cider-ci.builder.project-configuration :as project-configuration]
     [cider-ci.builder.jobs.dependencies :as jobs.dependencies]
     [cider-ci.builder.repository :as repository]
     [cider-ci.builder.spec :as spec]
@@ -13,55 +13,46 @@
     [cider-ci.utils.map :refer [deep-merge convert-to-array]]
     [cider-ci.utils.messaging :as messaging]
     [cider-ci.utils.rdbms :as rdbms]
-    [clj-logging-config.log4j :as logging-config]
-    [clj-yaml.core :as yaml]
+
     [clojure.java.jdbc :as jdbc]
+
+    [clj-logging-config.log4j :as logging-config]
+    [logbug.catcher :as catcher]
+    [logbug.debug :as debug]
     [clojure.tools.logging :as logging]
-    [drtom.logbug.catcher :as catcher]
-    [drtom.logbug.debug :as debug]
-    [honeysql.core :as hc]
-    [honeysql.helpers :as hh]
     ))
 
 
 ;### create job #########################################################
 
-(defn- log-item [x]
-  x)
+(defn get-dotfile-specification [tree-id job-key]
+  (catcher/wrap-with-log-warn
+    (->> (project-configuration/get-project-configuration tree-id)
+         debug/identity-with-logging
+         :jobs
+         debug/identity-with-logging
+         convert-to-array
+         doall
+         debug/identity-with-logging
+         (some #(when (= (keyword (:key %)) (keyword job-key))%) )
+         debug/identity-with-logging
+         (#(or % (throw ex-info (str "No job with the key
+                                     " job-key " found.")
+                        {:status 404 :tree-id tree-id :job-key job-key}))))))
 
-(defn get-job-by-key [params project-configuration]
-  (get (:jobs project-configuration) (keyword (:key params))))
-
-(defn try-to-add-specification-from-project-configuration [params]
-  (try
-    (let [spec (->> (cider-ci.builder.project-configuration/get-project-configuration (:tree_id params))
-                    (get-job-by-key params))]
-      (logging/debug {:params params :job_specification spec})
-      (conj  {:job_specification spec} params))
-    (catch clojure.lang.ExceptionInfo e
-      (case (-> e ex-data :object :status)
-        404 params
-        (throw e)))))
-
-(defn add-specification-id-if-not-present [params]
-  (if (:job_specification_id params)
-    params
-    (assoc params :job_specification_id
-           (-> params
-               :job_specification
-               spec/get-or-create-job-spec
-               :id))))
-
-(defn add-specification-from-dofile-if-not-present [params]
-  (if (and (not (:job_specification_id params))
-           (not (:job_specification params)))
-    (try-to-add-specification-from-project-configuration params)
-    params))
+;(apply get-dotfile-specification (debug/get-last-argument #'get-dotfile-specification))
+;(debug/re-apply-last-argument #'get-dotfile-specification)
 
 
-(defn invoke-create-tasks-and-trials [params]
-  (tasks/create-tasks-and-trials {:job_id (:id params)})
-  params)
+;(project-configuration/get-project-configuration "7c4f1e1efcdf9854927e1808ffa9182319227839" )
+
+
+(defn find-or-create-specifiation [spec]
+  (spec/get-or-create-job-spec spec))
+
+(defn invoke-create-tasks-and-trials [job]
+  (tasks/create-tasks-and-trials {:job_id (:id job)})
+  job)
 
 (defn persist-job [params]
   (->> (jdbc/insert!
@@ -70,16 +61,22 @@
          (select-keys params
                       [:tree_id, :job_specification_id,
                        :name, :description, :priority, :key]))
-       first
-       (conj params)))
+       first))
+
 
 (defn create [params]
   (catcher/wrap-with-log-error
-    (-> params
-        add-specification-from-dofile-if-not-present
-        add-specification-id-if-not-present
-        persist-job
-        invoke-create-tasks-and-trials)))
+    (let [{tree-id :tree_id job-key :key} params
+          spec (get-dotfile-specification tree-id job-key)
+          spec-id (-> spec find-or-create-specifiation :id)
+          job-params (merge
+                       {:key job-key :name job-key}
+                       (select-keys spec [:name, :description, :priority])
+                       {:job_specification_id spec-id}
+                       (select-keys params [:tree_id :priority]))
+          job (persist-job job-params)]
+      (invoke-create-tasks-and-trials job))))
+
 
 ;### available jobs #####################################################
 
@@ -98,3 +95,5 @@
 ;(logging-config/set-logger! :level :debug)
 ;(logging-config/set-logger! :level :info)
 ;(debug/debug-ns *ns*)
+;(debug/wrap-with-log-debug #'create)
+

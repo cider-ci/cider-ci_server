@@ -55,17 +55,20 @@
 ;##### jobs #############################################################
 
 (defn create-job [request]
-  (catcher/wrap-with-log-warn
-    {:status 201
-     :body (jobs/create
-             (->> request
-                  :body
-                  keywordize-keys
-                  (map (fn [[k,v]]
-                         [k, (case k
-                               :tree_id v
-                               v)]))
-                  (into {})))}))
+  (try
+    (catcher/wrap-with-log-warn
+      {:status 201
+       :body (jobs/create
+               (->> request
+                    :body
+                    keywordize-keys
+                    (map (fn [[k,v]]
+                           [k, (case k
+                                 :tree_id v
+                                 v)]))
+                    (into {})))})
+    (catch Exception e
+      {:status 422 :body {:error (.getMessage e)}})))
 
 (defn available-jobs [request]
   (try
@@ -132,5 +135,5 @@
 ;(debug/debug-ns 'ring.middleware.resource)
 ;(debug/debug-ns 'cider-ci.auth.core)
 ;(debug/debug-ns 'cider-ci.auth.session)
-;(debug/debug-ns 'cider-ci.auth.http-basic)
+;(debug/wrap-with-log-debug #'create-job)
 ;(debug/debug-ns *ns*)
