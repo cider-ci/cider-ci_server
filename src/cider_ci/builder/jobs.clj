@@ -59,8 +59,8 @@
          (rdbms/get-ds)
          :jobs
          (select-keys params
-                      [:tree_id, :job_specification_id,
-                       :name, :description, :priority, :key]))
+                      [:tree_id, :job_specification_id, :created_by
+                       :name, :description, :priority, :key, :user_id]))
        first))
 
 
@@ -73,7 +73,7 @@
                        {:key job-key :name job-key}
                        (select-keys spec [:name, :description, :priority])
                        {:job_specification_id spec-id}
-                       (select-keys params [:tree_id :priority]))
+                       (select-keys params [:tree_id :priority :created_by]))
           job (persist-job job-params)]
       (invoke-create-tasks-and-trials job))))
 
