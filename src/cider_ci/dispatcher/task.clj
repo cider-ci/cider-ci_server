@@ -78,30 +78,19 @@
 
 ;### create trial #############################################################
 
-(defn create-trial
-  ([task]
-   (create-trial
-     (first (jdbc/query (rdbms/get-ds)
-                        ["SELECT jobs.id AS id FROM jobs
-                         JOIN tasks ON jobs.id = tasks.job_id
-                         WHERE tasks.id = ?" (:id task)])) task))
-  ([job task]
-   (try
-     (jdbc/with-db-transaction [tx (rdbms/get-ds)]
-       (let [task-id (:id task)
-             spec (get-task-spec task-id)
-             scripts (:scripts spec)]
-         (catcher/wrap-with-log-error
-           (let [trial (-> (jdbc/insert! tx :trials {:task_id task-id}) first)]
-             (create-scripts tx trial scripts)
-             (evaluate-trials-and-update task)
-             trial))))
-     (catch Exception e
-       (let [row-data  {:job_id (:id job)
-                        :title "Error when creating trial and scripts."
-                        :description (thrown/stringify e)}]
-         (logging/warn row-data)
-         (jdbc/insert! (rdbms/get-ds) "job_issues" row-data))))))
+(defn create-trial [task params]
+  (jdbc/with-db-transaction [tx (rdbms/get-ds)]
+    (let [task-id (:id task)
+          spec (get-task-spec task-id)
+          scripts (:scripts spec)]
+      (catcher/wrap-with-log-error
+        (let [trial (-> (jdbc/insert! tx :trials
+                                      (merge params
+                                             {:task_id task-id}))
+                        first)]
+          (create-scripts tx trial scripts)
+          (evaluate-trials-and-update task)
+          trial)))))
 
 (defn- create-trials [task]
   (let [id (:id task)
@@ -112,8 +101,7 @@
         in-progress-count (- (count states) finished-count)
         create-new-trials-count (min (- (or (:eager-trials spec) 1) in-progress-count)
                                      (- (or (:max-auto-trials spec) 2) (count states)))
-        _range (range 0 create-new-trials-count)
-        ]
+        _range (range 0 create-new-trials-count)]
     (logging/debug "CREATE-TRIALS"
                    {:id id :spec spec :states states
                     :finished-count finished-count
@@ -125,7 +113,14 @@
                   (some #{(:state job)} ["aborted" "aborting"]))
       (logging/debug "seqing and creating trials" )
       (doseq [_ _range]
-        (create-trial job task)))))
+        (try
+          (create-trial task {})
+          (catch Exception e
+            (let [row-data  {:job_id (:id job)
+                             :title "Error when creating trial and scripts."
+                             :description (thrown/stringify e)}]
+              (logging/warn row-data)
+              (jdbc/insert! (rdbms/get-ds) "job_issues" row-data))))))))
 
 
 ;### eval and create trials ###################################################

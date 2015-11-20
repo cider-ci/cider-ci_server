@@ -68,7 +68,7 @@
     (:state update-params)))
 
 (def ^:private permitted-update-keys
-  #{:error :result :started_at :finished_at})
+  #{:error :result :started_at :finished_at :aborted_by :aborted_at})
 
 (defn- compute-update-params [params id]
   (when-let [trial (get-trial id)]

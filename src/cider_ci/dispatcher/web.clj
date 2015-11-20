@@ -39,7 +39,7 @@
 
 (defn update-trial [id params]
   (trials/update-trial (assoc (clojure.walk/keywordize-keys params)
-                       :id id))
+                              :id id))
   {:status 200})
 
 ;##### status dispatch ########################################################
@@ -69,51 +69,57 @@
 ;#### routing #################################################################
 
 (defn abort-job [request]
-  (try
-    (-> request :params :id abort/abort-job)
-    {:status 202}
-    (catch clojure.lang.ExceptionInfo e
-      (if-let [status (-> e ex-data :status)]
-        {:status status
-         :body (.getMessage e)}
-        {:status 500
-         :body (thrown/stringify e)}))
-    (catch Throwable th
-      {:status 500
-       :body (thrown/stringify th)})))
+  (try (let [body (-> request :body)
+             id (-> request :params :id)
+             params  (if (map? body) body {})]
+         (abort/abort-job id params)
+         {:status 202})
+       (catch clojure.lang.ExceptionInfo e
+         (if-let [status (-> e ex-data :status)]
+           {:status status
+            :body (.getMessage e)}
+           {:status 500
+            :body (thrown/stringify e)}))
+       (catch Throwable th
+         {:status 500
+          :body (thrown/stringify th)})))
 
 
 ;#### routing #################################################################
 
 (defn retry-and-resume [request]
-  (try
-    (-> request :params :id retry/retry-and-resume)
-    {:status 202}
-    (catch clojure.lang.ExceptionInfo e
-      (if-let [status (-> e ex-data :status)]
-        {:status status
-         :body (.getMessage e)}
-        {:status 500
-         :body (thrown/stringify e)}))
-    (catch Throwable th
-      {:status 500
-       :body (thrown/stringify th)})))
+  (try (let [body (-> request :body)
+             id (-> request :params :id)
+             params  (if (map? body) body {})]
+         (retry/retry-and-resume id params)
+         {:status 202})
+       (catch clojure.lang.ExceptionInfo e
+         (if-let [status (-> e ex-data :status)]
+           {:status status
+            :body (.getMessage e)}
+           {:status 500
+            :body (thrown/stringify e)}))
+       (catch Throwable th
+         {:status 500
+          :body (thrown/stringify th)})))
 
 (defn retry-task [request]
-  (try
-    (let [trial (-> request :params :id retry/retry-task)]
-      {:status 200
-       :body (json/write-str trial)
-       :headers {"content-type" "application/json;charset=utf-8"} })
-    (catch clojure.lang.ExceptionInfo e
-      (if-let [status (-> e ex-data :status)]
-        {:status status
-         :body (.getMessage e)}
-        {:status 500
-         :body (thrown/stringify e)}))
-    (catch Throwable th
-      {:status 500
-       :body (thrown/stringify th)})))
+  (try (let [body (-> request :body)
+             task-id (-> request :params :id)
+             params  (if (map? body) body {})
+             trial (retry/retry-task task-id params)]
+         {:status 200
+          :body (json/write-str trial)
+          :headers {"content-type" "application/json;charset=utf-8"}})
+       (catch clojure.lang.ExceptionInfo e
+         (if-let [status (-> e ex-data :status)]
+           {:status status
+            :body (.getMessage e)}
+           {:status 500
+            :body (thrown/stringify e)}))
+       (catch Throwable th
+         {:status 500
+          :body (thrown/stringify th)})))
 
 
 ;#### routing #################################################################
@@ -175,3 +181,4 @@
 ;(logging-config/set-logger! :level :debug)
 ;(logging-config/set-logger! :level :info)
 ;(debug/debug-ns *ns*)
+;(debug/wrap-with-log-debug #'retry-task)

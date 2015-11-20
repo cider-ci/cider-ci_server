@@ -49,25 +49,27 @@
                     ORDER BY trials.created_at DESC
                     LIMIT 1 " job-id]) first))
 
-(defn- set-pending-trials-to-aborted [job-id]
+(defn- set-pending-trials-to-aborted [job-id params]
   (loop []
     (when-let [trial (next-pending-trial job-id)]
-      (trials/update-trial (assoc trial :state "aborted"))
+      (trials/update-trial (merge trial params
+                                  {:state "aborted"}))
       (recur))))
 
-(defn- set-processing-trials-to-aborted [job-id]
+(defn- set-processing-trials-to-aborted [job-id params]
   (loop []
     (when-let [trial (next-processing-trial job-id)]
-      (trials/update-trial (assoc trial :state "aborting"))
+      (trials/update-trial (merge trial params
+                                  {:state "aborting"}))
       (recur))))
 
-(defn abort-job [job-id]
-  (jdbc/execute! (get-ds)
-                 ["UPDATE jobs
-                  SET state = 'aborting'
-                  WHERE id = ? " job-id])
-  (set-pending-trials-to-aborted job-id)
-  (set-processing-trials-to-aborted job-id)
+(defn abort-job [job-id params]
+  (jdbc/update! (rdbms/get-ds) :jobs
+                (merge (select-keys params [:aborted_at :aborted_by])
+                       {:state "aborting"})
+                ["id = ? " job-id])
+  (set-pending-trials-to-aborted job-id params)
+  (set-processing-trials-to-aborted job-id params)
   (job/evaluate-and-update job-id))
 
 
@@ -93,7 +95,7 @@
   (catcher/wrap-with-suppress-and-log-error
     (->> (jdbc/query (get-ds) detached-jobs-query)
          (map :id)
-         (map abort-job)
+         (map #(abort-job % {}))
          doall)))
 
 
