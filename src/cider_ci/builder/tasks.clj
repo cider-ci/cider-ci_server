@@ -158,11 +158,13 @@
     (wrap-exception-create-job-issue
       job "Error during create-tasks-and-trials"
       (-> job create-tasks)
-      (doseq [task-with-id (jdbc/query
-                             (rdbms/get-ds)
-                             ["SELECT id FROM tasks WHERE job_id = ?"
-                              (:id job)])]
-        (messaging/publish "task.create-trials" task-with-id))
+      (doseq [task (jdbc/query
+                     (rdbms/get-ds)
+                     ["SELECT id, state FROM tasks WHERE job_id = ?"
+                      (:id job)])]
+        (when (= (:state task) "pending")
+          (messaging/publish "task.create-trials" task)))
+      (messaging/publish "job.evaluate-and-update" (select-keys job [:id]))
       (assert-tasks job))
     (throw (IllegalStateException. (str "could not find job for " message)))))
 

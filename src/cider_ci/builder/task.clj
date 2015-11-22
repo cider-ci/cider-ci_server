@@ -18,16 +18,53 @@
        (filter (complement nil?)
                (for [[k v] spec-map] (when v k)))))
 
-(defn create-db-task [_raw-spec]
-  (let [raw-spec (clojure.walk/keywordize-keys _raw-spec)
-        db-task-spec (spec/get-or-create-task-spec (dissoc raw-spec
-                                                           :job_id))
-        job-id (:job_id raw-spec)
-        task-row (conj (select-keys raw-spec [:name :state :error :priority])
+
+;##############################################################################
+
+(defn- check-aggregate-state [spec]
+  (let [value (:aggregate-state spec)]
+    (case value
+      ("satisfy-last" "satisfy-any") []
+      [(str "### Validation Error\n "
+            "The value of `aggregate-state` must be either"
+            "`satisfy-any` for `satisfy-last` but it is: `" value "`.")])))
+
+(defn- validated-task-spec [spec]
+  (loop [errors []
+         pending-checks [check-aggregate-state]]
+    (if-let [next-check (first pending-checks)]
+      (recur (concat errors (apply next-check [spec]))
+             (rest pending-checks))
+      errors)))
+
+;### normalize task-spec ######################################################
+
+(defn- normalize-aggregate-succes [spec]
+  (if (:aggregate-state spec)
+    spec
+    (assoc spec :aggregate-state "satisfy-any")))
+
+(defn- normalize-task-spec [raw-spec]
+  (-> raw-spec
+      clojure.walk/keywordize-keys
+      (dissoc :job_id)
+      normalize-aggregate-succes))
+
+
+;##############################################################################
+
+(defn create-db-task [raw-task-spec]
+  (let [job-id (:job_id raw-task-spec)
+        task-spec (normalize-task-spec raw-task-spec)
+        db-task-spec (spec/get-or-create-task-spec task-spec)
+        errors (validated-task-spec task-spec)
+        task-row (conj (select-keys task-spec [:name :state :error :priority])
                        {:job_id job-id
-                        :traits (spec-map-to-array (or (:traits raw-spec) {}))
-                        :exclusive_global_resources (spec-map-to-array (or (:exclusive-global-resources raw-spec) {}))
+                        :traits (spec-map-to-array (or (:traits task-spec) {}))
+                        :entity_errors errors
+                        :exclusive_global_resources (spec-map-to-array (or (:exclusive-global-resources task-spec) {}))
                         :task_specification_id (:id db-task-spec)
+                        :state (if (empty? errors) "pending" "aborted")
                         :id (util/idid2id job-id (:id db-task-spec))
                         })]
     (logging/debug task-row)
