@@ -43,13 +43,17 @@
               {:ref "http://json-roa.github.io/"
                :name "JSON-ROA Homepage"}}})
 
+(defn- add-root-link [request json-roa-data]
+  (let [relations (or (-> json-roa-data :relations) {})
+        relations-with-root (assoc relations :root (json-roa.links/root (:context request)))]
+    (logging/debug {:relations-with-root relations-with-root})
+    (assoc json-roa-data :relations relations-with-root)))
 
 (defn amend-json-roa [request json-roa-data]
   (-> {}
-      (assoc-in [:_json-roa] json-roa-data)
+      (assoc-in [:_json-roa] (add-root-link request json-roa-data))
       (assoc-in [:_json-roa :about_json-roa] about)
-      (assoc-in [:_json-roa :version] "1.0.0")
-      ))
+      (assoc-in [:_json-roa :version] "1.0.0")))
 
 ;### Routing ##################################################################
 
@@ -96,4 +100,4 @@
 ;(logging-config/set-logger! :level :debug)
 ;(logging-config/set-logger! :level :info)
 ;(debug/debug-ns 'clojure.java.jdbc)
-;(debug/debug-ns *ns*)
+(debug/debug-ns *ns*)

@@ -19,9 +19,7 @@
       (logging/debug {:ids ids})
       {:name "Jobs"
        :self-relation (links/jobs context query-params)
-       :relations
-       {:root (links/root context)
-        }
+       :relations {}
        :collection
        (conj
          {:relations

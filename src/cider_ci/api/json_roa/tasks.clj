@@ -21,8 +21,7 @@
     (let [ids (->> response :body :tasks (map :id))]
       {:name "Tasks"
        :self-relation (links/tasks context query-params)
-       :relations (merge {:root (links/root context)}
-                         (when-not (clojure.string/blank? job-id)
+       :relations (merge {} (when-not (clojure.string/blank? job-id)
                            {:job (links/job context job-id) }))
        :collection (conj
                      {:relations
