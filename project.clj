@@ -12,6 +12,7 @@
                  [cider-ci/clj-utils "3.2.2"]
                  [drtom/honeysql "1.3.0-beta.3"]
                  [logbug "2.0.0-beta.6"]
+                 [org.clojure/core.memoize "0.5.8"]
                  [org.clojure/tools.nrepl "0.2.11"]
                  ]
   :profiles {:dev

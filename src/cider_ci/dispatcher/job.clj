@@ -56,6 +56,11 @@
       (update-state-and-fire-if-changed (:id job) new-state))))
 
 
+(defn initialize []
+  (catcher/wrap-with-log-error
+    (messaging/listen "job.evaluate-and-update"
+                      (fn [message] (evaluate-and-update (:id message)))
+                      "job.evaluate-and-update")))
 
 ;#### debug ###################################################################
 ;(debug/debug-ns *ns*)

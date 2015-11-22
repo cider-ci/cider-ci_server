@@ -4,9 +4,10 @@
 
 (ns cider-ci.dispatcher.main
   (:require
+    [cider-ci.dispatcher.abort :as abort]
     [cider-ci.dispatcher.dispatch :as dispatch]
     [cider-ci.dispatcher.dispatch.timeout-sweeper]
-    [cider-ci.dispatcher.abort :as abort]
+    [cider-ci.dispatcher.job :as job]
     [cider-ci.dispatcher.task :as task]
     [cider-ci.dispatcher.web :as web]
     [cider-ci.utils.config :as config :refer [get-db-spec]]
@@ -19,8 +20,7 @@
     [clojure.tools.logging :as logging]
     [drtom.logbug.catcher :as catcher]
     [drtom.logbug.thrown]
-    [pg-types.all]
-    ))
+    [pg-types.all]))
 
 (defn -main [& args]
   (catcher/wrap-with-log-error
@@ -32,6 +32,7 @@
       (messaging/initialize (:messaging conf))
       (http/initialize conf)
       (task/initialize)
+      (job/initialize)
       (web/initialize conf)
       (dispatch/initialize)
       (abort/initialize)

@@ -4,6 +4,7 @@
 
 (ns cider-ci.dispatcher.task
   (:require
+    [clojure.core.memoize :as core.memoize]
     [cider-ci.dispatcher.job :as job]
     [cider-ci.dispatcher.result :as result]
     [cider-ci.dispatcher.stateful-entity :as stateful-entity]
@@ -41,7 +42,7 @@
     (map :state
          (jdbc/query (rdbms/get-ds)
                      ["SELECT state FROM trials
-                      WHERE task_id = ?" id]))))
+                      WHERE task_id = ? ORDER BY created_at ASC" id]))))
 
 (defn- get-job-for-task [task]
   (->> (jdbc/query (rdbms/get-ds)
@@ -50,19 +51,48 @@
                     WHERE tasks.id = ? " (:id task)]) first))
 
 
+;### get task spec data #######################################################
+
+(defn- _get-task-spec-data [id]
+  (or (-> (jdbc/query (rdbms/get-ds)
+                      ["SELECT data FROM task_specifications WHERE id = ?" id])
+          first
+          :data)
+      (throw (ex-info "Do not cache" {:msg :do-not-cache}))))
+
+(def _get-task-spec-data-memoized
+  (core.memoize/lru _get-task-spec-data))
+
+
+(defn- get-task-spec-data [id]
+  (try (_get-task-spec-data-memoized id)
+       (catch clojure.lang.ExceptionInfo e
+         (if (= (-> e ex-data :msg) :do-not-cache)
+           nil
+           (throw e)))))
+
+;(get-task-spec-data "2b1b1ac7-bfda-54c6-b1c3-78e54ec27f52")
+;(get-task-spec-data-memoized_ "2b1b1ac7-bfda-54c6-b1c3-78e54ec27f52")
+;(get-task-spec-data "2b1b1ac7-bfda-54c6-b1c3-78e54ec27f53")
+
+
 ;### re-evaluate  #############################################################
 
+
 (defn- eval-new-state [task trial-states]
-  (cond (empty? trial-states) (:state task)
-        (some #{"passed"} trial-states) "passed"
-        (every? #{"aborted"} trial-states ) "aborted"
-        (every? #{"failed" "aborted"} trial-states) "failed"
-        (some #{"executing" "dispatching"} trial-states) "executing"
-        (some #{"pending"} trial-states) "pending"
-        (some #{"aborting"} trial-states) "aborting"
-        :else (do (logging/warn 'eval-new-state "Unmatched condition"
-                                {:task task :trial-states trial-states})
-                "failed")))
+  (let [spec (-> task :task_specification_id get-task-spec-data)]
+    (cond (empty? trial-states) (:state task)
+          (case (-> spec :aggregate-state)
+            "satisfy-last" (= (last trial-states) "passed")
+            (some #{"passed"} trial-states) )"passed"
+          (every? #{"aborted"} trial-states ) "aborted"
+          (every? #{"failed" "aborted"} trial-states) "failed"
+          (some #{"executing" "dispatching"} trial-states) "executing"
+          (some #{"pending"} trial-states) "pending"
+          (some #{"aborting"} trial-states) "aborting"
+          :else (do (logging/warn 'eval-new-state "Unmatched condition"
+                                  {:task task :trial-states trial-states})
+                    "failed"))))
 
 (defn- evaluate-trials-and-update
   "Returns a truthy value when the state of the task has changed."
