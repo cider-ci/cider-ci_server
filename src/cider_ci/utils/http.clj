@@ -16,6 +16,7 @@
 ;### build url ##################################################################
 
 (defn sanitize-query-params [params]
+  (logging/warn "cider-ci.utils.http/sanitize-query-params is deprecated")
   (into {} (sort (for [[k v] params]
                    [(-> k name clojure.string/trim
                         clojure.string/lower-case
@@ -26,6 +27,7 @@
                     v]))))
 
 (defn build-url-query-string [params]
+  (logging/warn "cider-ci.utils.http/build-url-query-string is deprecated use http-client/generate-query-string")
   (-> params sanitize-query-params
       http-client/generate-query-string))
 

@@ -82,7 +82,7 @@
 
 ;### duration #################################################################
 
-(defn parse-config-duration-string-to-seconds [& ks]
+(defn parse-config-duration-to-seconds [& ks]
   (try (if-let [duration-config-value (-> (get-config) (get-in ks))]
          (parse-string-to-seconds duration-config-value)
          (logging/warn (str "No value to parse duration for " ks " was found.")))
