@@ -36,9 +36,9 @@
          debug/identity-with-logging
          (some #(when (= (keyword (:key %)) (keyword job-key))%) )
          debug/identity-with-logging
-         (#(or % (throw ex-info (str "No job with the key
-                                     " job-key " found.")
-                        {:status 404 :tree-id tree-id :job-key job-key}))))))
+         (#(or % (throw (ex-info (str "No job with the key '"
+                                      job-key "' found.")
+                                 {:status 404 :tree-id tree-id :job-key job-key})))))))
 
 ;(apply get-dotfile-specification (debug/get-last-argument #'get-dotfile-specification))
 ;(debug/re-apply-last-argument #'get-dotfile-specification)
