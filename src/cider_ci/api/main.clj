@@ -6,6 +6,7 @@
 (ns cider-ci.api.main
   (:gen-class)
   (:require
+    [cider-ci.utils.http :as utils-http]
     [cider-ci.api.resources :as resources]
     [cider-ci.api.web :as web]
     [cider-ci.auth.core :as auth]
@@ -29,6 +30,7 @@
     (messaging/initialize (:messaging (get-config)))
     (nrepl/initialize (-> (get-config) :services :api :nrepl))
     (auth/initialize (select-keys (get-config) [:secret :session :basic_auth]))
+    (utils-http/initialize (get-config))
     (web/initialize)
     nil))
 

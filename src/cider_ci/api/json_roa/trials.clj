@@ -21,6 +21,7 @@
      :self-relation (links/trials context task-id  query-params)
      :relations
      {:task (links/task context task-id)
+      :retry (links/retry context task-id)
       }
      :collection
      (conj

@@ -14,25 +14,24 @@
 
 (defn build [request response]
   (let [context (:context request)
-        query-params (:query-params request)]
-    (let [ids (->> response :body :jobs (map :id))]
-      (logging/debug {:ids ids})
-      {:name "Jobs"
-       :self-relation (links/jobs context query-params)
-       :relations {}
-       :collection
-       (conj
-         {:relations
-          (into {} (map-indexed
-                     (fn [i id]
-                       [(+ 1 i (pagination/compute-offset query-params))
-                        (links/job context id)])
-                     ids))}
-         (when (seq ids)
-           (links/next-rel
-             (fn [query-params]
-               (links/jobs-path context query-params))
-             query-params)))})))
+        query-params (:query-params request)
+        ids (->> response :body :jobs (map :id))
+        offset (pagination/compute-offset query-params)]
+    {:name "Jobs"
+     :self-relation (links/jobs context query-params)
+     :relations {:create-job (links/create-job context)}
+     :collection
+     (conj
+       {:relations
+        (into {} (map-indexed
+                   (fn [i id]
+                     [(+ 1 i offset) (links/job context id)])
+                   ids))}
+       (when (seq ids)
+         (links/next-rel
+           (fn [query-params]
+             (links/jobs-path context query-params))
+           query-params)))}))
 
 
 

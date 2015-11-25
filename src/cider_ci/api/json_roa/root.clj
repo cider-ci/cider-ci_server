@@ -14,7 +14,9 @@
     {:name "Root"
      :self-relation (json-roa.links/root context)
      :relations
-     {:jobs (json-roa.links/jobs context)
+     {
+      :commits (json-roa.links/commits context)
+      :jobs (json-roa.links/jobs context)
       :job (json-roa.links/job context)
       :job-specification  (json-roa.links/job-specification context)
       :task (json-roa.links/task context)

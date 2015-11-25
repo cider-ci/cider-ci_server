@@ -6,6 +6,7 @@
 (ns cider-ci.api.resources
   (:require
     [cider-ci.api.json-roa :as json-roa]
+    [cider-ci.api.resources.git :as git]
     [cider-ci.api.resources.job :as job]
     [cider-ci.api.resources.job-specifications :as job-specifications]
     [cider-ci.api.resources.jobs :as jobs]
@@ -42,17 +43,11 @@
     ))
 
 
-;### sanitize request params #################################################
-
-(defn sanitize-request-params [request]
-  (assoc request
-         :query-params (-> request :query-params http/sanitize-query-params)
-         ))
-
-(defn wrap-sanitize-request-params [handler]
+(defn wrap-keywordize-query-params [handler]
   (fn [request]
-    (handler (sanitize-request-params request))))
-
+    (handler
+      (assoc request :query-params
+             (-> request :query-params clojure.walk/keywordize-keys)))))
 
 ;### include storage_servic_prefix ############################################
 
@@ -69,12 +64,15 @@
   (cpj/routes
     (cpj/GET "/" request (resources.root/get request))
 
-    (cpj/ANY "/jobs/" [] jobs/routes)
     (cpj/ANY "/jobs/:id" [] job/routes)
     (cpj/ANY "/jobs/:id/tree-attachments/*" _ tree-attachments/routes)
     (cpj/ANY "/jobs/:id/*" [] job/routes)
+    (cpj/ANY "/jobs/*" [] jobs/routes)
 
-    (cpj/ANY "/tasks/:id/trials/" [] trials/routes)
+    (cpj/ANY "/commits/*" _ git/routes)
+    (cpj/ANY "/git-refs/*" _ git/routes)
+
+    (cpj/ANY "/tasks/:id/trials/*" [] trials/routes)
     (cpj/ANY "/tasks/:id" [] task/routes)
     (cpj/ANY "/tasks/" [] tasks/routes)
 
@@ -117,7 +115,7 @@
         wrap-includ-storage-service-prefix
         wrapp-error
         ring.middleware.json/wrap-json-response
-        wrap-sanitize-request-params))
+        wrap-keywordize-query-params))
 
 
 ;### Debug ####################################################################

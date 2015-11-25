@@ -10,8 +10,9 @@
   :dependencies [
                  [cheshire "5.5.0"]
                  [cider-ci/clj-auth "3.1.0"]
-                 [cider-ci/clj-utils "3.3.1"]
-                 [drtom/honeysql "1.3.0-beta.3"]
+                 [cider-ci/clj-utils "3.3.2"]
+                 [cider-ci/open-session "1.2.0"]
+                 [drtom/honeysql "1.3.0-beta.4"]
                  [logbug "2.0.0-beta.6"]
 
                  [json-roa/clj-utils "1.0.0"]

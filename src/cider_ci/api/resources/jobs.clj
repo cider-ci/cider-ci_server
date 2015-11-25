@@ -5,15 +5,13 @@
 (ns cider-ci.api.resources.jobs
   (:require
     [cider-ci.api.pagination :as pagination]
-    [logbug.debug :as debug]
     [cider-ci.utils.http :as http]
+    [cider-ci.utils.http :as utils-http]
     [cider-ci.utils.http-server :as http-server]
     [cider-ci.utils.rdbms :as rdbms]
-    [clj-http.client :as http-client]
-    [clj-logging-config.log4j :as logging-config]
+    [cider-ci.api.util :refer [do-http-request]]
     [clojure.data.json :as json]
     [clojure.java.jdbc :as jdbc]
-    [clojure.tools.logging :as logging]
     [compojure.core :as cpj]
     [compojure.handler :as cpj.handler]
     [honeysql.core :as hc]
@@ -22,6 +20,11 @@
     [ring.middleware.cookies :as cookies]
     [ring.middleware.json]
     [ring.util.response :as response]
+
+    [clojure.tools.logging :as logging]
+    [clj-logging-config.log4j :as logging-config]
+    [logbug.catcher :as catcher]
+    [logbug.debug :as debug]
     )
   (:use
     [clojure.walk :only [keywordize-keys]]
@@ -142,10 +145,36 @@
 (defn get-index [request]
   {:body {:jobs (index (:query-params request))}})
 
+
+;### create job #################################################################
+
+(defn create-job [request]
+  (if-not (= (->> request :json-params keys (map keyword) set) #{:tree_id  :key})
+    {:status 422
+     :body {:message "The request body must exactly contain the keys 'tree_id' and 'key'"}}
+    (let [user-id (-> request :authenticated-user :id)
+          url (utils-http/build-service-url :builder "/jobs/")
+          _ (logging/info {:url url})
+          body (-> request :json-params
+                   (assoc :created_by user-id)
+                   json/write-str)
+          params {:body body :throw-exceptions false}
+          _ (logging/info {:params params})
+          response (do-http-request :post url params)]
+      (logging/info {:create-response response})
+      (logging/info (type (-> response :body )))
+      (select-keys
+        (if (instance? String (:body response))
+          (assoc response :body (json/read-str (:body response)  :key-fn keyword))
+          response)  [:body :status]))))
+
+
+(=  #{:x} #{:x})
 ;### routes #####################################################################
 (def routes
   (cpj/routes
-    (cpj/GET "/jobs/" request (get-index request))))
+    (cpj/GET "/jobs/" request (get-index request))
+    (cpj/POST "/jobs/create" _ create-job)))
 
 
 ;### init #####################################################################

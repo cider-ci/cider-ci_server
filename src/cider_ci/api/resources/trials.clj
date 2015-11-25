@@ -6,15 +6,11 @@
   (:require
     [cider-ci.api.pagination :as pagination]
     [cider-ci.api.util :as util]
-    [logbug.debug :as debug]
-    [cider-ci.utils.http :as http]
-    [cider-ci.utils.http-server :as http-server]
+    [cider-ci.api.util :refer [do-http-request]]
+    [cider-ci.utils.http :as utils-http]
     [cider-ci.utils.rdbms :as rdbms]
-    [clj-http.client :as http-client]
-    [clj-logging-config.log4j :as logging-config]
     [clojure.data.json :as json]
     [clojure.java.jdbc :as jdbc]
-    [clojure.tools.logging :as logging]
     [compojure.core :as cpj]
     [compojure.handler :as cpj.handler]
     [honeysql.core :as hc]
@@ -23,6 +19,10 @@
     [ring.middleware.cookies :as cookies]
     [ring.middleware.json]
     [ring.util.response :as response]
+
+    [clj-logging-config.log4j :as logging-config]
+    [clojure.tools.logging :as logging]
+    [logbug.debug :as debug]
     ))
 
 
@@ -55,12 +55,31 @@
           (trials-data (-> request :route-params :task_id)
                        (-> request :query-params))}})
 
+;### retry ######################################################################
+
+(defn retry [request]
+  (let [task-id (-> request :route-params :task_id)
+        user-id (-> request :authenticated-user :id)
+        url (utils-http/build-service-url
+              :dispatcher (str "/tasks/" task-id "/retry"))
+        _ (logging/info {:url url})
+        body (json/write-str {:created_by user-id})
+        params {:body body :throw-exceptions false}
+        _ (logging/info {:params params})
+        response (do-http-request :post url params)]
+    (logging/info {:create-response response})
+    (logging/info (type (-> response :body )))
+    (select-keys
+      (if (instance? String (:body response))
+        (assoc response :body (json/read-str (:body response)  :key-fn keyword))
+        response)  [:body :status])))
+
 
 ;### routes #####################################################################
 (def routes
   (cpj/routes
-    (cpj/GET "/tasks/:task_id/trials/" request (get-trials request))
-    ))
+    (cpj/GET "/tasks/:task_id/trials/" _ get-trials)
+    (cpj/POST "/tasks/:task_id/trials/retry" _  retry)))
 
 
 ;### init #####################################################################

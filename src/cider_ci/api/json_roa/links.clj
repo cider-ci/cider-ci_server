@@ -5,13 +5,16 @@
 (ns cider-ci.api.json-roa.links
   (:require
     [cider-ci.api.pagination :as pagination]
-    [cider-ci.utils.http :as http]
-    [logbug.debug :as debug]
+    [clj-http.client :as http-client]
     [clj-logging-config.log4j :as logging-config]
     [clojure.tools.logging :as logging]
+    [logbug.debug :as debug]
     [ring.util.codec :refer [form-encode]]
     ))
 
+;##############################################################################
+;### general ##################################################################
+;##############################################################################
 
 (defn api-docs-path []
   (str "/cider-ci/docs/api/api_resources.html"))
@@ -36,7 +39,7 @@
 
 (defn next-link [url-path query-params]
   {:next {:href (str url-path "?"
-                     (http/build-url-query-string
+                     (http-client/generate-query-string
                        (pagination/next-page-query-query-params
                          query-params)))}})
 
@@ -46,6 +49,49 @@
                           query-params))}})
 
 
+
+;##############################################################################
+;### resources per se #########################################################
+;##############################################################################
+
+;### commits ##############################################################
+
+(defn commits-path
+  ([prefix]
+   (commits-path prefix {}))
+  ([prefix query-params]
+   (str prefix "/commits/"
+        (if (empty? query-params)
+          "{?repository_url,branch_head,branch_descendants,tree_id}"
+          (str "?" (http-client/generate-query-string query-params))
+          ))))
+
+(defn commits
+  ([prefix ]
+   (commits prefix {}))
+  ([prefix query-params]
+   {:name "Commits"
+    :href (commits-path prefix query-params)
+    :relations
+    {:api-doc
+     {:name "API Documentation Commits"
+      :href (str (api-docs-path) "#commits")}}}))
+
+
+(defn commit
+  ([prefix]
+   (commit prefix "{id}"))
+  ([prefix id]
+   {:name "Commit"
+    :href (str prefix "/commits/" id)
+    :relations
+    {:api-doc
+     {:name "API Documentation Commit"
+      :href (str (api-docs-path) "#commit")}
+     }}))
+
+
+
 ;### jobs #################################################################
 
 (defn jobs-path
@@ -53,10 +99,8 @@
    (jobs-path prefix {}))
   ([prefix query-params]
    (str prefix "/jobs/"
-        (if (empty? query-params)
-          "{?repository_url,branch_head,branch_descendants,state,tree_id,job_specification_id}"
-          (str "?" (http/build-url-query-string query-params))
-          ))))
+        (str "?" (http-client/generate-query-string query-params)
+             "{?repository_url,branch_head,branch_descendants,state,tree_id,job_specification_id}"))))
 
 (defn jobs
   ([prefix ]
@@ -64,10 +108,22 @@
   ([prefix query-params]
    {:name "Jobs"
     :href (jobs-path prefix query-params)
+    :methods {:get {} }
     :relations
     {:api-doc
      {:name "API Documentation Jobs"
       :href (str (api-docs-path) "#jobs")}}}))
+
+
+(defn create-job [prefix]
+  {:name "Create Job"
+   :href (str prefix "/jobs/create")
+   :methods {:post {} }
+   :relations
+   {:api-doc
+    {:name "API Documentation Create-Job"
+     :href (str (api-docs-path) "#create-job")}}})
+
 
 
 ;### job ##################################################################
@@ -145,7 +201,7 @@
   (str prefix "/tasks/"
        (if (empty? query-params)
          "{?job_id,state,task_specification_id}"
-         (str "?" (http/build-url-query-string query-params)
+         (str "?" (http-client/generate-query-string query-params)
               "{?job_id,state,task_specification_id}"))))
 
 (defn tasks
@@ -186,7 +242,7 @@
    (str prefix "/tasks/"  task-id "/trials/"
         (if (empty? query-params)
           "{?state}"
-          (str "?" (http/build-url-query-string query-params))))))
+          (str "?" (http-client/generate-query-string query-params))))))
 
 (defn trials
   ([prefix task-id ]
@@ -198,6 +254,16 @@
     {:api-doc
      {:name "API Documentation Trials"
       :href (str (api-docs-path) "#trials")}}}))
+
+
+(defn retry [prefix task-id]
+  {:name "Retry Task"
+   :href (str prefix (str "/tasks/" task-id "/trials/retry"))
+   :methods {:post {} }
+   :relations
+   {:api-doc
+    {:name "API Documentation Retry"
+     :href (str (api-docs-path) "#retry")}}})
 
 
 ;### trial attachments ######################################################
@@ -228,7 +294,7 @@
    (str prefix "/trial/"  trial-id "/trial-attachments/"
         (if (empty? query-params)
           "{?pathsegment}"
-          (str "?" (http/build-url-query-string query-params))))))
+          (str "?" (http-client/generate-query-string query-params))))))
 
 (defn trial-attachments
   ([prefix trial-id]
@@ -266,7 +332,7 @@
   ([prefix job-id query-params]
    (str prefix "/jobs/"  job-id "/tree-attachments/"
         (when-not  (empty? query-params)
-          (str "?" (http/build-url-query-string query-params))))))
+          (str "?" (http-client/generate-query-string query-params))))))
 
 (defn tree-attachments
   ([prefix job-id]

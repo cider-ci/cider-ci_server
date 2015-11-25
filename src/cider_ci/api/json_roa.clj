@@ -5,6 +5,7 @@
 
 (ns cider-ci.api.json-roa
   (:require
+    [cider-ci.api.json-roa.git :as json-roa.git]
     [cider-ci.api.json-roa.job :as json-roa.job]
     [cider-ci.api.json-roa.job-specification :as json-roa.job-specification]
     [cider-ci.api.json-roa.jobs :as json-roa.jobs]
@@ -53,7 +54,7 @@
   (-> {}
       (assoc-in [:_json-roa] (add-root-link request json-roa-data))
       (assoc-in [:_json-roa :about_json-roa] about)
-      (assoc-in [:_json-roa :version] "1.0.0")))
+      (assoc-in [:_json-roa :json-roa_version] "1.0.0")))
 
 ;### Routing ##################################################################
 
@@ -65,10 +66,14 @@
     (cpj/GET "/" request (json-roa.root/build request))
     (cpj/GET "/jobs/" request (json-roa.jobs/build request json-response))
     (cpj/GET "/jobs/:id" request (json-roa.job/build request json-response))
+    (cpj/POST "/jobs/create" request (json-roa.job/build request json-response))
     (cpj/GET "/tasks/" request (json-roa.tasks/build request json-response))
+
+    (cpj/GET "/commits*" request (json-roa.git/build request json-response))
 
     (cpj/GET "/tasks/:id" request (json-roa.task/build request json-response))
     (cpj/GET "/tasks/:id/trials/" request (json-roa.trials/build request json-response))
+
 
     (cpj/GET "/job-specifications/:id" request (json-roa.job-specification/build request json-response))
     (cpj/GET "/task-specifications/:id" request (json-roa.task-specification/build request json-response))
@@ -76,6 +81,8 @@
     (cpj/GET "/scripts/:id" request (json-roa.script/build request json-response))
 
     (cpj/GET "/trial/:id" request (json-roa.trial/build request json-response))
+    (cpj/POST "/tasks/:id/trials/retry" request (json-roa.trial/build request json-response))
+
     (cpj/ANY "/trial/:trial_id/trial-attachments/" request (json-roa.trial-attachments/build request json-response))
     (cpj/ANY "/trial-attachments/:id" request (json-roa.trial-attachment/build request json-response))
 
@@ -100,4 +107,4 @@
 ;(logging-config/set-logger! :level :debug)
 ;(logging-config/set-logger! :level :info)
 ;(debug/debug-ns 'clojure.java.jdbc)
-(debug/debug-ns *ns*)
+;(debug/debug-ns *ns*)
