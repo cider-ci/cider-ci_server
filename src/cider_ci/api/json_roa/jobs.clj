@@ -19,7 +19,7 @@
         offset (pagination/compute-offset query-params)]
     {:name "Jobs"
      :self-relation (links/jobs context query-params)
-     :relations {:create-job (links/create-job context)}
+     :relations {}
      :collection
      (conj
        {:relations

@@ -69,34 +69,34 @@
 
 
 (defn filter-by-branch [query params]
-  (if-let [branch-name (:branch-head params)]
+  (if-let [branch-name (:branch_head params)]
     (-> query
         (hh/merge-join :commits [:= :commits.tree_id :jobs.tree_id])
         (hh/merge-join :branches [:= :branches.current_commit_id :commits.id])
-        (hh/merge-where [:= :%lower.branches.name (clojure.string/lower-case branch-name)]))
+        (hh/merge-where [:= :branches.name  branch-name]))
     query))
 
 (defn filter-by-branch-descendants [query params]
-  (if-let [branch-name (:branch-descendants params)]
+  (if-let [branch-name (:branch_descendants params)]
     (-> query
         (hh/merge-join :commits [:= :commits.tree_id :jobs.tree_id])
         (hh/merge-join :branches_commits [:= :branches_commits.commit_id :commits.id])
         (hh/merge-join [:branches :branches_via_branches_commits] [:= :branches_via_branches_commits.id :branches_commits.branch_id])
-        (hh/merge-where [:= :%lower.branches_via_branches_commits.name (clojure.string/lower-case branch-name)]))
+        (hh/merge-where [:= :branches_via_branches_commits.name branch-name]))
     query))
 
 (defn filter-by-repository [query params]
-  (if-let [repository-url (:repository-url params)]
+  (if-let [repository-url (:repository_url params)]
     (-> query
         (hh/merge-join :commits [:= :commits.tree_id :jobs.tree_id])
         (hh/merge-join :branches_commits [:= :branches_commits.commit_id :commits.id])
         (hh/merge-join [:branches :branches_via_branches_commits] [:= :branches_via_branches_commits.id :branches_commits.branch_id])
         (hh/merge-join :repositories [:= :repositories.id :branches_via_branches_commits.repository_id])
-        (hh/merge-where [:= :%lower.repositories.git_url (clojure.string/lower-case repository-url)]))
+        (hh/merge-where [:= :repositories.git_url repository-url]))
     query))
 
 (defn filter-by-job-specification-id [query params]
-  (if-let [job-specification-id (:job-specification-id params)]
+  (if-let [job-specification-id (:job_specification_id params)]
     (-> query
         (hh/merge-where [:= :jobs.job_specification_id job-specification-id]))
     query))
@@ -108,10 +108,17 @@
     query))
 
 (defn filter-by-tree-id [query params]
-  (if-let [tree-id (:tree-id params)]
+  (if-let [tree-id (:tree_id params)]
     (-> query
         (hh/merge-where [:= :jobs.tree_id tree-id]))
     query))
+
+(defn filter-by-key [query params]
+  (if-let [key (:key params)]
+    (-> query
+        (hh/merge-where [:= :jobs.key key]))
+    query))
+
 
 (defn log-debug-honeymap [honeymap]
   (logging/debug {:honeymap honeymap})
@@ -121,6 +128,8 @@
   (let [query (-> (build-jobs-base-query)
                   log-debug-honeymap
                   (pagination/add-offset-for-honeysql query-params)
+                  log-debug-honeymap
+                  (filter-by-key query-params)
                   log-debug-honeymap
                   (filter-by-state query-params)
                   log-debug-honeymap
@@ -137,8 +146,7 @@
                   dedup-join
                   log-debug-honeymap
                   hc/format
-                  log-debug-honeymap
-                  )
+                  log-debug-honeymap)
         _ (logging/debug "GET /jobs " {:query query})]
     (jdbc/query (rdbms/get-ds) query)))
 
@@ -169,7 +177,6 @@
           response)  [:body :status]))))
 
 
-(=  #{:x} #{:x})
 ;### routes #####################################################################
 (def routes
   (cpj/routes

@@ -99,8 +99,11 @@
    (jobs-path prefix {}))
   ([prefix query-params]
    (str prefix "/jobs/"
-        (str "?" (http-client/generate-query-string query-params)
-             "{?repository_url,branch_head,branch_descendants,state,tree_id,job_specification_id}"))))
+        (if (empty? query-params)
+          "{?repository_url,branch_head,branch_descendants,key,state,tree_id,job_specification_id}"
+          (str "?" (http-client/generate-query-string query-params)
+               "{?repository_url,branch_head,branch_descendants,key,state,tree_id,job_specification_id}"
+               )))))
 
 (defn jobs
   ([prefix ]
