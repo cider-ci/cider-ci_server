@@ -68,6 +68,8 @@
 
 (def ^:private update-permitted-keys
   #{:state :exit_status :environment_variables
+    :working_dir :command
+    :script_file :wrapper_file
     :finished_at :started_at :error})
 
 (defmacro catch-with-suppress-and-log [level catch-sex & expressions]
@@ -136,7 +138,7 @@
 
 
 ;#### debug ###################################################################
-(logging-config/set-logger! :level :debug)
+;(logging-config/set-logger! :level :debug)
 ;(logging-config/set-logger! :level :info)
 ;(debug/debug-ns *ns*)
 ;(debug/wrap-with-log-debug #'patch-script)
