@@ -81,18 +81,18 @@
 
 (defn- eval-new-state [task trial-states]
   (let [spec (-> task :task_specification_id get-task-spec-data)]
-    (cond (empty? trial-states) (:state task)
-          (case (-> spec :aggregate-state)
-            "satisfy-last" (= (last trial-states) "passed")
-            (some #{"passed"} trial-states) )"passed"
-          (every? #{"aborted"} trial-states ) "aborted"
-          (every? #{"failed" "aborted"} trial-states) "failed"
-          (some #{"executing" "dispatching"} trial-states) "executing"
-          (some #{"pending"} trial-states) "pending"
-          (some #{"aborting"} trial-states) "aborting"
-          :else (do (logging/warn 'eval-new-state "Unmatched condition"
-                                  {:task task :trial-states trial-states})
-                    "failed"))))
+    (if (= "satisfy-last" (-> spec :aggregate-state))
+      (or (last trial-states) "pending")
+      (cond (empty? trial-states) "aborted"
+            (some #{"passed"} trial-states) "passed"
+            (every? #{"aborted"} trial-states ) "aborted"
+            (every? #{"failed" "aborted"} trial-states) "failed"
+            (some #{"executing" "dispatching"} trial-states) "executing"
+            (some #{"pending"} trial-states) "pending"
+            (some #{"aborting"} trial-states) "aborting"
+            :else (do (logging/warn 'eval-new-state "Unmatched condition"
+                                    {:task task :trial-states trial-states})
+                      "failed")))))
 
 (defn- evaluate-trials-and-update
   "Returns a truthy value when the state of the task has changed."
@@ -109,18 +109,20 @@
 ;### create trial #############################################################
 
 (defn create-trial [task params]
-  (jdbc/with-db-transaction [tx (rdbms/get-ds)]
-    (let [task-id (:id task)
-          spec (get-task-spec task-id)
-          scripts (:scripts spec)]
-      (catcher/wrap-with-log-error
-        (let [trial (-> (jdbc/insert! tx :trials
-                                      (merge params
-                                             {:task_id task-id}))
-                        first)]
-          (create-scripts tx trial scripts)
-          (evaluate-trials-and-update task)
-          trial)))))
+  (catcher/wrap-with-log-error
+    (let [trial (jdbc/with-db-transaction [tx (rdbms/get-ds)]
+                  (let [task-id (:id task)
+                        spec (get-task-spec task-id)
+                        scripts (:scripts spec)]
+                    (let [trial (-> (jdbc/insert! tx :trials
+                                                  (merge params
+                                                         {:task_id task-id}))
+                                    first)]
+                      (create-scripts tx trial scripts)
+                      trial)))]
+      (when (evaluate-trials-and-update task)
+        (job/evaluate-and-update (:job_id task)))
+      trial)))
 
 (defn- create-trials [task]
   (let [id (:id task)
@@ -184,7 +186,7 @@
 ;#### debug ###################################################################
 ;(logging-config/set-logger! :level :debug)
 ;(logging-config/set-logger! :level :info)
-;(debug/debug-ns *ns*)
+(debug/debug-ns *ns*)
 ;(debug/wrap-with-log-debug #'evaluate-and-create-trials)
 ;(debug/wrap-with-log-debug #'eval-new-state)
 ;(debug/re-apply-last-argument #'get-trial-states)

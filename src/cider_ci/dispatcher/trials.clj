@@ -99,6 +99,7 @@
         (finally
           (dispatch-update (select-keys params [:id :task_id])))))))
 
+;(update-trial {:id "82ff77e8-8f45-440b-8505-d0ba6d049354" :state "passed"})
 
 ;#### sql helpers #############################################################
 

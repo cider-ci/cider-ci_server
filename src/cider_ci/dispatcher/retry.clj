@@ -24,24 +24,24 @@
 
 (defn retry-unpassed-tasks [job params]
   (->> (jdbc/query (rdbms/get-ds)
-                   ["SELECT id FROM tasks
+                   ["SELECT id, job_id FROM tasks
                     WHERE job_id = ?
                     AND state IN ('failed','aborted','aborting')" (:id job)])
        (map #(task/create-trial % params))
        doall))
 
 (defn retry-and-resume [job-id params]
-  (let [job (job/get-job job-id)
-        job-id (:id job) ]
-    (when-not job
-      (throw (ex-info "Job not found" {:status 422})))
-    (jdbc/update! (get-ds) :jobs
-                  (merge (select-keys params [:resumed_by, :resumed_at])
-                         {:state "pending"})
-                  ["id = ?" job-id])
-    (retry-unpassed-tasks job {:created_by (:resumed_by params)})
-    (job/evaluate-and-update job-id)
-    ))
+  (catcher/wrap-with-log-error
+    (let [job (job/get-job job-id)
+          job-id (:id job) ]
+      (when-not job
+        (throw (ex-info "Job not found" {:status 422})))
+      (jdbc/update! (get-ds) :jobs
+                    (merge (select-keys params [:resumed_by, :resumed_at])
+                           {:state "pending"})
+                    ["id = ?" job-id])
+      (retry-unpassed-tasks job {:created_by (:resumed_by params)})
+      (job/evaluate-and-update job-id))))
 
 ;#### retry-task ##############################################################
 
