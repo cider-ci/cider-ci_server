@@ -34,7 +34,7 @@
       (sql-order-by [:tasks.created_at :asc] [:tasks.id :asc])))
 
 (defn filter-by-job-id [query query-params]
-  (if-let [job-id (:job-id query-params)]
+  (if-let [job-id (:job_id query-params)]
     (-> query
         (sql-merge-where [:= :tasks.job_id job-id]))
     query))
@@ -46,7 +46,7 @@
     query))
 
 (defn filter-by-task-specification-id [query query-params]
-  (if-let [task-specification-id (:task-specification-id query-params)]
+  (if-let [task-specification-id (:task_specification_id query-params)]
     (-> query
         (sql-merge-where [:= :tasks.task_specification_id
                           task-specification-id]))

@@ -49,7 +49,6 @@
                           query-params))}})
 
 
-
 ;##############################################################################
 ;### resources per se #########################################################
 ;##############################################################################
@@ -76,7 +75,6 @@
     {:api-doc
      {:name "API Documentation Commits"
       :href (str (api-docs-path) "#commits")}}}))
-
 
 (defn commit
   ([prefix]
@@ -117,7 +115,6 @@
      {:name "API Documentation Jobs"
       :href (str (api-docs-path) "#jobs")}}}))
 
-
 (defn create-job [prefix]
   {:name "Create Job"
    :href (str prefix "/jobs/create")
@@ -126,10 +123,6 @@
    {:api-doc
     {:name "API Documentation Create-Job"
      :href (str (api-docs-path) "#create-job")}}})
-
-
-
-;### job ##################################################################
 
 (defn job
   ([prefix]
@@ -143,9 +136,6 @@
       :href (str (api-docs-path) "#job")}
      }}))
 
-
-;### job ##################################################################
-
 (defn job-specification
   ([prefix]
    (job prefix "{id}"))
@@ -155,7 +145,8 @@
     :relations {}
     }))
 
-;### script #######################################################################
+
+;### script ####################################################################
 
 (defn script-path [prefix id]
   (str prefix "/scripts/" id ))
@@ -172,8 +163,7 @@
       :href (str (api-docs-path) "#script")}}}))
 
 
-
-;### task #######################################################################
+;### tasks #####################################################################
 
 (defn task-path [prefix id]
   (str prefix "/tasks/" id ))
@@ -198,8 +188,6 @@
     :relations {}
     }))
 
-;### tasks #################################################################
-
 (defn tasks-path [prefix query-params]
   (str prefix "/tasks/"
        (if (empty? query-params)
@@ -219,7 +207,7 @@
       :href (str (api-docs-path) "#tasks")}}}))
 
 
-;### trial #######################################################################
+;### trials ##################################################################
 
 (defn trial-path [prefix id]
   (str prefix "/trial/" id ))
@@ -234,9 +222,6 @@
     {:api-doc
      {:name "API Documentation Trial"
       :href (str (api-docs-path) "#trial")}}}))
-
-
-;### trials #################################################################
 
 (defn trials-path
   ([prefix task-id]
@@ -257,7 +242,6 @@
     {:api-doc
      {:name "API Documentation Trials"
       :href (str (api-docs-path) "#trials")}}}))
-
 
 (defn retry [prefix task-id]
   {:name "Retry Task"
@@ -308,7 +292,7 @@
     }))
 
 
-;### tree attachment ######################################################
+;### tree attachments #########################################################
 
 (defn tree-attachment-path
   ([prefix attachment-id]
@@ -326,9 +310,6 @@
       :href (str (api-docs-path) "#tree-attachments")}}
     }))
 
-
-;### tree attachments ######################################################
-
 (defn tree-attachments-path
   ([prefix job-id]
    (tree-attachments-path prefix job-id {}))
@@ -345,11 +326,7 @@
     :href (tree-attachments-path prefix job-id query-params)
     }))
 
-
-;### tree attachments data stream link #####################################
-
-
-(defn-  tree-attachment-data-stream-val [context]
+(defn- tree-attachment-data-stream-val [context]
   {:name "Tree-Attachment Data"
    ; :href (str storage-service-prefix "/tree-attachments" path)
    :methods {:get {}

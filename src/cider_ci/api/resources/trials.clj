@@ -67,12 +67,10 @@
         params {:body body :throw-exceptions false}
         _ (logging/info {:params params})
         response (do-http-request :post url params)]
-    (logging/info {:create-response response})
-    (logging/info (type (-> response :body )))
-    (select-keys
-      (if (instance? String (:body response))
-        (assoc response :body (json/read-str (:body response)  :key-fn keyword))
-        response)  [:body :status])))
+    (if (map? (:body response))
+      (select-keys response [:body :status])
+      {:status (:status response)
+       :body {:message (:body (-> response :body str))}})))
 
 
 ;### routes #####################################################################

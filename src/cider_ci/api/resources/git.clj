@@ -22,7 +22,6 @@
                             (get-ds)
                             ["SELECT * FROM commits where id = ? " id])
                           first)]
-      (logging/info commit)
       {:body commit})))
 
 ;##############################################################################

@@ -2,7 +2,6 @@
 ; Licensed under the terms of the GNU Affero General Public License v3.
 ; See the "LICENSE.txt" file provided with this software.
 
-
 (ns cider-ci.api.resources.job
   (:require
     [logbug.debug :as debug]
@@ -20,9 +19,6 @@
     [ring.middleware.json]
     [ring.util.response :as response]
     ))
-
-(defonce conf (atom nil))
-
 
 
 ;### get-job-stats ########################################################
@@ -54,6 +50,7 @@
   {:body (job-data (:params request))
    })
 
+
 ;### routes #####################################################################
 
 (def routes
@@ -62,15 +59,7 @@
     (cpj/GET "/jobs/:id/stats" request (get-job-stats request))))
 
 
-;### init #####################################################################
-
-(defn initialize [new-conf]
-  (reset! conf new-conf))
-
-
 ;### Debug ####################################################################
 ;(logging-config/set-logger! :level :debug)
 ;(logging-config/set-logger! :level :info)
 ;(debug/debug-ns *ns*)
-
-

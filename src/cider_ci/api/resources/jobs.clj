@@ -30,33 +30,13 @@
     [clojure.walk :only [keywordize-keys]]
     ))
 
-(defonce conf (atom nil))
-
+;### general ####################################################################
 
 (defn dedup-join [honeymap]
   (assoc honeymap :join
          (reduce #(let [[k v] %2] (conj %1 k v)) []
                  (clojure.core/distinct (partition 2 (:join honeymap))))))
 
-
-(def ^:dynamic inval nil)
-;(type (first inval))
-;(distinct inval)
-;(seq (set inval))
-(defn dedup-join-with-logging [honeymap]
-  (logging/debug {:type (type honeymap) :honeymap honeymap})
-  (let [join (:join honeymap)]
-    (logging/debug {:type (type join) :join join})
-    (let [partitioned-join (into [] (partition 2 join))]
-      (logging/debug {:type (type partitioned-join) :partitioned-join partitioned-join})
-      (def inval partitioned-join)
-      (let [distinct-joins (clojure.core/distinct partitioned-join)]
-        (logging/debug {:distinct-joins distinct-joins})
-        (let [reduced-joins (seq (reduce #(let [[k v] %2] (conj %1 k v)) [] distinct-joins))]
-          (logging/debug {:reduced-joins reduced-joins})
-          (let [res-honeymap (assoc honeymap :join reduced-joins)]
-            (logging/debug {:res-honeymap res-honeymap})
-            res-honeymap))))))
 
 ;### get-index ##################################################################
 
@@ -66,7 +46,6 @@
       (hh/modifiers :distinct)
       (hh/order-by [:jobs.created_at :desc])
       ))
-
 
 (defn filter-by-branch [query params]
   (if-let [branch-name (:branch_head params)]
@@ -119,7 +98,6 @@
         (hh/merge-where [:= :jobs.key key]))
     query))
 
-
 (defn log-debug-honeymap [honeymap]
   (logging/debug {:honeymap honeymap})
   honeymap)
@@ -162,35 +140,26 @@
      :body {:message "The request body must exactly contain the keys 'tree_id' and 'key'"}}
     (let [user-id (-> request :authenticated-user :id)
           url (utils-http/build-service-url :builder "/jobs/")
-          _ (logging/info {:url url})
           body (-> request :json-params
                    (assoc :created_by user-id)
                    json/write-str)
           params {:body body :throw-exceptions false}
-          _ (logging/info {:params params})
           response (do-http-request :post url params)]
-      (logging/info {:create-response response})
-      (logging/info (type (-> response :body )))
-      (select-keys
-        (if (instance? String (:body response))
-          (assoc response :body (json/read-str (:body response)  :key-fn keyword))
-          response)  [:body :status]))))
-
+      (if (map? (:body response))
+        (select-keys response [:body :status])
+        {:status (:status response)
+         :body {:message {:body (-> response :body str)}}}))))
 
 ;### routes #####################################################################
+
 (def routes
   (cpj/routes
     (cpj/GET "/jobs/" request (get-index request))
     (cpj/POST "/jobs/create" _ create-job)))
 
 
-;### init #####################################################################
-
-(defn initialize [new-conf]
-  (reset! conf new-conf))
-
 
 ;### Debug ####################################################################
 ;(logging-config/set-logger! :level :debug)
 ;(logging-config/set-logger! :level :info)
-;(debug/debug-ns *ns*)
+(debug/debug-ns *ns*)

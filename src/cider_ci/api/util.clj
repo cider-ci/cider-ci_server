@@ -38,7 +38,8 @@
                :content-type :json
                :accept :json
                :socket-timeout 1000
-               :conn-timeout 1000 }
+               :conn-timeout 1000
+               :as :auto}
               params)))))
 
 
