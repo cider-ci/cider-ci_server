@@ -38,7 +38,7 @@
 
 (def routes
   (cpj/routes
-    (cpj/GET "/trial/:id" request (get-trial request))
+    (cpj/GET "/trials/:id" request (get-trial request))
     ))
 
 

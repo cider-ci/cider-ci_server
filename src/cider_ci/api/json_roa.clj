@@ -80,10 +80,11 @@
 
     (cpj/GET "/scripts/:id" request (json-roa.script/build request json-response))
 
-    (cpj/GET "/trial/:id" request (json-roa.trial/build request json-response))
+    (cpj/GET "/trials/:id" request (json-roa.trial/build request json-response))
+
     (cpj/POST "/tasks/:id/trials/retry" request (json-roa.trial/build request json-response))
 
-    (cpj/ANY "/trial/:trial_id/trial-attachments/" request (json-roa.trial-attachments/build request json-response))
+    (cpj/ANY "/trials/:trial_id/trial-attachments/" request (json-roa.trial-attachments/build request json-response))
     (cpj/ANY "/trial-attachments/:id" request (json-roa.trial-attachment/build request json-response))
 
     (cpj/ANY "/jobs/:id/tree-attachments/" request (json-roa.tree-attachments/build request json-response))

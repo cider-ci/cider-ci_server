@@ -52,7 +52,7 @@
 
 (def routes
   (cpj/routes
-    (cpj/GET "/trial/:trial_id/trial-attachments/" request (get-attachments request))
+    (cpj/GET "/trials/:trial_id/trial-attachments/" request (get-attachments request))
     ))
 
 

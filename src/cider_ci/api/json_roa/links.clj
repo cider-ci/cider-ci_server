@@ -210,7 +210,7 @@
 ;### trials ##################################################################
 
 (defn trial-path [prefix id]
-  (str prefix "/trial/" id ))
+  (str prefix "/trials/" id ))
 
 (defn trial
   ([prefix]
@@ -278,7 +278,7 @@
   ([prefix trial-id]
    (trial-attachments-path prefix trial-id {}))
   ([prefix trial-id query-params]
-   (str prefix "/trial/"  trial-id "/trial-attachments/"
+   (str prefix "/trials/"  trial-id "/trial-attachments/"
         (if (empty? query-params)
           "{?pathsegment}"
           (str "?" (http-client/generate-query-string query-params))))))
