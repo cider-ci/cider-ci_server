@@ -163,14 +163,12 @@
   Create trials according to max-auto-trials and eager-trials properties
   if task is not in terminal state. The argument task must be a map
   including an :id key"
-  [task]
-  (create-trials task)
-  (when (evaluate-trials-and-update task)
-    (messaging/publish "task.state-changed" task)
-    (job/evaluate-and-update (:job_id (get-task (:id task)))))
-  ;(evaluate-and-create-trials {:id "d0e04847-ef9c-53ec-a009-18a02a7b8f81"})
-  ;(evaluate-and-create-trials {:id "6946714b-9bbd-5c78-9304-878bd2cf6049"})
-  )
+  [task_]
+  (let [task (if (:job_id task_) task_ (get-task (:id task_)))]
+    (create-trials task)
+    (when (evaluate-trials-and-update task)
+      (messaging/publish "task.state-changed" task)
+      (job/evaluate-and-update (:job_id (get-task (:id task)))))))
 
 
 ;### initialize ###############################################################
@@ -186,7 +184,7 @@
 ;#### debug ###################################################################
 ;(logging-config/set-logger! :level :debug)
 ;(logging-config/set-logger! :level :info)
-(debug/debug-ns *ns*)
+;(debug/debug-ns *ns*)
 ;(debug/wrap-with-log-debug #'evaluate-and-create-trials)
 ;(debug/wrap-with-log-debug #'eval-new-state)
 ;(debug/re-apply-last-argument #'get-trial-states)
