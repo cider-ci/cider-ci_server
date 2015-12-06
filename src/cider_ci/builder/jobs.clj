@@ -4,6 +4,7 @@
 
 (ns cider-ci.builder.jobs
   (:require
+    [cider-ci.builder.jobs.normalizer :as normalizer]
     [cider-ci.builder.project-configuration :as project-configuration]
     [cider-ci.builder.jobs.dependencies :as jobs.dependencies]
     [cider-ci.builder.repository :as repository]
@@ -67,7 +68,8 @@
 (defn create [params]
   (catcher/wrap-with-log-error
     (let [{tree-id :tree_id job-key :key} params
-          spec (get-dotfile-specification tree-id job-key)
+          spec (-> (get-dotfile-specification tree-id job-key)
+                   normalizer/normalize-job-spec )
           spec-id (-> spec find-or-create-specifiation :id)
           job-params (merge
                        {:key job-key :name job-key}
@@ -86,8 +88,7 @@
        convert-to-array
        (map #(assoc % :tree_id tree-id :runnable true :reasons []))
        jobs.dependencies/evaluate
-       (map #(select-keys % [:name :key :tree_id :description :runnable :reasons]))
-       ))
+       (map #(select-keys % [:name :key :tree_id :description :runnable :reasons]))))
 
 
 ;### Debug ####################################################################

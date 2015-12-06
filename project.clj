@@ -10,7 +10,7 @@
                  [cider-ci/clj-auth "3.1.0"]
                  [cider-ci/clj-utils "3.2.2"]
                  [drtom/honeysql "1.3.0-beta.3"]
-                 [logbug "2.0.0-beta.6"]
+                 [logbug "2.0.0-beta.8"]
                  [org.clojure/core.memoize "0.5.7"]
                  [org.clojure/tools.nrepl "0.2.11"]
                  ]
