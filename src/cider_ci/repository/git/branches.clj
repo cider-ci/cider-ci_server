@@ -4,7 +4,7 @@
 
 (ns cider-ci.repository.git.branches
   (:require
-    [drtom.logbug.thrown :as thrown]
+    [logbug.thrown :as thrown]
     [cider-ci.utils.system :as system]
     [clojure.tools.logging :as logging]
     ))

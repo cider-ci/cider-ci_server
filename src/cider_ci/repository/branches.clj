@@ -6,7 +6,7 @@
   (:require
     [cider-ci.repository.commits :as commits]
     [cider-ci.repository.sql.branches :as sql.branches]
-    [drtom.logbug.debug :as debug]
+    [logbug.debug :as debug]
     [clj-logging-config.log4j :as logging-config]
     [clojure.java.jdbc :as jdbc]
     [clojure.tools.logging :as logging]

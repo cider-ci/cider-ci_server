@@ -11,9 +11,9 @@
     [clojure.core.memoize :as memo]
     [clojure.data.json :as json]
     [clojure.tools.logging :as logging]
-    [drtom.logbug.catcher :as catcher]
-    [drtom.logbug.debug :as debug]
-    [drtom.logbug.thrown :as thrown]
+    [logbug.catcher :as catcher]
+    [logbug.debug :as debug]
+    [logbug.thrown :as thrown]
     [ring.util.response :refer [charset]]
     ))
 

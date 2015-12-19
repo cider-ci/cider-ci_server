@@ -4,8 +4,7 @@
 
 (ns cider-ci.repository.web
   (:require
-    [cider-ci.auth.core :as auth]
-    [cider-ci.auth.core]
+    [cider-ci.auth.authorize :as authorize]
     [cider-ci.auth.http-basic :as http-basic]
     [cider-ci.repository.git.repositories :as git.repositories]
     [cider-ci.repository.project-configuration :as project-configuration]
@@ -16,23 +15,26 @@
     [cider-ci.utils.messaging :as messaging]
     [cider-ci.utils.rdbms :as rdbms]
     [cider-ci.utils.routing :as routing]
-    [clj-logging-config.log4j :as logging-config]
+
     [clj-time.core :as time]
     [clojure.data :as data]
     [clojure.data.json :as json]
-    [clojure.tools.logging :as logging]
     [compojure.core :as cpj]
     [compojure.handler :as cpj.handler]
-    [drtom.logbug.debug :as debug]
-    [drtom.logbug.ring :refer [wrap-handler-with-logging]]
-    [drtom.logbug.thrown :as thrown]
     [ring.adapter.jetty :as jetty]
     [ring.middleware.json]
     [ring.middleware.params]
     [ring.util.response :refer [charset]]
     [ring.util.response]
+
+    [clj-logging-config.log4j :as logging-config]
+    [clojure.tools.logging :as logging]
+    [logbug.debug :as debug :refer [÷> ÷>>]]
+    [logbug.ring :refer [wrap-handler-with-logging]]
+    [logbug.thrown :as thrown]
     ))
 
+;##### get file ###############################################################
 
 (defn get-git-file [request]
   (logging/debug get-git-file [request])
@@ -127,35 +129,24 @@
 
 ;##### routes #################################################################
 
-(defn build-routes [context]
+(def routes
   (cpj/routes
     (cpj/GET "/project-configuration/:id" _ get-project-configuration)
-    (cpj/GET "/path-content/:id/*" request
-             (get-path-content request))
-    (cpj/GET "/:id/git/*" request
-             (get-git-file request))))
+    (cpj/GET "/path-content/:id/*" _ get-path-content)
+    (cpj/GET "/:id/git/*" _ get-git-file )))
 
 (defn build-main-handler [context]
-  ( -> (cpj.handler/api (build-routes context))
-       (wrap-handler-with-logging 'cider-ci.dispatcher.web)
-       routing/wrap-shutdown
-       (wrap-handler-with-logging 'cider-ci.dispatcher.web)
-       (ring.middleware.params/wrap-params)
-       (wrap-handler-with-logging 'cider-ci.repository.web)
-       (ring.middleware.json/wrap-json-params)
-       (wrap-handler-with-logging 'cider-ci.repository.web)
-       (wrap-status-dispatch)
-       (wrap-handler-with-logging 'cider-ci.repository.web)
-       (auth/wrap-authenticate-and-authorize-service)
-       (wrap-handler-with-logging 'cider-ci.repository.web)
-       (http-basic/wrap {:executor true :user false :service true})
-       (wrap-handler-with-logging 'cider-ci.repository.web)
-       wrap-repositories-update-notifications
-       (wrap-handler-with-logging 'cider-ci.repository.web)
-       (routing/wrap-prefix context)
-       (wrap-handler-with-logging 'cider-ci.repository.web)
-       (routing/wrap-log-exception)
-       ))
+  (÷> wrap-handler-with-logging
+      (cpj.handler/api routes)
+      routing/wrap-shutdown
+      (ring.middleware.params/wrap-params)
+      (ring.middleware.json/wrap-json-params)
+      (wrap-status-dispatch)
+      (authorize/wrap-require! {:service true})
+      (http-basic/wrap {:service true})
+      wrap-repositories-update-notifications
+      (routing/wrap-prefix context)
+      (routing/wrap-log-exception)))
 
 
 ;#### the server ##############################################################
@@ -170,4 +161,5 @@
 ;#### debug ###################################################################
 ;(logging-config/set-logger! :level :debug)
 ;(logging-config/set-logger! :level :info)
+;(debug/debug-ns 'cider-ci.auth.http-basic)
 ;(debug/debug-ns *ns*)

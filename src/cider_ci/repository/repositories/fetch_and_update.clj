@@ -6,7 +6,6 @@
   (:require
     [cider-ci.repository.branches :as branches]
     [cider-ci.repository.git.repositories :as git.repositories]
-    [cider-ci.utils.daemon :as daemon]
     [cider-ci.utils.fs :as ci-fs]
     [cider-ci.utils.messaging :as messaging]
     [cider-ci.utils.rdbms :as rdbms]
@@ -15,15 +14,16 @@
     [clj-time.core :as time]
     [clojure.java.jdbc :as jdbc]
     [clojure.tools.logging :as logging]
-    [drtom.logbug.catcher :as catcher]
-    [drtom.logbug.debug :as debug]
-    [drtom.logbug.thrown :as thrown]
+    [logbug.catcher :as catcher]
+    [logbug.debug :as debug]
+    [logbug.thrown :as thrown]
     [honeysql.sql :refer :all]
     [me.raynes.fs :as fs]
     ))
 
 
 ;### helpers ##################################################################
+
 (defn- directory-exists? [path]
   (let [file (clojure.java.io/file path)]
     (and (.exists file)
@@ -35,6 +35,7 @@
 
 
 ;### delete branches ##########################################################
+
 (defn- branches-delete-query [git-url existing-branches-names]
   (-> (sql-delete-from :branches)
       (sql-using :repositories)
@@ -54,6 +55,7 @@
 
 
 ;### branches #################################################################
+
 (defn- get-git-branches [repository-path]
   (let [res (system/exec-with-success-or-throw
               ["git" "branch" "--no-abbrev" "--no-color" "-v"]
@@ -80,13 +82,13 @@
 
 
 ;### GIT Stuff ################################################################
+
 (defn- update-git-server-info [repository]
   (logging/debug update-git-server-info [repository])
   (let [repository-path (git.repositories/path repository)
         id (git.repositories/canonic-id repository) ]
     (system/exec-with-success-or-throw ["git" "update-server-info"]
                                        {:watchdog (* 10 60 1000), :dir repository-path, :env {"TERM" "VT-100"}})))
-
 
 (defn- send-branch-update-notification [action branch]
   (let [queue-name (str "branch." (name action))]
@@ -122,7 +124,7 @@
       (system/exec-with-success-or-throw ["rm" "-rf" dir])
       (system/exec-with-success-or-throw
         ["git" "clone" "--mirror" (:git_url repository) dir]
-        {:watchdog (* 5 60 1000)}))))
+        {:watchdog (* 10 60 1000)}))))
 
 (defn- git-fetch [repository path]
   (system/exec-with-success-or-throw

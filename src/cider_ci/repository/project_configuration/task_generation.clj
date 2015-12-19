@@ -11,8 +11,8 @@
     [cider-ci.utils.rdbms :as rdbms]
     [clojure.tools.logging :as logging]
     [clojure.walk :refer [keywordize-keys]]
-    [drtom.logbug.catcher :as catcher]
-    [drtom.logbug.debug :as debug]
+    [logbug.catcher :as catcher]
+    [logbug.debug :as debug]
     ))
 
 

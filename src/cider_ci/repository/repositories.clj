@@ -8,7 +8,7 @@
     [cider-ci.repository.branches :as branches]
     [cider-ci.repository.git.repositories :as git.repositories]
     [cider-ci.repository.sql.branches :as sql.branches]
-    [cider-ci.utils.daemon :as daemon]
+    [cider-ci.utils.daemon :as daemon :refer [defdaemon]]
     [cider-ci.utils.fs :as ci-fs]
     [cider-ci.utils.messaging :as messaging]
     [cider-ci.utils.rdbms :as rdbms]
@@ -17,15 +17,17 @@
     [clj-time.core :as time]
     [clojure.java.jdbc :as jdbc]
     [clojure.tools.logging :as logging]
-    [drtom.logbug.catcher :as catcher]
-    [drtom.logbug.debug :as debug]
-    [drtom.logbug.thrown :as thrown]
+    [logbug.catcher :as catcher]
+    [logbug.debug :as debug]
+    [logbug.thrown :as thrown]
     [me.raynes.fs :as fs]
     ))
 
 
 ;### repositories processors ##################################################
+
 (defonce repository-processors-atom (atom {}))
+
 (defn- repository-agent-error-handler [_agent ex]
   (logging/warn ["Agent error" _agent (thrown/stringify ex)]))
 
@@ -48,6 +50,7 @@
 
 
 ;### Submit actions through agent #############################################
+
 (defn- git-fetch-is-due? [repository git-repository]
   (when-let [interval-value (:git_fetch_and_update_interval repository)]
     (if-let [git-fetched-at (:git-fetched-at @(:agent git-repository))]
@@ -85,6 +88,7 @@
 
 
 ;### update-repositories ######################################################
+
 (defn- update-repositories []
   ;(logging/debug update-repositories)
   (doseq [repository (jdbc/query (rdbms/get-ds) ["SELECT * from repositories"])]
@@ -94,12 +98,7 @@
         (submit-git-fetch-and-update repository repository-processor)
         ))))
 
-
-(daemon/define "update-repositories"
-  start-update-repositories
-  stop-update-repositories
-  1
-  (update-repositories))
+(defdaemon "update-repositories" 1 (update-repositories))
 
 
 ;### update repository ########################################################
@@ -108,6 +107,7 @@
   (let [repository-processor (get-or-create-repository-processor repository)]
     (submit-git-fetch-and-update repository repository-processor)
     ))
+
 
 ;### initialize ###############################################################
 

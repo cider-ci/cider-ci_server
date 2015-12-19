@@ -9,10 +9,10 @@
     )
   (:require
     [cider-ci.utils.config :as config :refer [get-config get-db-spec]]
-    [drtom.logbug.debug :as debug]
+    [logbug.debug :as debug]
     [cider-ci.utils.fs :as ci-fs]
     [cider-ci.utils.system :as system]
-    [drtom.logbug.catcher :as catcher]
+    [logbug.catcher :as catcher]
     [clojure.string :as string :refer [blank? split trim]]
     [clojure.tools.logging :as logging]
     ))

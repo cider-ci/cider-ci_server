@@ -8,16 +8,24 @@
   :license {:name "GNU AFFERO GENERAL PUBLIC LICENSE Version 3"
             :url "http://www.gnu.org/licenses/agpl-3.0.html"}
   :dependencies [
-                 [cider-ci/clj-utils "3.2.1"]
-                 [drtom/honeysql "1.3.0-beta.2"]
-                 [cider-ci/clj-auth "3.1.0"]
+                 [cider-ci/clj-utils "4.0.6"]
+                 [cider-ci/clj-auth "4.0.1"]
+
+                 [drtom/honeysql "1.3.0-beta.4"]
+                 [logbug "2.0.0-beta.8"]
+
+                 [cheshire "5.5.0"]
+                 [clj-http "2.0.0"]
                  [me.raynes/fs "1.4.6"]
-                 [org.clojure/core.memoize "0.5.7"]
-                 [org.clojure/tools.nrepl "0.2.10"]
+                 [org.apache.commons/commons-io "1.3.2"]
+                 [org.clojure/core.incubator "0.1.3"]
+                 [org.clojure/core.memoize "0.5.8"]
+                 [org.clojure/tools.nrepl "0.2.12"]
+
                  ]
   :source-paths ["src"]
   :profiles {:dev
-             {:dependencies [[midje "1.7.0"]]
+             {:dependencies [[midje "1.8.3"]]
               :plugins [[lein-midje "3.1.1"]]
               :repositories [["tmp" {:url "http://maven-repo-tmp.drtom.ch" :snapshots false}]]
               :resource-paths ["../config" "./config" "./resources"]}

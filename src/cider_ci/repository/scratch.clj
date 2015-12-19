@@ -9,7 +9,6 @@
     [cider-ci.repository.branches :as branches]
     [cider-ci.repository.git.repositories :as git.repositories]
     [cider-ci.repository.sql.branches :as sql.branches]
-    [cider-ci.utils.daemon :as daemon]
     [cider-ci.utils.fs :as ci-fs]
     [cider-ci.utils.messaging :as messaging]
     [cider-ci.utils.rdbms :as rdbms]
@@ -18,9 +17,9 @@
     [clj-time.core :as time]
     [clojure.java.jdbc :as jdbc]
     [clojure.tools.logging :as logging]
-    [drtom.logbug.catcher :as catcher]
-    [drtom.logbug.debug :as debug]
-    [drtom.logbug.thrown :as thrown]
+    [logbug.catcher :as catcher]
+    [logbug.debug :as debug]
+    [logbug.thrown :as thrown]
     [me.raynes.fs :as fs]
     ))
 
