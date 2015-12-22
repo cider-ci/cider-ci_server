@@ -5,19 +5,20 @@
 (ns cider-ci.dispatcher.web
   (:refer-clojure :exclude [sync])
   (:require
-    [cider-ci.auth.core :as auth]
-    [cider-ci.auth.core]
+    [cider-ci.auth.authorize :as authorize]
     [cider-ci.auth.http-basic :as http-basic]
     [cider-ci.dispatcher.abort :as abort]
     [cider-ci.dispatcher.retry :as retry]
     [cider-ci.dispatcher.scripts :refer [script-routes]]
     [cider-ci.dispatcher.sync :as sync]
     [cider-ci.dispatcher.trials :as trials]
+    [cider-ci.utils.config :as config :refer [get-config]]
     [cider-ci.utils.http :as http]
     [cider-ci.utils.http-server :as http-server]
     [cider-ci.utils.messaging :as messaging]
     [cider-ci.utils.rdbms :as rdbms]
     [cider-ci.utils.routing :as routing]
+
     [clojure.data :as data]
     [clojure.data.json :as json]
     [compojure.core :as cpj]
@@ -25,15 +26,15 @@
     [ring.adapter.jetty :as jetty]
     [ring.middleware.json]
 
+
     [clj-logging-config.log4j :as logging-config]
     [clojure.tools.logging :as logging]
-    [drtom.logbug.debug :as debug]
-    [drtom.logbug.ring :refer [wrap-handler-with-logging]]
-    [drtom.logbug.thrown :as thrown]
+    [logbug.debug :as debug :refer [÷> ÷>>]]
+    [logbug.debug :as debug]
+    [logbug.ring :refer [wrap-handler-with-logging]]
+    [logbug.thrown :as thrown]
     ))
 
-
-(defonce conf (atom nil))
 
 ;##### update trial ###########################################################
 
@@ -126,51 +127,33 @@
 
 (def routes
   (cpj/routes
-
     (cpj/GET "/status" request #'status-handler)
-
     (cpj/POST "/jobs/:id/abort" _ #'abort-job)
-
     (cpj/POST "/jobs/:id/retry-and-resume" _ #'retry-and-resume)
-
     (cpj/POST "/tasks/:id/retry" _ #'retry-task)
-
     (cpj/PATCH "/trials/:id"
                {{id :id} :params data :body}
                (update-trial id data))
-
     (cpj/ANY "/trials/:id/scripts/*" _ script-routes)
-
     (cpj/GET "/" [] "OK")
-
     (cpj/POST "/sync" _ #'sync)
-
     ))
 
-
-
 (defn build-main-handler [context]
-  ( -> (cpj.handler/api routes)
-       (wrap-handler-with-logging 'cider-ci.dispatcher.web)
-       routing/wrap-shutdown
-       (wrap-handler-with-logging 'cider-ci.dispatcher.web)
-       (ring.middleware.json/wrap-json-body {:keywords? true})
-       (wrap-handler-with-logging 'cider-ci.dispatcher.web)
-       (routing/wrap-prefix context)
-       (wrap-handler-with-logging 'cider-ci.dispatcher.web)
-       (auth/wrap-authenticate-and-authorize-service)
-       (wrap-handler-with-logging 'cider-ci.dispatcher.web)
-       (http-basic/wrap {:executor true :user false :service true})
-       (wrap-handler-with-logging 'cider-ci.dispatcher.web)
-       (routing/wrap-log-exception)))
+  (÷> wrap-handler-with-logging
+      (cpj.handler/api routes)
+      routing/wrap-shutdown
+      (ring.middleware.json/wrap-json-body {:keywords? true})
+      (routing/wrap-prefix context)
+      (authorize/wrap-require! {:executor true :service true})
+      (http-basic/wrap {:executor true :service true})
+      (routing/wrap-log-exception)))
 
 
 ;#### the server ##############################################################
 
-(defn initialize [new-conf]
-  (reset! conf new-conf)
-  (cider-ci.auth.core/initialize new-conf)
-  (let [http-conf (-> @conf :services :dispatcher :http)
+(defn initialize []
+  (let [http-conf (-> (get-config) :services :dispatcher :http)
         context (str (:context http-conf) (:sub_context http-conf))]
     (http-server/start http-conf (build-main-handler context))))
 

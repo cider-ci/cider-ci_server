@@ -4,7 +4,7 @@
 
 (ns cider-ci.dispatcher.executor
   (:require
-    [drtom.logbug.debug :as debug]
+    [logbug.debug :as debug]
     [cider-ci.utils.config :as config]
     [clj-logging-config.log4j :as logging-config]
     [clojure.tools.logging :as logging]

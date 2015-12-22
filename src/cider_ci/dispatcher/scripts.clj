@@ -13,10 +13,10 @@
     [clojure.tools.logging :as clj-logging]
     [clojure.tools.logging :as logging]
     [compojure.core :as cpj]
-    [drtom.logbug.catcher :as catcher]
-    [drtom.logbug.debug :as debug]
-    [drtom.logbug.thrown :as logbug.thrown]
-    [drtom.logbug.thrown :as thrown]
+    [logbug.catcher :as catcher]
+    [logbug.debug :as debug]
+    [logbug.thrown :as logbug.thrown]
+    [logbug.thrown :as thrown]
     )
   (:import
     [java.io InputStream]

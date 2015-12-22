@@ -10,7 +10,7 @@
     [clojure.data.json :as json]
     [clojure.java.jdbc :as jdbc]
     [clojure.tools.logging :as logging]
-    [drtom.logbug.debug :as debug]
+    [logbug.debug :as debug]
     [honeysql.format :as sql-format]
     [honeysql.helpers :as sql-helpers]
     [honeysql.types :as sql-types]
