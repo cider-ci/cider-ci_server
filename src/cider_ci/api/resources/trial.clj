@@ -30,7 +30,7 @@
   (let [trial-id (-> request :params :id)
         trial (first (jdbc/query (rdbms/get-ds) ["SELECT * from trials WHERE id = ?" trial-id]))]
     (when trial
-      {:body trial})))
+      {:body (dissoc trial :token)})))
 
 
 
