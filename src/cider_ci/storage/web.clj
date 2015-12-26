@@ -4,33 +4,35 @@
 
 (ns cider-ci.storage.web
   (:require
-    [cider-ci.auth.core :as auth]
+    [cider-ci.storage.web.public :as public]
+    [cider-ci.storage.shared :refer [delete-file delete-row delete-file-and-row]]
+
+    [cider-ci.auth.authorize :as authorize]
     [cider-ci.auth.http-basic :as http-basic]
     [cider-ci.auth.session :as session]
     [cider-ci.open-session.cors :as cors]
-    [cider-ci.storage.web.public :as public]
     [cider-ci.utils.config :as config :refer [get-config]]
     [cider-ci.utils.http :as http]
     [cider-ci.utils.http-server :as http-server]
     [cider-ci.utils.rdbms :as rdbms]
     [cider-ci.utils.routing :as routing]
-    [clj-logging-config.log4j :as logging-config]
+
     [clojure.data.json :as json]
     [clojure.java.io :as io]
     [clojure.java.jdbc :as jdbc]
-    [clojure.tools.logging :as logging]
     [compojure.core :as cpj]
     [compojure.handler :as cpj.handler]
-    [drtom.logbug.catcher :as catcher]
-    [drtom.logbug.debug :as debug]
-    [drtom.logbug.ring :refer [wrap-handler-with-logging]]
     [me.raynes.fs :as clj-fs]
     [ring.middleware.cookies :as cookies]
     [ring.util.response]
+
+    [clj-logging-config.log4j :as logging-config]
+    [clojure.tools.logging :as logging]
+    [logbug.catcher :as catcher]
+    [logbug.debug :as debug :refer [÷> ÷>>]]
+    [logbug.ring :refer [wrap-handler-with-logging]]
     )
-  (:use
-    [cider-ci.storage.shared :only [delete-file delete-row delete-file-and-row]]
-    ))
+  )
 
 ;### new helper ###############################################################
 
@@ -100,11 +102,11 @@
               (ring.util.response/header "X-Sendfile" file-path)
               (ring.util.response/header "content-type" (:content_type row))))))))
 
-(defn build-routes []
+(def storage-routes
   (-> (cpj/routes
         (cpj/GET "/:prefix/:id/*" _ get-file)
         (cpj/PUT "/:prefix/:id/*" _ put-file))
-      routing/wrap-shutdown))
+      ))
 
 
 ;##### status dispatch ########################################################
@@ -127,39 +129,29 @@
 
 ;#### routing #################################################################
 
-(defn build-base-handler []
-  ( -> (build-routes)
-       cpj.handler/api
-       (wrap-handler-with-logging 'cider-ci.storage.web)
-       wrap-status-dispatch
-       (wrap-handler-with-logging 'cider-ci.storage.web)
-       ))
+(def base-handler
+  (÷> wrap-handler-with-logging
+      storage-routes
+      routing/wrap-shutdown
+      cpj.handler/api
+      wrap-status-dispatch))
 
 (defn wrap-auth [handler]
-  (-> handler
-      (wrap-handler-with-logging 'cider-ci.storage.web)
-      auth/wrap-authenticate-and-authorize-service-or-user
-      (wrap-handler-with-logging 'cider-ci.storage.web)
+  (÷> wrap-handler-with-logging
+      handler
+      (authorize/wrap-require! {:user true :service true :executor true})
       (http-basic/wrap {:user true :service true :executor true})
-      (wrap-handler-with-logging 'cider-ci.storage.web)
       session/wrap
-      (wrap-handler-with-logging 'cider-ci.storage.web)
       cookies/wrap-cookies
-      (wrap-handler-with-logging 'cider-ci.storage.web)
       cors/wrap
-      (wrap-handler-with-logging 'cider-ci.storage.web)
-      (public/wrap-shortcut handler)
-      ))
+      (public/wrap-shortcut handler)))
 
 (defn build-main-handler [context]
-  (-> (build-base-handler)
-      (wrap-handler-with-logging 'cider-ci.storage.web)
+  (÷> wrap-handler-with-logging
+      base-handler
       wrap-auth
-      (wrap-handler-with-logging 'cider-ci.storage.web)
       (routing/wrap-prefix context)
-      (wrap-handler-with-logging 'cider-ci.storage.web)
-      routing/wrap-log-exception
-      ))
+      routing/wrap-log-exception))
 
 
 ;#### the server ##############################################################

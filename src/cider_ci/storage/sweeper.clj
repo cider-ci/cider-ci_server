@@ -4,15 +4,17 @@
 
 (ns cider-ci.storage.sweeper
   (:require
-    [cider-ci.utils.daemon :as daemon]
-    [drtom.logbug.debug :as debug]
+    [cider-ci.utils.daemon :as daemon :refer [defdaemon]]
+
     [cider-ci.utils.rdbms :as rdbms]
-    [drtom.logbug.catcher :as catcher]
-    [clj-logging-config.log4j :as logging-config]
     [clojure.java.io :as io]
     [clojure.java.jdbc :as jdbc]
-    [clojure.tools.logging :as logging]
     [me.raynes.fs :as fsutils]
+
+    [clj-logging-config.log4j :as logging-config]
+    [clojure.tools.logging :as logging]
+    [logbug.catcher :as catcher]
+    [logbug.debug :as debug]
     )
   (:use
     [cider-ci.storage.shared :only [delete-file delete-row delete-file-and-row]]
@@ -56,7 +58,7 @@
           (logging/debug "file not found, deleting row ...")
           (delete-row table-name id))))))
 
-(daemon/define "delete-orphans" start-delete-orphans stop-delete-orphans (* 20 60 60)
+(defdaemon "delete-orphans" (* 20 60 60)
   (logging/info "Deleting orphans ...")
   (delete-row-orphans)
   (delete-file-orphans))

@@ -4,18 +4,17 @@
 
 (ns cider-ci.storage.main
   (:require
-    [cider-ci.auth.core :as auth]
     [cider-ci.storage.shared :as shared]
     [cider-ci.storage.sweeper :as sweeper]
     [cider-ci.storage.web :as web]
     [cider-ci.utils.config :as config :refer [get-config get-db-spec]]
-    [drtom.logbug.debug :as debug]
+    [logbug.debug :as debug]
     [cider-ci.utils.http :as http]
     [cider-ci.utils.map :refer [deep-merge]]
     [cider-ci.utils.nrepl :as nrepl]
     [cider-ci.utils.rdbms :as rdbms]
-    [drtom.logbug.catcher :as catcher]
-    [drtom.logbug.thrown]
+    [logbug.catcher :as catcher]
+    [logbug.thrown]
     [clojure.tools.logging :as logging]
     [me.raynes.fs :as fsutils]
     [pg-types.all]
@@ -30,13 +29,12 @@
 
 (defn -main [& args]
   (catcher/wrap-with-log-warn
-    (drtom.logbug.thrown/reset-ns-filter-regex #".*cider.ci.*")
+    (logbug.thrown/reset-ns-filter-regex #".*cider.ci.*")
     (config/initialize)
     (rdbms/initialize (get-db-spec :repository))
     (nrepl/initialize (-> (get-config) :services :storage :nrepl))
     (http/initialize (select-keys (get-config) [:basic_auth]))
     (create-dirs (-> (get-config) :services :storage :stores))
-    (auth/initialize (select-keys (get-config) [:secret :session :basic_auth]))
     (web/initialize)
     (sweeper/initialize (-> (get-config) :services :storage :stores))))
 

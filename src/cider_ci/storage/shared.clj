@@ -5,8 +5,8 @@
 (ns cider-ci.storage.shared
   (:require
     [cider-ci.utils.rdbms :as rdbms]
-    [drtom.logbug.debug :as debug]
-    [drtom.logbug.catcher :as catcher]
+    [logbug.debug :as debug]
+    [logbug.catcher :as catcher]
     [clj-logging-config.log4j :as logging-config]
     [clojure.java.jdbc :as jdbc]
     [clojure.tools.logging :as logging]
