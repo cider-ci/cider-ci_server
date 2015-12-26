@@ -3,8 +3,8 @@
     :exclude [get])
   (:require
     [cider-ci.utils.config :refer [get-config]]
-    [drtom.logbug.debug :as debug]
-    [drtom.logbug.catcher :as catcher]
+    [logbug.debug :as debug]
+    [logbug.catcher :as catcher]
     [clj-http.client :as http-client]
     [clj-logging-config.log4j :as logging-config]
     [clojure.tools.logging :as logging]
@@ -14,22 +14,6 @@
 (defonce conf (atom nil))
 
 ;### build url ##################################################################
-
-(defn sanitize-query-params [params]
-  (logging/warn "cider-ci.utils.http/sanitize-query-params is deprecated")
-  (into {} (sort (for [[k v] params]
-                   [(-> k name clojure.string/trim
-                        clojure.string/lower-case
-                        (clojure.string/replace " " "-")
-                        (clojure.string/replace "_" "-")
-                        (clojure.string/replace #"-+" "-")
-                        keyword)
-                    v]))))
-
-(defn build-url-query-string [params]
-  (logging/warn "cider-ci.utils.http/build-url-query-string is deprecated use http-client/generate-query-string")
-  (-> params sanitize-query-params
-      http-client/generate-query-string))
 
 (defn build-url
   ([config path]
@@ -51,7 +35,7 @@
           context sub-context path)))
   ([config path query-params]
    (str (build-url config path)
-        "?" (build-url-query-string query-params))))
+        "?" (http-client/generate-query-string query-params))))
 
 ;### build-service-url ########################################################
 
@@ -77,7 +61,7 @@
    (str (get-base-url) (build-service-prefix service-name-or-keyword) path))
   ([service-name-or-keyword path query-params]
    (build-service-url service-name-or-keyword
-                      (str path "?" (build-url-query-string query-params)))))
+                      (str path "?" (http-client/generate-query-string query-params)))))
 
 ;### Http request #############################################################
 

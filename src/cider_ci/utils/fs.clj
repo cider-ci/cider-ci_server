@@ -4,7 +4,7 @@
 
 (ns cider-ci.utils.fs
   (:require
-    [drtom.logbug.debug :as debug]
+    [logbug.debug :as debug]
     [clj-logging-config.log4j :as logging-config]
     [clj-uuid]
     [clojure.string :as string]

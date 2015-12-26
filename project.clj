@@ -2,23 +2,25 @@
 ; Licensed under the terms of the GNU Affero General Public License v3.
 ; See the "LICENSE.txt" file provided with this software.
 
-(defproject cider-ci/clj-utils "3.4.0"
+(defproject cider-ci/clj-utils "4.0.5"
   :description "Shared Clojure Utils for Cider-CI"
   :url "https://github.com/cider-ci/cider-ci_clj-utils"
   :license {:name "GNU AFFERO GENERAL PUBLIC LICENSE Version 3"
             :url "http://www.gnu.org/licenses/agpl-3.0.html"}
   :dependencies [
+                 [drtom/honeysql "1.3.0-beta.4"]
+                 [logbug "2.0.0-beta.8"]
+                 [pg-types "2.0.0"]
+
                  [cheshire "5.5.0"]
                  [clj-http "2.0.0"]
                  [clj-time "0.11.0"]
                  [clj-yaml "0.4.0"]
-                 [com.mchange/c3p0 "0.9.5"]
-                 [com.novemberain/langohr "3.3.0"]
+                 [com.mchange/c3p0 "0.9.5"] ; Don not upgrade this. It depends on Java 1.8.
+                 [com.novemberain/langohr "3.4.2"]
                  [compojure "1.4.0"]
                  [drtom/clj-uuid "0.0.8"]
-                 [drtom/honeysql "1.3.0-beta.2"]
-                 [drtom/logbug "1.3.0"]
-                 [joda-time "2.8.2"]
+                 [joda-time "2.9.1"]
                  [log4j/log4j "1.2.17" :exclusions [javax.mail/mail javax.jms/jms com.sun.jdmk/jmxtools com.sun.jmx/jmxri]]
                  [me.raynes/fs "1.4.6"]
                  [org.apache.commons/commons-lang3 "3.4"]
@@ -26,25 +28,21 @@
                  [org.clojure/clojure "1.7.0"]
                  [org.clojure/data.json "0.2.6"]
                  [org.clojure/java.jdbc "0.4.2"]
-                 [org.clojure/tools.nrepl "0.2.11"]
-                 [org.postgresql/postgresql "9.4-1201-jdbc41"]
-                 [org.slf4j/slf4j-log4j12 "1.7.12"]
+                 [org.clojure/tools.nrepl "0.2.12"]
+                 [org.postgresql/postgresql "9.4-1206-jdbc41"]
+                 [org.slf4j/slf4j-log4j12 "1.7.13"]
                  [org.yaml/snakeyaml "1.16"]
-                 [pg-types "2.0.0"]
                  [ring "1.4.0"]
                  [ring/ring-core "1.4.0"]
                  [ring/ring-jetty-adapter "1.4.0"]
                  [ring/ring-json "0.4.0"]
 
                  ; explicit transient deps to force conflict resolution
-                 [org.clojure/java.classpath "0.2.2"]
+                 ;[org.clojure/java.classpath "0.2.3"]
                  ]
 
-  :profiles {:dev {:dependencies [
-                                  [midje "1.7.0"]
-                                  [org.xerial/sqlite-jdbc "3.8.11.1"]
-                                  ]
-                   :plugins [[lein-midje "3.1.1"]]
+  :profiles {:dev {:dependencies [ ]
+                   :plugins []
                    :resource-paths ["resources_dev"]
                    } }
 

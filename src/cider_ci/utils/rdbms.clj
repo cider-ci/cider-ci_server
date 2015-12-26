@@ -1,6 +1,6 @@
 (ns cider-ci.utils.rdbms
   (:require
-    [drtom.logbug.catcher :as catcher]
+    [logbug.catcher :as catcher]
     [clojure.java.jdbc :as jdbc]
     [clojure.tools.logging :as logging]
     [ring.util.codec]

@@ -1,6 +1,6 @@
 (ns cider-ci.utils.nrepl
   (:require
-    [drtom.logbug.catcher :as catcher]
+    [logbug.catcher :as catcher]
     [clj-logging-config.log4j :as logging-config]
     [clojure.tools.logging :as logging]
     [clojure.tools.nrepl.server :as nrepl-server]

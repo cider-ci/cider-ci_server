@@ -4,7 +4,7 @@
 
 (ns cider-ci.utils.map
   (:require
-    [drtom.logbug.debug :as debug]
+    [logbug.debug :as debug]
     [clj-logging-config.log4j :as logging-config]
     [clojure.tools.logging :as logging]))
 

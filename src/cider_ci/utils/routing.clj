@@ -5,7 +5,7 @@
 
 (ns cider-ci.utils.routing
   (:require
-    [drtom.logbug.catcher :as catcher]
+    [logbug.catcher :as catcher]
     [clojure.tools.logging :as logging]
     [compojure.core :as cpj]
     ))

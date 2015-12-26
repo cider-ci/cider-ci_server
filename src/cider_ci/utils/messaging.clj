@@ -14,8 +14,8 @@
     [langohr.core :as rmq]
     [langohr.exchange :as le]
     [langohr.queue :as lq]
-    [drtom.logbug.debug :as debug]
-    [drtom.logbug.catcher :as catcher]
+    [logbug.debug :as debug]
+    [logbug.catcher :as catcher]
     [cider-ci.utils.json-protocol]
     )
   (:import

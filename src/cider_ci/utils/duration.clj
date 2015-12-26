@@ -5,7 +5,7 @@
 
 (ns cider-ci.utils.duration
   (:require
-    [drtom.logbug.debug :as debug]
+    [logbug.debug :as debug]
     [clojure.tools.logging :as logging]
     ))
 

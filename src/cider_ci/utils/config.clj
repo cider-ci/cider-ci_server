@@ -13,7 +13,7 @@
     [clj-yaml.core :as yaml]
     [clojure.java.io :as io]
     [clojure.tools.logging :as logging]
-    [drtom.logbug.debug :as debug]
+    [logbug.debug :as debug]
     [me.raynes.fs :as clj-fs]
     ))
 
