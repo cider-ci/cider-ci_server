@@ -77,27 +77,26 @@
                                      :CIDER_CI_TASK_ID (:task_id trial)
                                      :CIDER_CI_TRIAL_ID trial-id
                                      :CIDER_CI_TREE_ID (:tree_id branch-and-commit)})]
-    {
-     :environment-variables environment-variables
-     :git-options (or (:git-options task-spec) {})
-     :git_branch_name (:name branch-and-commit)
-     :git_commit_id commit-id
-     :git_tree_id (:tree_id branch-and-commit)
-     :git_url (git-url repository-id)
-     :git-proxies {}
-     :job_id job-id
-     :patch_path (patch-path executor trial-id)
-     :ports (:ports task-spec)
-     :repository_id repository-id
-     :scripts (get-scripts trial)
-     :task_id (:task_id trial)
-     :templates (templates-data task-spec)
-     :tree-attachments (:tree-attachments task-spec)
-     :tree-attachments-path (tree-attachments-path tree-id)
-     :trial-attachments (:trial-attachments task-spec)
-     :trial-attachments-path (trial-attachments-path trial-id)
-     :trial_id trial-id
-     }))
+    (merge (select-keys trial [:token :task_id])
+           {:environment-variables environment-variables
+            :git-options (or (:git-options task-spec) {})
+            :git_branch_name (:name branch-and-commit)
+            :git_commit_id commit-id
+            :git_tree_id (:tree_id branch-and-commit)
+            :git_url (git-url repository-id)
+            :git-proxies {}
+            :job_id job-id
+            :patch_path (patch-path executor trial-id)
+            :ports (:ports task-spec)
+            :repository_id repository-id
+            :scripts (get-scripts trial)
+            :templates (templates-data task-spec)
+            :tree-attachments (:tree-attachments task-spec)
+            :tree-attachments-path (tree-attachments-path tree-id)
+            :trial-attachments (:trial-attachments task-spec)
+            :trial-attachments-path (trial-attachments-path trial-id)
+            :trial_id trial-id
+            })))
 
 
 ;#### debug ###################################################################
