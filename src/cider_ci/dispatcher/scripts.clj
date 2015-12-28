@@ -4,17 +4,20 @@
 
 (ns cider-ci.dispatcher.scripts
   (:require
+    [cider-ci.dispatcher.web.auth :refer [validate-trial-token!]]
+
     [camel-snake-kebab.core :refer [->snake_case ->kebab-case-keyword ->snake_case_keyword]]
     [camel-snake-kebab.extras :refer [transform-keys]]
     [cider-ci.utils.map :refer [convert-to-array]]
     [cider-ci.utils.rdbms :as rdbms :refer [get-ds]]
-    [clj-logging-config.log4j :as logging-config]
     [clojure.java.jdbc :as jdbc]
-    [clojure.tools.logging :as clj-logging]
-    [clojure.tools.logging :as logging]
     [compojure.core :as cpj]
-    [logbug.catcher :as catcher]
-    [logbug.debug :as debug]
+
+    [clj-logging-config.log4j :as logging-config]
+    [clojure.tools.logging :as logging]
+    [logbug.catcher :as catcher :refer [catch*]]
+    [logbug.debug :as debug :refer [÷> ÷>>]]
+    [logbug.ring :refer [wrap-handler-with-logging]]
     [logbug.thrown :as logbug.thrown]
     [logbug.thrown :as thrown]
     )
@@ -72,13 +75,6 @@
     :script_file :wrapper_file
     :finished_at :started_at :error})
 
-(defmacro catch-with-suppress-and-log [level catch-sex & expressions]
-  `(try
-     ~@expressions
-     (catch Throwable e#
-       (clj-logging/log ~level (logbug.thrown/stringify e#))
-       ~catch-sex)))
-
 (defn remove-null-values [data]
   (->> data
       (into [])
@@ -86,7 +82,7 @@
       (into {})))
 
 (defn- patch-script [trial-id script-key data]
-  (catch-with-suppress-and-log
+  (catch*
     :error {:status 500 :body "Update error, see the logs for details."}
     (-> data
         remove-null-values
@@ -114,7 +110,7 @@
                            (type data)))))
 
 (defn- patch-field [trial-id script-key field data]
-  (catch-with-suppress-and-log
+  (catch*
     :error {:status 500 :body "Error when patching script filed, see the logs for details."}
     (let [current-value (get-current-value trial-id script-key field)
           new-value (build-new-value current-value data)]
@@ -124,17 +120,26 @@
 
 ;### routes ####################################################################
 
+(defn- validate-token [request handler]
+  (let [{{trial-id :id} :route-params} request]
+    (validate-trial-token! request trial-id)
+    (handler request)))
+
+(defn- wrap-validate-token
+  [handler]
+  (fn [request]
+    (validate-token request handler)))
+
 (def script-routes
-  (cpj/routes
-    (cpj/PATCH "/trials/:id/scripts/:key"
-               {{id :id key :key} :params data :body}
-               (patch-script id key data))
-
-    (cpj/PATCH "/trials/:id/scripts/:key/:field"
-               {{id :id key :key field :field} :params data :body}
-               (patch-field id key field data))
-    ))
-
+  (÷> wrap-handler-with-logging
+      (cpj/routes
+        (cpj/PATCH "/trials/:id/scripts/:key"
+                   {{id :id key :key} :params data :body}
+                   (patch-script id key data))
+        (cpj/PATCH "/trials/:id/scripts/:key/:field"
+                   {{id :id key :key field :field} :params data :body}
+                   (patch-field id key field data)))
+      wrap-validate-token))
 
 
 ;#### debug ###################################################################
@@ -142,5 +147,5 @@
 ;(logging-config/set-logger! :level :info)
 ;(debug/debug-ns *ns*)
 ;(debug/wrap-with-log-debug #'patch-script)
-;(debug/wrap-with-log-debug #'build-new-value)
-;(debug/wrap-with-log-debug #'patch-field)
+;(debug/wrap-with-log-debug #'remove-null-values)
+;(debug/wrap-with-log-debug #'validate-token)

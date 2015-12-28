@@ -5,19 +5,23 @@
 (ns cider-ci.dispatcher.web
   (:refer-clojure :exclude [sync])
   (:require
-    [cider-ci.auth.authorize :as authorize]
-    [cider-ci.auth.http-basic :as http-basic]
     [cider-ci.dispatcher.abort :as abort]
     [cider-ci.dispatcher.retry :as retry]
     [cider-ci.dispatcher.scripts :refer [script-routes]]
     [cider-ci.dispatcher.sync :as sync]
     [cider-ci.dispatcher.trials :as trials]
+    [cider-ci.dispatcher.web.auth :as web-auth]
+
+    [cider-ci.auth.authorize :as authorize]
+    [cider-ci.auth.http-basic :as http-basic]
     [cider-ci.utils.config :as config :refer [get-config]]
     [cider-ci.utils.http :as http]
     [cider-ci.utils.http-server :as http-server]
     [cider-ci.utils.messaging :as messaging]
     [cider-ci.utils.rdbms :as rdbms]
     [cider-ci.utils.routing :as routing]
+    [cider-ci.utils.ring :as ci-utils-ring]
+
 
     [clojure.data :as data]
     [clojure.data.json :as json]
@@ -26,11 +30,9 @@
     [ring.adapter.jetty :as jetty]
     [ring.middleware.json]
 
-
     [clj-logging-config.log4j :as logging-config]
     [clojure.tools.logging :as logging]
     [logbug.debug :as debug :refer [÷> ÷>>]]
-    [logbug.debug :as debug]
     [logbug.ring :refer [wrap-handler-with-logging]]
     [logbug.thrown :as thrown]
     ))
@@ -38,10 +40,12 @@
 
 ;##### update trial ###########################################################
 
-(defn update-trial [id params]
-  (trials/update-trial (assoc (clojure.walk/keywordize-keys params)
-                              :id id))
-  {:status 200})
+(defn update-trial [request]
+  (let [{{id :id} :params data :body} request]
+    (web-auth/validate-trial-token! request id)
+    (trials/update-trial (assoc (clojure.walk/keywordize-keys data)
+                                :id id))
+    {:status 200}))
 
 ;##### status dispatch ########################################################
 
@@ -131,23 +135,22 @@
     (cpj/POST "/jobs/:id/abort" _ #'abort-job)
     (cpj/POST "/jobs/:id/retry-and-resume" _ #'retry-and-resume)
     (cpj/POST "/tasks/:id/retry" _ #'retry-task)
-    (cpj/PATCH "/trials/:id"
-               {{id :id} :params data :body}
-               (update-trial id data))
+    (cpj/PATCH "/trials/:id" _ update-trial)
     (cpj/ANY "/trials/:id/scripts/*" _ script-routes)
     (cpj/GET "/" [] "OK")
     (cpj/POST "/sync" _ #'sync)
     ))
 
 (defn build-main-handler [context]
-  (÷> wrap-handler-with-logging
+  (÷> (wrap-handler-with-logging :trace)
       (cpj.handler/api routes)
       routing/wrap-shutdown
       (ring.middleware.json/wrap-json-body {:keywords? true})
       (routing/wrap-prefix context)
       (authorize/wrap-require! {:executor true :service true})
       (http-basic/wrap {:executor true :service true})
-      (routing/wrap-log-exception)))
+      ci-utils-ring/wrap-webstack-exception
+      ))
 
 
 ;#### the server ##############################################################
@@ -164,4 +167,4 @@
 ;(logging-config/set-logger! :level :debug)
 ;(logging-config/set-logger! :level :info)
 ;(debug/debug-ns *ns*)
-;(debug/wrap-with-log-debug #'retry-task)
+;(debug/wrap-with-log-debug #'update-trial)
