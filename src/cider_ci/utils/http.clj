@@ -65,21 +65,20 @@
 
 ;### Http request #############################################################
 
-(defn- request [method url params]
+(defn request [method url params]
   (logging/debug [method url params])
   (let [basic-auth (:basic_auth @conf)]
-    (catcher/wrap-with-log-error
-      (logging/debug ("http/" method) {:url url :basic-auth basic-auth})
-      (http-client/request
-        (conj {:basic-auth [(:username basic-auth) (:password basic-auth)]
-               :url url
-               :method method
-               :insecure? true
-               :content-type :json
-               :accept :json
-               :socket-timeout 1000
-               :conn-timeout 1000 }
-              params)))))
+    (logging/debug ("http/" method) {:url url :basic-auth basic-auth})
+    (http-client/request
+      (conj {:basic-auth [(:username basic-auth) (:password basic-auth)]
+             :url url
+             :method method
+             :insecure? true
+             :content-type :json
+             :accept :json
+             :socket-timeout 1000
+             :conn-timeout 1000 }
+            params))))
 
 (defn get [url params]
   (logging/debug get [url params])

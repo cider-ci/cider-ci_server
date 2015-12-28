@@ -2,15 +2,15 @@
 ; Licensed under the terms of the GNU Affero General Public License v3.
 ; See the "LICENSE.txt" file provided with this software.
 
-(defproject cider-ci/clj-utils "4.0.5"
+(defproject cider-ci/clj-utils "4.2.0"
   :description "Shared Clojure Utils for Cider-CI"
   :url "https://github.com/cider-ci/cider-ci_clj-utils"
   :license {:name "GNU AFFERO GENERAL PUBLIC LICENSE Version 3"
             :url "http://www.gnu.org/licenses/agpl-3.0.html"}
   :dependencies [
                  [drtom/honeysql "1.3.0-beta.4"]
-                 [logbug "2.0.0-beta.8"]
-                 [pg-types "2.0.0"]
+                 [logbug "2.0.0-beta.10"]
+                 [pg-types "2.1.1"]
 
                  [cheshire "5.5.0"]
                  [clj-http "2.0.0"]
@@ -29,7 +29,6 @@
                  [org.clojure/data.json "0.2.6"]
                  [org.clojure/java.jdbc "0.4.2"]
                  [org.clojure/tools.nrepl "0.2.12"]
-                 [org.postgresql/postgresql "9.4-1206-jdbc41"]
                  [org.slf4j/slf4j-log4j12 "1.7.13"]
                  [org.yaml/snakeyaml "1.16"]
                  [ring "1.4.0"]
@@ -45,6 +44,8 @@
                    :plugins []
                    :resource-paths ["resources_dev"]
                    } }
+
+  :java-source-paths ["java"]
 
   :repositories [["tmp" {:url "http://maven-repo-tmp.drtom.ch" :snapshots false}]]
   :plugins [[org.apache.maven.wagon/wagon-ssh-external "2.6"]]
