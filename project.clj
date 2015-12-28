@@ -2,7 +2,7 @@
 ; Licensed under the terms of the GNU Affero General Public License v3.
 ; See the "LICENSE.txt" file provided with this software.
 
-(defproject cider-ci/clj-utils "4.2.0"
+(defproject cider-ci/clj-utils "4.2.1"
   :description "Shared Clojure Utils for Cider-CI"
   :url "https://github.com/cider-ci/cider-ci_clj-utils"
   :license {:name "GNU AFFERO GENERAL PUBLIC LICENSE Version 3"
@@ -46,6 +46,7 @@
                    } }
 
   :java-source-paths ["java"]
+  :javac-options ["-target" "1.7" "-source" "1.7" "-Xlint:-options"]
 
   :repositories [["tmp" {:url "http://maven-repo-tmp.drtom.ch" :snapshots false}]]
   :plugins [[org.apache.maven.wagon/wagon-ssh-external "2.6"]]
