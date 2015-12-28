@@ -118,6 +118,7 @@
 ;##############################################################################
 
 (declare expand)
+
 (defn- get-inclusion [git-ref-id include-spec]
   (let [submodule-ref (resolve-submodule-git-ref [git-ref-id]
                                                  (or (:submodule include-spec) []))
@@ -135,9 +136,10 @@
 (defn include-map [git-ref-id spec]
   (if-let [include-specs (:_cider-ci_include spec)]
     (let [included (get-inclusions git-ref-id include-specs)]
-      (deep-merge
-        (dissoc spec :_cider-ci_include)
-        included))
+      (include-map git-ref-id
+                   (deep-merge
+                     (dissoc spec :_cider-ci_include)
+                     included)))
     (->> spec
          (map (fn [[k v]] [k (expand git-ref-id v)]))
          (into {}))))
