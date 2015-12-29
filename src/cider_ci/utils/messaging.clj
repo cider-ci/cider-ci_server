@@ -65,6 +65,7 @@
 
 ;### logging ##################################################################
 (defonce ^:private logging-queue (atom nil))
+
 (defn- logging-receiver [ch metadata ^bytes payload]
   (let [message (try
                   (clojure.walk/keywordize-keys
@@ -74,6 +75,7 @@
     (logging/debug ["MESSAGE LOGGING" {:metadata metadata
                               :payload payload
                               :message message}])))
+
 (defn- bind-to-logging-queue [exchange-name]
   (lq/bind (get-channel) (:queue @logging-queue) exchange-name {:routing-key "#"}))
 
