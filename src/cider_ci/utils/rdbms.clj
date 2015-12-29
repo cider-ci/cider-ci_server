@@ -20,7 +20,7 @@
   false otherwise."
   []
   (try
-    (catcher/wrap-with-log-error
+    (catcher/with-logging {}
       (->> (jdbc/query (get-ds) ["SELECT true AS state"])
            first :state))
     (catch Exception _

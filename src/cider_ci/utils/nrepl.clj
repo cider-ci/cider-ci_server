@@ -23,14 +23,14 @@
 (defonce ^:private server nil)
 
 (defn stop-server []
-  (catcher/wrap-with-log-error
+  (catcher/with-logging {}
     (logging/info "stopping server")
     (nrepl-server/stop-server server)
     (def ^:private server nil)))
 
 (defn start-server []
   (logging/debug start-server [])
-  (catcher/wrap-with-log-error
+  (catcher/with-logging {}
     (when server (stop-server))
     (if (:enabled @conf)
       (let [args (flatten (seq (select-keys @conf [:port :bind])))]

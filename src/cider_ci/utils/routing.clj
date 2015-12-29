@@ -22,7 +22,7 @@
 
 (defn wrap-log-exception [handler]
   (fn [request]
-    (catcher/wrap-with-log-error
+    (catcher/with-logging {}
       (handler request))))
 
 

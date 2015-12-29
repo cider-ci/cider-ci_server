@@ -11,7 +11,6 @@
     [clojure.tools.logging :as logging]
     ))
 
-
 (defn exec
   ([command]
    (exec command {}))
@@ -19,7 +18,6 @@
    (let [options (conj {:watchdog 1000}
                        opts)]
      @(commons-exec/sh command options))))
-
 
 (defn exec-with-success-or-throw [& args]
   (let [res (apply exec args)]
@@ -29,7 +27,6 @@
                (str "Unsuccessful shell execution"
                     [args]
                     {:result res}))))))
-
 
 (defn exec-with-success? [& args]
   (= 0 (:exit (apply exec args))))

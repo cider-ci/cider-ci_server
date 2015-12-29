@@ -5,7 +5,7 @@
 
 (ns cider-ci.utils.ring
   (:require
-    [logbug.catcher :as catcher :refer [catch*]]
+    [logbug.catcher :as catcher]
     [clojure.tools.logging :as logging]
     )
   (:import
@@ -17,9 +17,11 @@
 
 (defn wrap-webstack-exception [handler]
   (fn [request]
-    (catch* :warn #(if (instance? WebstackException %)
+    (catcher/snatch
+      {:level :warn
+       :return-fn #(if (instance? WebstackException %)
                      (ex-data %)
-                     (throw %)))
-    (handler request)))
+                     (throw %))}
+      (handler request))))
 
 

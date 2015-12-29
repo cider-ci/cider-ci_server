@@ -40,8 +40,8 @@
                    (:connection @conf))))))
 
 (defn disconnect []
-  (catcher/wrap-with-suppress-and-log-warn (rmq/close @ch))
-  (catcher/wrap-with-suppress-and-log-warn (rmq/close @conn))
+  (catcher/snatch {} (rmq/close @ch))
+  (catcher/snatch {} (rmq/close @conn))
   (reset! ch nil)
   (reset! conn nil)
   )
@@ -89,7 +89,7 @@
 
 (defn- create-handler [message-receiver]
   (fn [ch metadata ^bytes payload]
-    (catcher/wrap-with-suppress-and-log-warn
+    (catcher/snatch {}
       (logging/debug {:message (conj
                                  (select-keys metadata [:type :exchange])
                                  {:payload (String. payload "UTF-8")})})
@@ -138,7 +138,7 @@
   ([name message options]
    (publish name message options name))
   ([exchange-name message options routing-key]
-   (catcher/wrap-with-log-error
+   (catcher/with-logging {:level :error}
      (memoized-create-exchange exchange-name)
      (logging/debug {:publish {:message message
                                :exchange exchange-name :routing-key routing-key}})
@@ -160,7 +160,7 @@
   ([exchange-name receiver queue-name]
    (listen exchange-name receiver queue-name {}))
   ([exchange-name receiver qname options]
-   (catcher/wrap-with-log-error
+   (catcher/with-logging {:level :warn}
      (create-exchange exchange-name)
      (let [queue-name (:queue
                         (lq/declare (get-channel)
@@ -179,7 +179,7 @@
   "Checks if the internal channel is open and returns true in case."
   []
   (try
-    (catcher/wrap-with-log-error (rmq/open? (get-channel)))
+    (catcher/with-logging {:level :warn} (rmq/open? (get-channel)))
     (catch Exception _ false)
     ))
 
@@ -187,7 +187,7 @@
 (defn initialize [new-conf]
   (logging/info [initialize new-conf])
   (reset! conf new-conf)
-  (catcher/wrap-with-log-error
+  (catcher/with-logging {:level :error}
     (connect (:connection @conf))
     (reset! logging-queue (lq/declare (get-channel)))
     (future
