@@ -19,12 +19,12 @@
         max-mem (.maxMemory rt)
         total-mem (.totalMemory rt)
         free-mem (.freeMemory rt)
-        free-ratio (double (/ free-mem max-mem))
-        ok? (> free-ratio 0.05)
+        used-ratio (double (/ (- total-mem free-mem) max-mem))
+        ok? (< used-ratio 0.90)
         stats {"Max" (Humanize/binaryPrefix max-mem)
                "Total" (Humanize/binaryPrefix total-mem)
                "Free" (Humanize/binaryPrefix free-mem)
-               :Free-Ratio (Double/parseDouble (String/format "%.2f" (into-array [free-ratio])))
+               :Used (Double/parseDouble (String/format "%.2f" (into-array [used-ratio])))
                :OK? ok?
                :status (if ok?  "OK" "CRITICAL")}]
     (when-not ok?
