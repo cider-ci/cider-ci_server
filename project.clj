@@ -2,7 +2,7 @@
 ; Licensed under the terms of the GNU Affero General Public License v3.
 ; See the "LICENSE.txt" file provided with this software.
 
-(defproject cider-ci/clj-utils "5.1.0"
+(defproject cider-ci/clj-utils "5.1.1"
   :description "Shared Clojure Utils for Cider-CI"
   :url "https://github.com/cider-ci/cider-ci_clj-utils"
   :license {:name "GNU AFFERO GENERAL PUBLIC LICENSE Version 3"
@@ -16,6 +16,7 @@
                  [clj-http "2.0.0"]
                  [clj-time "0.11.0"]
                  [clj-yaml "0.4.0"]
+                 [com.github.mfornos/humanize-slim "1.2.2"]
                  [com.mchange/c3p0 "0.9.5"] ; Don not upgrade this. It depends on Java 1.8.
                  [com.novemberain/langohr "3.4.2"]
                  [compojure "1.4.0"]

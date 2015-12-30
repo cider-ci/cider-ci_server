@@ -8,8 +8,10 @@
     [clj-commons-exec :as commons-exec]
     [clj-logging-config.log4j :as logging-config]
     [clojure.tools.logging :as logging]
+    )
+  (:import
+    [humanize Humanize]
     ))
-
 
 (defn check-memory-usage []
   (System/gc)
@@ -19,10 +21,10 @@
         free-mem (.freeMemory rt)
         free-ratio (double (/ free-mem max-mem))
         ok? (> free-ratio 0.05)
-        stats {"Max" max-mem
-               "Total" total-mem
-               "Free" free-mem
-               :Free-Ratio free-ratio
+        stats {"Max" (Humanize/binaryPrefix max-mem)
+               "Total" (Humanize/binaryPrefix total-mem)
+               "Free" (Humanize/binaryPrefix free-mem)
+               :Free-Ratio (Double/parseDouble (String/format "%.2f" (into-array [free-ratio])))
                :OK? ok?
                :status (if ok?  "OK" "CRITICAL")}]
     (when-not ok?
