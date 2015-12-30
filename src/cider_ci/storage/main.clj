@@ -23,12 +23,12 @@
 (defn create-dirs [stores]
   (doseq [store stores]
     (let [directory-path (:file_path store)]
-      (catcher/wrap-with-suppress-and-log-error
+      (catcher/snatch {}
         (logging/debug "mkdirs " directory-path)
         (fsutils/mkdirs directory-path)))))
 
 (defn -main [& args]
-  (catcher/wrap-with-log-warn
+  (catcher/with-logging {}
     (logbug.thrown/reset-ns-filter-regex #".*cider.ci.*")
     (config/initialize)
     (rdbms/initialize (get-db-spec :repository))

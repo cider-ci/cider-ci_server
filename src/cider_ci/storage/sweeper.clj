@@ -33,7 +33,7 @@
   (doseq [store  @conf]
     (doseq [file (.listFiles (io/file (:file_path store)))]
       (logging/debug file)
-      (catcher/wrap-with-suppress-and-log-error
+      (catcher/snatch {}
         (let [abs-path (.getAbsolutePath file)
               file-name (fsutils/name file)]
               (logging/debug "checking" {:abs-path abs-path :file-name file-name})

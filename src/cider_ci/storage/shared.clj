@@ -18,12 +18,12 @@
 
 (defn delete-file [path]
   (logging/debug delete-file [path])
-  (catcher/wrap-with-suppress-and-log-error
+  (catcher/snatch {}
     (fsutils/delete path)))
 
 (defn delete-row [table id]
   (logging/debug delete-row [table id])
-  (catcher/wrap-with-suppress-and-log-error
+  (catcher/snatch {}
     (jdbc/delete! (rdbms/get-ds) table ["id = ?::uuid" id])))
 
 (defn delete-file-and-row [store file-row]

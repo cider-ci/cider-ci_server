@@ -7,10 +7,10 @@
   :license {:name "GNU AFFERO GENERAL PUBLIC LICENSE Version 3"
             :url "http://www.gnu.org/licenses/agpl-3.0.html"}
   :dependencies [
-                 [cider-ci/clj-auth "4.0.1"]
-                 [cider-ci/clj-utils "4.2.1"]
+                 [cider-ci/clj-auth "5.0.1"]
+                 [cider-ci/clj-utils "5.1.2"]
 
-                 [logbug "2.0.0-beta.10"]
+                 [logbug "3.0.0"]
                  [drtom/honeysql "1.3.0-beta.4"]
                  [me.raynes/fs "1.4.6"]
                  [org.clojure/tools.nrepl "0.2.12"]
@@ -21,8 +21,8 @@
               :repositories [["tmp" {:url "http://maven-repo-tmp.drtom.ch" :snapshots false}]]} }
   :resource-paths ["./config" "../config" "./resources"]
   :aot [cider-ci.storage.main]
+  ;:aot :all
   :main cider-ci.storage.main
   :repositories [["tmp" {:url "http://maven-repo-tmp.drtom.ch" :snapshots false}]]
-  :jvm-opts ["-Xmx128m"]
   :repl-options {:timeout  120000}
   )

@@ -16,6 +16,7 @@
     [cider-ci.utils.http-server :as http-server]
     [cider-ci.utils.rdbms :as rdbms :refer [get-ds]]
     [cider-ci.utils.routing :as routing]
+    [cider-ci.utils.runtime :as runtime]
 
     [clojure.data.json :as json]
     [clojure.java.io :as io]
@@ -104,7 +105,7 @@
 (defn executor-may-upload-trial-attachments? [request]
   (or (-> request :authenticated-executor :upload_trial_attachments)
       (do (let [trial-id (-> request :route-params :id)]
-            (catcher/wrap-with-suppress-and-log-warn
+            (catcher/snatch {}
               (jdbc/insert!  (rdbms/get-ds) :trial_issues
                 {:trial_id trial-id
                  :id (clj-uuid/v5 clj-uuid/+null+ (str trial-id " executor-upload-forbidden"))
@@ -128,7 +129,7 @@
   (or (-> request :authenticated-executor :upload_tree_attachments)
       (do (let [trial-token (-> request :headers (get "trial-token"))
                 job-id (get-job-id-for-trial-token trial-token)]
-            (catcher/wrap-with-suppress-and-log-warn
+            (catcher/snatch {}
               (jdbc/insert!  (rdbms/get-ds) :job_issues
                             {:job_id job-id
                              :id (clj-uuid/v5 clj-uuid/+null+ (str job-id " executor-upload-forbidden"))
@@ -165,7 +166,7 @@
      :body "The store for this path could not be found!"}))
 
 (defn get-file [request]
-  (catcher/wrap-with-suppress-and-log-warn
+  (catcher/snatch {}
     (when-let [store (find-store request)]
       (when-let [row (get-row request)]
         (let [file-path (-> (str (:file_path store) "/" (:id row)) clj-fs/file
@@ -183,14 +184,14 @@
 ;##### status dispatch ########################################################
 
 (defn status-handler [request]
-  (let [stati {:rdbms (rdbms/check-connection)}]
-    (if (every? identity (vals stati))
-      {:status 200
-       :body (json/write-str stati)
-       :headers {"content-type" "application/json;charset=utf-8"} }
-      {:status 511
-       :body (json/write-str stati)
-       :headers {"content-type" "application/json;charset=utf-8"} })))
+  (let [rdbms-status (rdbms/check-connection)
+        memory-status (runtime/check-memory-usage)
+        body (json/write-str {:rdbms rdbms-status
+                              :memory memory-status})]
+    {:status  (if (and rdbms-status (:OK? memory-status))
+                200 499 )
+     :body body
+     :headers {"content-type" "application/json;charset=utf-8"} }))
 
 (defn wrap-status-dispatch [default-handler]
   (cpj/routes
