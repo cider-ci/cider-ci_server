@@ -97,7 +97,7 @@
 (defn- evaluate-trials-and-update
   "Returns a truthy value when the state of the task has changed."
   [task]
-  (catcher/wrap-with-log-error
+  (catcher/with-logging {}
     (let [id (:id task)
           task (get-task id)
           trial-states (get-trial-states task)
@@ -109,7 +109,7 @@
 ;### create trial #############################################################
 
 (defn create-trial [task params]
-  (catcher/wrap-with-log-error
+  (catcher/with-logging {}
     (let [trial (jdbc/with-db-transaction [tx (rdbms/get-ds)]
                   (let [task-id (:id task)
                         spec (get-task-spec task-id)
@@ -174,7 +174,7 @@
 ;### initialize ###############################################################
 
 (defn initialize []
-  (catcher/wrap-with-log-error
+  (catcher/with-logging {}
     (messaging/listen "task.create-trials"
                       #'create-trials
                       "task.create-trials")))

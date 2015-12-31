@@ -30,7 +30,7 @@
                    (:id trial)]) first :count))
 
 (defn post-trial [url basic-auth-pw data]
-  (catcher/wrap-with-log-warn
+  (catcher/with-logging {}
     (http-client/post url
                       {:content-type :json
                        :body (json/write-str data)
@@ -43,7 +43,7 @@
       (throw (ex-info "Entity not found." {:table-name table-name :id id}))))
 
 (defn dispatch [trial-id executor-id]
-  (catcher/wrap-with-suppress-and-log-error
+  (catcher/snatch {}
     (let [trial (get-entity-or-throw "trials" trial-id)
           executor (get-entity-or-throw "executors" executor-id)]
       (try (trials/wrap-trial-with-issue-and-throw-again

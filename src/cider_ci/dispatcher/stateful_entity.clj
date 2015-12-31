@@ -41,7 +41,7 @@
 
 
 (defn evaluate-and-update [tablename id states]
-  (catcher/wrap-with-log-error
+  (catcher/with-logging {}
     (let [update-to #(update-state tablename id % {:assert-existence true})]
       (cond
         (some #{"passed"} states) (update-to "passed")

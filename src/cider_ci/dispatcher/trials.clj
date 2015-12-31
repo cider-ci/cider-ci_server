@@ -77,7 +77,7 @@
              {:state new-state}))))
 
 (defn update-trial [params]
-  (catcher/wrap-with-suppress-and-log-warn
+  (catcher/snatch {}
     (let [id (:id params)]
       (try
         (assert id)

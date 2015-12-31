@@ -13,7 +13,7 @@
 
     [clj-logging-config.log4j :as logging-config]
     [clojure.tools.logging :as logging]
-    [logbug.catcher :as catcher :refer [catch*]]
+    [logbug.catcher :as catcher :refer [snatch]]
     [logbug.debug :as debug]
     [logbug.ring :refer [wrap-handler-with-logging]]
 

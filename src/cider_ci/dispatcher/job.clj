@@ -49,7 +49,7 @@
 
 
 (defn evaluate-and-update [job-id]
-  (catcher/wrap-with-log-warn
+  (catcher/with-logging {}
     (let [job (get-job job-id)
           task-states (get-task-states job)
           new-state (evalute-new-state job task-states)]
@@ -57,7 +57,7 @@
 
 
 (defn initialize []
-  (catcher/wrap-with-log-error
+  (catcher/with-logging {}
     (messaging/listen "job.evaluate-and-update"
                       (fn [message] (evaluate-and-update (:id message)))
                       "job.evaluate-and-update")))

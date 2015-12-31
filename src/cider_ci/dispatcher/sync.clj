@@ -43,7 +43,7 @@
                      :error [(str "This trial was lost on executor " (:name executor))]}))))
 
 (defn sync [executor data]
-  (catcher/wrap-with-log-warn
+  (catcher/with-logging {}
     (fail-trials-lost-on-executor executor (:trials data))
     (update-executor/update-when-changed executor data)
     (ping/update-last-ping-at executor)

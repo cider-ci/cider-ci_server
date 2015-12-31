@@ -92,7 +92,7 @@
       sql-format))
 
 (defn- abort-running-detached-jobs [_]
-  (catcher/wrap-with-suppress-and-log-error
+  (catcher/snatch {}
     (->> (jdbc/query (get-ds) detached-jobs-query)
          (map :id)
          (map #(abort-job % {}))
@@ -135,7 +135,7 @@
 ;#### initialize ##############################################################
 
 (defn initialize []
-  (catcher/wrap-with-log-error
+  (catcher/with-logging {}
     (messaging/listen "repository.updated" #'abort-running-detached-jobs)
     (start-dead-executor-trials-aborter)))
 

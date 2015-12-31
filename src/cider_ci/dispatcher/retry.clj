@@ -31,7 +31,7 @@
        doall))
 
 (defn retry-and-resume [job-id params]
-  (catcher/wrap-with-log-error
+  (catcher/with-logging {}
     (let [job (job/get-job job-id)
           job-id (:id job) ]
       (when-not job

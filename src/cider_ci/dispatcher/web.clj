@@ -21,7 +21,7 @@
     [cider-ci.utils.rdbms :as rdbms]
     [cider-ci.utils.routing :as routing]
     [cider-ci.utils.ring :as ci-utils-ring]
-
+    [cider-ci.utils.runtime :as runtime]
 
     [clojure.data :as data]
     [clojure.data.json :as json]
@@ -35,6 +35,9 @@
     [logbug.debug :as debug :refer [÷> ÷>>]]
     [logbug.ring :refer [wrap-handler-with-logging]]
     [logbug.thrown :as thrown]
+    )
+  (:import
+    [humanize Humanize]
     ))
 
 
@@ -47,19 +50,20 @@
                                 :id id))
     {:status 200}))
 
+
 ;##### status dispatch ########################################################
 
 (defn status-handler [request]
-  (let [stati {:rdbms (rdbms/check-connection)
-               :messaging (messaging/check-connection)
-               }]
-    (if (every? identity (vals stati))
-      {:status 200
-       :body (json/write-str stati)
-       :headers {"content-type" "application/json;charset=utf-8"} }
-      {:status 511
-       :body (json/write-str stati)
-       :headers {"content-type" "application/json;charset=utf-8"} })))
+  (let [rdbms-status (rdbms/check-connection)
+        messaging-status (rdbms/check-connection)
+        memory-status (runtime/check-memory-usage)
+        body (json/write-str {:rdbms rdbms-status
+                              :messaging messaging-status
+                              :memory memory-status})]
+    {:status  (if (and rdbms-status messaging-status (:OK? memory-status))
+                200 499 )
+     :body body
+     :headers {"content-type" "application/json;charset=utf-8"} }))
 
 
 ;#### sync ####################################################################
@@ -142,7 +146,7 @@
     ))
 
 (defn build-main-handler [context]
-  (÷> (wrap-handler-with-logging :trace)
+  (÷> (wrap-handler-with-logging :debug)
       (cpj.handler/api routes)
       routing/wrap-shutdown
       (ring.middleware.json/wrap-json-body {:keywords? true})

@@ -26,11 +26,11 @@
 
 
 (defn ^:private sweep-in-dispatch-timeout []
-  (catcher/wrap-with-suppress-and-log-error
+  (catcher/snatch {}
     (doseq [id (->> (dispatch-timeout-query)
                     (jdbc/query (get-ds))
                     (map :id))]
-      (catcher/wrap-with-suppress-and-log-error
+      (catcher/snatch {}
         (trials/update-trial {:id id :state "aborted" :error ["dispatch timeout"]})))))
 
 

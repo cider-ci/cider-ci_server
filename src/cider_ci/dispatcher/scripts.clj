@@ -15,7 +15,7 @@
 
     [clj-logging-config.log4j :as logging-config]
     [clojure.tools.logging :as logging]
-    [logbug.catcher :as catcher :refer [catch*]]
+    [logbug.catcher :as catcher :refer [snatch]]
     [logbug.debug :as debug :refer [÷> ÷>>]]
     [logbug.ring :refer [wrap-handler-with-logging]]
     [logbug.thrown :as logbug.thrown]
@@ -82,8 +82,8 @@
       (into {})))
 
 (defn- patch-script [trial-id script-key data]
-  (catch*
-    :error {:status 500 :body "Update error, see the logs for details."}
+  (snatch
+    {:return-expr {:status 500 :body "Update error, see the logs for details."}}
     (-> data
         remove-null-values
         snake-case-top-level-keys
@@ -110,8 +110,7 @@
                            (type data)))))
 
 (defn- patch-field [trial-id script-key field data]
-  (catch*
-    :error {:status 500 :body "Error when patching script filed, see the logs for details."}
+  (snatch {:return-expr {:status 500 :body "Error when patching script filed, see the logs for details."}}
     (let [current-value (get-current-value trial-id script-key field)
           new-value (build-new-value current-value data)]
       ;(logging/info 'PATCH-FIELD 'NEW-VALUE {:value new-value :type (type new-value)})
