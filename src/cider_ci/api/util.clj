@@ -28,7 +28,7 @@
 (defn do-http-request [method url params]
   (logging/debug [method url params])
   (let [basic-auth (:basic_auth (get-config))]
-    (catcher/wrap-with-log-error
+    (catcher/with-logging {}
       (logging/debug  {:method method :url url :basic-auth basic-auth})
       (http-client/request
         (conj {:basic-auth [(:username basic-auth) (:password basic-auth)]

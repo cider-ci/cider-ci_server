@@ -9,11 +9,11 @@
             :url "http://www.gnu.org/licenses/agpl-3.0.html"}
   :dependencies [
                  [cheshire "5.5.0"]
-                 [cider-ci/clj-auth "3.1.0"]
-                 [cider-ci/clj-utils "3.3.2"]
+                 [cider-ci/clj-auth "5.0.1"]
+                 [cider-ci/clj-utils "5.1.2"]
                  [cider-ci/open-session "1.2.0"]
                  [drtom/honeysql "1.3.0-beta.4"]
-                 [logbug "2.0.0-beta.6"]
+                 [logbug "3.0.0"]
 
                  [json-roa/clj-utils "1.0.0"]
                  [org.clojure/tools.nrepl "0.2.12"]
@@ -26,13 +26,12 @@
   :source-paths ["src"]
   :test-paths ["test"]
   :profiles {:dev
-             {:dependencies [[midje "1.8.2"]]
+             {:dependencies [[midje "1.8.3"]]
               :plugins [[lein-midje "3.1.1"]]
               :repositories [["tmp" {:url "http://maven-repo-tmp.drtom.ch" :snapshots false}]]} }
   :resource-paths ["./config" "../config" "./resources"]
-  :aot [cider-ci.api.main]
+  :aot :all
   :main cider-ci.api.main
-  :jvm-opts ["-Xmx128m"]
   :repl-options {:timeout  120000}
   )
 

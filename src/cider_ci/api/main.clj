@@ -9,7 +9,6 @@
     [cider-ci.utils.http :as utils-http]
     [cider-ci.api.resources :as resources]
     [cider-ci.api.web :as web]
-    [cider-ci.auth.core :as auth]
     [cider-ci.utils.config :as config :refer [get-config]]
     [logbug.debug :as debug]
     [cider-ci.utils.http :as http]
@@ -23,13 +22,12 @@
     ))
 
 (defn -main [& args]
-  (catcher/wrap-with-log-error
+  (catcher/with-logging {}
     (logbug.thrown/reset-ns-filter-regex #".*cider.ci.*")
     (config/initialize)
     (rdbms/initialize (config/get-db-spec :api))
     (messaging/initialize (:messaging (get-config)))
     (nrepl/initialize (-> (get-config) :services :api :nrepl))
-    (auth/initialize (select-keys (get-config) [:secret :session :basic_auth]))
     (utils-http/initialize (get-config))
     (web/initialize)
     nil))

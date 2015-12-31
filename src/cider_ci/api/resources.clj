@@ -33,13 +33,15 @@
     [compojure.route :as cpj.route]
     [json-roa.ring-middleware.request]
     [json-roa.ring-middleware.response]
-    [logbug.catcher :as catcher]
-    [logbug.debug :as debug]
-    [logbug.ring :as logbug-ring :refer [wrap-handler-with-logging o->]]
     [ring.adapter.jetty :as jetty]
     [ring.middleware.cookies :as cookies]
     [ring.middleware.json]
     [ring.util.response :as response]
+
+    [logbug.catcher :as catcher]
+    [logbug.debug :as debug :refer [÷> ÷>>]]
+    [logbug.ring :as logbug-ring :refer [wrap-handler-with-logging]]
+
     ))
 
 
@@ -108,14 +110,14 @@
             )))
 
 (defn build-routes-handler []
-  ( o-> wrap-handler-with-logging
-        routes
-        (json-roa.ring-middleware.request/wrap json-roa/handler)
-        json-roa.ring-middleware.response/wrap
-        wrap-includ-storage-service-prefix
-        wrapp-error
-        ring.middleware.json/wrap-json-response
-        wrap-keywordize-query-params))
+  (÷> wrap-handler-with-logging
+      routes
+      (json-roa.ring-middleware.request/wrap json-roa/handler)
+      json-roa.ring-middleware.response/wrap
+      wrap-includ-storage-service-prefix
+      wrapp-error
+      ring.middleware.json/wrap-json-response
+      wrap-keywordize-query-params))
 
 
 ;### Debug ####################################################################
