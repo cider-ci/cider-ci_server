@@ -9,16 +9,21 @@
     [cider-ci.utils.rdbms :as rdbms :refer [get-ds]]
     [clojure.java.jdbc :as jdbc]
     [clojure.tools.logging :as logging]
-    [drtom.logbug.catcher :as catcher]
-    [drtom.logbug.debug :as debug]
+    [logbug.catcher :as catcher]
+    [logbug.debug :as debug]
     [honeysql.sql :refer :all]
     ))
 
 (defn- get-job-retention-interval []
-  (catcher/wrap-with-suppress-and-log-warn
-    (when-let [job-retention-duration-secs
-               (parse-config-duration-to-seconds :job_retention_duration)]
-      (str job-retention-duration-secs " Seconds "))))
+  (catcher/snatch {}
+    (when-let [job-retention-duration-hours
+               (-> (parse-config-duration-to-seconds :job_retention_duration)
+                   (/ (* 60 60))
+                   BigDecimal.
+                   .toBigInteger)]
+      (when-not (>= job-retention-duration-hours 1)
+        (throw (IllegalArgumentException. "Job retention duration must be at least one hour")))
+      (str job-retention-duration-hours " Hours"))))
 
 (defn- job-overdue-query-part [job-retention-interval]
   (str "(jobs.updated_at < (now() - interval '" job-retention-interval "'))"))
@@ -52,7 +57,7 @@
        (jdbc/query (get-ds))))
 
 (defn- sweep-jobs []
-  (catcher/wrap-with-suppress-and-log-error
+  (catcher/snatch {}
     (when-let [ids-query (to-be-swept-jobs-query)]
       (when-let [job-ids (->> ids-query
                               (jdbc/query (get-ds))

@@ -27,7 +27,7 @@
 ;### create job #########################################################
 
 (defn get-dotfile-specification [tree-id job-key]
-  (catcher/wrap-with-log-warn
+  (catcher/with-logging {}
     (->> (project-configuration/get-project-configuration tree-id)
          debug/identity-with-logging
          :jobs
@@ -66,7 +66,7 @@
 
 
 (defn create [params]
-  (catcher/wrap-with-log-error
+  (catcher/with-logging {}
     (let [{tree-id :tree_id job-key :key} params
           spec (-> (get-dotfile-specification tree-id job-key)
                    normalizer/normalize-job-spec )

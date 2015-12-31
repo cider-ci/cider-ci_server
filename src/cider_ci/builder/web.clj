@@ -4,7 +4,7 @@
 
 (ns cider-ci.builder.web
   (:require
-    [cider-ci.auth.core :as auth]
+    [cider-ci.auth.authorize :as authorize]
     [cider-ci.auth.http-basic :as http-basic]
     [cider-ci.builder.jobs :as jobs]
     [cider-ci.builder.util :as util]
@@ -13,17 +13,21 @@
     [cider-ci.utils.messaging :as messaging]
     [cider-ci.utils.rdbms :as rdbms]
     [cider-ci.utils.routing :as routing]
-    [clj-logging-config.log4j :as logging-config]
+    [cider-ci.utils.runtime :as runtime]
+
     [clojure.data.json :as json]
-    [clojure.tools.logging :as logging]
     [clojure.walk :refer [keywordize-keys]]
     [compojure.core :as cpj]
-    [drtom.logbug.catcher :as catcher]
-    [drtom.logbug.debug :as debug]
-    [drtom.logbug.ring :refer [wrap-handler-with-logging]]
-    [drtom.logbug.thrown :as thrown]
     [ring.middleware.json]
+
+    [clj-logging-config.log4j :as logging-config]
+    [clojure.tools.logging :as logging]
+    [logbug.catcher :as catcher]
+    [logbug.debug :as debug :refer [÷> ÷>>]]
+    [logbug.ring :refer [wrap-handler-with-logging]]
+    [logbug.thrown :as thrown]
     ))
+
 
 
 (defn top-handler [request]
@@ -36,16 +40,17 @@
 ;##### status dispatch ########################################################
 
 (defn status-handler [request]
-  (let [stati {:rdbms (rdbms/check-connection)
-               :messaging (messaging/check-connection)
-               }]
-    (if (every? identity (vals stati))
-      {:status 200
-       :body (json/write-str stati)
-       :headers {"content-type" "application/json;charset=utf-8"} }
-      {:status 511
-       :body (json/write-str stati)
-       :headers {"content-type" "application/json;charset=utf-8"} })))
+  (let [rdbms-status (rdbms/check-connection)
+        messaging-status (rdbms/check-connection)
+        memory-status (runtime/check-memory-usage)
+        body (json/write-str {:rdbms rdbms-status
+                              :messaging messaging-status
+                              :memory memory-status})]
+    {:status  (if (and rdbms-status messaging-status (:OK? memory-status))
+                200 499 )
+     :body body
+     :headers {"content-type" "application/json;charset=utf-8"} }))
+
 
 (defn wrap-status-dispatch [default-handler]
   (cpj/routes
@@ -56,7 +61,7 @@
 
 (defn create-job [request]
   (try
-    (catcher/wrap-with-log-warn
+    (catcher/with-logging {}
       {:status 201
        :body (jobs/create
                (->> request
@@ -72,7 +77,7 @@
 
 (defn available-jobs [request]
   (try
-    (catcher/wrap-with-log-warn
+    (catcher/with-logging {}
       {:status 200
        :headers {"content-type" "application/json;charset=utf-8"}
        :body (util/json-write-str
@@ -101,24 +106,17 @@
 ;#### the main handler ########################################################
 
 (defn build-main-handler [context]
-  ( -> top-handler
-       (wrap-handler-with-logging 'cider-ci.builder.web)
-       routing/wrap-shutdown
-       (wrap-handler-with-logging 'cider-ci.builder.web)
-       wrap-status-dispatch
-       (wrap-handler-with-logging 'cider-ci.builder.web)
-       wrap-jobs
-       (wrap-handler-with-logging 'cider-ci.builder.web)
-       ring.middleware.json/wrap-json-response
-       ring.middleware.json/wrap-json-body
-       (wrap-handler-with-logging 'cider-ci.builder.web)
-       (auth/wrap-authenticate-and-authorize-service)
-       (wrap-handler-with-logging 'cider-ci.builder.web)
-       (routing/wrap-prefix context)
-       (wrap-handler-with-logging 'cider-ci.builder.web)
-       (http-basic/wrap {:service true})
-       (wrap-handler-with-logging 'cider-ci.builder.web)
-       ))
+  (÷> wrap-handler-with-logging
+      top-handler
+      routing/wrap-shutdown
+      wrap-status-dispatch
+      wrap-jobs
+      ring.middleware.json/wrap-json-response
+      ring.middleware.json/wrap-json-body
+      (routing/wrap-prefix context)
+      (authorize/wrap-require! {:service true})
+      (http-basic/wrap {:service true})
+      ))
 
 
 ;#### the server ##############################################################

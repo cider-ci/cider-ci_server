@@ -6,10 +6,10 @@
   (:require
     [cider-ci.builder.util :as util]
     [cider-ci.utils.config :as config :refer [get-config]]
-    [drtom.logbug.debug :as debug]
+    [logbug.debug :as debug]
     [cider-ci.utils.http :as http]
     [cider-ci.utils.rdbms :as rdbms]
-    [drtom.logbug.catcher :as catcher]
+    [logbug.catcher :as catcher]
     [clj-yaml.core :as yaml]
     [clojure.core.memoize :as memo]
     [clojure.java.jdbc :as jdbc]
@@ -19,7 +19,7 @@
 
 
 (defn- parse-path-content [path content]
-  (catcher/wrap-with-log-warn
+  (catcher/with-logging {}
     (let [path (clojure.string/lower-case path)]
       (cond
         (re-matches #".*(yml|yaml)" path) (yaml/parse-string content)
@@ -30,7 +30,7 @@
   (let [url (http/build-service-url
               :repository
               (str "/path-content/" git-ref-id "/" path))
-        res (catcher/wrap-with-log :info (http/get url {}))
+        res (http/get url {})
         body (:body res)]
     (parse-path-content path body)))
 

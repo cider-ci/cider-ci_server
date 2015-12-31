@@ -5,7 +5,7 @@
 (ns cider-ci.builder.task
   (:require
     [clojure.tools.logging :as logging]
-    [drtom.logbug.debug :as debug]
+    [logbug.debug :as debug]
     [cider-ci.utils.rdbms :as rdbms]
     [cider-ci.builder.spec :as spec]
     [clojure.java.jdbc :as jdbc]

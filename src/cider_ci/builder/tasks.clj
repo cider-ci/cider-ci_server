@@ -7,25 +7,25 @@
     [cider-ci.builder.spec :as spec]
     [cider-ci.builder.task :as task]
     [cider-ci.builder.util :as util]
-    [cider-ci.utils.config-loader :as config-loader]
     [cider-ci.utils.map :as map :refer [deep-merge]]
     [cider-ci.utils.map :refer [convert-to-array]]
     [cider-ci.utils.messaging :as messaging]
     [cider-ci.utils.rdbms :as rdbms]
-    [clj-logging-config.log4j :as  logging-config]
+
     [clj-yaml.core :as yaml]
     [clojure.java.jdbc :as jdbc]
-    [clojure.tools.logging :as logging]
-    [drtom.logbug.catcher :as catcher]
-    [drtom.logbug.debug :as debug]
-    [drtom.logbug.thrown :as thrown]
-    [drtom.logbug.thrown]
     [langohr.basic     :as lb]
     [langohr.channel   :as lch]
     [langohr.consumers :as lc]
     [langohr.core      :as rmq]
     [langohr.exchange  :as le]
     [langohr.queue     :as lq]
+
+    [clj-logging-config.log4j :as  logging-config]
+    [clojure.tools.logging :as logging]
+    [logbug.catcher :as catcher]
+    [logbug.debug :as debug]
+    [logbug.thrown :as thrown]
     ))
 
 
@@ -171,7 +171,7 @@
 ;### initialization ###########################################################
 (defn initialize []
   (logging/debug "initialize")
-  (catcher/wrap-with-log-warn
+  (catcher/with-logging {}
     (messaging/listen "job.create-tasks-and-trials"
                       #'create-tasks-and-trials
                       "job.create-tasks-and-trials")))

@@ -4,7 +4,6 @@
 
 (ns cider-ci.builder.main
   (:require
-    [cider-ci.auth.core :as auth]
     [cider-ci.builder.jobs.sweeper :as jobs.sweeper]
     [cider-ci.builder.jobs.trigger :as jobs.trigger]
     [cider-ci.builder.repository :as repository]
@@ -18,22 +17,21 @@
     [cider-ci.utils.rdbms :as rdbms]
     [clojure.java.jdbc :as jdbc]
     [clojure.tools.logging :as logging]
-    [drtom.logbug.catcher :as catcher]
-    [drtom.logbug.debug :as debug]
-    [drtom.logbug.thrown]
+    [logbug.catcher :as catcher]
+    [logbug.debug :as debug]
+    [logbug.thrown]
     [pg-types.all]
     ))
 
 
 (defn -main [& args]
-  (catcher/wrap-with-log-error
-    (drtom.logbug.thrown/reset-ns-filter-regex #".*cider.ci.*")
+  (catcher/with-logging {}
+    (logbug.thrown/reset-ns-filter-regex #".*cider.ci.*")
     (config/initialize)
     (rdbms/initialize (get-db-spec :builder))
     (nrepl/initialize (-> (get-config) :services :builder :nrepl))
     (messaging/initialize (:messaging (get-config)))
     (tasks/initialize)
-    (auth/initialize (select-keys (get-config) [:secret :session :basic_auth]))
     (web/initialize)
     (jobs.trigger/initialize)
     (jobs.sweeper/initialize)

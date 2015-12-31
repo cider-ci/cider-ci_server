@@ -8,8 +8,8 @@
     [clj-logging-config.log4j :as logging-config]
     [clojure.core.memoize :as memo]
     [clojure.tools.logging :as logging]
-    [drtom.logbug.catcher :as catcher]
-    [drtom.logbug.debug :as debug]
+    [logbug.catcher :as catcher]
+    [logbug.debug :as debug]
     [clojure.data.json :as json]
     ))
 
@@ -17,7 +17,7 @@
   (let [url (http/build-service-url
               :repository
               (str "/project-configuration/" tree-id))
-        res (try (catcher/wrap-with-log :warn (http/get url {})))
+        res (http/get url {})
         body (:body res)]
     (json/read-str body :key-fn keyword)))
 

@@ -5,7 +5,7 @@
 (ns cider-ci.builder.spec
   (:require
     [cider-ci.builder.util :as util]
-    [drtom.logbug.debug :as debug]
+    [logbug.debug :as debug]
     [cider-ci.utils.json-protocol]
     [cider-ci.utils.rdbms :as rdbms]
     [clj-uuid]

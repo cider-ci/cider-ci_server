@@ -10,12 +10,12 @@
     [cider-ci.builder.repository :as repository]
     [cider-ci.builder.spec :as spec]
     [cider-ci.builder.tasks :as tasks]
-    [drtom.logbug.debug :as debug]
+    [logbug.debug :as debug]
     [cider-ci.utils.http :as http]
     [cider-ci.utils.map :refer [deep-merge convert-to-array]]
     [cider-ci.utils.messaging :as messaging]
     [cider-ci.utils.rdbms :as rdbms]
-    [drtom.logbug.catcher :as catcher]
+    [logbug.catcher :as catcher]
     [clj-logging-config.log4j :as logging-config]
     [clj-yaml.core :as yaml]
     [clojure.java.jdbc :as jdbc]
@@ -96,7 +96,7 @@
 (declare trigger-supermodules-jobs)
 
 (defn- trigger-jobs [tree-id]
-  (catcher/wrap-with-suppress-and-log-debug
+  (catcher/snatch {}
     (->> (project-configuration/get-project-configuration tree-id)
          :jobs
          convert-to-array
@@ -106,7 +106,7 @@
          (filter jobs.dependencies/fulfilled?)
          (map jobs/create)
          doall))
-  (catcher/wrap-with-suppress-and-log-debug
+  (catcher/snatch {}
     (trigger-supermodules-jobs tree-id)) nil)
 
 (defn- trigger-supermodules-jobs [tree-id]
@@ -123,7 +123,7 @@
 ;### listen to branch updates #################################################
 
 (defn- evaluate-branch-updated-message [msg]
-  (catcher/wrap-with-log-warn
+  (catcher/with-logging {}
     (logging/debug 'evaluate-branch-updated-message {:msg msg})
     (-> (jdbc/query
           (rdbms/get-ds)
