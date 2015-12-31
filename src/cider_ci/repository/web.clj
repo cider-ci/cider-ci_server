@@ -15,6 +15,7 @@
     [cider-ci.utils.messaging :as messaging]
     [cider-ci.utils.rdbms :as rdbms]
     [cider-ci.utils.routing :as routing]
+    [cider-ci.utils.runtime :as runtime]
 
     [clj-time.core :as time]
     [clojure.data :as data]
@@ -73,16 +74,16 @@
 ;##### status dispatch ########################################################
 
 (defn status-handler [request]
-  (let [stati {:rdbms (rdbms/check-connection)
-               :messaging (messaging/check-connection)
-               }]
-    (if (every? identity (vals stati))
-      {:status 200
-       :body (json/write-str stati)
-       :headers {"content-type" "application/json;charset=utf-8"} }
-      {:status 511
-       :body (json/write-str stati)
-       :headers {"content-type" "application/json;charset=utf-8"} })))
+  (let [rdbms-status (rdbms/check-connection)
+        messaging-status (rdbms/check-connection)
+        memory-status (runtime/check-memory-usage)
+        body (json/write-str {:rdbms rdbms-status
+                              :messaging messaging-status
+                              :memory memory-status})]
+    {:status  (if (and rdbms-status messaging-status (:OK? memory-status))
+                200 499 )
+     :body body
+     :headers {"content-type" "application/json;charset=utf-8"} }))
 
 (defn wrap-status-dispatch [default-handler]
   (cpj/routes

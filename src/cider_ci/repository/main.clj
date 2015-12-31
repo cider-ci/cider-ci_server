@@ -15,7 +15,7 @@
     ))
 
 (defn -main [& args]
-  (catcher/wrap-with-log-error
+  (catcher/with-logging {}
     (logbug.thrown/reset-ns-filter-regex #".*cider.ci.*")
     (config/initialize)
     (rdbms/initialize (get-db-spec :dispatcher))

@@ -52,7 +52,7 @@
 
 
 (defn ls-tree [repository id include-regex exclude-regex]
-  (catcher/wrap-with-log-warn
+  (catcher/with-logging {}
     (->> (-> (system/exec-with-success-or-throw
                ["git" "ls-tree" "-r" "--name-only" id]
                {:dir (path repository)})

@@ -26,7 +26,7 @@
 
 
 (defn get-repository-by-update-notification-token [token]
-  (catcher/wrap-with-suppress-and-log-warn
+  (catcher/snatch {}
     (->> (jdbc/query (rdbms/get-ds)
                      ["SELECT * from repositories WHERE update_notification_token = ?"
                       token]) first )))

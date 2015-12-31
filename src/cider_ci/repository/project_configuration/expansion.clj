@@ -145,7 +145,7 @@
          (into {}))))
 
 (defn expand [git-ref-id spec]
-  (catcher/wrap-with-log-warn
+  (catcher/with-logging {}
     (cond
       (map? spec) (->> spec
                        (include-map git-ref-id)

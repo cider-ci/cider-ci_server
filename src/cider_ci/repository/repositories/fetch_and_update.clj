@@ -71,7 +71,7 @@
     branches))
 
 (defn- update-branches [repository]
-  (catcher/wrap-with-log-error
+  (catcher/with-logging {}
     (jdbc/with-db-transaction [tx (rdbms/get-ds)]
       (let [repository-path (git.repositories/path repository)
             git-branches (get-git-branches repository-path)
@@ -95,7 +95,7 @@
     (messaging/publish queue-name branch)))
 
 (defn- send-branch-update-notifications [updated-branches]
-  (catcher/wrap-with-log-error
+  (catcher/with-logging {}
     (doseq [action [:created :deleted :updated]]
       (->> (action updated-branches)
            (map #(send-branch-update-notification action %))
@@ -107,7 +107,7 @@
                      (select-keys repository [:git_url :name])))
 
 (defn git-update [repository]
-  (catcher/wrap-with-log-error
+  (catcher/with-logging {}
     (let [dir (git.repositories/path repository)
           _ (assert-directory-exists! dir)
           updated-branches (update-branches repository)]
@@ -119,7 +119,7 @@
         (send-repository-update-notification repository)))))
 
 (defn git-initialize [repository]
-  (catcher/wrap-with-log-error
+  (catcher/with-logging {}
     (let [dir (git.repositories/path repository)]
       (system/exec-with-success-or-throw ["rm" "-rf" dir])
       (system/exec-with-success-or-throw
@@ -132,7 +132,7 @@
     {:watchdog (* 10 60 1000), :dir path, :env {"TERM" "VT-100"}}))
 
 (defn  git-fetch-or-initialize [repository]
-  (catcher/wrap-with-suppress-and-log-warn
+  (catcher/snatch {}
     (let [path (git.repositories/path repository)]
       (if (fs/exists? path)
         (git-fetch repository path)

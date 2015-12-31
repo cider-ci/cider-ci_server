@@ -58,7 +58,7 @@
       true)))
 
 (defn- git-fetch-and-update-fn [state repository]
-  (catcher/wrap-with-suppress-and-log-warn
+  (catcher/snatch {}
     (fetch-and-update/git-fetch-or-initialize repository)
     (fetch-and-update/git-update repository))
   (conj state  {:git-fetched-at (time/now)}))

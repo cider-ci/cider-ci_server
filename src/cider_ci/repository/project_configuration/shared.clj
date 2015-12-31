@@ -15,7 +15,7 @@
     ))
 
 (defn- parse-path-content [repository path id content]
-  (catcher/wrap-with-log-warn
+  (catcher/with-logging {}
     (let [path (clojure.string/lower-case path)]
       (try
         (cond

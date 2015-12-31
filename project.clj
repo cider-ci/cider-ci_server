@@ -8,11 +8,11 @@
   :license {:name "GNU AFFERO GENERAL PUBLIC LICENSE Version 3"
             :url "http://www.gnu.org/licenses/agpl-3.0.html"}
   :dependencies [
-                 [cider-ci/clj-utils "4.2.1"]
-                 [cider-ci/clj-auth "4.0.1"]
+                 [cider-ci/clj-auth "5.0.1"]
+                 [cider-ci/clj-utils "5.1.2"]
 
                  [drtom/honeysql "1.3.0-beta.4"]
-                 [logbug "2.0.0-beta.8"]
+                 [logbug "3.0.0"]
 
                  [cheshire "5.5.0"]
                  [clj-http "2.0.0"]
@@ -31,8 +31,7 @@
               :resource-paths ["../config" "./config" "./resources"]}
              :production
              {:resource-paths ["/etc/cider-ci" "../config" "./config" "./resources"]}}
-  :aot [cider-ci.repository.main]
+  :aot :all
   :main cider-ci.repository.main
-  :jvm-opts ["-Xmx256m"]
   :repl-options {:timeout  120000}
   )

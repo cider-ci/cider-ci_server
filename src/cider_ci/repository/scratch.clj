@@ -24,7 +24,7 @@
     ))
 
 
-(catcher/wrap-with-suppress-and-log-warn
+(catcher/snatch {}
   (jdbc/query (rdbms/get-ds) ["SELECT 1 + )"])
   )
 
