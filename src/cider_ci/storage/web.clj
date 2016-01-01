@@ -16,7 +16,7 @@
     [cider-ci.utils.http-server :as http-server]
     [cider-ci.utils.rdbms :as rdbms :refer [get-ds]]
     [cider-ci.utils.routing :as routing]
-    [cider-ci.utils.runtime :as runtime]
+    [cider-ci.utils.status :as status]
 
     [clojure.data.json :as json]
     [clojure.java.io :as io]
@@ -57,7 +57,7 @@
         [table-name id-name] (get-table-and-id-name request)
         query [(str "SELECT * FROM " table-name
                     "  WHERE " id-name " = ? AND path = ?") id path]]
-    (-> (jdbc/query (rdbms/get-ds) query)
+    (-> (jdbc/query (get-ds) query)
         first)))
 
 (defn save-file-and-presist-row [request store]
@@ -65,7 +65,7 @@
         file-path (str (:file_path store) "/" id)
         file (io/file file-path)
         {content-type :content-type content-length :content-length} request]
-    (jdbc/with-db-transaction [tx (rdbms/get-ds)]
+    (jdbc/with-db-transaction [tx (get-ds)]
       (with-open [in (io/input-stream (:body request))
                   out (io/output-stream file)]
         (clojure.java.io/copy in out))
@@ -106,7 +106,7 @@
   (or (-> request :authenticated-executor :upload_trial_attachments)
       (do (let [trial-id (-> request :route-params :id)]
             (catcher/snatch {}
-              (jdbc/insert!  (rdbms/get-ds) :trial_issues
+              (jdbc/insert! (get-ds) :trial_issues
                 {:trial_id trial-id
                  :id (clj-uuid/v5 clj-uuid/+null+ (str trial-id " executor-upload-forbidden"))
                  :type "warning"
@@ -130,13 +130,13 @@
       (do (let [trial-token (-> request :headers (get "trial-token"))
                 job-id (get-job-id-for-trial-token trial-token)]
             (catcher/snatch {}
-              (jdbc/insert!  (rdbms/get-ds) :job_issues
-                            {:job_id job-id
-                             :id (clj-uuid/v5 clj-uuid/+null+ (str job-id " executor-upload-forbidden"))
-                             :type "warning"
-                             :title "Attachment Upload Forbidden"
-                             :description (str "The executor " (-> request :authenticated-executor :name)
-                                               " is not allowed to upload attachments but it tried to.")})))
+              (jdbc/insert! (get-ds) :job_issues
+                {:job_id job-id
+                 :id (clj-uuid/v5 clj-uuid/+null+ (str job-id " executor-upload-forbidden"))
+                 :type "warning"
+                 :title "Attachment Upload Forbidden"
+                 :description (str "The executor " (-> request :authenticated-executor :name)
+                                   " is not allowed to upload attachments but it tried to.")})))
           false)))
 
 (defn put-authorized? [store request]
@@ -181,32 +181,13 @@
         (cpj/PUT "/:prefix/:id/*" _ put-file))))
 
 
-;##### status dispatch ########################################################
-
-(defn status-handler [request]
-  (let [rdbms-status (rdbms/check-connection)
-        memory-status (runtime/check-memory-usage)
-        body (json/write-str {:rdbms rdbms-status
-                              :memory memory-status})]
-    {:status  (if (and rdbms-status (:OK? memory-status))
-                200 499 )
-     :body body
-     :headers {"content-type" "application/json;charset=utf-8"} }))
-
-(defn wrap-status-dispatch [default-handler]
-  (cpj/routes
-    (cpj/GET "/status" request #'status-handler)
-    (cpj/ANY "*" request default-handler)))
-
-
 ;#### routing #################################################################
 
 (def base-handler
   (÷> (wrap-handler-with-logging :trace)
       storage-routes
       routing/wrap-shutdown
-      cpj.handler/api
-      wrap-status-dispatch))
+      cpj.handler/api))
 
 (defn wrap-auth [handler]
   (÷> (wrap-handler-with-logging :trace)
@@ -222,6 +203,7 @@
   (÷> (wrap-handler-with-logging :trace)
       base-handler
       wrap-auth
+      status/wrap
       (routing/wrap-prefix context)
       routing/wrap-log-exception))
 
