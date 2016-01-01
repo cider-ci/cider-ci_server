@@ -17,7 +17,7 @@
 (defn -main [& args]
   (catcher/with-logging {}
     (logbug.thrown/reset-ns-filter-regex #".*cider.ci.*")
-    (config/initialize)
+    (config/initialize {})
     (rdbms/initialize (get-db-spec :dispatcher))
     (nrepl/initialize (-> (get-config) :services :repository :nrepl))
     (http/initialize (select-keys (get-config) [:basic_auth]))

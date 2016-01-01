@@ -12,10 +12,8 @@
     [cider-ci.repository.sql.repository :as sql.repository]
     [cider-ci.utils.config :as config :refer [get-config]]
     [cider-ci.utils.http-server :as http-server]
-    [cider-ci.utils.messaging :as messaging]
-    [cider-ci.utils.rdbms :as rdbms]
     [cider-ci.utils.routing :as routing]
-    [cider-ci.utils.runtime :as runtime]
+    [cider-ci.utils.status :as status]
 
     [clj-time.core :as time]
     [clojure.data :as data]
@@ -71,26 +69,6 @@
       (respond-with-500 request e))))
 
 
-;##### status dispatch ########################################################
-
-(defn status-handler [request]
-  (let [rdbms-status (rdbms/check-connection)
-        messaging-status (rdbms/check-connection)
-        memory-status (runtime/check-memory-usage)
-        body (json/write-str {:rdbms rdbms-status
-                              :messaging messaging-status
-                              :memory memory-status})]
-    {:status  (if (and rdbms-status messaging-status (:OK? memory-status))
-                200 499 )
-     :body body
-     :headers {"content-type" "application/json;charset=utf-8"} }))
-
-(defn wrap-status-dispatch [default-handler]
-  (cpj/routes
-    (cpj/GET "/status" request #'status-handler)
-    (cpj/ANY "*" request default-handler)))
-
-
 ;#### repository update notification ##########################################
 
 (defn update-notification-handler [request]
@@ -142,7 +120,7 @@
       routing/wrap-shutdown
       (ring.middleware.params/wrap-params)
       (ring.middleware.json/wrap-json-params)
-      (wrap-status-dispatch)
+      status/wrap
       (authorize/wrap-require! {:service true})
       (http-basic/wrap {:service true})
       wrap-repositories-update-notifications
