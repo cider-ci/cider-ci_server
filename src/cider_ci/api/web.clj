@@ -11,10 +11,9 @@
     [cider-ci.open-session.cors :as cors]
     [cider-ci.utils.config :refer [get-config]]
     [cider-ci.utils.http-server :as http-server]
-    [cider-ci.utils.messaging :as messaging]
-    [cider-ci.utils.rdbms :as rdbms]
+    [cider-ci.utils.status :as status]
     [cider-ci.utils.routing :as routing]
-    [cider-ci.utils.runtime :as runtime]
+
 
     [clojure.data.json :as json]
     [compojure.core :as cpj]
@@ -54,25 +53,6 @@
     (cpj/ANY "*" request default-handler)))
 
 
-;##### status dispatch ########################################################
-
-(defn status-handler [request]
-  (let [rdbms-status (rdbms/check-connection)
-        messaging-status (rdbms/check-connection)
-        memory-status (runtime/check-memory-usage)
-        body (json/write-str {:rdbms rdbms-status
-                              :messaging messaging-status
-                              :memory memory-status})]
-    {:status  (if (and rdbms-status messaging-status (:OK? memory-status))
-                200 499 )
-     :body body
-     :headers {"content-type" "application/json;charset=utf-8"} }))
-
-(defn wrap-status-dispatch [default-handler]
-  (cpj/routes
-    (cpj/GET "/status" request #'status-handler)
-    (cpj/ANY "*" request default-handler)))
-
 
 ;##### routes and wrappers ####################################################
 
@@ -83,7 +63,7 @@
       ring.middleware.json/wrap-json-params
       ring.middleware.json/wrap-json-params
       (ring.middleware.params/wrap-params)
-      wrap-status-dispatch
+      status/wrap
       (authorize/wrap-require! {:user true :service true})
       (http-basic/wrap {:user true :service true})
       session/wrap

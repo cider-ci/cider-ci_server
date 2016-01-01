@@ -13,7 +13,6 @@
     [logbug.debug :as debug]
     [cider-ci.utils.http :as http]
     [cider-ci.utils.map :refer [deep-merge]]
-    [cider-ci.utils.messaging :as messaging]
     [cider-ci.utils.nrepl :as nrepl]
     [cider-ci.utils.rdbms :as rdbms]
     [logbug.catcher :as catcher]
@@ -24,9 +23,8 @@
 (defn -main [& args]
   (catcher/with-logging {}
     (logbug.thrown/reset-ns-filter-regex #".*cider.ci.*")
-    (config/initialize)
+    (config/initialize {:overrides {:service :api}})
     (rdbms/initialize (config/get-db-spec :api))
-    (messaging/initialize (:messaging (get-config)))
     (nrepl/initialize (-> (get-config) :services :api :nrepl))
     (utils-http/initialize (get-config))
     (web/initialize)
