@@ -10,10 +10,8 @@
     [cider-ci.builder.util :as util]
     [cider-ci.utils.config :refer [get-config]]
     [cider-ci.utils.http-server :as http-server]
-    [cider-ci.utils.messaging :as messaging]
-    [cider-ci.utils.rdbms :as rdbms]
+    [cider-ci.utils.status :as status]
     [cider-ci.utils.routing :as routing]
-    [cider-ci.utils.runtime :as runtime]
 
     [clojure.data.json :as json]
     [clojure.walk :refer [keywordize-keys]]
@@ -36,26 +34,6 @@
    :body "This resource is not known to the Cider-Ci Builder."
    })
 
-
-;##### status dispatch ########################################################
-
-(defn status-handler [request]
-  (let [rdbms-status (rdbms/check-connection)
-        messaging-status (rdbms/check-connection)
-        memory-status (runtime/check-memory-usage)
-        body (json/write-str {:rdbms rdbms-status
-                              :messaging messaging-status
-                              :memory memory-status})]
-    {:status  (if (and rdbms-status messaging-status (:OK? memory-status))
-                200 499 )
-     :body body
-     :headers {"content-type" "application/json;charset=utf-8"} }))
-
-
-(defn wrap-status-dispatch [default-handler]
-  (cpj/routes
-    (cpj/GET "/status" request #'status-handler)
-    (cpj/ANY "*" request default-handler)))
 
 ;##### jobs #############################################################
 
@@ -109,14 +87,13 @@
   (÷> wrap-handler-with-logging
       top-handler
       routing/wrap-shutdown
-      wrap-status-dispatch
       wrap-jobs
       ring.middleware.json/wrap-json-response
       ring.middleware.json/wrap-json-body
+      status/wrap
       (routing/wrap-prefix context)
       (authorize/wrap-require! {:service true})
-      (http-basic/wrap {:service true})
-      ))
+      (http-basic/wrap {:service true})))
 
 
 ;#### the server ##############################################################
