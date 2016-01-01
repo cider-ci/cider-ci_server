@@ -17,11 +17,9 @@
     [cider-ci.utils.config :as config :refer [get-config]]
     [cider-ci.utils.http :as http]
     [cider-ci.utils.http-server :as http-server]
-    [cider-ci.utils.messaging :as messaging]
-    [cider-ci.utils.rdbms :as rdbms]
     [cider-ci.utils.routing :as routing]
     [cider-ci.utils.ring :as ci-utils-ring]
-    [cider-ci.utils.runtime :as runtime]
+    [cider-ci.utils.status :as status]
 
     [clojure.data :as data]
     [clojure.data.json :as json]
@@ -49,21 +47,6 @@
     (trials/update-trial (assoc (clojure.walk/keywordize-keys data)
                                 :id id))
     {:status 200}))
-
-
-;##### status dispatch ########################################################
-
-(defn status-handler [request]
-  (let [rdbms-status (rdbms/check-connection)
-        messaging-status (rdbms/check-connection)
-        memory-status (runtime/check-memory-usage)
-        body (json/write-str {:rdbms rdbms-status
-                              :messaging messaging-status
-                              :memory memory-status})]
-    {:status  (if (and rdbms-status messaging-status (:OK? memory-status))
-                200 499 )
-     :body body
-     :headers {"content-type" "application/json;charset=utf-8"} }))
 
 
 ;#### sync ####################################################################
@@ -135,7 +118,6 @@
 
 (def routes
   (cpj/routes
-    (cpj/GET "/status" request #'status-handler)
     (cpj/POST "/jobs/:id/abort" _ #'abort-job)
     (cpj/POST "/jobs/:id/retry-and-resume" _ #'retry-and-resume)
     (cpj/POST "/tasks/:id/retry" _ #'retry-task)
@@ -148,13 +130,13 @@
 (defn build-main-handler [context]
   (÷> (wrap-handler-with-logging :debug)
       (cpj.handler/api routes)
+      status/wrap
       routing/wrap-shutdown
       (ring.middleware.json/wrap-json-body {:keywords? true})
       (routing/wrap-prefix context)
       (authorize/wrap-require! {:executor true :service true})
       (http-basic/wrap {:executor true :service true})
-      ci-utils-ring/wrap-webstack-exception
-      ))
+      ci-utils-ring/wrap-webstack-exception))
 
 
 ;#### the server ##############################################################
