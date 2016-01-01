@@ -177,15 +177,16 @@
                           (create-handler receiver)
                           {:auto-ack true}))))))
 
-(defn check-connection
-  "Checks if the internal channel is open and returns true in case."
-  []
-  (try
-    (catcher/with-logging {:level :warn} (rmq/open? (get-channel)))
-    (catch Exception _ false)
-    ))
+(defn check-connection []
+  (if (= @conf {})
+    {:OK? true :message "messaging not initialized"}
+    (catcher/snatch
+      {:return-fn (fn [e] {:OK? false :error (.getMessage e)})}
+      (rmq/open? (get-channel))
+      {:OK? true})))
 
 ;### initialize ###############################################################
+
 (defn initialize [new-conf]
   (logging/info [initialize new-conf])
   (reset! conf new-conf)
@@ -195,8 +196,7 @@
     (future
       (lcons/subscribe (get-channel) (:queue @logging-queue)
                        logging-receiver {:auto-ack false}))
-    (logging/info "messaging initialized")
-    ))
+    (logging/info "messaging initialized")))
 
 
 

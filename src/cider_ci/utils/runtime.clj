@@ -17,18 +17,17 @@
   (System/gc)
   (let [rt (Runtime/getRuntime)
         max-mem (.maxMemory rt)
-        total-mem (.totalMemory rt)
-        free-mem (.freeMemory rt)
-        used-ratio (double (/ (- total-mem free-mem) max-mem))
-        ok? (< used-ratio 0.90)
-        stats {"Max" (Humanize/binaryPrefix max-mem)
-               "Total" (Humanize/binaryPrefix total-mem)
-               "Free" (Humanize/binaryPrefix free-mem)
-               :Used (Double/parseDouble (String/format "%.2f" (into-array [used-ratio])))
-               :OK? ok?
-               :status (if ok?  "OK" "CRITICAL")}]
-    (when-not ok?
-      (logging/fatal stats))
+        allocated-mem (.totalMemory rt)
+        free (.freeMemory rt)
+        used (- allocated-mem free)
+        usage (double (/ used max-mem))
+        ok? (and (< usage 0.95) (> free ))
+        stats {:OK? ok?
+               :Max (Humanize/binaryPrefix max-mem)
+               :Allocated (Humanize/binaryPrefix allocated-mem)
+               :Used (Humanize/binaryPrefix used)
+               :Usage (Double/parseDouble (String/format "%.2f" (into-array [usage])))}]
+    (when-not ok?  (logging/fatal stats))
     stats))
 
 ;### Debug #####################################################################

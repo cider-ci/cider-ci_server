@@ -10,17 +10,27 @@
     [cider-ci.utils.fs :refer :all]
     [cider-ci.utils.map :refer [deep-merge]]
     [cider-ci.utils.rdbms :as rdbms]
+
     [clj-yaml.core :as yaml]
     [clojure.java.io :as io]
+    [clojure.set :refer [difference]]
+    [me.raynes.fs :as clj-fs]
+
     [clojure.tools.logging :as logging]
     [logbug.debug :as debug]
-    [me.raynes.fs :as clj-fs]
     ))
 
 
 (defonce ^:private conf (atom {}))
-
 (defn get-config [] @conf)
+
+(defonce ^:private opts (atom
+                          {:overrides {}
+                           :filenames [(system-path ".." "config" "config_default.yml")
+                                       (system-path "config" "config_default.yml")
+                                       (system-path ".." "config" "config.yml")
+                                       (system-path "config" "config.yml")]}))
+(defn get-opts [] @opts)
 
 ;##############################################################################
 
@@ -34,9 +44,9 @@
       (logging/info "config changed to " new-config))))
 
 
-(defn read-configs-and-merge-in [filenames]
+(defn read-configs-and-merge-in []
   (loop [config (get-config)
-         filenames filenames]
+         filenames (:filenames @opts)]
     (if-let [filename (first filenames)]
       (if (.exists (io/as-file filename))
         (recur (try (let [add-on-string (slurp filename)
@@ -47,28 +57,25 @@
                       config))
                (rest filenames))
         (recur config (rest filenames)))
-      (merge-in-config config))))
+      (merge-in-config (deep-merge config (:overrides @opts))))))
 
 
-(defonce ^:private filenames (atom nil))
+(defdaemon "reload-config" 1 (read-configs-and-merge-in))
 
-(defdaemon "reload-config" 1 (read-configs-and-merge-in @filenames))
+;### Initialize ###############################################################
 
-;##############################################################################
+(defn initialize [options]
 
-(defn initialize
-  ([]
-   (initialize (filter identity
-                       [(system-path-abs "etc" "cider-ci" "config_default.yml")
-                        (system-path ".." "config" "config_default.yml")
-                        (system-path "config" "config_default.yml")
-                        (system-path-abs "etc" "cider-ci" "config.yml")
-                        (system-path ".." "config" "config.yml")
-                        (system-path "config" "config.yml")])))
-  ([_filenames]
-   (reset! filenames _filenames)
-   (read-configs-and-merge-in _filenames)
-   (start-reload-config)))
+  (assert
+    (empty?
+      (difference (-> options keys set)
+                  (-> @opts keys set)))
+    "Opts must only contain the same keys as default-opts")
+
+  (let [options (deep-merge @opts options)]
+    (reset! opts options)
+    (read-configs-and-merge-in)
+    (start-reload-config)))
 
 
 ;### DB #######################################################################

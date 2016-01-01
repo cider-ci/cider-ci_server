@@ -15,18 +15,23 @@
 (defonce ^:private ds (atom nil))
 (defn get-ds [] @ds)
 
-(defn check-connection
-  "Performs a simple query an returns boolean true on success and
-  false otherwise."
-  []
-  (try
-    (catcher/with-logging {}
-      (->> (jdbc/query (get-ds) ["SELECT true AS state"])
-           first :state))
-    (catch Exception _
-      false)))
-
-
+(defn check-connection []
+  (if-not @ds
+    {:OK? true :message "RDBMS is not initialized!"}
+    (catcher/snatch
+      {:return-fn (fn [e] {:OK? false :error (.getMessage e)})}
+      (assert (->> (jdbc/query @ds
+                               ["SELECT true AS state FROM schema_migrations LIMIT 1"])
+                   first :state))
+      (let [c3p0ds (-> @ds :datasource)
+            conns (.getNumConnectionsDefaultUser c3p0ds)
+            busy (.getNumBusyConnectionsDefaultUser c3p0ds)
+            idle (.getNumIdleConnectionsDefaultUser c3p0ds)
+            usage (double (/ busy conns))]
+        {:OK? true
+         :PoolSize conns
+         :usage (Double/parseDouble (String/format "%.2f" (into-array [usage])))
+         }))))
 
 (defn reset []
   (logging/info "resetting c3p0 datasource")
