@@ -24,12 +24,14 @@
                                ["SELECT true AS state FROM schema_migrations LIMIT 1"])
                    first :state))
       (let [c3p0ds (-> @ds :datasource)
+            max (.getMaxPoolSize c3p0ds)
             conns (.getNumConnectionsDefaultUser c3p0ds)
             busy (.getNumBusyConnectionsDefaultUser c3p0ds)
             idle (.getNumIdleConnectionsDefaultUser c3p0ds)
             usage (double (/ busy conns))]
         {:OK? true
-         :PoolSize conns
+         :Max max
+         :Allocated conns
          :usage (Double/parseDouble (String/format "%.2f" (into-array [usage])))
          }))))
 
