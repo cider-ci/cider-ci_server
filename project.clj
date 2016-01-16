@@ -9,7 +9,7 @@
             :url "http://www.gnu.org/licenses/agpl-3.0.html"}
   :dependencies [
                  [cider-ci/clj-auth "5.0.1"]
-                 [cider-ci/clj-utils "6.0.1"]
+                 [cider-ci/clj-utils "6.1.0"]
 
                  [drtom/honeysql "1.3.0-beta.4"]
                  [logbug "3.0.0"]
@@ -31,7 +31,7 @@
               :resource-paths ["../config" "./config" "./resources"]}
              :production
              {:resource-paths ["/etc/cider-ci" "../config" "./config" "./resources"]}}
-  :aot :all
+  :aot [cider-ci.repository.main]
   :main cider-ci.repository.main
   :repl-options {:timeout  120000}
   )
