@@ -13,7 +13,6 @@
 
     [clojure.java.jdbc :as jdbc]
     [clojure.string :refer [blank?]]
-    [clojurewerkz.urly.core :as urly]
     [honeysql.sql :refer :all]
 
     [clj-logging-config.log4j :as logging-config]
