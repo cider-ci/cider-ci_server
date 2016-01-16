@@ -81,9 +81,17 @@
           {:datasource
            (doto (ComboPooledDataSource.)
              (.setJdbcUrl (get-url db-conf))
-             (#(when-let [user (get-user db-conf)] (.setUser % user)))
-             (#(when-let [password (get-password db-conf)] (.setPassword % password)))
-             (#(when-let [max-pool-size (get-max-pool-size db-conf)](.setMaxPoolSize % max-pool-size))))}))
+             (#(when-let [user (get-user db-conf)]
+                 (.setUser % user)))
+             (#(when-let [password (get-password db-conf)]
+                 (.setPassword % password)))
+             (.setMaxPoolSize (or (get-max-pool-size db-conf) 10))
+             (.setMinPoolSize (or (:min-pool-size db-conf) 3))
+             (.setMaxConnectionAge
+               (or (:max-connection-age db-conf) (* 3 60 60)))
+             (.setMaxIdleTimeExcessConnections
+               (or (:max-idle-time-exess-connections db-conf) (* 10 60)))
+             )}))
 
 (defn initialize [db-conf]
   (logging/info initialize [db-conf])
