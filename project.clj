@@ -8,10 +8,11 @@
   :license {:name "GNU AFFERO GENERAL PUBLIC LICENSE Version 3"
             :url "http://www.gnu.org/licenses/agpl-3.0.html"}
   :dependencies [
-                 [cheshire "5.5.0"]
                  [cider-ci/clj-auth "5.0.1"]
-                 [cider-ci/clj-utils "6.0.1"]
+                 [cider-ci/clj-utils "6.1.0"]
                  [cider-ci/open-session "1.2.0"]
+
+                 [cheshire "5.5.0"]
                  [drtom/honeysql "1.3.0-beta.4"]
                  [logbug "3.0.0"]
 
@@ -30,7 +31,7 @@
               :plugins [[lein-midje "3.1.1"]]
               :repositories [["tmp" {:url "http://maven-repo-tmp.drtom.ch" :snapshots false}]]} }
   :resource-paths ["./config" "../config" "./resources"]
-  :aot :all
+  :aot [cider-ci.api.main]
   :main cider-ci.api.main
   :repl-options {:timeout  120000}
   )
