@@ -8,7 +8,7 @@
             :url "http://www.gnu.org/licenses/agpl-3.0.html"}
   :dependencies [
                  [cider-ci/clj-auth "5.0.1"]
-                 [cider-ci/clj-utils "6.0.1"]
+                 [cider-ci/clj-utils "6.1.0"]
 
                  [logbug "3.0.0"]
                  [drtom/honeysql "1.3.0-beta.4"]
@@ -20,8 +20,7 @@
               :plugins [[lein-midje "3.1.1"]]
               :repositories [["tmp" {:url "http://maven-repo-tmp.drtom.ch" :snapshots false}]]} }
   :resource-paths ["./config" "../config" "./resources"]
-  ;:aot [cider-ci.storage.main]
-  :aot :all
+  :aot [cider-ci.storage.main]
   :main cider-ci.storage.main
   :repositories [["tmp" {:url "http://maven-repo-tmp.drtom.ch" :snapshots false}]]
   :repl-options {:timeout  120000}
