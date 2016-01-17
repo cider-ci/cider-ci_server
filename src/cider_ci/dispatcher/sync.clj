@@ -39,8 +39,8 @@
     (doseq [lost-trial-id  (difference (set in-progress-trials-of-executor-ids)
                                        (set known-trial-ids-by-executor))]
       (trials/update-trial {:id lost-trial-id
-                     :state "aborted"
-                     :error [(str "This trial was lost on executor " (:name executor))]}))))
+                            :state "aborted"
+                            :error (str "This trial was lost on executor " (:name executor))}))))
 
 (defn sync [executor data]
   (catcher/with-logging {}
