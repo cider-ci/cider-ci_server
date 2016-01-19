@@ -2,7 +2,7 @@
 ; Licensed under the terms of the GNU Affero General Public License v3.
 ; See the "LICENSE.txt" file provided with this software.
 
-(defproject cider-ci/clj-utils "6.1.0"
+(defproject cider-ci/clj-utils "6.1.1"
   :description "Shared Clojure Utils for Cider-CI"
   :url "https://github.com/cider-ci/cider-ci_clj-utils"
   :license {:name "GNU AFFERO GENERAL PUBLIC LICENSE Version 3"
@@ -10,7 +10,7 @@
   :dependencies [
                  [drtom/honeysql "1.3.0-beta.4"]
                  [logbug "3.0.0"]
-                 [pg-types "2.1.1"]
+                 [pg-types "2.1.2"]
 
                  [cheshire "5.5.0"]
                  [clj-http "2.0.0"]
