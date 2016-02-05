@@ -28,7 +28,7 @@
     [clj-logging-config.log4j :as logging-config]
     [clojure.tools.logging :as logging]
     [logbug.catcher :as catcher]
-    [logbug.debug :as debug :refer [÷> ÷>>]]
+    [logbug.debug :as debug :refer [I> I>>]]
     [logbug.ring :as logbug-ring :refer [wrap-handler-with-logging]]
     )
   (:use
@@ -57,7 +57,7 @@
 ;##### routes and wrappers ####################################################
 
 (defn build-main-handler [context]
-  (÷> wrap-handler-with-logging
+  (I> wrap-handler-with-logging
       (resources/build-routes-handler)
       routing/wrap-shutdown
       ring.middleware.json/wrap-json-params

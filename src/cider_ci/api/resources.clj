@@ -39,7 +39,7 @@
     [ring.util.response :as response]
 
     [logbug.catcher :as catcher]
-    [logbug.debug :as debug :refer [÷> ÷>>]]
+    [logbug.debug :as debug :refer [I> I>>]]
     [logbug.ring :as logbug-ring :refer [wrap-handler-with-logging]]
 
     ))
@@ -110,7 +110,7 @@
             )))
 
 (defn build-routes-handler []
-  (÷> wrap-handler-with-logging
+  (I> wrap-handler-with-logging
       routes
       (json-roa.ring-middleware.request/wrap json-roa/handler)
       json-roa.ring-middleware.response/wrap
