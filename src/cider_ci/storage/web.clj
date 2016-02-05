@@ -31,7 +31,7 @@
     [clj-logging-config.log4j :as logging-config]
     [clojure.tools.logging :as logging]
     [logbug.catcher :as catcher]
-    [logbug.debug :as debug :refer [÷> ÷>>]]
+    [logbug.debug :as debug :refer [I> I>>]]
     [logbug.ring :refer [wrap-handler-with-logging]]
     )
   )
@@ -184,13 +184,13 @@
 ;#### routing #################################################################
 
 (def base-handler
-  (÷> (wrap-handler-with-logging :trace)
+  (I> (wrap-handler-with-logging :trace)
       storage-routes
       routing/wrap-shutdown
       cpj.handler/api))
 
 (defn wrap-auth [handler]
-  (÷> (wrap-handler-with-logging :trace)
+  (I> (wrap-handler-with-logging :trace)
       handler
       (authorize/wrap-require! {:user true :service true :executor true})
       (http-basic/wrap {:user true :service true :executor true})
@@ -200,7 +200,7 @@
       (public/wrap-shortcut handler)))
 
 (defn build-main-handler [context]
-  (÷> (wrap-handler-with-logging :trace)
+  (I> (wrap-handler-with-logging :trace)
       base-handler
       wrap-auth
       status/wrap

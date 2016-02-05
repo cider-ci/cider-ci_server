@@ -3,6 +3,7 @@
 ; See the "LICENSE.txt" file provided with this software.
 
 (ns cider-ci.storage.main
+  (:gen-class)
   (:require
     [cider-ci.storage.shared :as shared]
     [cider-ci.storage.sweeper :as sweeper]
