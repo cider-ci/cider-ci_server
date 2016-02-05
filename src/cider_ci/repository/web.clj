@@ -28,7 +28,7 @@
 
     [clj-logging-config.log4j :as logging-config]
     [clojure.tools.logging :as logging]
-    [logbug.debug :as debug :refer [÷> ÷>>]]
+    [logbug.debug :as debug :refer [I> I>>]]
     [logbug.ring :refer [wrap-handler-with-logging]]
     [logbug.thrown :as thrown]
     ))
@@ -115,7 +115,7 @@
     (cpj/GET "/:id/git/*" _ get-git-file )))
 
 (defn build-main-handler [context]
-  (÷> wrap-handler-with-logging
+  (I> wrap-handler-with-logging
       (cpj.handler/api routes)
       routing/wrap-shutdown
       (ring.middleware.params/wrap-params)

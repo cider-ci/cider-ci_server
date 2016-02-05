@@ -1,4 +1,5 @@
 (ns cider-ci.repository.main
+  (:gen-class)
   (:require
     [cider-ci.repository.repositories :as repositories]
     [cider-ci.repository.web :as web]
