@@ -30,7 +30,7 @@
 
     [clj-logging-config.log4j :as logging-config]
     [clojure.tools.logging :as logging]
-    [logbug.debug :as debug :refer [÷> ÷>>]]
+    [logbug.debug :as debug :refer [I> I>>]]
     [logbug.ring :refer [wrap-handler-with-logging]]
     [logbug.thrown :as thrown]
     )
@@ -128,7 +128,7 @@
     ))
 
 (defn build-main-handler [context]
-  (÷> (wrap-handler-with-logging :debug)
+  (I> (wrap-handler-with-logging :debug)
       (cpj.handler/api routes)
       status/wrap
       routing/wrap-shutdown

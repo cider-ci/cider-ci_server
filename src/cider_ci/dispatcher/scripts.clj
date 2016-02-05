@@ -16,7 +16,7 @@
     [clj-logging-config.log4j :as logging-config]
     [clojure.tools.logging :as logging]
     [logbug.catcher :as catcher :refer [snatch]]
-    [logbug.debug :as debug :refer [÷> ÷>>]]
+    [logbug.debug :as debug :refer [I> I>>]]
     [logbug.ring :refer [wrap-handler-with-logging]]
     [logbug.thrown :as logbug.thrown]
     [logbug.thrown :as thrown]
@@ -130,7 +130,7 @@
     (validate-token request handler)))
 
 (def script-routes
-  (÷> wrap-handler-with-logging
+  (I> wrap-handler-with-logging
       (cpj/routes
         (cpj/PATCH "/trials/:id/scripts/:key"
                    {{id :id key :key} :params data :body}

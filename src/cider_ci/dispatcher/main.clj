@@ -3,6 +3,7 @@
 ; See the "LICENSE.txt" file provided with this software.
 
 (ns cider-ci.dispatcher.main
+  (:gen-class)
   (:require
     [cider-ci.dispatcher.abort :as abort]
     [cider-ci.dispatcher.dispatch :as dispatch]

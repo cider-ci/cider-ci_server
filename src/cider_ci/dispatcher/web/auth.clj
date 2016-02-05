@@ -9,7 +9,7 @@
 
     [clj-logging-config.log4j :as logging-config]
     [clojure.tools.logging :as logging]
-    [logbug.debug :as debug :refer [÷> ÷>>]]
+    [logbug.debug :as debug :refer [I> I>>]]
     [logbug.debug :as debug]
     [logbug.ring :refer [wrap-handler-with-logging]]
     [logbug.thrown :as thrown]
