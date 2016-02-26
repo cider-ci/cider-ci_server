@@ -44,5 +44,7 @@
   (clojure.string/join (File/separator) args))
 
 (defn system-path-abs [& args]
-  (when-not SystemUtils/IS_OS_WINDOWS
-    (str (File/separator) (apply system-path args))))
+  (if-not SystemUtils/IS_OS_WINDOWS
+    (str (File/separator) (apply system-path args))
+    (throw (UnsupportedOperationException.
+             "`system-path-abs` is not implement for this platform."))))

@@ -2,6 +2,10 @@
   (:require
     [clojure.test :refer :all]
 
+    [cider-ci.auth.authorize]
+    [cider-ci.auth.http_basic]
+    [cider-ci.auth.session]
+
     [cider-ci.utils.config]
     [cider-ci.utils.daemon]
     [cider-ci.utils.duration]

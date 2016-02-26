@@ -2,16 +2,16 @@
   (:refer-clojure
     :exclude [get])
   (:require
+    [cider-ci.auth.http-basic :as http-basic]
     [cider-ci.utils.config :refer [get-config]]
-    [logbug.debug :as debug]
-    [logbug.catcher :as catcher]
+    [cider-ci.utils.map]
     [clj-http.client :as http-client]
     [clj-logging-config.log4j :as logging-config]
     [clojure.tools.logging :as logging]
+    [logbug.catcher :as catcher]
+    [logbug.debug :as debug]
     ))
 
-
-(defonce conf (atom nil))
 
 ;### build url ##################################################################
 
@@ -67,10 +67,13 @@
 
 (defn request [method url params]
   (logging/debug [method url params])
-  (let [basic-auth (:basic_auth @conf)]
-    (logging/debug ("http/" method) {:url url :basic-auth basic-auth})
+  (let [username (if-let [service-name (:service (get-config))]
+                   (str (cider-ci.utils.map/k2str service-name) "-service")
+                   "unknown-service")
+        password (http-basic/create-password username)]
+    (logging/debug (str "http/" method) {:url url :username username :password password})
     (http-client/request
-      (conj {:basic-auth [(:username basic-auth) (:password basic-auth)]
+      (conj {:basic-auth [username password]
              :url url
              :method method
              :insecure? true
@@ -95,12 +98,6 @@
 (defn patch [url params]
   (logging/debug patch [url params])
    (request :patch url params))
-
-
-;### Initialize ###############################################################
-
-(defn initialize [new-conf]
-  (reset! conf new-conf))
 
 
 ;### Debug ####################################################################
