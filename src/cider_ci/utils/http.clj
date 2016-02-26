@@ -67,13 +67,10 @@
 
 (defn request [method url params]
   (logging/debug [method url params])
-  (let [username (if-let [service-name (:service (get-config))]
-                   (str (cider-ci.utils.map/k2str service-name) "-service")
-                   "unknown-service")
-        password (http-basic/create-password username)]
-    (logging/debug (str "http/" method) {:url url :username username :password password})
+  (let [basic-auth (:basic_auth (get-config))]
+    (logging/debug ("http/" method) {:url url :basic-auth basic-auth})
     (http-client/request
-      (conj {:basic-auth [username password]
+      (conj {:basic-auth [(:username basic-auth) (:password basic-auth)]
              :url url
              :method method
              :insecure? true
