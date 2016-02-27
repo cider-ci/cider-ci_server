@@ -44,9 +44,12 @@
       user)))
 
 (defn password-matches [password username]
-  (when-let [secret (:secret (get-config))]
-    (and username
-         (= password (sha1-hmac username secret)))))
+  (or (when-let  [basic-auth-pw (-> (get-config) :basic_auth  :password)]
+        (or (= password basic-auth-pw)
+            (= password (sha1-hmac username basic-auth-pw))))
+      (when-let [secret (:secret (get-config))]
+        (and username
+             (= password (sha1-hmac username secret))))))
 
 (defn create-password
   ([username secret]
