@@ -1,21 +1,22 @@
-; Copyright (C) 2013, 2014, 2015 Dr. Thomas Schank  (DrTom@schank.ch, Thomas.Schank@algocon.ch)
+; Copyright © 2013 - 2016 Dr. Thomas Schank <Thomas.Schank@AlgoCon.ch>
 ; Licensed under the terms of the GNU Affero General Public License v3.
 ; See the "LICENSE.txt" file provided with this software.
 
+(import 'java.io.File)
+(load-file (str "src" File/separator "cider_ci" File/separator "repository.clj"))
 
-(defproject cider-ci_repository "3.0.0"
+(defproject cider-ci_repository cider-ci.repository/VERSION
   :description "Cider-CI Repository"
   :license {:name "GNU AFFERO GENERAL PUBLIC LICENSE Version 3"
             :url "http://www.gnu.org/licenses/agpl-3.0.html"}
   :dependencies [
-                 [cider-ci/clj-auth "6.0.0"]
-                 [cider-ci/clj-utils "7.0.0"]
+                 [cider-ci/clj-utils "8.3.0"]
 
                  [drtom/honeysql "1.3.0-beta.4"]
                  [logbug "4.0.0"]
 
                  [cheshire "5.5.0"]
-                 [clj-http "2.0.1"]
+                 [clj-http "2.1.0"]
                  [me.raynes/fs "1.4.6"]
                  [org.apache.commons/commons-io "1.3.2"]
                  [org.clojure/core.incubator "0.1.3"]
