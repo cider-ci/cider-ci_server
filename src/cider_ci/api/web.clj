@@ -1,4 +1,4 @@
-; Copyright (C) 2013, 2014, 2015 Dr. Thomas Schank  (DrTom@schank.ch, Thomas.Schank@algocon.ch)
+; Copyright © 2013 - 2016 Dr. Thomas Schank <Thomas.Schank@AlgoCon.ch>
 ; Licensed under the terms of the GNU Affero General Public License v3.
 ; See the "LICENSE.txt" file provided with this software.
 
@@ -53,7 +53,6 @@
     (cpj/ANY "*" request default-handler)))
 
 
-
 ;##### routes and wrappers ####################################################
 
 (defn build-main-handler [context]
@@ -75,13 +74,22 @@
       (routing/wrap-log-exception)))
 
 
+(defn wrap-snatch-and-log-exception [handler]
+  (fn [request]
+    (catcher/snatch
+      {:return-expr {:status 500
+                     :body "Unexpected server error; see server logs for details."}}
+      (handler request))))
+
+
 ;#### the server ##############################################################
 
 (defn initialize []
   (let [http-conf (-> (get-config) :services :api :http)
         context (str (:context http-conf) (:sub_context http-conf))]
-    (http-server/start http-conf (build-main-handler context))))
-
+    (http-server/start http-conf (-> context
+                                     build-main-handler
+                                     wrap-snatch-and-log-exception))))
 
 
 ;### Debug ####################################################################
