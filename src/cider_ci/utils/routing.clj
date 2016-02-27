@@ -25,7 +25,6 @@
     (catcher/with-logging {}
       (handler request))))
 
-
 ;### shutdown #################################################################
 
 (defn shutdown [request]

@@ -2,7 +2,7 @@
 ; Licensed under the terms of the GNU Affero General Public License v3.
 ; See the "LICENSE.txt" file provided with this software.
 
-(defproject cider-ci/clj-utils "8.2.0"
+(defproject cider-ci/clj-utils "8.3.0"
   :description "Shared Clojure Utils for Cider-CI"
   :url "https://github.com/cider-ci/cider-ci_clj-utils"
   :license {:name "GNU AFFERO GENERAL PUBLIC LICENSE Version 3"
@@ -14,7 +14,7 @@
                  [cider-ci/open-session "1.2.0"]
 
                  [cheshire "5.5.0"]
-                 [clj-http "2.0.1"]
+                 [clj-http "2.1.0"]
                  [clj-time "0.11.0"]
                  [clj-yaml "0.4.0"]
                  [com.github.mfornos/humanize-slim "1.2.2"]
@@ -31,8 +31,8 @@
                  [org.clojure/data.json "0.2.6"]
                  [org.clojure/java.jdbc "0.4.2"]
                  [org.clojure/tools.nrepl "0.2.12"]
-                 [org.slf4j/slf4j-log4j12 "1.7.14"]
-                 [org.yaml/snakeyaml "1.16"]
+                 [org.slf4j/slf4j-log4j12 "1.7.18"]
+                 [org.yaml/snakeyaml "1.17"]
                  [ring "1.4.0"]
                  [ring/ring-core "1.4.0"]
                  [ring/ring-jetty-adapter "1.4.0"]
