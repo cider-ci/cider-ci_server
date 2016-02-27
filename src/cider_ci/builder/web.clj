@@ -1,4 +1,4 @@
-; Copyright (C) 2013, 2014, 2015 Dr. Thomas Schank  (DrTom@schank.ch, Thomas.Schank@algocon.ch)
+; Copyright © 2013 - 2016 Dr. Thomas Schank <Thomas.Schank@AlgoCon.ch>
 ; Licensed under the terms of the GNU Affero General Public License v3.
 ; See the "LICENSE.txt" file provided with this software.
 
@@ -21,7 +21,7 @@
     [clj-logging-config.log4j :as logging-config]
     [clojure.tools.logging :as logging]
     [logbug.catcher :as catcher]
-    [logbug.debug :as debug :refer [÷> ÷>>]]
+    [logbug.debug :as debug :refer [I> I>>]]
     [logbug.ring :refer [wrap-handler-with-logging]]
     [logbug.thrown :as thrown]
     ))
@@ -84,7 +84,7 @@
 ;#### the main handler ########################################################
 
 (defn build-main-handler [context]
-  (÷> wrap-handler-with-logging
+  (I> wrap-handler-with-logging
       top-handler
       routing/wrap-shutdown
       wrap-jobs

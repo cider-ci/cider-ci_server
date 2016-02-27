@@ -1,8 +1,9 @@
-; Copyright (C) 2013, 2014, 2015 Dr. Thomas Schank  (DrTom@schank.ch, Thomas.Schank@algocon.ch)
+; Copyright © 2013 - 2016 Dr. Thomas Schank <Thomas.Schank@AlgoCon.ch>
 ; Licensed under the terms of the GNU Affero General Public License v3.
 ; See the "LICENSE.txt" file provided with this software.
 
 (ns cider-ci.builder.main
+  (:gen-class)
   (:require
     [cider-ci.builder.jobs.sweeper :as jobs.sweeper]
     [cider-ci.builder.jobs.trigger :as jobs.trigger]
@@ -10,7 +11,6 @@
     [cider-ci.builder.tasks :as tasks]
     [cider-ci.builder.web :as web]
     [cider-ci.utils.config :as config :refer [get-config get-db-spec]]
-    [cider-ci.utils.http :as http]
     [cider-ci.utils.map :refer [deep-merge]]
     [cider-ci.utils.messaging :as messaging]
     [cider-ci.utils.nrepl :as nrepl]
@@ -34,8 +34,7 @@
     (tasks/initialize)
     (web/initialize)
     (jobs.trigger/initialize)
-    (jobs.sweeper/initialize)
-    (http/initialize (get-config))))
+    (jobs.sweeper/initialize)))
 
 
 ;### Debug ####################################################################
