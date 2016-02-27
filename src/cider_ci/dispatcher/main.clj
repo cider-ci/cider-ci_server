@@ -1,4 +1,4 @@
-; Copyright (C) 2013, 2014, 2015 Dr. Thomas Schank  (DrTom@schank.ch, Thomas.Schank@algocon.ch)
+; Copyright © 2013 - 2016 Dr. Thomas Schank <Thomas.Schank@AlgoCon.ch>
 ; Licensed under the terms of the GNU Affero General Public License v3.
 ; See the "LICENSE.txt" file provided with this software.
 
@@ -13,7 +13,6 @@
     [cider-ci.dispatcher.web :as web]
 
     [cider-ci.utils.config :as config :refer [get-db-spec]]
-    [cider-ci.utils.http :as http]
     [cider-ci.utils.map :refer [deep-merge]]
     [cider-ci.utils.messaging :as messaging]
     [cider-ci.utils.nrepl :as nrepl]
@@ -29,12 +28,11 @@
 (defn -main [& args]
   (catcher/with-logging {}
     (logbug.thrown/reset-ns-filter-regex #".*cider.ci.*")
-    (config/initialize {})
+    (config/initialize {:overrides {:service :dispatcher}})
     (rdbms/initialize (get-db-spec :dispatcher))
     (let [conf (config/get-config)]
       (nrepl/initialize (-> conf :services :dispatcher :nrepl))
       (messaging/initialize (:messaging conf))
-      (http/initialize conf)
       (task/initialize)
       (job/initialize)
       (web/initialize)
