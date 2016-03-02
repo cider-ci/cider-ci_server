@@ -25,25 +25,27 @@
 
 ;### next trials to be processed ##############################################
 
-(defn- get-and-set-next-trial [tx executor params]
-  (when-let [{trial-id :id} (next-trial/next-trial-for-pull tx executor)]
-    (trials/wrap-trial-with-issue-and-throw-again
-      {:id trial-id}  "Error during dispatch"
-      (jdbc/update! tx :trials
-                    {:state "dispatching"
-                     :dispatched_at (time/now)
-                     :executor_id (:id executor)}
-                    ["id = ?" trial-id]))
-    (first (jdbc/query tx ["SELECT * FROM trials WHERE id = ?" trial-id]))))
+(def get-trial-lock (Object.))
+
+(defn- get-and-set-next-trial [tx executor]
+  (locking get-trial-lock
+    (when-let [{trial-id :id} (next-trial/next-trial-for-pull tx executor)]
+      (trials/wrap-trial-with-issue-and-throw-again
+        {:id trial-id}  "Error during dispatch"
+        (jdbc/update! tx :trials
+                      {:state "dispatching"
+                       :dispatched_at (time/now)
+                       :executor_id (:id executor)}
+                      ["id = ?" trial-id]))
+      (first (jdbc/query tx ["SELECT * FROM trials WHERE id = ?" trial-id])))))
 
 (defn- get-trials-to-be-dispatched [executor data]
   (let [available-load (-> data :available_load)]
-    (if (or (>= 0 available-load)
-            (not (clojure.string/blank? (:base_url executor))))
+    (if (>= 0 available-load)
       []
       (jdbc/with-db-transaction [tx (rdbms/get-ds)]
         (loop [trials []]
-          (if-let [trial (get-and-set-next-trial tx executor data)]
+          (if-let [trial (get-and-set-next-trial tx executor)]
             (let [trials (conj trials trial)]
               (if (< (count trials) available-load)
                 (recur trials)

@@ -4,13 +4,15 @@
 
 (ns cider-ci.dispatcher.dispatch.next-trial
   (:require
-    [logbug.debug :as debug]
+    [cider-ci.self]
     [cider-ci.utils.rdbms :as rdbms]
-    [logbug.catcher :as catcher]
-    [clj-logging-config.log4j :as logging-config]
     [clojure.java.jdbc :as jdbc]
-    [clojure.tools.logging :as logging]
     [honeysql.sql :refer :all]
+
+    [clj-logging-config.log4j :as logging-config]
+    [clojure.tools.logging :as logging]
+    [logbug.catcher :as catcher]
+    [logbug.debug :as debug]
     ))
 
 ;##############################################################################
@@ -83,23 +85,10 @@
 
 ;##############################################################################
 
-(def ^:private  next-trial-with-executor-for-push-query
-  (-> trials-excutors-query-ordered
-      (sql-merge-where (sql-raw "base_url <> ''"))
-      (sql-merge-where [:<> :base_url nil])
-      (sql-limit 1)
-      sql-format))
-
-(defn next-trial-with-executor-for-push []
-  (->> next-trial-with-executor-for-push-query
-       (jdbc/query (rdbms/get-ds)) first))
-
 (defn next-trial-for-pull [tx executor]
   (->> (-> trials-excutors-query-ordered
            (sql-merge-where [:= :exs.id (:id executor)])
-           (sql-merge-where [:or
-                             [:= :base_url ""]
-                             [:= :base_url nil]])
+           (sql-merge-where [:= cider-ci.self/VERSION (:version executor)])
            (sql-limit 1) sql-format)
        (jdbc/query tx)
        first))

@@ -3,14 +3,11 @@
 ; See the "LICENSE.txt" file provided with this software.
 
 (ns cider-ci.dispatcher.web
-  (:refer-clojure :exclude [sync])
   (:require
     [cider-ci.dispatcher.abort :as abort]
     [cider-ci.dispatcher.retry :as retry]
-    [cider-ci.dispatcher.scripts :refer [script-routes]]
-    [cider-ci.dispatcher.sync :as sync]
-    [cider-ci.dispatcher.trials :as trials]
-    [cider-ci.dispatcher.web.auth :as web-auth]
+    [cider-ci.dispatcher.web.executor :as web.executor]
+
 
     [cider-ci.auth.authorize :as authorize]
     [cider-ci.auth.http-basic :as http-basic]
@@ -38,24 +35,6 @@
     [humanize Humanize]
     ))
 
-
-;##### update trial ###########################################################
-
-(defn update-trial [request]
-  (let [{{id :id} :params data :body} request]
-    (web-auth/validate-trial-token! request id)
-    (trials/update-trial (assoc (clojure.walk/keywordize-keys data)
-                                :id id))
-    {:status 200}))
-
-
-;#### sync ####################################################################
-
-(defn sync [request]
-  (let [executor (:authenticated-executor request)]
-    (if-not (:id executor)
-      {:status 403}
-      (sync/sync executor (:body request)))))
 
 
 ;#### routing #################################################################
@@ -121,31 +100,20 @@
     (cpj/POST "/jobs/:id/abort" _ #'abort-job)
     (cpj/POST "/jobs/:id/retry-and-resume" _ #'retry-and-resume)
     (cpj/POST "/tasks/:id/retry" _ #'retry-task)
-    (cpj/PATCH "/trials/:id" _ update-trial)
-    (cpj/ANY "/trials/:id/scripts/*" _ script-routes)
     (cpj/GET "/" [] "OK")
-    (cpj/POST "/sync" _ #'sync)
     ))
 
 (defn build-main-handler [context]
-  (I> (wrap-handler-with-logging :debug)
+  (I> wrap-handler-with-logging
       (cpj.handler/api routes)
       status/wrap
       routing/wrap-shutdown
+      (authorize/wrap-require! {:service true})
+      (http-basic/wrap {:service true})
+      web.executor/wrap-dispatch-executor-routes
       (ring.middleware.json/wrap-json-body {:keywords? true})
       (routing/wrap-prefix context)
-      (authorize/wrap-require! {:executor true :service true})
-      (http-basic/wrap {:executor true :service true})
       ci-utils-ring/wrap-webstack-exception))
-
-
-;#### the server ##############################################################
-
-(defn initialize []
-  (let [http-conf (-> (get-config) :services :dispatcher :http)
-        context (str (:context http-conf) (:sub_context http-conf))]
-    (http-server/start http-conf (build-main-handler context))))
-
 
 
 ;#### debug ###################################################################

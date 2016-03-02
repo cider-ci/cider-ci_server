@@ -71,14 +71,14 @@
         repository-id (:repository_id branch-and-commit)
         trial-id (:id trial)
         commit-id (:git_commit_id branch-and-commit)
-        environment-variables (conj (or (:environment-variables task-spec) {})
+        environment-variables (conj (or (:environment_variables task-spec) {})
                                     {:CIDER_CI_JOB_ID job-id
                                      :CIDER_CI_TASK_ID (:task_id trial)
                                      :CIDER_CI_TRIAL_ID trial-id
                                      :CIDER_CI_TREE_ID (:tree_id branch-and-commit)})]
     (merge (select-keys trial [:token :task_id])
-           {:environment-variables environment-variables
-            :git-options (or (:git-options task-spec) {})
+           {:environment_variables environment-variables
+            :git_options (or (:git_options task-spec) {})
             :git_branch_name (:name branch-and-commit)
             :git_commit_id commit-id
             :git_tree_id (:tree_id branch-and-commit)
@@ -90,10 +90,10 @@
             :repository_id repository-id
             :scripts (get-scripts trial)
             :templates (templates-data task-spec)
-            :tree-attachments (:tree-attachments task-spec)
-            :tree-attachments-path (tree-attachments-path tree-id)
-            :trial-attachments (:trial-attachments task-spec)
-            :trial-attachments-path (trial-attachments-path trial-id)
+            :tree_attachments (:tree_attachments task-spec)
+            :tree_attachments_path (tree-attachments-path tree-id)
+            :trial_attachments (:trial_attachments task-spec)
+            :trial_attachments_path (trial-attachments-path trial-id)
             :trial_id trial-id
             })))
 

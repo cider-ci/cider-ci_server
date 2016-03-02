@@ -78,21 +78,21 @@
 
 ;### re-evaluate  #############################################################
 
-
 (defn- eval-new-state [task trial-states]
   (let [spec (-> task :task_specification_id get-task-spec-data)]
-    (if (= "satisfy-last" (-> spec :aggregate-state))
-      (or (last trial-states) "pending")
-      (cond (empty? trial-states) "aborted"
+    (if (= "satisfy-last" (-> spec :aggregate_state))
+      (or (last trial-states) "defective")
+      (cond (empty? trial-states) "defective"
             (some #{"passed"} trial-states) "passed"
-            (every? #{"aborted"} trial-states ) "aborted"
-            (every? #{"failed" "aborted"} trial-states) "failed"
             (some #{"executing" "dispatching"} trial-states) "executing"
+            (= (last trial-states) "aborted") "aborted"
+            (every? #{"defective"} trial-states) "defective"
             (some #{"pending"} trial-states) "pending"
             (some #{"aborting"} trial-states) "aborting"
+            (some #{"failed"} trial-states) "failed"
             :else (do (logging/warn 'eval-new-state "Unmatched condition"
                                     {:task task :trial-states trial-states})
-                      "failed")))))
+                      "defective")))))
 
 (defn- evaluate-trials-and-update
   "Returns a truthy value when the state of the task has changed."
@@ -131,8 +131,8 @@
         states (get-trial-states task)
         finished-count (->> states (filter #(terminal-states %)) count)
         in-progress-count (- (count states) finished-count)
-        create-new-trials-count (min (- (or (:eager-trials spec) 1) in-progress-count)
-                                     (- (or (:max-auto-trials spec) 2) (count states)))
+        create-new-trials-count (min (- (or (:eager_trials spec) 1) in-progress-count)
+                                     (- (or (:max_trials spec) 2) (count states)))
         _range (range 0 create-new-trials-count)]
     (logging/debug "CREATE-TRIALS"
                    {:id id :spec spec :states states
@@ -160,7 +160,7 @@
 (defn evaluate-and-create-trials
   "Evaluate task, evaluate state of trials and adjust state of task.
   Send \"task.state-changed\" message if state changed.
-  Create trials according to max-auto-trials and eager-trials properties
+  Create trials according to max_trials and eager_trials properties
   if task is not in terminal state. The argument task must be a map
   including an :id key"
   [task_]

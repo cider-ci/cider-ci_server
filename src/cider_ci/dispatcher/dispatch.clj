@@ -24,71 +24,7 @@
     [logbug.debug :as debug]
     ))
 
-;### dispatch #################################################################
 
-(defn- issues-count [trial]
-  (-> (jdbc/query (get-ds)
-                  ["SELECT count(*) FROM trial_issues WHERE trial_id = ? "
-                   (:id trial)]) first :count))
-
-(defn post-trial [url basic-auth-pw data]
-  (catcher/with-logging {}
-    (http-client/post url
-                      {:content-type :json
-                       :body (json/write-str data)
-                       :insecure? true
-                       :basic-auth ["dispatcher" basic-auth-pw ]})))
-
-(defn- get-entity-or-throw [table-name id]
-  (or (first (jdbc/query
-               (get-ds) [(str "SELECT * FROM " table-name " WHERE id = ?") id]))
-      (throw (ex-info "Entity not found." {:table-name table-name :id id}))))
-
-(defn dispatch [trial-id executor-id]
-  (catcher/snatch {}
-    (let [trial (get-entity-or-throw "trials" trial-id)
-          executor (get-entity-or-throw "executors" executor-id)]
-      (try (trials/wrap-trial-with-issue-and-throw-again
-             trial  "Error during dispatch"
-             (let [data (build-data/build-dispatch-data trial executor)
-                   url (str (:base_url executor)  "/execute")
-                   basic-auth-pw (executor-utils/http-basic-password executor)]
-               (trials/update-trial {:id (:id trial)
-                                     :state "dispatching"
-                                     :executor_id (:id executor)})
-               (post-trial url basic-auth-pw data)
-               (trials/update-trial {:id (:id trial) :state "executing"})))
-           (catch Exception e
-             (let  [row (if (<= 3 (issues-count trial))
-                          {:state "failed"
-                           :warnings ["Too many issues, giving up to dispatch this trial."]
-                           :executor_id nil}
-                          {:state "pending" :executor_id nil})]
-               (trials/update-trial (conj trial row))
-               false))))))
-
-(defn dispatch-trials []
-  (loop []
-    (when-let [{trial-id :id executor-id :executor_id}
-               (next-trial/next-trial-with-executor-for-push)]
-      (jdbc/update! (get-ds) :trials
-                    {:state "dispatching"
-                     :dispatched_at (time/now)
-                     :executor_id executor-id}
-                    ["id = ?" trial-id])
-      (future (dispatch trial-id executor-id))
-      (recur))))
-
-
-;#### dispatch service ########################################################
-
-(defdaemon "dispatch-service" 0.3 (dispatch-trials))
-
-
-;### initialize ##############################################################
-(defn initialize []
-  (start-dispatch-service)
-  )
 
 ;#### debug ###################################################################
 ;(logging-config/set-logger! :level :debug)

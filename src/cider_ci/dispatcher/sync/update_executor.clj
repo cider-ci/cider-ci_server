@@ -3,10 +3,12 @@
 ; See the "LICENSE.txt" file provided with this software.
 
 (ns cider-ci.dispatcher.sync.update-executor
+  (:refer-clojure :exclude [update])
   (:require
     [cider-ci.dispatcher.executor :as executor-entity]
     [cider-ci.utils.http :as http]
-    [cider-ci.utils.rdbms :as rdbms]
+    [cider-ci.utils.rdbms :as rdbms :refer [get-ds]]
+    [cider-ci.utils.jdbc :refer [insert-or-update]]
     [clojure.data.json :as json]
     [clojure.java.jdbc :as jdbc]
 
@@ -16,35 +18,87 @@
     [logbug.catcher :as catcher :refer [snatch]]
     [logbug.debug :as debug]
     [logbug.ring :refer [wrap-handler-with-logging]]
-
     ))
 
 
-(defn update-when-changed [executor data]
+(defn get-executor [id]
+  (first (jdbc/query
+           (rdbms/get-ds)
+           ["SELECT * from executors WHERE id = ?"
+            id ])))
 
-  (when-not (= (sort (:traits executor)) (sort (:traits data)))
-    (jdbc/update!
-      (rdbms/get-ds)
-      :executors
-      {:traits (sort (:traits data))}
-      ["id = ?" (:id executor)]))
+(defn update-traits [executor data]
+  (if (= (sort (:traits executor)) (sort (:traits data)))
+    executor
+    (do (jdbc/update!
+          (rdbms/get-ds)
+          :executors
+          {:traits (sort (:traits data))}
+          ["id = ?" (:id executor)])
+        (get-executor (:id executor)))))
 
-  (when-not (= (sort (:accepted_repositories executor)) (sort (:accepted_repositories data)))
-    (jdbc/update!
-      (rdbms/get-ds)
-      :executors
-      {:accepted_repositories (sort (:accepted_repositories data))}
-      ["id = ?" (:id executor)]))
+(defn update-accepted-repositories [executor data]
+  (if (= (sort (:accepted_repositories executor))
+         (sort (:accepted_repositories data)))
+    executor
+    (do (jdbc/update!
+          (rdbms/get-ds)
+          :executors
+          {:accepted_repositories (sort (:accepted_repositories data))}
+          ["id = ?" (:id executor)])
+        (get-executor (:id executor)))))
 
-  (when-let [max-load (:max_load data)]
-    (when-not (= (:max_load executor) max-load)
-      (jdbc/update!
-        (rdbms/get-ds)
-        :executors
-        {:max_load max-load}
-        ["id = ?" (:id executor)])))
+(defn update-max-load [executor data]
+  (if (= (:max_load executor) (:max_load data))
+    executor
+    (do (jdbc/update!
+          (rdbms/get-ds)
+          :executors
+          {:max_load (:max_load data)}
+          ["id = ?" (:id executor)])
+        (get-executor (:id executor)))))
 
-  )
+(defn update-version [executor data]
+  (let [executor-version (-> data :status :version)
+        ; TODO this is broken must be mix out of :version_mismatch and executor id
+        ; see also place where it is deleted!
+        issue-id (clj-uuid/v5 clj-uuid/+null+ :version_mismatch)
+        where-clause ["executor_id = ? AND id = ?" (:id executor) issue-id]]
+    (if (= executor-version cider-ci.self/VERSION)
+      (jdbc/delete! (get-ds) :executor_issues where-clause)
+      (insert-or-update (get-ds)
+        "executor_issues"  where-clause
+        {:id issue-id
+         :executor_id (:id executor)
+         :title "Version Mismatch"
+         :description (str "The executor `" (:name executor) "` is on version `"
+                           executor-version "`, but we are on `"
+                           cider-ci.self/VERSION "`! \n"
+                           "No trials will be dispatched to this executor!\n"
+                           )}))
+    (if (= (:version executor) executor-version)
+      executor
+      (do
+        (jdbc/update!
+          (rdbms/get-ds)
+          :executors
+          {:version (-> data :status :version) }
+          ["id = ?" (:id executor)])
+        (get-executor (:id executor))))))
+
+(defn update-last-ping-at [executor]
+  (jdbc/execute! (rdbms/get-ds)
+                 ["UPDATE executors SET last_ping_at = now()
+                  WHERE executors.id = ?" (:id executor)])
+  (get-executor (:id executor)))
+
+(defn update [executor data]
+  (-> executor
+      (update-traits data)
+      (update-accepted-repositories data)
+      (update-max-load data)
+      (update-version data)
+      update-last-ping-at))
 
 ;#### debug ###################################################################
 ;(debug/debug-ns *ns*)

@@ -16,11 +16,9 @@
     ))
 
 (defn update-last-ping-at [executor]
-  (->
-    (jdbc/execute! (rdbms/get-ds)
-                   ["UPDATE executors SET last_ping_at = now()
-                    WHERE executors.id = ?" (:id executor)])
-    first
-    (> 0)))
+  (jdbc/execute! (rdbms/get-ds)
+                 ["UPDATE executors SET last_ping_at = now()
+                  WHERE executors.id = ?" (:id executor)])
+  executor)
 
 

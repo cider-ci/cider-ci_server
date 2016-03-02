@@ -42,9 +42,11 @@
                      (every? #{"passed" "failed" "aborted"} task-states) "aborted"
                      :else "aborting")
     (cond (every? #{"passed"} task-states) "passed"
-          (every? #{"failed" "passed" "aborted"} task-states) "failed"
           (some #{"executing"} task-states) "executing"
           (some #{"pending"} task-states) "pending"
+          (some #{"aborted"} task-states) "aborted"
+          (some #{"defective"} task-states) "defective"
+          (some #{"failed"} task-states) "failed"
           :else (:state job))))
 
 

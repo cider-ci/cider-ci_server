@@ -26,7 +26,7 @@
   (->> (jdbc/query (rdbms/get-ds)
                    ["SELECT id, job_id FROM tasks
                     WHERE job_id = ?
-                    AND state IN ('failed','aborted','aborting')" (:id job)])
+                    AND state IN ('aborted','aborting','defective','failed')" (:id job)])
        (map #(task/create-trial % params))
        doall))
 

@@ -33,7 +33,6 @@
                                                         (keyword "varchar[]")
                                                         ))])))
 
-;(sql-format/format (sql-helpers/merge-where [:<> :base_url ""]))
 
 
 

@@ -41,20 +41,21 @@
                                        (set known-trial-ids-by-executor))]
       (trials/update-trial {:id lost-trial-id
                             :state "aborted"
-                            :error (str "This trial was lost on executor " (:name executor))}))))
+                            :error (str "This trial was lost on executor " (:name executor))}))
+    executor))
 
 (defn sync [executor data]
   (catcher/with-logging {}
-    (fail-trials-lost-on-executor executor (:trials data))
-    (update-executor/update-when-changed executor data)
-    (ping/update-last-ping-at executor)
-    ;jobs-to-execute (get-jobs-to-execute executor (:body request))]
-    {:status 200
-     :body (json/write-str (sync-trials/sync-trials executor data))}))
+    (let [payload (-> executor
+                      (fail-trials-lost-on-executor (:trials data))
+                      (update-executor/update data)
+                      (sync-trials/sync-trials data)
+                      (assoc :version cider-ci.self/VERSION))]
+      {:status 200
+       :body (json/write-str payload)})))
 
 ;#### debug ###################################################################
 ;(logging-config/set-logger! :level :debug)
 ;(logging-config/set-logger! :level :info)
 ;(debug/debug-ns 'cider-ci.utils.http)
 ;(debug/debug-ns *ns*)
-

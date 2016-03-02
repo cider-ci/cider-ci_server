@@ -5,38 +5,36 @@
 (ns cider-ci.dispatcher.main
   (:gen-class)
   (:require
+    [cider-ci.self]
+
     [cider-ci.dispatcher.abort :as abort]
     [cider-ci.dispatcher.dispatch :as dispatch]
     [cider-ci.dispatcher.dispatch.timeout-sweeper]
     [cider-ci.dispatcher.job :as job]
     [cider-ci.dispatcher.task :as task]
     [cider-ci.dispatcher.web :as web]
+    [cider-ci.dispatcher.dispatch.timeout-sweeper :as timeout-sweeper]
 
-    [cider-ci.utils.config :as config :refer [get-db-spec]]
-    [cider-ci.utils.map :refer [deep-merge]]
-    [cider-ci.utils.messaging :as messaging]
-    [cider-ci.utils.nrepl :as nrepl]
-    [cider-ci.utils.rdbms :as rdbms]
-
-    [clojure.java.jdbc :as jdbc]
+    [cider-ci.utils.app]
+    [cider-ci.utils.config :refer [get-config]]
 
     [clojure.tools.logging :as logging]
     [logbug.catcher :as catcher]
     [logbug.thrown]
     ))
 
+
 (defn -main [& args]
-  (catcher/with-logging {}
-    (logbug.thrown/reset-ns-filter-regex #".*cider.ci.*")
-    (config/initialize {:overrides {:service :dispatcher}})
-    (rdbms/initialize (get-db-spec :dispatcher))
-    (let [conf (config/get-config)]
-      (nrepl/initialize (-> conf :services :dispatcher :nrepl))
-      (messaging/initialize (:messaging conf))
-      (task/initialize)
-      (job/initialize)
-      (web/initialize)
-      (dispatch/initialize)
-      (abort/initialize)
-      (cider-ci.dispatcher.dispatch.timeout-sweeper/initialize))))
+  (catcher/snatch
+    {:level :fatal
+     :throwable Throwable
+     :return-fn (fn [_] (System/exit -1))}
+    (cider-ci.utils.app/init web/build-main-handler)
+
+    (task/initialize)
+    (job/initialize)
+    (abort/initialize)
+    (timeout-sweeper/initialize)
+
+    ))
 

@@ -6,7 +6,7 @@
   (:require
     [cider-ci.dispatcher.web.auth :refer [validate-trial-token!]]
 
-    [camel-snake-kebab.core :refer [->snake_case ->kebab-case-keyword ->snake_case_keyword]]
+    [camel-snake-kebab.core :refer [->snake_case ->snake_case_keyword]]
     [camel-snake-kebab.extras :refer [transform-keys]]
     [cider-ci.utils.map :refer [convert-to-array]]
     [cider-ci.utils.rdbms :as rdbms :refer [get-ds]]
@@ -31,12 +31,6 @@
   (->> mp
       (into [])
       (map (fn [[k v]] [(->snake_case_keyword k) v]))
-      (into {})))
-
-(defn- kebab-case-top-level-keys [mp]
-  (->> mp
-      (into [])
-      (map (fn [[k v]] [(->kebab-case-keyword k) v]))
       (into {})))
 
 
@@ -64,16 +58,15 @@
 
 (defn get-scripts [trial]
   (->> (jdbc/query (get-ds)
-                   ["SELECT * FROM scripts WHERE trial_id = ?" (:id trial)])
-       (map kebab-case-top-level-keys)))
+                   ["SELECT * FROM scripts WHERE trial_id = ?" (:id trial)])))
 
 ;### patch script ##############################################################
 
 (def ^:private update-permitted-keys
   #{:state :exit_status :environment_variables
-    :working_dir :command
+    :working_dir :command :issues
     :script_file :wrapper_file
-    :finished_at :started_at :error})
+    :finished_at :started_at })
 
 (defn remove-null-values [data]
   (->> data
