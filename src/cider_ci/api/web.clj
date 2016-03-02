@@ -74,23 +74,6 @@
       (routing/wrap-log-exception)))
 
 
-(defn wrap-snatch-and-log-exception [handler]
-  (fn [request]
-    (catcher/snatch
-      {:return-expr {:status 500
-                     :body "Unexpected server error; see server logs for details."}}
-      (handler request))))
-
-
-;#### the server ##############################################################
-
-(defn initialize []
-  (let [http-conf (-> (get-config) :services :api :http)
-        context (str (:context http-conf) (:sub_context http-conf))]
-    (http-server/start http-conf (-> context
-                                     build-main-handler
-                                     wrap-snatch-and-log-exception))))
-
 
 ;### Debug ####################################################################
 ;(logging-config/set-logger! :level :debug)

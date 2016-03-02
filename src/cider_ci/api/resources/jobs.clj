@@ -9,7 +9,6 @@
     [cider-ci.utils.http :as utils-http]
     [cider-ci.utils.http-server :as http-server]
     [cider-ci.utils.rdbms :as rdbms]
-    [cider-ci.api.util :refer [do-http-request]]
     [clojure.data.json :as json]
     [clojure.java.jdbc :as jdbc]
     [compojure.core :as cpj]
@@ -143,8 +142,11 @@
           body (-> request :json-params
                    (assoc :created_by user-id)
                    json/write-str)
-          params {:body body :throw-exceptions false}
-          response (do-http-request :post url params)]
+          params {:body body
+                  :throw-exceptions false
+                  :socket-timeout 3000
+                  :conn-timeout 3000}
+          response (http/request :post url params)]
       (if (map? (:body response))
         (select-keys response [:body :status])
         {:status (:status response)
@@ -162,4 +164,4 @@
 ;### Debug ####################################################################
 ;(logging-config/set-logger! :level :debug)
 ;(logging-config/set-logger! :level :info)
-(debug/debug-ns *ns*)
+;(debug/debug-ns *ns*)

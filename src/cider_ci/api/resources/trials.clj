@@ -6,7 +6,6 @@
   (:require
     [cider-ci.api.pagination :as pagination]
     [cider-ci.api.util :as util]
-    [cider-ci.api.util :refer [do-http-request]]
     [cider-ci.utils.http :as utils-http]
     [cider-ci.utils.rdbms :as rdbms]
     [clojure.data.json :as json]
@@ -66,7 +65,7 @@
         body (json/write-str {:created_by user-id})
         params {:body body :throw-exceptions false}
         _ (logging/info {:params params})
-        response (do-http-request :post url params)]
+        response (utils-http/request :post url params)]
     (if (map? (:body response))
       (select-keys response [:body :status])
       {:status (:status response)
