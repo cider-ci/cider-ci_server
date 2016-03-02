@@ -4,6 +4,7 @@
 
 (ns cider-ci.builder.jobs.normalizer
   (:require
+    [cider-ci.utils.core :refer :all]
 
     [clj-logging-config.log4j :as logging-config]
     [logbug.catcher :as catcher]
@@ -11,9 +12,6 @@
     [clojure.tools.logging :as logging]
     ))
 
-
-(defn seqable? [x]
-  (instance? clojure.lang.Seqable x))
 
 (defn- normalize-to-key-name-map [d]
   (cond (map? d)
@@ -25,7 +23,7 @@
                            (assoc :key (or (:key v) k))
                            (assoc :name (or (:name v) k)))]))
              (into {}))
-        (seqable? d)
+        (coll? d)
         (->> d
              (map-indexed (fn [i v] [(or (:key v) (:name v) (str i)) v]))
              (into {}))
@@ -43,17 +41,10 @@
 
 ;### normalize task ###########################################################
 
-(defn seq-to-strin-bool-map [sq]
-  (->> sq
-       (map (fn [s] [(str s) true]))
-       (into {})))
-
 (defn- normalize-traits-in-task [task-map]
-  (if-let [traits (:traits task-map)]
-    (cond (map? traits) task-map
-          (seqable? traits) (assoc task-map :traits (seq-to-strin-bool-map traits))
-          :else (throw (IllegalStateException. "Traits must be a map or a seqable.")))
-    (assoc task-map :traits {})))
+  (assoc
+    task-map :traits
+    (to-cisetmap (or (:traits task-map) {}))))
 
 (defn- normalize-task-with-body-to-scripts-task [task-map]
   (cond (:scripts task-map) task-map
@@ -80,7 +71,7 @@
              (map (fn [[k v]] [k (normalize-string-value-to-body-map v)]))
              (into {}))
 
-        (seqable? d)
+        (coll? d)
         (->> d
              (map (fn [v] (normalize-string-value-to-body-map v))))
 
@@ -114,14 +105,14 @@
       (#(assoc % :tasks (normalize-tasks (:tasks %))))))
 
 
-;### task-defaults ############################################################
+;### task_defaults ############################################################
 
 (defn- normalize-task-defaults [task-defaults]
   (normalize-task task-defaults))
 
 (defn- normalize-task-defaults-in-context [ctx]
-  (if-let [task-defaults (:task-defaults ctx)]
-    (assoc ctx :task-defaults (normalize-task-defaults task-defaults))
+  (if-let [task-defaults (:task_defaults ctx)]
+    (assoc ctx :task_defaults (normalize-task-defaults task-defaults))
     ctx
     ))
 
@@ -141,11 +132,25 @@
       ))
 
 
+;### Normalize job properties #################################################
 
-;### Debug ####################################################################
+(defn- normalize-empty-tasks-warning [spec]
+  "Adds :empty_tasks_warning `true` if the key is not present.
+  Otherwise normalizes the value of :empty_tasks_warning to a boolean."
+  (let [value (if-not (contains? spec :empty_tasks_warning)
+                true
+                (if (:empty_tasks_warning spec)
+                  true
+                  false))]
+    (assoc spec :empty_tasks_warning value)))
 
+(defn- normalize-job-properties [spec]
+  (-> spec
+      normalize-empty-tasks-warning))
 
-(def CONTEXT-KEYS [:task :tasks :task-defaults :script-defaults :subcontexts])
+;### Normalize to top level context ###########################################
+
+(def CONTEXT-KEYS [:task :tasks :task_defaults :script_defaults :subcontexts])
 
 (defn- normalize-to-top-level-context [spec]
   (if (:context spec)
@@ -160,6 +165,7 @@
 (defn normalize-job-spec [job-spec]
   (-> job-spec
       normalize-to-top-level-context
+      normalize-job-properties
       (#(assoc % :context (-> % :context normalize-context)))
       ))
 

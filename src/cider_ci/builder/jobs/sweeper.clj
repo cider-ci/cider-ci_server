@@ -11,7 +11,7 @@
     [clojure.tools.logging :as logging]
     [logbug.catcher :as catcher]
     [logbug.debug :as debug]
-    [honeysql.sql :refer :all]
+    [honeysql.core :as sql]
     ))
 
 (defn- get-job-retention-interval []
@@ -33,27 +33,27 @@
 
 (def ^:private job-not-directly-releated-to-branch-query-part
   [:not [:exists
-         (-> (sql-select 1)
-             (sql-from :commits)
-             (sql-where [:= :jobs.tree_id :commits.tree_id])
-             (sql-merge-join :branches [:= :branches.current_commit_id
+         (-> (sql/select 1)
+             (sql/from :commits)
+             (sql/where [:= :jobs.tree_id :commits.tree_id])
+             (sql/merge-join :branches [:= :branches.current_commit_id
                                         :commits.id]))]])
 
 (defn- to-be-swept-jobs-query []
   (when-let [job-retention-interval (get-job-retention-interval)]
-    (-> (-> (sql-select :jobs.id)
-            (sql-from :jobs)
-            (sql-merge-where (sql-raw (job-overdue-query-part
+    (-> (-> (sql/select :jobs.id)
+            (sql/from :jobs)
+            (sql/merge-where (sql/raw (job-overdue-query-part
                                         job-retention-interval)))
-            (sql-merge-where (job-state-condition-query-part))
-            (sql-merge-where job-not-directly-releated-to-branch-query-part)
-            )sql-format)))
+            (sql/merge-where (job-state-condition-query-part))
+            (sql/merge-where job-not-directly-releated-to-branch-query-part)
+            )sql/format)))
 
 (defn- delete-jobs [job-ids]
-  (->> (-> (sql-delete-from :jobs)
-           (sql-merge-where [:in :jobs.id job-ids])
-           (sql-returning :jobs.name :jobs.id :jobs.tree_id :jobs.key)
-           sql-format)
+  (->> (-> (sql/delete-from :jobs)
+           (sql/merge-where [:in :jobs.id job-ids])
+           (sql/returning :jobs.name :jobs.id :jobs.tree_id :jobs.key)
+           sql/format)
        (jdbc/query (get-ds))))
 
 (defn- sweep-jobs []

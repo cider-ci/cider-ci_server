@@ -5,37 +5,33 @@
 (ns cider-ci.builder.main
   (:gen-class)
   (:require
+    [cider-ci.self]
+    [cider-ci.utils.app]
+    [cider-ci.utils.config :refer [get-config]]
+
     [cider-ci.builder.jobs.sweeper :as jobs.sweeper]
     [cider-ci.builder.jobs.trigger :as jobs.trigger]
     [cider-ci.builder.repository :as repository]
     [cider-ci.builder.tasks :as tasks]
     [cider-ci.builder.web :as web]
-    [cider-ci.utils.config :as config :refer [get-config get-db-spec]]
-    [cider-ci.utils.map :refer [deep-merge]]
-    [cider-ci.utils.messaging :as messaging]
-    [cider-ci.utils.nrepl :as nrepl]
-    [cider-ci.utils.rdbms :as rdbms]
-    [clojure.java.jdbc :as jdbc]
+
     [clojure.tools.logging :as logging]
     [logbug.catcher :as catcher]
-    [logbug.debug :as debug]
     [logbug.thrown]
-    [pg-types.all]
     ))
 
 
 (defn -main [& args]
-  (catcher/with-logging {}
-    (logbug.thrown/reset-ns-filter-regex #".*cider.ci.*")
-    (config/initialize {:overrides {:service :builder}})
-    (rdbms/initialize (get-db-spec :builder))
-    (nrepl/initialize (-> (get-config) :services :builder :nrepl))
-    (messaging/initialize (:messaging (get-config)))
-    (tasks/initialize)
-    (web/initialize)
-    (jobs.trigger/initialize)
-    (jobs.sweeper/initialize)))
+  (catcher/snatch
+    {:level :fatal
+     :throwable Throwable
+     :return-fn #(System/exit -1)}
+    (cider-ci.utils.app/init web/build-main-handler)
 
+    (tasks/initialize)
+    (jobs.trigger/initialize)
+    (jobs.sweeper/initialize)
+    ))
 
 ;### Debug ####################################################################
 ;(logging-config/set-logger! :level :debug)

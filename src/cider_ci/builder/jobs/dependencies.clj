@@ -8,17 +8,22 @@
     [cider-ci.builder.spec :as spec]
     [cider-ci.builder.tasks :as tasks]
     [cider-ci.builder.util :as util]
-    [logbug.debug :as debug]
+
+    [cider-ci.utils.core :refer :all]
     [cider-ci.utils.http :as http]
+    [cider-ci.utils.map :refer [convert-to-array]]
     [cider-ci.utils.messaging :as messaging]
     [cider-ci.utils.rdbms :as rdbms :refer [get-ds]]
-    [logbug.catcher :as catcher]
-    [cider-ci.utils.map :refer [deep-merge convert-to-array]]
-    [clj-logging-config.log4j :as logging-config]
+
+    [honeysql.core :as sql]
     [clj-yaml.core :as yaml]
     [clojure.java.jdbc :as jdbc]
+
+    [logbug.catcher :as catcher]
+    [clj-logging-config.log4j :as logging-config]
     [clojure.tools.logging :as logging]
-    [honeysql.sql :refer :all]
+    [logbug.debug :as debug]
+
     ))
 
 
@@ -46,23 +51,23 @@
         commits_supermodule_ref (str (gensym "commits_supermodule_"))
         updated-query (-> query
 
-               (sql-merge-join
+               (sql/merge-join
                  [:commits commits_submodule_ref]
-                 [:= (sql-raw (str commits_submodule_ref ".tree_id"))
-                  (sql-raw (str submodule_tree_id_join_ref ".tree_id"))])
+                 [:= (sql/raw (str commits_submodule_ref ".tree_id"))
+                  (sql/raw (str submodule_tree_id_join_ref ".tree_id"))])
 
-               (sql-merge-join
+               (sql/merge-join
                  [:submodules submodule_ref]
-                 [:= (sql-raw (str submodule_ref ".submodule_commit_id"))
-                  (sql-raw (str commits_submodule_ref ".id"))])
+                 [:= (sql/raw (str submodule_ref ".submodule_commit_id"))
+                  (sql/raw (str commits_submodule_ref ".id"))])
 
-               (sql-merge-join
+               (sql/merge-join
                  [:commits commits_supermodule_ref]
-                 [:= (sql-raw (str commits_supermodule_ref ".id"))
-                  (sql-raw (str submodule_ref ".commit_id"))])
+                 [:= (sql/raw (str commits_supermodule_ref ".id"))
+                  (sql/raw (str submodule_ref ".commit_id"))])
 
-               (sql-merge-where
-                 [:= (sql-raw (str submodule_ref ".path"))
+               (sql/merge-where
+                 [:= (sql/raw (str submodule_ref ".path"))
                   submodule-path])
 
                )]
@@ -72,25 +77,25 @@
   (let [ [intermediate-query join_ref] (reduce submodule-reducer [base-query "jobs"] submodule-paths)]
     [" EXISTS "
      (-> intermediate-query
-         (sql-merge-where [:= (sql-raw (str join_ref ".tree_id")) tree-id])) ]))
+         (sql/merge-where [:= (sql/raw (str join_ref ".tree_id")) tree-id])) ]))
 
 (defn- subquery-for-job-depencency [base-query tree-id]
   [" EXISTS "
    (-> base-query
-       (sql-merge-where [:= :jobs.tree_id tree-id]))])
+       (sql/merge-where [:= :jobs.tree_id tree-id]))])
 
 (defn- build-job-dependency-query [tree-id dependency]
-  (let [base-query (-> (sql-select 1)
-                       (sql-from :jobs)
-                       (sql-merge-where [:= :jobs.key (:job dependency)])
-                       (sql-merge-where [:in :jobs.state (:states dependency)]))
+  (let [base-query (-> (sql/select 1)
+                       (sql/from :jobs)
+                       (sql/merge-where [:= :jobs.key (:job dependency)])
+                       (sql/merge-where [:in :jobs.state (:states dependency)]))
         subquery (if-let [submodule-paths (-> dependency :submodule seq)]
                    (subquery-for-job-depencency-in-submodules
                      base-query (reverse submodule-paths) tree-id)
                    (subquery-for-job-depencency base-query tree-id))]
     (-> base-query
-        (sql-merge-where subquery)
-        sql-format)))
+        (sql/merge-where subquery)
+        sql/format)))
 
 (defn- evaluate-job-dependency [job dependency]
   (let [tree-id (:tree_id job)
@@ -108,7 +113,7 @@
                               dependency "` is not applicable!"))))
 
 (defn- evaluate-dependencies [job]
-  (if-let [dependencies (-> job :depends-on seq)]
+  (if-let [dependencies (-> job :depends_on seq)]
     (reduce evaluate-job-dependency job dependencies)
     job))
 

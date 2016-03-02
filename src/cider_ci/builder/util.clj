@@ -17,11 +17,6 @@
 (defn json-write-str [data]
   (json/write-str data :key-fn json-key-fn))
 
-(defn deep-merge [& vals]
-  (if (every? map? vals)
-    (apply merge-with deep-merge vals)
-    (last vals)))
-
 (defn id-hash [data]
   (clj-uuid/v5 clj-uuid/+null+ (json-write-str data)))
 

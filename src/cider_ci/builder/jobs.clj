@@ -4,14 +4,17 @@
 
 (ns cider-ci.builder.jobs
   (:require
-    [cider-ci.builder.jobs.normalizer :as normalizer]
-    [cider-ci.builder.project-configuration :as project-configuration]
     [cider-ci.builder.jobs.dependencies :as jobs.dependencies]
+    [cider-ci.builder.jobs.normalizer :as normalizer]
+    [cider-ci.builder.jobs.validator :as validator]
+    [cider-ci.builder.project-configuration :as project-configuration]
     [cider-ci.builder.repository :as repository]
     [cider-ci.builder.spec :as spec]
     [cider-ci.builder.tasks :as tasks]
+
+    [cider-ci.utils.core :refer :all]
     [cider-ci.utils.http :as http]
-    [cider-ci.utils.map :refer [deep-merge convert-to-array]]
+    [cider-ci.utils.map :refer [convert-to-array]]
     [cider-ci.utils.messaging :as messaging]
     [cider-ci.utils.rdbms :as rdbms]
 
@@ -51,10 +54,6 @@
 (defn find-or-create-specifiation [spec]
   (spec/get-or-create-job-spec spec))
 
-(defn invoke-create-tasks-and-trials [job]
-  (tasks/create-tasks-and-trials {:job_id (:id job)})
-  job)
-
 (defn persist-job [params]
   (->> (jdbc/insert!
          (rdbms/get-ds)
@@ -64,6 +63,12 @@
                        :name, :description, :priority, :key, :user_id]))
        first))
 
+(defn on-job-exception [job ex]
+  (jdbc/update!
+    (rdbms/get-ds) :jobs {:state "defective"}
+    ["job.id = ?" (:id job)])
+  ; TODO create a job issue
+  )
 
 (defn create [params]
   (catcher/with-logging {}
@@ -77,7 +82,11 @@
                        {:job_specification_id spec-id}
                        (select-keys params [:tree_id :priority :created_by]))
           job (persist-job job-params)]
-      (invoke-create-tasks-and-trials job))))
+      (catcher/snatch
+        {:return-fn (fn [e] (on-job-exception job e))}
+        (validator/validate! job)
+        (tasks/create-tasks-and-trials {:job_id (:id job)}))
+      job)))
 
 
 ;### available jobs #####################################################

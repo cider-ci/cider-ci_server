@@ -7,7 +7,8 @@
     [cider-ci.builder.spec :as spec]
     [cider-ci.builder.task :as task]
     [cider-ci.builder.util :as util]
-    [cider-ci.utils.map :as map :refer [deep-merge]]
+
+    [cider-ci.utils.core :refer [deep-merge]]
     [cider-ci.utils.map :refer [convert-to-array]]
     [cider-ci.utils.messaging :as messaging]
     [cider-ci.utils.rdbms :as rdbms]
@@ -41,7 +42,17 @@
          (jdbc/insert! (rdbms/get-ds) "job_issues" row-data#)))))
 
 (defn get-job [id]
-  (first (jdbc/query (rdbms/get-ds) ["SELECT * FROM jobs WHERE id =?" id ])))
+  (->> ["SELECT * FROM jobs WHERE id =?" id ]
+  (jdbc/query (rdbms/get-ds))
+  first))
+
+(defn get-job-spec [job]
+  (->> ["SELECT * from job_specifications WHERE id = ?"
+        (:job_specification_id job)]
+       (jdbc/query (rdbms/get-ds))
+       first))
+
+;(-> "5147259f-7210-4c4b-bfaa-cf3fe053b4fc" get-job get-job-spec)
 
 
 ;### build tasks ##############################################################
@@ -102,10 +113,10 @@
            (fn [context]
              (logging/debug {:context context})
              (let [task-defaults (deep-merge inherited-task-defaults
-                                                  (or (:task-defaults context)
+                                                  (or (:task_defaults context)
                                                       {}))
                    script-defaults (deep-merge inherited-script-defaults
-                                                    (or (:script-defaults context)
+                                                    (or (:script_defaults context)
                                                         {}))]
                (build-tasks-for-single-context context
                                                task-defaults
@@ -115,58 +126,63 @@
 (def ^:private script-base-defaults {})
 
 (defn build-tasks
-  "Build the tasks for the given top-level specification."
-  [job _spec]
-  (let [spec (clojure.walk/keywordize-keys _spec)
+  "Build the tasks for the given top-level context spec"
+  [tx job context-spec]
+  (let [context-spec (clojure.walk/keywordize-keys context-spec)
         tasks (build-tasks-for-single-context
-                spec
-                (conj (or (:task-defaults spec) {})
+                context-spec
+                (conj (or (:task_defaults context-spec) {})
                       {:job_id (:id job)})
-                (deep-merge script-base-defaults (or (:script-defaults spec) {})))]
+                (deep-merge script-base-defaults
+                            (or (:script_defaults context-spec) {})))]
     (doseq [raw-task tasks]
-      (wrap-exception-create-job-issue
-        job "Error during task creation"
-        (task/create-db-task raw-task)))))
+      (task/create-db-task tx raw-task))))
 
 
 ;### create tasks for job ###############################################
 
-(defn create-tasks [job]
-  (wrap-exception-create-job-issue
-    job "Error when creating tasks"
-    (let [spec (-> (jdbc/query (rdbms/get-ds)
-                               ["SELECT * FROM job_specifications WHERE id = ?"
-                                (:job_specification_id job)])
-                   first
-                   :data
-                   :context)]
-      (build-tasks job spec))))
+(defn create-tasks [job spec]
+  (jdbc/with-db-transaction [tx (rdbms/get-ds)]
+    (let [context-spec (-> spec :data :context)]
+      (build-tasks tx job context-spec))))
 
-(defn- assert-tasks [job]
-  (when (= 0 (-> (jdbc/query (rdbms/get-ds)
-                             ["SELECT count(*) AS count FROM tasks WHERE job_id = ?"
-                              (:id job)])
-                 first :count))
-    (jdbc/update! (rdbms/get-ds) :jobs
-                  {:state "failed"}
-                  ["id = ? " (:id job)])
-    (throw (IllegalStateException.
-             "This job failed because no tasks have been created for it."))))
+(defn number-of-tasks [job]
+  (->> ["SELECT count(*) AS count FROM tasks WHERE job_id = ?"
+        (:id job)]
+       (jdbc/query (rdbms/get-ds))
+       first
+       :count))
+
+(defn- check-tasks-empty! [job spec]
+  (when (and (:empty_tasks_warning spec)
+             (= 0 (number-of-tasks job)))
+    (jdbc/insert!
+      (rdbms/get-ds) :job_issues
+      {:job_id (:id job)
+       :type "warning"
+       :title "No Tasks Have Been Created"
+       :description
+       (->> ["This job has **no tasks**."
+             " The job passes because this is the consistent behavior."
+             " However, this warning is issued in case this is not intended."
+             " You can set the property `empty_tasks_warning` to false "
+             " to disable this warning in the future."]
+            (clojure.string/join "\n"))})))
 
 (defn create-tasks-and-trials [message]
-  (if-let [job (get-job (:job_id message))]
-    (wrap-exception-create-job-issue
-      job "Error during create-tasks-and-trials"
-      (-> job create-tasks)
-      (doseq [task (jdbc/query
-                     (rdbms/get-ds)
-                     ["SELECT id, state FROM tasks WHERE job_id = ?"
-                      (:id job)])]
-        (when (= (:state task) "pending")
-          (messaging/publish "task.create-trials" task)))
-      (messaging/publish "job.evaluate-and-update" (select-keys job [:id]))
-      (assert-tasks job))
-    (throw (IllegalStateException. (str "could not find job for " message)))))
+  (when-let [job (get-job (:job_id message))]
+    (when-let [job-spec-row (get-job-spec job)]
+      (wrap-exception-create-job-issue
+        job "An exception occurred when creating tasks and trials!"
+        (create-tasks job job-spec-row)
+        (doseq [task (jdbc/query
+                       (rdbms/get-ds)
+                       ["SELECT id, state FROM tasks WHERE job_id = ?"
+                        (:id job)])]
+          (when (= (:state task) "pending")
+            (messaging/publish "task.create-trials" task)))
+        (check-tasks-empty! job (:data job-spec-row))
+        (messaging/publish "job.evaluate-and-update" (select-keys job [:id]))))))
 
 ;### initialization ###########################################################
 (defn initialize []
