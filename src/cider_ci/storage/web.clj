@@ -31,16 +31,16 @@
     [clj-logging-config.log4j :as logging-config]
     [clojure.tools.logging :as logging]
     [logbug.catcher :as catcher]
-    [logbug.debug :as debug :refer [I> I>>]]
+    [logbug.debug :as debug :refer [I> I>> identity-with-logging]]
     [logbug.ring :refer [wrap-handler-with-logging]]
-    )
-  )
+    ))
 
 ;### new helper ###############################################################
 
 (defn find-store [request]
   (let [prefix (-> request :route-params :prefix)]
-    (->> (get-config)
+    (I>> identity-with-logging
+         (get-config)
          :services :storage :stores
          (filter #(= (str "/" prefix) (:url_path_prefix %)))
          first)))
@@ -206,14 +206,6 @@
       status/wrap
       (routing/wrap-prefix context)
       routing/wrap-log-exception))
-
-
-;#### the server ##############################################################
-
-(defn initialize []
-  (let [http-conf (-> (get-config) :services :storage :http)
-        context (str (:context http-conf) (:sub_context http-conf))]
-    (http-server/start http-conf (build-main-handler context))))
 
 
 ;### Debug ####################################################################
