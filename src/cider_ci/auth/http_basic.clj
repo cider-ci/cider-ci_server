@@ -59,15 +59,15 @@
      (create-password username secret)
      (throw (IllegalStateException. "The secret is not set")))))
 
-(defn get-executor [executor-name]
+(defn find-executor [executor-name]
   (first (jdbc/query
            (rdbms/get-ds)
-           ["SELECT * FROM executors WHERE id::TEXT = ?"
+           ["SELECT * FROM executors WHERE name = ?"
             executor-name])))
 
 (defn authenticate-executor [executor-name password-digest]
   (when (password-matches password-digest executor-name)
-    (get-executor executor-name)))
+    (find-executor executor-name)))
 
 (defn- authenticate-role [request roles]
   (let [request (atom request)]
@@ -111,7 +111,7 @@
   [^String string]
   (apply str (map char (base64/decode (.getBytes string)))))
 
-(defn- extract-and-add-basic-auth-properties
+(defn extract-and-add-basic-auth-properties
   "Extracts information from the \"authorization\" header and
   adds a :basic-auth-request key to the request with the value
   {:name name :password password}."

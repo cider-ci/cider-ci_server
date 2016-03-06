@@ -49,7 +49,7 @@
   (->> sq
        (partition 2 2 "NO-TYPE-GIVEN")
        (map (fn [[d t]]
-              [(Double/parseDouble d) (duration-type-into-secs-factor t)]))
+              [(* (Double/parseDouble d) (duration-type-into-secs-factor t))]))
        flatten ))
 
 (defn parse-string-to-seconds [duration]
@@ -57,7 +57,7 @@
        split-by-whitespaces
        drop-fillwords
        convert-to-seconds-factors
-       (reduce *)))
+       (reduce +)))
 
 ;(parse-string-to-seconds "three days")
 ;(parse-string-to-seconds "3 elephants")

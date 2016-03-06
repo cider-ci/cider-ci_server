@@ -2,6 +2,7 @@
   (:refer-clojure
     :exclude [get])
   (:require
+    [cider-ci.utils.core :refer :all]
     [cider-ci.auth.http-basic :as http-basic]
     [cider-ci.utils.config :refer [get-config]]
     [cider-ci.utils.map]
@@ -67,18 +68,19 @@
 
 (defn request [method url params]
   (logging/debug [method url params])
-  (let [basic-auth (:basic_auth (get-config))]
-    (logging/debug ("http/" method) {:url url :basic-auth basic-auth})
-    (http-client/request
-      (conj {:basic-auth [(:username basic-auth) (:password basic-auth)]
-             :url url
-             :method method
-             :insecure? true
-             :content-type :json
-             :accept :json
-             :socket-timeout 1000
-             :conn-timeout 1000 }
-            params))))
+  (let [{username :username password :password} (:basic_auth (get-config))
+        req-map (conj {:basic-auth [(to-cistr username) (to-cistr password)]
+                       :url url
+                       :method method
+                       :insecure? true
+                       :content-type :json
+                       :accept :json
+                       :socket-timeout 1000
+                       :conn-timeout 1000
+                       :as :auto}
+                      params)]
+    (logging/debug 'request req-map)
+    (http-client/request req-map)))
 
 (defn get [url params]
   (logging/debug get [url params])

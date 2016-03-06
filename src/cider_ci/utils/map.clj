@@ -4,32 +4,31 @@
 
 (ns cider-ci.utils.map
   (:require
+    [cider-ci.utils.core :refer [to-cistr]]
+
     [logbug.debug :as debug]
     [clj-logging-config.log4j :as logging-config]
-    [clojure.tools.logging :as logging]))
-
+    [clojure.tools.logging :as logging]
+    ))
 
 (defn deep-merge [& vals]
+  (logging/warn (str "cider-ci.utils.map/deep-merge is deprecated."
+                     " Use cider-ci.utils.core/deep-merge instead."))
   (if (every? map? vals)
     (apply merge-with deep-merge vals)
     (last vals)))
 
-
-(defn k2str [k]
-  (if (keyword? k) (subs (str k) 1) (str k) ))
-
-
 (defn convert-to-array
   "Converts a map of maps to an array of maps. The key becomes the value of the
-  :name property if and only if :name does no exists already."
+  :key property by applying (to-cistr key) property. If there is no :name property
+  it will be set in the same way."
   [map-or-array]
   (if (and (map? map-or-array)
            (every?  map? (map second map-or-array)))
     (map (fn [[k m]]
            (conj m
-                 {:key (k2str k)}
+                 {:key (to-cistr k)}
                  (when-not (:name m)
-                   {:name (k2str k)})))
+                   {:name (to-cistr k)})))
          map-or-array)
     map-or-array))
-

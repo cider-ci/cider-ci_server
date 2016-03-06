@@ -8,3 +8,5 @@
 /tmp
 pom.xml
 pom.xml.asc
+src/cider_ci/self.clj
+
