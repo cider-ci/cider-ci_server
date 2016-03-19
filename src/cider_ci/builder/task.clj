@@ -4,12 +4,18 @@
 
 (ns cider-ci.builder.task
   (:require
+    [cider-ci.builder.spec :as spec]
+    [cider-ci.builder.util :as util]
+
+    [cider-ci.utils.config :as config]
+    [cider-ci.utils.duration :as duration]
+    [cider-ci.utils.rdbms :as rdbms]
+
+    [clojure.java.jdbc :as jdbc]
+
     [clojure.tools.logging :as logging]
     [logbug.debug :as debug]
-    [cider-ci.utils.rdbms :as rdbms]
-    [cider-ci.builder.spec :as spec]
-    [clojure.java.jdbc :as jdbc]
-    [cider-ci.builder.util :as util]
+
   ))
 
 
@@ -37,6 +43,7 @@
              (rest pending-checks))
       errors)))
 
+
 ;### normalize task-spec ######################################################
 
 (defn- normalize-aggregate-succes [spec]
@@ -44,11 +51,26 @@
     spec
     (assoc spec :aggregate-state "satisfy-any")))
 
+(defn dispatch-storm-delay-default []
+  (or (config/parse-config-duration-to-seconds
+        :dispatch-storm-delay-default-duration)
+      5))
+
+(defn- normalize-dispatch-storm-delay [spec]
+  (if-let [dispatch-storm-delay-duration (:dispatch-storm-delay-duration spec)]
+    (-> spec (dissoc :dispatch-storm-delay-duration)
+        (assoc :dispatch_storm_delay_seconds
+               (-> dispatch-storm-delay-duration
+                   duration/parse-string-to-seconds
+                   Math/floor int)))
+    (assoc spec :dispatch_storm_delay_seconds (dispatch-storm-delay-default))))
+
 (defn- normalize-task-spec [raw-spec]
   (-> raw-spec
       clojure.walk/keywordize-keys
       (dissoc :job_id)
-      normalize-aggregate-succes))
+      normalize-aggregate-succes
+      normalize-dispatch-storm-delay))
 
 
 ;##############################################################################
@@ -58,7 +80,7 @@
         task-spec (normalize-task-spec raw-task-spec)
         db-task-spec (spec/get-or-create-task-spec task-spec)
         errors (validated-task-spec task-spec)
-        task-row (conj (select-keys task-spec [:name :state :error :priority])
+        task-row (conj (select-keys task-spec [:name :state :error :priority :dispatch_storm_delay_seconds])
                        {:job_id job-id
                         :traits (spec-map-to-array (or (:traits task-spec) {}))
                         :entity_errors errors
