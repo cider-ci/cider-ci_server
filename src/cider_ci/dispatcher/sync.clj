@@ -10,6 +10,7 @@
     [cider-ci.dispatcher.sync.sync-trials :as sync-trials]
     [cider-ci.dispatcher.sync.update-executor :as update-executor]
     [cider-ci.dispatcher.trials :as trials]
+
     [cider-ci.utils.rdbms :as rdbms]
     [clj-logging-config.log4j :as logging-config]
     [clojure.data.json :as json]

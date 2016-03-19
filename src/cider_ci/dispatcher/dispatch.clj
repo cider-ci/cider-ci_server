@@ -13,6 +13,8 @@
     [cider-ci.utils.daemon :refer [defdaemon]]
     [cider-ci.utils.http :as http]
     [cider-ci.utils.rdbms :as rdbms :refer [get-ds]]
+
+    [clj-time.core :as time]
     [clj-http.client :as http-client]
     [clj-logging-config.log4j :as logging-config]
     [clojure.data.json :as json]
@@ -71,6 +73,7 @@
                (next-trial/next-trial-with-executor-for-push)]
       (jdbc/update! (get-ds) :trials
                     {:state "dispatching"
+                     :dispatched_at (time/now)
                      :executor_id executor-id}
                     ["id = ?" trial-id])
       (future (dispatch trial-id executor-id))

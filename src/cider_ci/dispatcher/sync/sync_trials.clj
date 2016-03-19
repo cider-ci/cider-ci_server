@@ -9,7 +9,8 @@
     [cider-ci.dispatcher.dispatch.next-trial :as next-trial]
     [cider-ci.dispatcher.trials :as trials]
     [cider-ci.utils.rdbms :as rdbms]
-    [clj-logging-config.log4j :as logging-config]
+
+    [clj-time.core :as time]
     [clojure.java.jdbc :as jdbc]
     [clojure.tools.logging :as logging]
     [logbug.catcher :as catcher]
@@ -17,6 +18,8 @@
     [honeysql.format :as sql-format]
     [honeysql.helpers :as sql-helpers]
     [honeysql.types :as sql-types]
+
+    [clj-logging-config.log4j :as logging-config]
     ))
 
 
@@ -27,7 +30,9 @@
     (trials/wrap-trial-with-issue-and-throw-again
       {:id trial-id}  "Error during dispatch"
       (jdbc/update! tx :trials
-                    {:state "dispatching" :executor_id (:id executor)}
+                    {:state "dispatching"
+                     :dispatched_at (time/now)
+                     :executor_id (:id executor)}
                     ["id = ?" trial-id]))
     (first (jdbc/query tx ["SELECT * FROM trials WHERE id = ?" trial-id]))))
 
