@@ -4,23 +4,28 @@
 
 (ns cider-ci.repository.repositories
   (:require
+
     [cider-ci.repository.repositories.fetch-and-update :as fetch-and-update]
     [cider-ci.repository.branches :as branches]
     [cider-ci.repository.git.repositories :as git.repositories]
     [cider-ci.repository.sql.branches :as sql.branches]
+
     [cider-ci.utils.daemon :as daemon :refer [defdaemon]]
+    [cider-ci.utils.duration :as duration]
     [cider-ci.utils.fs :as ci-fs]
     [cider-ci.utils.messaging :as messaging]
     [cider-ci.utils.rdbms :as rdbms]
     [cider-ci.utils.system :as system]
-    [clj-logging-config.log4j :as logging-config]
+
     [clj-time.core :as time]
     [clojure.java.jdbc :as jdbc]
+    [me.raynes.fs :as fs]
+
+    [clj-logging-config.log4j :as logging-config]
     [clojure.tools.logging :as logging]
-    [logbug.catcher :as catcher]
+    [logbug.catcher :as catcher :refer [snatch]]
     [logbug.debug :as debug]
     [logbug.thrown :as thrown]
-    [me.raynes.fs :as fs]
     ))
 
 
@@ -51,11 +56,19 @@
 
 ;### Submit actions through agent #############################################
 
+(defn- git-fetch-and-update-interval [repository]
+  (time/seconds
+    (snatch
+      {:return-expr 60}
+      (duration/parse-string-to-seconds
+        (:git_fetch_and_update_interval repository)))))
+
 (defn- git-fetch-is-due? [repository git-repository]
-  (when-let [interval-value (:git_fetch_and_update_interval repository)]
-    (if-let [git-fetched-at (:git-fetched-at @(:agent git-repository))]
-      (time/after? (time/now) (time/plus git-fetched-at (time/seconds interval-value)))
-      true)))
+  (if-let [git-fetched-at (:git-fetched-at @(:agent git-repository))]
+    (time/after?
+      (time/now)
+      (time/plus git-fetched-at (git-fetch-and-update-interval repository)))
+    true))
 
 (defn- git-fetch-and-update-fn [state repository]
   (catcher/snatch {}

@@ -14,11 +14,13 @@
     [clj-time.core :as time]
     [clojure.java.jdbc :as jdbc]
     [clojure.tools.logging :as logging]
-    [logbug.catcher :as catcher]
-    [logbug.debug :as debug]
-    [logbug.thrown :as thrown]
     [honeysql.sql :refer :all]
     [me.raynes.fs :as fs]
+
+    [logbug.debug :as debug :refer [I> I>> identity-with-logging]]
+    [logbug.catcher :as catcher]
+    [logbug.thrown :as thrown]
+
     ))
 
 
@@ -57,18 +59,18 @@
 ;### branches #################################################################
 
 (defn- get-git-branches [repository-path]
-  (let [res (system/exec-with-success-or-throw
-              ["git" "branch" "--no-abbrev" "--no-color" "-v"]
-              {:watchdog (* 1 60 1000), :dir repository-path, :env {"TERM" "VT-100"}})
-        out (:out res)
-        lines (clojure.string/split out #"\n")
-        branches (map (fn [line]
-                        (let [[_ branch-name current-commit-id]
-                              (re-find #"^?\s+(\S+)\s+(\S+)\s+(.*)$" line)]
-                          {:name branch-name
-                           :current_commit_id current-commit-id}))
-                      lines)]
-    branches))
+  (I>> identity-with-logging
+       (I> identity-with-logging
+           (system/exec-with-success-or-throw
+             ["git" "branch" "--list" "--no-abbrev" "--no-color" "-v"]
+             {:timeout "1 Minutes", :dir repository-path, :env {"TERM" "VT-100"}})
+           :out
+           (clojure.string/split #"\n"))
+       (map (fn [line]
+              (let [[_ branch-name current-commit-id]
+                    (re-find #"^?\s+(.+)\s+([0-9a-f]{40})\s+(.*)$" line)]
+                {:name (clojure.string/trim branch-name)
+                 :current_commit_id current-commit-id})))))
 
 (defn- update-branches [repository]
   (catcher/with-logging {}
@@ -88,7 +90,7 @@
   (let [repository-path (git.repositories/path repository)
         id (git.repositories/canonic-id repository) ]
     (system/exec-with-success-or-throw ["git" "update-server-info"]
-                                       {:watchdog (* 10 60 1000), :dir repository-path, :env {"TERM" "VT-100"}})))
+                                       {:timeout "1 Minute", :dir repository-path, :env {"TERM" "VT-100"}})))
 
 (defn- send-branch-update-notification [action branch]
   (let [queue-name (str "branch." (name action))]
@@ -124,12 +126,12 @@
       (system/exec-with-success-or-throw ["rm" "-rf" dir])
       (system/exec-with-success-or-throw
         ["git" "clone" "--mirror" (:git_url repository) dir]
-        {:watchdog (* 10 60 1000)}))))
+        {:timeout "30 Minutes"}))))
 
 (defn- git-fetch [repository path]
   (system/exec-with-success-or-throw
     ["git" "fetch" (:git_url repository) "--force" "--tags" "--prune"  "+*:*"]
-    {:watchdog (* 10 60 1000), :dir path, :env {"TERM" "VT-100"}}))
+    {:timeout "10 Minutes", :dir path, :env {"TERM" "VT-100"}}))
 
 (defn  git-fetch-or-initialize [repository]
   (catcher/snatch {}
@@ -143,4 +145,3 @@
 ;(logging-config/set-logger! :level :debug)
 ;(logging-config/set-logger! :level :info)
 ;(debug/debug-ns *ns*)
-

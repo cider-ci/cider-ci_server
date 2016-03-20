@@ -62,12 +62,20 @@
         res (->> query
                  (jdbc/query  (rdbms/get-ds))
                  (map :submodule_commit_id))]
-    (if-not (seq res)
-      (throw (ex-info (str "The commit id for submodule path '" path
-                           "' and commits '" (seq commit-ids)
-                           "' could not be resolved! Is a git push pending?")
-                      {:status 404}))
-      res)))
+    (if (seq res)
+      res
+      (let [message "Project Configuration Error - Submodule could not be resolved"]
+        (throw
+          (ex-info
+            message
+            {:status 404
+             :title message
+             :description
+             (str "The commit id for submodule path `" path
+                  "` and the commit(s) " (clojure.string/join ", " (seq commit-ids))
+                  " could not be resolved!  \n\n A git push might be pending or"
+                  " a submodule might not be configured as a repository in"
+                  " your Cider-CI server.")}))))))
 
 (defn- resolve-submodule-git-ref [git-refs paths]
   (let [commit-ids (get-commit-ids git-refs)]
@@ -134,11 +142,11 @@
 ;##############################################################################
 
 (defn include-map [git-ref-id spec]
-  (if-let [include-specs (:_cider-ci_include spec)]
+  (if-let [include-specs (:include spec)]
     (let [included (get-inclusions git-ref-id include-specs)]
       (include-map git-ref-id
                    (deep-merge
-                     (dissoc spec :_cider-ci_include)
+                     (dissoc spec :include)
                      included)))
     (->> spec
          (map (fn [[k v]] [k (expand git-ref-id v)]))
@@ -149,7 +157,7 @@
     (cond
       (map? spec) (->> spec
                        (include-map git-ref-id)
-                       (#(if (:_cider-ci_generate-tasks %)
+                       (#(if (:generate_tasks %)
                            (task-generation/generate-tasks git-ref-id %)
                            %)))
       (coll? spec) (->> spec

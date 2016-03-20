@@ -15,7 +15,7 @@
   [repository-path]
   (let [res (system/exec
               ["git" "branch" "--no-abbrev" "--no-color" "-v"]
-              {:watchdog (* 1 60 1000), :dir repository-path, :env {"TERM" "VT-100"}})
+              {:timeout "1 Minute", :dir repository-path, :env {"TERM" "VT-100"}})
         out (:out res)
         lines (clojure.string/split out #"\n")
         branches (map (fn [line]
@@ -25,10 +25,3 @@
                            :current_commit_id current-commit-id}))
                       lines)]
     branches))
-
-  ;(get-branches "/Users/thomas/Programming/ROR/cider-ci_server-tb/repositories/f81e51fa-b83e-4fba-8f2f-d3f0d71ccc4f")
-
-
-
-
-

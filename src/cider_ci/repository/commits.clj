@@ -7,10 +7,12 @@
   (:require
     [cider-ci.repository.git.commits :as git-commits]
     [cider-ci.repository.sql.commits :as sql.commits]
+
+    [clojure.java.jdbc :as jdbc]
+
+    [clojure.tools.logging :as logging]
     [logbug.debug :as debug]
     [clj-logging-config.log4j :as logging-config]
-    [clojure.java.jdbc :as jdbc]
-    [clojure.tools.logging :as logging]
     ))
 
 ;### create / update ###########################################################
@@ -60,8 +62,8 @@
         commit)))
 
 
-
 ;#### debug ###################################################################
-;(debug/debug-ns *ns*)
 ;(logging-config/set-logger! :level :debug)
 ;(logging-config/set-logger! :level :info)
+;(debug/debug-ns *ns*)
+

@@ -11,7 +11,6 @@
     [cider-ci.repository.repositories :as repositories]
     [cider-ci.repository.sql.repository :as sql.repository]
     [cider-ci.utils.config :as config :refer [get-config]]
-    [cider-ci.utils.http-server :as http-server]
     [cider-ci.utils.routing :as routing]
     [cider-ci.utils.status :as status]
 
@@ -97,7 +96,8 @@
         (catch clojure.lang.ExceptionInfo e
           (case (-> e ex-data :status )
             404 {:status 404
-                 :body (thrown/stringify e)}
+                 :headers {"Content-Type" "application/json"}
+                 :body (json/write-str (ex-data e)) }
             422 {:status 422
                  :body (thrown/stringify e)}
             (respond-with-500 request e)))
@@ -126,14 +126,6 @@
       wrap-repositories-update-notifications
       (routing/wrap-prefix context)
       (routing/wrap-log-exception)))
-
-
-;#### the server ##############################################################
-
-(defn initialize []
-  (let [http-conf (-> (get-config) :services :repository :http)
-        context (str (:context http-conf) (:sub_context http-conf))]
-    (http-server/start http-conf (build-main-handler context))))
 
 
 

@@ -20,13 +20,13 @@
 ;##############################################################################
 
 (defn- file-name-to-task [file-name]
-  [file-name {:environment-variables
+  [file-name {:environment_variables
               {:CIDER_CI_TASK_FILE file-name}}])
 
 (defn generate-tasks [git-ref-id context]
-  (if-let [generate-spec (:_cider-ci_generate-tasks context)]
+  (if-let [generate-spec (:generate_tasks context)]
     (let [repository (sql.repository/resolve git-ref-id)
-          include-regex (-> generate-spec :include-match)
+          include-regex (-> generate-spec :include_match)
           exclude-regex (-> generate-spec :exclude-match)
           file-list (git.repositories/ls-tree
                       repository git-ref-id include-regex exclude-regex)
@@ -43,7 +43,7 @@
                   generated-tasks)]
       (-> context
           (assoc :tasks tasks)
-          (dissoc :_cider-ci_generate-tasks)))
+          (dissoc :generate_tasks)))
     context))
 
 ;### Debug ####################################################################

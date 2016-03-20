@@ -35,9 +35,13 @@
     (or (get-content-or-nil id (first config-files-alternatives))
         (if-let [rest-alternatives (-> config-files-alternatives rest seq)]
           (recur rest-alternatives)
-          (throw (ex-info (str "Neither configuration file "
-                               CONFIG-FILES-ALTERNATIVES " was found.\n\n")
-                          {:status 404}))))))
+          (throw (ex-info "Project Configuration Error"
+                          {:status 404
+                           :title "Project Configuration Error"
+                           :description
+                           (str "Neither configuration file "
+                                (clojure.string/join ", " CONFIG-FILES-ALTERNATIVES)
+                                " was found.")}))))))
 
 ;(get-either-configfile-content "b0c4d792440a24c766b9535db95bcd18426437dc")
 

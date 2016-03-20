@@ -21,12 +21,22 @@
         (cond
           (re-matches #".*(yml|yaml)" path) (yaml/parse-string content)
           (re-matches #".*json" path) (json/read-str content :key-fn keyword)
-          :else (throw (IllegalArgumentException.
-                         (str "Parsing " path " is not supported."))))
+          :else (throw (ex-info "Project Configuration Parse Error"
+                                {:status 422
+                                 :title "Project Configuration Parse Error"
+                                 :description
+                                 (str "Only YAML and JSON documents are allowed. "
+                                      "The project configuration requested to parse "
+                                      path)})))
         (catch Exception e
-          (throw (ex-info (str "Parser error for file " path
-                               " of " id " in " (:name repository))
-                          {:status 422} e)))))))
+          (throw (ex-info "Project Configuration Parse Error"
+                          {:status 422
+                           :title "Project Configuration Parse Error"
+                           :description
+                           (str "Parser error for file " path
+                                " of " id " in " (:name repository)". \n"
+                                "The original error message is: "
+                                (.getMessage e))})))))))
 
 (defn find-repo-for-id! [id]
   (or (sql.repository/resolve id)
@@ -43,10 +53,13 @@
           (cond
             (re-matches #"(?is).*does not exist in.*"
                         (or (-> e ex-data :err) ""))
-            (throw (ex-info (str "the path " path " was not found for " id " in " (:name repository))
-                            {:status 404} e))
-            :else
-            (throw e))))))
+            (throw (ex-info "Project Configuration Error - File Missing"
+                            {:status 404
+                             :title "Project Configuration Error - File Missing"
+                             :description (str "The file for the path `" path "`"
+                                               " was not found in the project *" (:name repository)"*"
+                                               " for the id `" id "`.")}))
+            :else (throw e))))))
 
 
 ;### Debug ####################################################################

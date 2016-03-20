@@ -6,14 +6,19 @@
 (ns cider-ci.repository.git.commits
   (:refer-clojure :exclude [get])
   (:require
+    [cider-ci.utils.system :as system]
+
     [clj-commons-exec :as commons-exec]
-    [clj-logging-config.log4j :as logging-config]
     [clj-time.coerce :as time-coerce]
     [clj-time.core :as time-core]
     [clj-time.format :as time-format]
-    [clojure.tools.logging :as logging]
-    [cider-ci.utils.system :as system]
     [clojure.string :as string :refer [split]]
+
+    [clj-logging-config.log4j :as logging-config]
+    [clojure.tools.logging :as logging]
+    [logbug.catcher :as catcher]
+    [logbug.debug :as debug]
+    [logbug.thrown :as thrown]
     ))
 
 ;##############################################################################
@@ -26,7 +31,7 @@
 
 (defn get [id repository-path]
   (logging/debug "get-info " id repository-path)
-  (let [res (system/exec
+  (let [res (system/exec-with-success-or-throw
               ["git" "log" "-n" "1" "--pretty=%T %n%an %n%ae %n%aD %n%cn %n%ce %n%cD %n%s %n%b" id]
               {:dir repository-path})
         out (:out res)
@@ -47,7 +52,7 @@
 ;##############################################################################
 
 (defn get-git-parent-ids [id repository-path]
-  (let [res (system/exec
+  (let [res (system/exec-with-success-or-throw
               ["git" "rev-list" "-n" "1" "--parents" id]
               {:dir repository-path})
         out (clojure.string/trim (:out res))
@@ -68,8 +73,6 @@
           ["git" "ls-tree" "-r" commit-id]
           {:dir repository-path})))
 
-;(git-ls-tree-r "f03949538e290bc4e855c8f05fdac190813a9362" "./tmp/repositories/https-github-com-zhdk-leihs-git_873beeef-a3a1-5ae9-8a5c-b3f9870c1b54")
-
 (defn get-submodules
   "Returns a seq of maps each containing a :submodule_commit_id and :path key"
   [commit-id repository-path]
@@ -82,6 +85,10 @@
            (filter #(= "commit" (nth % 1)))
            (map #(hash-map :submodule_commit_id (nth % 2) :path (nth % 3)))))))
 
-;(get-submodules "5f0430a5c7d3d399ad717c9d347b7a57d56a69c9" "./tmp/repositories/http-localhost-8888-cider-ci-demo-project-bash_e62bc7e0-81da-5cdb-bb04-58f429e9f7c1")
-;(type (:out (deref (commons-exec/sh ["git" "ls-tree" "-r" "5f0430a5c7d3d399ad717c9d347b7a57d56a69c9"] {:dir "./tmp/repositories/http-localhost-8888-cider-ci-demo-project-bash_e62bc7e0-81da-5cdb-bb04-58f429e9f7c1" }))))
-;(get-submodules "f03949538e290bc4e855c8f05fdac190813a9362" "./tmp/repositories/https-github-com-zhdk-leihs-git_873beeef-a3a1-5ae9-8a5c-b3f9870c1b54")
+
+
+;#### debug ###################################################################
+;(logging-config/set-logger! :level :debug)
+;(logging-config/set-logger! :level :info)
+;(debug/debug-ns *ns*)
+
