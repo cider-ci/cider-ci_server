@@ -1,7 +1,7 @@
 [
  [drtom/honeysql "2.0.0-ALPHA+1"]
  [logbug "4.0.0"]
- [pg-types "2.1.2"]
+ [pg-types "2.2.0"]
  [cider-ci/open-session "1.2.0"]
 
  [cheshire "5.5.0"]
