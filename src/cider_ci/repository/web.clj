@@ -88,7 +88,6 @@
 ;##### project configuration ##################################################
 
 (defn get-project-configuration [request]
-  (logging/info request)
   (-> (try
         (when-let [content (project-configuration/build-project-configuration
                              (-> request :params :id))]
