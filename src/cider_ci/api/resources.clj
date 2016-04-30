@@ -78,6 +78,7 @@
     (cpj/ANY "/tasks/:id" [] task/routes)
     (cpj/ANY "/tasks/" [] tasks/routes)
 
+    (cpj/ANY "/trials/:trial_id/scripts*" _ scripts/routes)
     (cpj/ANY "/trials/:trial_id/trial-attachments/" [] trial-attachments/routes)
     (cpj/ANY "/trials/*" [] trial/routes)
     (cpj/ANY "/trial-attachments/*" [] trial-attachment/routes)

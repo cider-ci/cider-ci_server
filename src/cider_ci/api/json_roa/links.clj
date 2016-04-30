@@ -162,6 +162,24 @@
      {:name "API Documentation script"
       :href (str (api-docs-path) "#script")}}}))
 
+(defn scripts-path
+  ([prefix trial-id]
+   (scripts-path prefix trial-id {}))
+  ([prefix trial-id query-params]
+   (str prefix "/trials/"  trial-id "/scripts/")))
+
+(defn scripts
+  ([prefix trial-id ]
+   (scripts  prefix trial-id {}))
+  ([prefix trial-id query-params]
+   {:name "scripts"
+    :href (scripts-path prefix trial-id query-params)
+    :relations
+    {:api-doc
+     {:name "API Documentation scripts"
+      :href (str (api-docs-path) "#scripts")}}}))
+
+
 
 ;### tasks #####################################################################
 

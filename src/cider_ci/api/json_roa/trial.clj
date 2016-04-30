@@ -20,6 +20,7 @@
      :relations
      {:trial-attachments (links/trial-attachments context id)
       :trials (links/trials context (-> response :body :task_id))
+      :scripts (links/scripts context (-> response :body :id))
       :task (links/task context (-> response :body :task_id))
       }}))
 

@@ -27,13 +27,22 @@
 
 (defn- get-script [request]
   {:body
-   (->> (first (jdbc/query (rdbms/get-ds)
-                           ["SELECT * FROM scripts WHERE id = ? "
-                            (-> request :route-params :id)])))})
+   (->> ["SELECT * FROM scripts WHERE id = ? "
+         (-> request :route-params :id)]
+        (jdbc/query (rdbms/get-ds))
+        first)})
+
+(defn- get-scripts [request]
+  {:body {:scripts
+          (->> ["SELECT id FROM scripts WHERE trial_id = ? "
+                (-> request :route-params :id)]
+               (jdbc/query (rdbms/get-ds)))}})
+
 
 ;### routes #####################################################################
 (def routes
   (cpj/routes
+    (cpj/GET "/trials/:id/scripts/" _ get-scripts)
     (cpj/GET "/scripts/:id" _ get-script)
     ))
 

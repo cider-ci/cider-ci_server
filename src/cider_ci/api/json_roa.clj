@@ -21,6 +21,7 @@
     [cider-ci.api.json-roa.trial-attachment :as json-roa.trial-attachment]
     [cider-ci.api.json-roa.trial-attachments :as json-roa.trial-attachments]
     [cider-ci.api.json-roa.trials :as json-roa.trials]
+    [cider-ci.api.json-roa.scripts :as json-roa.scripts]
     [cider-ci.utils.http :as http]
     [cider-ci.utils.routing :as routing]
     [compojure.core :as cpj]
@@ -79,6 +80,7 @@
     (cpj/GET "/task-specifications/:id" request (json-roa.task-specification/build request json-response))
 
     (cpj/GET "/scripts/:id" request (json-roa.script/build request json-response))
+    (cpj/GET "/trials/:id/scripts/" request (json-roa.scripts/build request json-response))
 
     (cpj/GET "/trials/:id" request (json-roa.trial/build request json-response))
 

@@ -28,6 +28,7 @@
 (defonce conf (atom nil))
 
 ;### get-trials #################################################################
+
 (defn build-trials-base-query [task-id]
   (-> (hh/from :trials)
       (hh/select :trials.id :trials.created_at)
@@ -39,7 +40,6 @@
   (if-let [state (:state params)]
     (-> query (hh/merge-where [:= :trials.state state]))
     query))
-
 
 (defn trials-data [task-id query-params]
   (let [query (-> (build-trials-base-query task-id)
@@ -53,6 +53,7 @@
   {:body {:trials
           (trials-data (-> request :route-params :task_id)
                        (-> request :query-params))}})
+
 
 ;### retry ######################################################################
 
@@ -73,6 +74,7 @@
 
 
 ;### routes #####################################################################
+
 (def routes
   (cpj/routes
     (cpj/GET "/tasks/:task_id/trials/" _ get-trials)
@@ -80,9 +82,9 @@
 
 
 ;### init #####################################################################
+
 (defn initialize [new-conf]
   (reset! conf new-conf))
-
 
 
 ;### Debug ####################################################################
