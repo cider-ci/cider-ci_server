@@ -66,7 +66,9 @@
   #{:state :exit_status :environment_variables
     :working_dir :command :issues
     :script_file :wrapper_file
-    :finished_at :started_at })
+    :finished_at :started_at
+    :exclusive_executor_resource
+    })
 
 (defn remove-null-values [data]
   (->> data
