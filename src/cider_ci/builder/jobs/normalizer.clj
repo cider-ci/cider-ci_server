@@ -6,6 +6,8 @@
   (:require
     [cider-ci.utils.core :refer :all]
 
+    [clj-time.core :as time]
+
     [clj-logging-config.log4j :as logging-config]
     [logbug.catcher :as catcher]
     [logbug.debug :as debug :refer [I> I>> identity-with-logging]]
@@ -20,8 +22,8 @@
                     (when-not (map v) (throw (IllegalStateException.
                                                (str v " must be a map!"))))
                     [k (-> v
-                           (assoc :key (or (:key v) k))
-                           (assoc :name (or (:name v) k)))]))
+                           (assoc :key (to-cistr (or (:key v) k)))
+                           (assoc :name (to-cistr (or (:name v) k))))]))
              (into {}))
         (coll? d)
         (->> d
@@ -162,14 +164,30 @@
 
 ;### Debug ####################################################################
 
+; TODO catch exception and convert it to a halfway meaning full
+; exception for a tree issue
 (defn normalize-job-spec [job-spec]
-  (-> job-spec
-      normalize-to-top-level-context
-      normalize-job-properties
-      (#(assoc % :context (-> % :context normalize-context)))
-      ))
+  (try
+    (-> job-spec
+        normalize-to-top-level-context
+        normalize-job-properties
+        (#(assoc % :context (-> % :context normalize-context)))
+        )
+    (catch clojure.lang.ExceptionInfo e (throw e))
+    (catch Throwable e
+      (let [title "Project Configuration Normalization Error"]
+        ( ->> {:title title
+               :description (str "An unexpected \"_" (.getMessage e)"_\" exception"
+                                 "occurred during normalization of the job. **Check your
+                                 Cider-CI project configuration.**
+                                 The server log-files might give a hint
+                                 if the problem is not obvious. Ask your server administrator
+                                 to check the _dispatcher logs_ at about " (time/now) "."
+                                 )
+               :type "error" }
+              (ex-info title)
+              throw )))))
 
-;(apply dissoc {:x 5} [:x])
 
 ;### Debug ####################################################################
 ;(logging-config/set-logger! :level :debug)

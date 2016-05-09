@@ -52,9 +52,10 @@
     (assoc spec :aggregate_state "satisfy-any")))
 
 (defn dispatch-storm-delay-default []
-  (or (config/parse-config-duration-to-seconds
-        :dispatch_storm_delay_default_duration)
-      5))
+  (-> (or (config/parse-config-duration-to-seconds
+            :dispatch_storm_delay_default_duration)
+          1)
+      int))
 
 (defn- normalize-dispatch-storm-delay [spec]
   (if-let [dispatch-storm-delay-duration (:dispatch_storm_delay_duration spec)]

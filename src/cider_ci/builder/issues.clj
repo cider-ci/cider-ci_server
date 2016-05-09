@@ -59,3 +59,10 @@
       ["tree_id = ? AND id = ?" fref (:id issue)]
       (select-keys issue [:id (refcol prefix) :title :message :description :type]))))
 
+;### Debug ####################################################################
+;(debug/debug-ns 'cider-ci.utils.http)
+;(logging-config/set-logger! :level :debug)
+;(logging-config/set-logger! :level :info)
+;(debug/wrap-with-log-debug #'create)
+;(debug/debug-ns *ns*)
+

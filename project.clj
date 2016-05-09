@@ -11,6 +11,8 @@
                  [org.clojure/core.memoize "0.5.8"]
                  [org.clojure/tools.nrepl "0.2.12"]
                  ]
+  :java-source-paths ["java"]
+  :javac-options ["-target" "1.8" "-source" "1.8" "-Xlint:-options"]
   :plugins [[cider-ci/lein_cider-ci_dev "0.2.0"]]
   :profiles {:dev
              {:dependencies [[midje "1.8.3"]]
@@ -18,7 +20,7 @@
               :plugins [[lein-midje "3.1.1"]]
               :repositories [["tmp" {:url "http://maven-repo-tmp.drtom.ch" :snapshots false}]]
               :resource-paths ["../config" "./config" "./resources"]}}
-  :aot [:all]
+  :aot [cider-ci.builder.ValidationException #"cider-ci.*"]
   :main cider-ci.builder.main
   :repl-options {:timeout  120000}
   )

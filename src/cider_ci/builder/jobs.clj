@@ -4,13 +4,14 @@
 
 (ns cider-ci.builder.jobs
   (:require
+    [cider-ci.builder.issues :as issues]
     [cider-ci.builder.jobs.dependencies :as jobs.dependencies]
     [cider-ci.builder.jobs.normalizer :as normalizer]
-    [cider-ci.builder.jobs.validator :as validator]
     [cider-ci.builder.project-configuration :as project-configuration]
     [cider-ci.builder.repository :as repository]
     [cider-ci.builder.spec :as spec]
     [cider-ci.builder.tasks :as tasks]
+    [cider-ci.builder.jobs.validator.job :as job-validator]
 
     [cider-ci.utils.core :refer :all]
     [cider-ci.utils.http :as http]
@@ -66,27 +67,39 @@
 (defn on-job-exception [job ex]
   (jdbc/update!
     (rdbms/get-ds) :jobs {:state "defective"}
-    ["job.id = ?" (:id job)])
-  ; TODO create a job issue
-  )
+    ["jobs.id = ?" (:id job)])
+  (let [issue (merge
+                {:title (.getMessage ex)
+                 :type "error"
+                 :description "Unspecified error, see the dispatcher logs for details."
+                 :job_id (:id job) }
+                (or (ex-data ex) {}))]
+    (jdbc/insert!
+      (rdbms/get-ds)
+      :job_issues
+      (select-keys issue [:id :job_id :title :description :type]))))
 
 (defn create [params]
-  (catcher/with-logging {}
-    (let [{tree-id :tree_id job-key :key} params
-          spec (-> (get-dotfile-specification tree-id job-key)
-                   normalizer/normalize-job-spec )
-          spec-id (-> spec find-or-create-specifiation :id)
-          job-params (merge
-                       {:key job-key :name job-key}
-                       (select-keys spec [:name, :description, :priority])
-                       {:job_specification_id spec-id}
-                       (select-keys params [:tree_id :priority :created_by]))
-          job (persist-job job-params)]
-      (catcher/snatch
-        {:return-fn (fn [e] (on-job-exception job e))}
-        (validator/validate! job)
-        (tasks/create-tasks-and-trials {:job_id (:id job)}))
-      job)))
+  (let [{tree-id :tree_id} params]
+    (catcher/snatch
+      {:return-fn (fn [ex]
+                    (issues/create-issue "tree" tree-id ex)
+                    (throw ex))}
+      (let [{tree-id :tree_id job-key :key} params
+            spec (-> (get-dotfile-specification tree-id job-key)
+                     normalizer/normalize-job-spec )
+            spec-id (-> spec find-or-create-specifiation :id)
+            job-params (merge
+                         {:key job-key :name job-key}
+                         (select-keys spec [:name, :description, :priority])
+                         {:job_specification_id spec-id}
+                         (select-keys params [:tree_id :priority :created_by]))
+            job (persist-job job-params)]
+        (catcher/snatch
+          {:return-fn (fn [e] (on-job-exception job e))}
+          (job-validator/validate! job)
+          (tasks/create-tasks-and-trials {:job_id (:id job)}))
+        job))))
 
 
 ;### available jobs #####################################################
