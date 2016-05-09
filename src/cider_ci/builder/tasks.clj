@@ -100,9 +100,9 @@
                (map (fn [task-spec] (build-task task-spec
                                                 task-defaults
                                                 script-defaults))))
-          (if-let [subcontexts (:subcontexts context)]
+          (if-let [contexts (:contexts context)]
             (build-tasks-for-contexts-sequence
-               (convert-to-array subcontexts) task-defaults script-defaults)
+               (convert-to-array contexts) task-defaults script-defaults)
             [])))
 
 (defn build-tasks-for-contexts-sequence

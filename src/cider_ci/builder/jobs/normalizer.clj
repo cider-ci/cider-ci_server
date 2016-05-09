@@ -124,9 +124,9 @@
   (-> context-spec
       normalize-tasks-in-context
       normalize-task-defaults-in-context
-      (#(if-let[subcontexts (:subcontexts %)]
-          (assoc % :subcontexts
-                 (->> subcontexts
+      (#(if-let[contexts (:contexts %)]
+          (assoc % :contexts
+                 (->> contexts
                       normalize-to-key-name-map
                       (map (fn [[k sctx]] [k  (normalize-context sctx)]))
                       (into {})))
@@ -152,7 +152,7 @@
 
 ;### Normalize to top level context ###########################################
 
-(def CONTEXT-KEYS [:task :tasks :task_defaults :script_defaults :subcontexts])
+(def CONTEXT-KEYS [:task :tasks :task_defaults :script_defaults :contexts])
 
 (defn- normalize-to-top-level-context [spec]
   (if (:context spec)

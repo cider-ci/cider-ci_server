@@ -42,7 +42,7 @@
    :key {:validator validate-string!}
    :name {:validator validate-string!}
    :script_defaults {:validator validate-script!}
-   :subcontexts {:validator (build-map-of-validator validate-context!)}
+   :contexts {:validator (build-map-of-validator validate-context!)}
    :task_defaults {:validator validate-task!}
    :tasks {:validator (build-map-of-validator validate-task!)}
    })

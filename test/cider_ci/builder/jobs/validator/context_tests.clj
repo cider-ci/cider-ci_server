@@ -26,7 +26,7 @@
       key: job-with-bogus-key
       name: job-with-bogus-key
       context:
-        subcontexts:
+        contexts:
           sub1:
             bogus: whatever
       "
