@@ -29,9 +29,7 @@
     ))
 
 (defn validate-port! [port chain]
-  (validate-accepted-keys! port ports-meta-spec chain)
-  (validate-values! port ports-meta-spec chain)
-  (validate-required-keys! port ports-meta-spec chain)
+  (validate-defaults! port ports-meta-spec chain)
   (validate-range! port chain))
 
 

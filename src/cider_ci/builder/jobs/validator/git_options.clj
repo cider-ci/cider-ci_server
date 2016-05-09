@@ -27,7 +27,7 @@
          throw)))
 
 (defn validate-submodules! [submodules chain]
-  (validate-all! submodules submodules-meta-spec chain)
+  (validate-defaults! submodules submodules-meta-spec chain)
   (validate-either-macher! submodules chain))
 
 (def git-options-meta-spec
@@ -35,7 +35,7 @@
                 :required true }})
 
 (defn validate-git-options! [git-options chain]
-  (validate-all! git-options git-options-meta-spec chain))
+  (validate-defaults! git-options git-options-meta-spec chain))
 
 ;### Debug ####################################################################
 ;(logging-config/set-logger! :level :debug)

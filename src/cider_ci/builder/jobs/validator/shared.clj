@@ -124,7 +124,7 @@
       (when-let [validator (:validator s)]
         (apply validator [(get test-spec k) (conj chain k)])))))
 
-(defn validate-all! [test-specs meta-test-specs chain]
+(defn validate-defaults! [test-specs meta-test-specs chain]
   (validate-accepted-keys! test-specs meta-test-specs chain)
   (validate-values! test-specs meta-test-specs chain)
   (validate-required-keys! test-specs meta-test-specs chain))

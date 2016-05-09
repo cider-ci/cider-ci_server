@@ -1,6 +1,7 @@
 (ns cider-ci.builder.jobs.validator.script
   (:require
     [cider-ci.builder.jobs.validator.shared :refer :all]
+    [cider-ci.builder.jobs.validator.script-dependency :refer [validate-script-dependency!]]
 
     [cider-ci.utils.core :refer :all]
 
@@ -19,9 +20,9 @@
    :ignore_state {:validator validate-boolean!}
    :key {:validator validate-string!}
    :name {:validator validate-string!}
-   :start_when nil
+   :start_when {:validator (build-map-of-validator validate-script-dependency!)}
    :template_environment_variables {:validator validate-boolean!}
-   :terminate_when nil
+   :terminate_when {:validator (build-map-of-validator validate-script-dependency!)}
    :timeout {:validator validate-duration!}
    })
 
