@@ -18,8 +18,7 @@
 
 (def job-meta-spec
   {
-   :context
-   {:validator validate-context!}
+   :context {:validator validate-context!}
    :depends_on nil
    :description nil
    :empty_tasks_warning nil
