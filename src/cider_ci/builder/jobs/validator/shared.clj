@@ -43,6 +43,19 @@
     (doseq [[k v] mp]
       (apply validator [v (conj chain k)]))))
 
+(defn build-collection-of-validator [validator]
+  (fn [coll chain]
+    (when (or (not (coll? coll))
+              (map? coll))
+      (->> {:type "error"
+            :description
+            (str "The item in " (format-chain chain)
+                 " must by a collection, but it is " (type coll))}
+           (ValidationException. "Type Mismatch")
+           throw))
+    (doseq [v coll]
+      (apply validator [v  chain]))))
+
 
 ;### primitive value validators ################################################
 
@@ -70,6 +83,9 @@
          (ValidationException. "Type Mismatch")
          throw)))
 
+
+;### shared validators #########################################################
+
 (defn validate-duration!
   [value chain]
   (validate-string! value chain)
@@ -87,6 +103,17 @@
                               )}
            (ValidationException. "Invalid Duration String")
            throw))))
+
+(defn validate-states! [test-states valid-states chain]
+  (when-not (every? valid-states test-states)
+    (->> {:type "error"
+          :description
+          (str (-> test-states sort format-coll) " in " (format-chain chain)
+               " contains an illegal state. Valid states are: "
+               (-> valid-states sort format-coll) "."
+               )}
+         (ValidationException. "Illegal State")
+         throw)))
 
 
 ;### spec validators ###########################################################

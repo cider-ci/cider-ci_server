@@ -43,6 +43,13 @@
     (set-un-runnable job "A job with the **same name** already exists for this tree-id.")
     job))
 
+(defn- evaluate-key-clash [job]
+  (if (seq (jdbc/query (get-ds)
+                       ["SELECT 1 FROM jobs WHERE tree_id = ? AND key = ?"
+                        (:tree_id job) (:key job)]))
+    (set-un-runnable job "A job with the **same key** already exists for this tree-id.")
+    job))
+
 ;##############################################################################
 
 (defn- submodule-reducer [[query submodule_tree_id_join_ref] submodule-path]
@@ -87,7 +94,7 @@
 (defn- build-job-dependency-query [tree-id dependency]
   (let [base-query (-> (sql/select 1)
                        (sql/from :jobs)
-                       (sql/merge-where [:= :jobs.key (:job dependency)])
+                       (sql/merge-where [:= :jobs.key (:job_key dependency)])
                        (sql/merge-where [:in :jobs.state (:states dependency)]))
         subquery (if-let [submodule-paths (-> dependency :submodule seq)]
                    (subquery-for-job-depencency-in-submodules
@@ -104,17 +111,20 @@
       (set-un-runnable job (str "The dependency `" dependency "` is not fulfilled!"))
       job)))
 
+
 ;##############################################################################
 
 (defn- evaluate-dependency [job dependency]
-  (case (:type dependency)
+  (case (-> dependency :type to-cistr)
     "job" (evaluate-job-dependency job dependency)
     (set-un-runnable job (str "The type of the dependency `"
                               dependency "` is not applicable!"))))
 
 (defn- evaluate-dependencies [job]
-  (if-let [dependencies (-> job :depends_on seq)]
-    (reduce evaluate-job-dependency job dependencies)
+  (if-let [dependencies (->> job :depends_on (map second) seq)]
+    (do
+      (logging/debug 'dependencies dependencies)
+      (reduce evaluate-dependency job dependencies))
     job))
 
 ;##############################################################################
@@ -122,16 +132,18 @@
 (defn evaluate [jobs]
   (->> jobs
        (map evaluate-name-clash)
+       (map evaluate-key-clash)
        (map evaluate-dependencies)))
 
 (defn fulfilled? [job]
   (-> job
       (assoc :runnable true)
       evaluate-name-clash
+      evaluate-key-clash
       evaluate-dependencies
       :runnable))
 
 ;### Debug ####################################################################
 ;(logging-config/set-logger! :level :debug)
 ;(logging-config/set-logger! :level :info)
-;(debug/debug-ns *ns*)
+(debug/debug-ns *ns*)
