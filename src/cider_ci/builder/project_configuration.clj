@@ -4,6 +4,7 @@
 
 (ns cider-ci.builder.project-configuration
   (:require
+    [cider-ci.builder.jobs.validator.project-configuration :as project-configuration-validator]
     [clojure.data.json :as json]
     [cider-ci.utils.http :as http]
     [clj-logging-config.log4j :as logging-config]
@@ -36,8 +37,14 @@
                          :as :json})
           :body))))
 
-(def get-project-configuration (memo/lru #(get-project-configuration_unmemoized %)
+(def get-project-configuration_without_validation (memo/lru #(get-project-configuration_unmemoized %)
                                          :lru/threshold 500))
+
+(defn get-project-configuration [tree-id]
+  (-> tree-id
+      get-project-configuration_without_validation
+      project-configuration-validator/validate!
+      ))
 
 ; disable caching (temporarily)
 ;(def get-project-configuration get-project-configuration_unmemoized)
@@ -46,5 +53,5 @@
 ;### Debug ####################################################################
 ;(logging-config/set-logger! :level :debug)
 ;(logging-config/set-logger! :level :info)
-;(debug/debug-ns *ns*)
 ;(debug/debug-ns 'cider-ci.utils.http)
+(debug/debug-ns *ns*)

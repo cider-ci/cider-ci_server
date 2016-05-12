@@ -11,7 +11,6 @@
     [cider-ci.builder.spec :as spec]
     [cider-ci.builder.tasks :as tasks]
     [cider-ci.builder.issues :refer [create-issue]]
-    [cider-ci.builder.jobs.validator.project-configuration :as project-configuration-validator]
 
     [cider-ci.utils.core :refer [deep-merge]]
     [cider-ci.utils.http :as http]
@@ -96,7 +95,6 @@
   (catcher/snatch
     {:return-fn (fn [e] (create-issue "tree" tree-id e))}
     (->> (project-configuration/get-project-configuration tree-id)
-         project-configuration-validator/validate!
          :jobs
          convert-to-array
          (filter #(-> % :run_on))
@@ -149,7 +147,7 @@
       trigger-jobs))
 
 (defn listen-to-job-updates-and-fire-trigger-jobs []
-  (messaging/listen "job.updated"  evaluate-job-update))
+  (messaging/listen "job.updated" evaluate-job-update))
 
 
 ;### initialize ###############################################################

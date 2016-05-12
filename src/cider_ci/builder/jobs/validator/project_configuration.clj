@@ -65,6 +65,7 @@
 (def job-config-meta-spec
   {:key {:validator validate-string!}
    :name {:validator validate-string!}
+   :description {:validator validate-string!}
    :run_when {:validator (build-map-of-validator validate-dependency-or-trigger!)}
    :depends_on {:validator (build-map-of-validator validate-dependency-or-trigger!)}
    :task nil
