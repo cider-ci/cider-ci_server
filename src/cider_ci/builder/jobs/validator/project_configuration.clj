@@ -63,15 +63,16 @@
 ;##############################################################################
 
 (def job-config-meta-spec
-  {:key {:validator validate-string!}
-   :name {:validator validate-string!}
-   :description {:validator validate-string!}
-   :run_when {:validator (build-map-of-validator validate-dependency-or-trigger!)}
+  {:context nil
    :depends_on {:validator (build-map-of-validator validate-dependency-or-trigger!)}
+   :description {:validator validate-string!}
+   :empty_tasks_warning {:validator validate-boolean!}
+   :key {:validator validate-string!}
+   :name {:validator validate-string!}
+   :run_when {:validator (build-map-of-validator validate-dependency-or-trigger!)}
    :task nil
-   :tasks nil
-   :context nil
    :task_defaults nil
+   :tasks nil
    })
 
 (defn validate-job! [job-spec chain]
