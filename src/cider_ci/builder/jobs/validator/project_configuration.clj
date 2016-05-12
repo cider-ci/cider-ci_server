@@ -81,9 +81,11 @@
 ;##############################################################################
 
 (def project-config-meta-spec
-  {:jobs {:validator (build-map-of-validator validate-job!)}
+  {:jobs {:validator (build-map-of-validator validate-job!)
+          :required true }
    :name {:validator validate-string!}
    :description {:validator validate-string!}
+   :shared nil
    })
 
 (defn validate! [project-config]
