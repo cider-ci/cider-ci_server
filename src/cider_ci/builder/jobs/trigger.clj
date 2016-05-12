@@ -27,7 +27,7 @@
 
     [clojure.tools.logging :as logging]
     [clj-logging-config.log4j :as logging-config]
-    [logbug.debug :as debug]
+    [logbug.debug :as debug :refer [I> I>> identity-with-logging]]
     ))
 
 
@@ -77,14 +77,12 @@
   (case (:type trigger)
     "job" (job-trigger-fulfilled? tree-id job trigger)
     "branch" (branch-trigger-fulfilled? tree-id job trigger)
-    (do (logging/warn "unhandled run_on" trigger) false)))
+    (do (logging/warn "unhandled run_when" trigger) false)))
 
 (defn some-job-trigger-fulfilled? [tree-id job]
-  (let [triggers (:run_on job)]
-    (if (= true triggers)
-      true
-      (some (fn [trigger]
-              (trigger-fulfilled? tree-id job trigger)) triggers))))
+  (when-let [triggers (:run_when job)]
+    (some (fn [[_ trigger]]
+            (trigger-fulfilled? tree-id job trigger)) triggers)))
 
 
 ;##############################################################################
@@ -94,10 +92,11 @@
 (defn- trigger-jobs [tree-id]
   (catcher/snatch
     {:return-fn (fn [e] (create-issue "tree" tree-id e))}
-    (->> (project-configuration/get-project-configuration tree-id)
+    (I>> identity-with-logging
+         (project-configuration/get-project-configuration tree-id)
          :jobs
          convert-to-array
-         (filter #(-> % :run_on))
+         (filter #(-> % :run_when))
          (filter #(some-job-trigger-fulfilled? tree-id %))
          (map #(assoc % :tree_id tree-id))
          (filter jobs.dependencies/fulfilled?)

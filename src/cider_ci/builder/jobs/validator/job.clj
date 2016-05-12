@@ -24,7 +24,7 @@
    :empty_tasks_warning nil
    :key nil
    :name nil
-   :run_on nil
+   :run_when nil
    })
 
 (defn validate!

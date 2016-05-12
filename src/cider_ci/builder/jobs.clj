@@ -22,9 +22,9 @@
     [clojure.java.jdbc :as jdbc]
 
     [clj-logging-config.log4j :as logging-config]
-    [logbug.catcher :as catcher]
-    [logbug.debug :as debug]
     [clojure.tools.logging :as logging]
+    [logbug.catcher :as catcher]
+    [logbug.debug :as debug :refer [I> I>> identity-with-logging]]
     ))
 
 
