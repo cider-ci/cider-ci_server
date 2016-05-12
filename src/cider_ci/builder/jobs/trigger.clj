@@ -38,7 +38,7 @@
   (let [query (-> (-> (sql/select true)
                       (sql/from :jobs)
                       (sql/merge-where [:= :tree_id tree-id])
-                      (sql/merge-where [:= :key (:job trigger)])
+                      (sql/merge-where [:= :key (:job_key trigger)])
                       (sql/merge-where [:in :state (:states trigger)])
                       (sql/limit 1)) sql/format) ]
     (logging/debug query)
