@@ -6,59 +6,61 @@
   (:require
     [cider-ci.repository.project-configuration.task-generation :as task-generation]
     [cider-ci.repository.project-configuration.shared :refer [get-content]]
-    [cider-ci.utils.map :refer [deep-merge]]
+
+    [cider-ci.utils.core :refer [deep-merge]]
     [cider-ci.utils.rdbms :as rdbms]
+
     [clj-yaml.core :as yaml]
     [clojure.java.jdbc :as jdbc]
+    [honeysql.core :as sql]
+
     [clojure.tools.logging :as logging]
     [logbug.catcher :as catcher]
     [logbug.debug :as debug]
-    [honeysql.core :as hc]
-    [honeysql.helpers :as hh]
     ))
 
 
 ;#### git helpers #############################################################
 
 (defn- get-commit-ids [git-refs]
-  (let [query (-> (hh/select :commits.id)
-                  (hh/from :commits)
-                  (hh/modifiers :distinct)
-                  (hh/merge-join :branches_commits [:=
+  (let [query (-> (sql/select :commits.id)
+                  (sql/from :commits)
+                  (sql/modifiers :distinct)
+                  (sql/merge-join :branches_commits [:=
                                                     :commits.id
                                                     :branches_commits.commit_id])
-                  (hh/merge-where [:or
+                  (sql/merge-where [:or
                                    [:in :id git-refs]
                                    [:in :tree_id git-refs]])
-                  (hc/format))]
+                  (sql/format))]
     (->> query
          (jdbc/query  (rdbms/get-ds))
          (map :id))))
 
 (defn- resolve-tree-id-for-commit-ids [commit-ids]
-  (let [query (-> (hh/select :commits.tree_id :commits.committer_date)
-                  (hh/from :commits)
-                  (hh/merge-where [:in :commits.id commit-ids])
-                  (hh/merge-join :branches_commits [:=
+  (let [query (-> (sql/select :commits.tree_id :commits.committer_date)
+                  (sql/from :commits)
+                  (sql/merge-where [:in :commits.id commit-ids])
+                  (sql/merge-join :branches_commits [:=
                                                     :commits.id
                                                     :branches_commits.commit_id])
-                  (hh/limit 1)
-                  (hh/order-by [:commits.committer_date :desc])
-                  (hc/format))]
+                  (sql/limit 1)
+                  (sql/order-by [:commits.committer_date :desc])
+                  (sql/format))]
     (->> query
          (jdbc/query  (rdbms/get-ds))
          (map :tree_id)
          first)))
 
 (defn- get-commit-refs-for-submodule [commit-ids path]
-  (let [query (-> (hh/select :submodules.submodule_commit_id)
-                  (hh/from  :submodules)
-                  (hh/merge-join :branches_commits [:=
+  (let [query (-> (sql/select :submodules.submodule_commit_id)
+                  (sql/from  :submodules)
+                  (sql/merge-join :branches_commits [:=
                                                     :submodules.submodule_commit_id
                                                     :branches_commits.commit_id])
-                  (hh/merge-where [:in :submodules.commit_id commit-ids])
-                  (hh/merge-where [:= :submodules.path path])
-                  (hc/format))
+                  (sql/merge-where [:in :submodules.commit_id commit-ids])
+                  (sql/merge-where [:= :submodules.path path])
+                  (sql/format))
         res (->> query
                  (jdbc/query  (rdbms/get-ds))
                  (map :submodule_commit_id))]

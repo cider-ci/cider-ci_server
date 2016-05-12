@@ -7,10 +7,13 @@
   (:require
     [cider-ci.repository.git.repositories :as git.repositories]
     [cider-ci.repository.sql.repository :as sql.repository]
-    [cider-ci.utils.map :refer [deep-merge]]
+
+    [cider-ci.utils.core :refer [deep-merge]]
     [cider-ci.utils.rdbms :as rdbms]
-    [clojure.tools.logging :as logging]
+
     [clojure.walk :refer [keywordize-keys]]
+
+    [clojure.tools.logging :as logging]
     [logbug.catcher :as catcher]
     [logbug.debug :as debug]
     ))
