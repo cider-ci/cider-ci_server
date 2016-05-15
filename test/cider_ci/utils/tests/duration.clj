@@ -14,6 +14,10 @@
 
   (is (= 1.0 (parse-string-to-seconds "1 Second")))
 
+  (is (= 30.0 (parse-string-to-seconds "0.5 Minutes")))
+
+  (is (= 150.0 (parse-string-to-seconds "2.5 Minutes")))
+
   (is (= 3600.333 (parse-string-to-seconds "1 hour and 333 milliseconds")))
 
   (is (=
