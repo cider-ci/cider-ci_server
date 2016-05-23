@@ -63,16 +63,17 @@
 ;##############################################################################
 
 (def job-config-meta-spec
-  {:context nil
+  {:context nil ; will be validated in the job spec
    :depends_on {:validator (build-map-of-validator validate-dependency-or-trigger!)}
    :description {:validator validate-string!}
    :empty_tasks_warning {:validator validate-boolean!}
    :key {:validator validate-string!}
    :name {:validator validate-string!}
+   :priority {:validator validate-integer!}
    :run_when {:validator (build-map-of-validator validate-dependency-or-trigger!)}
-   :task nil
-   :task_defaults nil
-   :tasks nil
+   :task nil ; part of the compact notation
+   :task_defaults nil ; part of the compact notation
+   :tasks nil ; part of the compact notation
    })
 
 (defn validate-job! [job-spec chain]
@@ -87,7 +88,7 @@
           :required true }
    :name {:validator validate-string!}
    :description {:validator validate-string!}
-   :shared nil
+   :shared nil ; can be freely chosen
    })
 
 (defn validate! [project-config]

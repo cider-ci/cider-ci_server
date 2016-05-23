@@ -19,12 +19,13 @@
 (def job-meta-spec
   {
    :context {:validator validate-context!}
-   :depends_on nil
-   :description nil
-   :empty_tasks_warning nil
-   :key nil
-   :name nil
-   :run_when nil
+   :depends_on nil ; is validated in the configuration validator
+   :description {:validator validate-string!}
+   :empty_tasks_warning nil ;is validated in the configuration validator
+   :key {:validator validate-string!}
+   :name {:validator validate-string!}
+   :priority {:validator validate-integer!}
+   :run_when nil ;is validated in the configuration validator
    })
 
 (defn validate!
