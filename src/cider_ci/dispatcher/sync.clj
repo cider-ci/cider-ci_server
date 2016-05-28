@@ -33,21 +33,21 @@
                AND (trials.updated_at < (now() - interval '1 Minutes'))
                " (:id executor)]))
 
-(defn fail-trials-lost-on-executor [executor reported-executor-trials]
+(defn defect-trials-lost-on-executor [executor reported-executor-trials]
   (let [known-trial-ids-by-executor (map :trial_id reported-executor-trials)
         in-progress-trials-of-executor (in-progress-trials-of-executor executor)
         in-progress-trials-of-executor-ids (map #(-> % :id str) in-progress-trials-of-executor)]
     (doseq [lost-trial-id  (difference (set in-progress-trials-of-executor-ids)
                                        (set known-trial-ids-by-executor))]
       (trials/update-trial {:id lost-trial-id
-                            :state "aborted"
+                            :state "defective"
                             :error (str "This trial was lost on executor " (:name executor))}))
     executor))
 
 (defn sync [executor data]
   (catcher/with-logging {}
     (let [payload (-> executor
-                      (fail-trials-lost-on-executor (:trials data))
+                      (defect-trials-lost-on-executor (:trials data))
                       (update-executor/update data)
                       (sync-trials/sync-trials data)
                       (assoc :version cider-ci.self/VERSION))]
