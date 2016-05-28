@@ -47,12 +47,6 @@
 
 ;#### update trial ############################################################
 
-(defn dispatch-update [trial]
-  (let [task-id (or (:task_id trial)
-                    (:task_id (get-trial (:id trial))))]
-    (assert task-id)
-    (task/evaluate-and-create-trials {:id task-id})))
-
 (defn- new-state [trial update-params]
   ; prevent executing, pending, etc when state is  aborted or aborting
   (case (:state trial)
@@ -77,7 +71,8 @@
              {:state new-state}))))
 
 (defn update-trial [params]
-  (catcher/snatch {}
+  (catcher/snatch
+    {}
     (let [id (:id params)]
       (try
         (assert id)
@@ -85,7 +80,10 @@
           (when-not (empty? update-params)
             (jdbc/update! (rdbms/get-ds)
                           :trials update-params
-                          ["id = ?" id])))
+                          ["id = ?" id]))
+          ; TODO: publish only if the state has really changed
+          ;(when (not= (:state params) (:state update-params))
+          (messaging/publish "trial.state-changed" (get-trial id)))
         (catch Exception e
           (jdbc/insert! (rdbms/get-ds)
                         :trial_issues {:trial_id id
@@ -94,10 +92,9 @@
                                        :description (str (thrown/stringify e)
                                                          "\n\n PARAMS:" params)})
           (jdbc/update! (rdbms/get-ds)
-                        :trials {:state "failed" :error (thrown/stringify e)}
-                        ["id = ?" id]))
-        (finally
-          (dispatch-update (select-keys params [:id :task_id])))))))
+                        :trials {:state "defective" :error (thrown/stringify e)}
+                        ["id = ?" id])
+          (messaging/publish "trial.state-changed" (get-trial id)))))))
 
 ;(update-trial {:id "82ff77e8-8f45-440b-8505-d0ba6d049354" :state "passed"})
 

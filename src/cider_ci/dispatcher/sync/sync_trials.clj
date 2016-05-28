@@ -8,7 +8,9 @@
     [cider-ci.dispatcher.dispatch.build-data :as build-data]
     [cider-ci.dispatcher.dispatch.next-trial :as next-trial]
     [cider-ci.dispatcher.trials :as trials]
+
     [cider-ci.utils.rdbms :as rdbms]
+    [cider-ci.utils.messaging :as messaging]
 
     [clj-time.core :as time]
     [clojure.java.jdbc :as jdbc]
@@ -27,30 +29,33 @@
 
 (def get-trial-lock (Object.))
 
-(defn- get-and-set-next-trial [tx executor]
-  (locking get-trial-lock
-    (when-let [{trial-id :id} (next-trial/next-trial-for-pull tx executor)]
-      (trials/wrap-trial-with-issue-and-throw-again
-        {:id trial-id}  "Error during dispatch"
-        (jdbc/update! tx :trials
-                      {:state "dispatching"
-                       :dispatched_at (time/now)
-                       :executor_id (:id executor)}
-                      ["id = ?" trial-id]))
-      (first (jdbc/query tx ["SELECT * FROM trials WHERE id = ?" trial-id])))))
+(defn- get-and-set-next-trial [executor]
+  (when-let
+    [trial (locking get-trial-lock
+             (jdbc/with-db-transaction [tx (rdbms/get-ds)]
+               (when-let [{trial-id :id} (next-trial/next-trial-for-pull tx executor)]
+                 (trials/wrap-trial-with-issue-and-throw-again
+                   {:id trial-id}  "Error during dispatch"
+                   (jdbc/update! tx :trials
+                                 {:state "dispatching"
+                                  :dispatched_at (time/now)
+                                  :executor_id (:id executor)}
+                                 ["id = ?" trial-id]))
+                 (first (jdbc/query tx ["SELECT * FROM trials WHERE id = ?" trial-id])))))]
+    (messaging/publish "trial.state-changed" trial)
+    trial))
 
 (defn- get-trials-to-be-dispatched [executor data]
   (let [available-load (-> data :available_load)]
     (if (>= 0 available-load)
       []
-      (jdbc/with-db-transaction [tx (rdbms/get-ds)]
-        (loop [trials []]
-          (if-let [trial (get-and-set-next-trial tx executor)]
-            (let [trials (conj trials trial)]
-              (if (< (count trials) available-load)
-                (recur trials)
-                trials))
-            trials))))))
+      (loop [trials []]
+        (if-let [trial (get-and-set-next-trial executor)]
+          (let [trials (conj trials trial)]
+            (if (< (count trials) available-load)
+              (recur trials)
+              trials))
+          trials)))))
 
 
 ;### trials beeing currently processed ########################################

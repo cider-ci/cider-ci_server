@@ -11,13 +11,16 @@
     [cider-ci.utils.map :refer [convert-to-array]]
     [cider-ci.utils.messaging :as messaging]
     [cider-ci.utils.rdbms :as rdbms]
-    [clj-logging-config.log4j :as logging-config]
+    [cider-ci.dispatcher.scripts :refer [create-scripts]]
+
     [clojure.java.jdbc :as jdbc]
+
     [clojure.tools.logging :as logging]
+    [clj-logging-config.log4j :as logging-config]
     [logbug.catcher :as catcher]
     [logbug.debug :as debug]
     [logbug.thrown :as thrown]
-    [cider-ci.dispatcher.scripts :refer [create-scripts]]
+
     ))
 
 
@@ -63,7 +66,6 @@
 (def _get-task-spec-data-memoized
   (core.memoize/lru _get-task-spec-data))
 
-
 (defn- get-task-spec-data [id]
   (try (_get-task-spec-data-memoized id)
        (catch clojure.lang.ExceptionInfo e
@@ -108,6 +110,7 @@
           new-state (eval-new-state task trial-states)]
       (result/update-task-and-job-result id)
       (stateful-entity/update-state :tasks id new-state {:assert-existence true}))))
+
 
 
 ;### create trial #############################################################
@@ -161,7 +164,7 @@
 
 ;### eval and create trials ###################################################
 
-(defn evaluate-and-create-trials
+(defn- evaluate-and-create-trials
   "Evaluate task, evaluate state of trials and adjust state of task.
   Send \"task.state-changed\" message if state changed.
   Create trials according to max_trials and eager_trials properties
@@ -175,13 +178,27 @@
       (job/evaluate-and-update (:job_id (get-task (:id task)))))))
 
 
+(defn- evaluate-on-changed-trial [trial]
+  (let [task-id (or (:task_id trial)
+                    (-> (jdbc/query
+                          (rdbms/get-ds)
+                          ["SELECT trials.task_id FROM trials
+                           WHERE id = ?" (:id trial)])
+                        first :task_id))]
+    (-> (jdbc/query (rdbms/get-ds)
+                    ["SELECT tasks.* FROM tasks
+                     WHERE id = ?" task-id])
+        first evaluate-and-create-trials)))
+
 ;### initialize ###############################################################
 
 (defn initialize []
   (catcher/with-logging {}
     (messaging/listen "task.create-trials"
                       #'create-trials
-                      "task.create-trials")))
+                      "task.create-trials")
+    (messaging/listen "trial.state-changed" #'evaluate-on-changed-trial)
+    ))
 
 ;(messaging/publish "task.create-trials" {:id "de10e33c-c13f-5aba-94aa-db1dca1e5932"})
 
