@@ -19,7 +19,9 @@
 
 
 (def ^:private CONFIG-FILES-ALTERNATIVES
-  ["cider-ci.yml" ".cider-ci.yml"
+  ["cider-ci_v4.yml" ".cider-ci_v4.yml"
+   "cider-ci_v4.json" ".cider-ci_v4.json"
+   "cider-ci.yml" ".cider-ci.yml"
    "cider-ci.json" ".cider-ci.json"])
 
 (defn- get-content-or-nil [id path]
