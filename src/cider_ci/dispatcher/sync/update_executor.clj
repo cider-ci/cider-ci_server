@@ -60,9 +60,7 @@
 
 (defn update-version [executor data]
   (let [executor-version (-> data :status :version)
-        ; TODO this is broken must be mix out of :version_mismatch and executor id
-        ; see also place where it is deleted!
-        issue-id (clj-uuid/v5 clj-uuid/+null+ :version_mismatch)
+        issue-id (clj-uuid/v5 clj-uuid/+null+ (str :version_mismatch (:id executor)))
         where-clause ["executor_id = ? AND id = ?" (:id executor) issue-id]]
     (if (= executor-version cider-ci.self/VERSION)
       (jdbc/delete! (get-ds) :executor_issues where-clause)
