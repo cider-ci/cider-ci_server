@@ -4,15 +4,17 @@
 
 (ns cider-ci.dispatcher.task
   (:require
-    [clojure.core.memoize :as core.memoize]
     [cider-ci.dispatcher.job :as job]
     [cider-ci.dispatcher.result :as result]
     [cider-ci.dispatcher.stateful-entity :as stateful-entity]
+    [cider-ci.dispatcher.scripts :refer [create-scripts]]
+
+    [cider-ci.utils.config :refer [get-config]]
     [cider-ci.utils.map :refer [convert-to-array]]
     [cider-ci.utils.messaging :as messaging]
     [cider-ci.utils.rdbms :as rdbms]
-    [cider-ci.dispatcher.scripts :refer [create-scripts]]
 
+    [clojure.core.memoize :as core.memoize]
     [clojure.java.jdbc :as jdbc]
 
     [clojure.tools.logging :as logging]
@@ -25,7 +27,8 @@
 
 
 ;### utils ####################################################################
-(defonce terminal-states #{"aborted" "failed" "passed"})
+(defn terminal-states []
+  (-> (get-config) :constants :STATES :FINISHED set))
 
 (defn get-task [id]
   (first (jdbc/query (rdbms/get-ds)
@@ -136,7 +139,7 @@
         job (get-job-for-task task)
         spec (get-task-spec id)
         states (get-trial-states task)
-        finished-count (->> states (filter #(terminal-states %)) count)
+        finished-count (->> states (filter #((terminal-states) %)) count)
         in-progress-count (- (count states) finished-count)
         create-new-trials-count (min (- (or (:eager_trials spec) 1) in-progress-count)
                                      (- (or (:max_trials spec) 2) (count states)))
@@ -176,7 +179,6 @@
     (when (evaluate-trials-and-update task)
       (messaging/publish "task.state-changed" task)
       (job/evaluate-and-update (:job_id (get-task (:id task)))))))
-
 
 (defn- evaluate-on-changed-trial [trial]
   (let [task-id (or (:task_id trial)
