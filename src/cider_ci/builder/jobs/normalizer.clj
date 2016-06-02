@@ -182,7 +182,7 @@
                                  Cider-CI project configuration.**
                                  The server log-files might give a hint
                                  if the problem is not obvious. Ask your server administrator
-                                 to check the _dispatcher logs_ at about " (time/now) "."
+                                 to check the _builder logs_ at about " (time/now) "."
                                  )
                :type "error" }
               (ex-info title)

@@ -71,7 +71,7 @@
   (let [issue (merge
                 {:title (.getMessage ex)
                  :type "error"
-                 :description "Unspecified error, see the dispatcher logs for details."
+                 :description "Unspecified error, see the builder logs for details."
                  :job_id (:id job) }
                 (or (ex-data ex) {}))]
     (jdbc/insert!
