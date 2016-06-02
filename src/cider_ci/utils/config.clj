@@ -30,8 +30,7 @@
                         :overrides {}
                         :resource-names ["config_default.yml"]
                         :filenames [(system-path "." "config" "config.yml")
-                                    (system-path ".." "config" "config.yml")
-                                    (system-path-abs "cider-ci" "data" "config" "config.yml")]})
+                                    (system-path ".." "config" "config.yml")]})
 
 (defonce opts (atom {}))
 
