@@ -2,6 +2,7 @@
   (:require
     [clojure.test :refer :all]
     [cider-ci.utils.core :refer :all]
+    [clj-yaml.core :as yaml]
     ))
 
 (deftest test-to-cistr
@@ -58,3 +59,20 @@
              ]]
     (is (= (-> v to-ciset)
            (-> v to-ciset to-cisetmap to-ciset)))))
+
+(deftest test-deep-merge-
+  (is (= (deep-merge
+           (yaml/parse-string
+             "x y z:
+                x: 42")
+           (yaml/parse-string
+             "x y z:
+                y: 49")
+           (yaml/parse-string
+             "x y z:
+                z/z: 3.14")
+           (yaml/parse-string
+             "a b c: 7"))
+         {(keyword "x y z") {:x 42 :y 49 :z/z 3.14}
+          (keyword "a b c") 7 })))
+
