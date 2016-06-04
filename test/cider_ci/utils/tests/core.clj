@@ -64,15 +64,17 @@
   (is (= (deep-merge
            (yaml/parse-string
              "x y z:
-                x: 42")
+             y z:
+               y: 42")
            (yaml/parse-string
              "x y z:
-                y: 49")
+             y z:
+               z: 49")
            (yaml/parse-string
              "x y z:
-                z/z: 3.14")
+             z/z: 3.14")
            (yaml/parse-string
              "a b c: 7"))
-         {(keyword "x y z") {:x 42 :y 49 :z/z 3.14}
+         {(keyword "x y z") {(keyword "y z") {:y 42 :z 49} :z/z 3.14}
           (keyword "a b c") 7 })))
 
