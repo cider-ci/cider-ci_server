@@ -1,8 +1,9 @@
 jobs:
   tests:
-    run_on:
-    - type: branch
-      include_match: ^.*$
+    run_when:
+      any branch has been updated:
+        type: branch
+        include_match: ^.*$
     task_defaults:
       traits:
         - JDK 8
