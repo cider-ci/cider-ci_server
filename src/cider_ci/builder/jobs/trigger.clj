@@ -13,11 +13,11 @@
     [cider-ci.builder.issues :refer [create-issue]]
 
     [cider-ci.utils.core :refer [deep-merge]]
+    [cider-ci.utils.daemon :refer [defdaemon]]
     [cider-ci.utils.http :as http]
     [cider-ci.utils.include-exclude :as include-exclude]
     [cider-ci.utils.jdbc :refer [insert-or-update]]
     [cider-ci.utils.map :refer [convert-to-array]]
-    [cider-ci.utils.messaging :as messaging]
     [cider-ci.utils.rdbms :as rdbms]
 
     [clj-yaml.core :as yaml]
@@ -39,7 +39,7 @@
                       (sql/from :jobs)
                       (sql/merge-where [:= :tree_id tree-id])
                       (sql/merge-where [:= :key (:job_key trigger)])
-                      (sql/merge-where [:in :state (:states trigger)])
+                      (sql/merge-where [:in :state (or (:states trigger) ["passed"])])
                       (sql/limit 1)) sql/format) ]
     (logging/debug query)
     (->> query
@@ -47,31 +47,34 @@
          first
          boolean)))
 
+(defn- branches-for-tree-id [tree-id]
+  (->> (-> (sql/select :name :repository_id)
+           (sql/from :branches)
+           (sql/merge-join
+             :commits
+             [:= :branches.current_commit_id :commits.id])
+           (sql/where [:= :commits.tree_id tree-id])
+           sql/format)
+       (jdbc/query (rdbms/get-ds))))
+
 (defn- branch-trigger-fulfilled? [tree-id job trigger]
-  (let [branches-query (-> (sql/select :name :repository_id)
-                           (sql/from :branches)
-                           (sql/merge-join
-                             :commits
-                             [:= :branches.current_commit_id :commits.id])
-                           (sql/where [:= :commits.tree_id tree-id])
-                           sql/format)
-        branches (jdbc/query (rdbms/get-ds) branches-query)
-        repository (->> (-> (sql/select :branch_trigger_include_match
-                                        :branch_trigger_exclude_match)
-                            (sql/from :repositories)
-                            (sql/merge-where [:in :id (map :repository_id branches)])
-                            (sql/format))
-                        (jdbc/query (rdbms/get-ds)) first)
-        branch-names (map :name branches)]
-    (->> branch-names
-         (include-exclude/filter
-           (:include_match trigger)
-           (:exclude_match trigger))
-         (include-exclude/filter
-           (:branch_trigger_include_match repository)
-           (:branch_trigger_exclude_match repository))
-         first
-         boolean)))
+  (boolean
+    (when-let [branches (-> tree-id branches-for-tree-id seq)]
+      (let [repository (->> (-> (sql/select :branch_trigger_include_match
+                                            :branch_trigger_exclude_match)
+                                (sql/from :repositories)
+                                (sql/merge-where [:in :id (map :repository_id branches)])
+                                (sql/format))
+                            (jdbc/query (rdbms/get-ds)) first)
+            branch-names (map :name branches)]
+        (->> branch-names
+             (include-exclude/filter
+               (:include_match trigger)
+               (:exclude_match trigger))
+             (include-exclude/filter
+               (:branch_trigger_include_match repository)
+               (:branch_trigger_exclude_match repository))
+             first)))))
 
 (defn trigger-fulfilled? [tree-id job trigger]
   (case (:type trigger)
@@ -87,74 +90,43 @@
 
 ;##############################################################################
 
-(declare trigger-supermodules-jobs)
-
 (defn- trigger-jobs [tree-id]
-  (catcher/snatch
-    {:return-fn (fn [e] (create-issue "tree" tree-id e))}
-    (I>> identity-with-logging
-         (project-configuration/get-project-configuration tree-id)
-         :jobs
-         convert-to-array
-         (filter #(-> % :run_when))
-         (filter #(some-job-trigger-fulfilled? tree-id %))
-         (map #(assoc % :tree_id tree-id))
-         (filter jobs.dependencies/fulfilled?)
-         (map jobs/create)
-         doall))
-  (catcher/snatch {}
-                  (trigger-supermodules-jobs tree-id)) nil)
+  (locking tree-id
+    (catcher/snatch
+      {:return-fn (fn [e] (create-issue "tree" tree-id e))}
+      (I>> identity-with-logging
+           (project-configuration/get-project-configuration tree-id)
+           :jobs
+           convert-to-array
+           (filter #(-> % :run_when))
+           (filter #(some-job-trigger-fulfilled? tree-id %))
+           (map #(assoc % :tree_id tree-id))
+           (filter jobs.dependencies/fulfilled?)
+           (map jobs/create)
+           doall)))
+  tree-id)
 
-(defn- trigger-supermodules-jobs [tree-id]
-  (->> (jdbc/query (rdbms/get-ds)
-              ["SELECT DISTINCT supermodules_commits.tree_id FROM commits AS supermodules_commits
-                JOIN submodules ON submodules.commit_id = supermodules_commits.id
-                JOIN commits AS submodule_commits ON submodule_commits.id = submodules.submodule_commit_id
-                WHERE submodule_commits.tree_id = ?" tree-id])
-       (map :tree_id)
-       (map trigger-jobs)
-       doall) nil)
+;##############################################################################
 
+(defn evaluate-tree-id-notifications []
+  (I>> identity-with-logging
+       "SELECT * FROM tree_id_notifications ORDER BY created_at ASC LIMIT 100"
+       (jdbc/query (rdbms/get-ds))
+       (map (fn [row]
+              (future (trigger-jobs (:tree_id row))
+                      row)))
+       (map deref)
+       (map :id)
+       (map #(jdbc/delete! (rdbms/get-ds) :tree_id_notifications ["id = ?" %]))
+       doall))
 
-;### listen to branch updates #################################################
-
-(defn- evaluate-branch-updated-message [msg]
-  (catcher/with-logging {}
-    (logging/debug 'evaluate-branch-updated-message {:msg msg})
-    (-> (jdbc/query
-          (rdbms/get-ds)
-          ["SELECT tree_id FROM commits WHERE id = ? " (:current_commit_id msg)])
-        first
-        :tree_id
-        trigger-jobs)))
-
-(defn listen-to-branch-updates-and-fire-trigger-jobs []
-  (messaging/listen "branch.updated" evaluate-branch-updated-message))
-
-(defn listen-to-branch-creations-and-fire-trigger-jobs []
-  (messaging/listen "branch.created" evaluate-branch-updated-message))
-
-
-;### listen to job updates ##############################################
-
-(defn evaluate-job-update [msg]
-  (-> (jdbc/query
-        (rdbms/get-ds)
-        ["SELECT tree_id FROM jobs WHERE id = ? " (:id msg)])
-      first
-      :tree_id
-      trigger-jobs))
-
-(defn listen-to-job-updates-and-fire-trigger-jobs []
-  (messaging/listen "job.updated" evaluate-job-update))
+(defdaemon "evaluate-tree-id-notifications" 1 (evaluate-tree-id-notifications))
 
 
 ;### initialize ###############################################################
 
 (defn initialize []
-  (listen-to-branch-updates-and-fire-trigger-jobs)
-  (listen-to-branch-creations-and-fire-trigger-jobs)
-  (listen-to-job-updates-and-fire-trigger-jobs))
+  (start-evaluate-tree-id-notifications))
 
 
 ;### Debug ####################################################################
