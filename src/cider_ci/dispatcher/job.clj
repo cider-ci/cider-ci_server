@@ -6,6 +6,7 @@
   (:require
     [cider-ci.dispatcher.stateful-entity :as stateful-entity]
     [cider-ci.utils.config :as config :refer [get-config]]
+    [cider-ci.utils.messaging :as messaging]
     [cider-ci.utils.rdbms :as rdbms :refer [get-ds]]
     [clj-logging-config.log4j :as logging-config]
     [clojure.java.jdbc :as jdbc]
@@ -24,8 +25,9 @@
                  WHERE job_id = ?" (:id job)])))
 
 (defn- update-state-and-fire-if-changed [job-id new-state]
-  (stateful-entity/update-state
-    :jobs job-id new-state {:assert-existence true}))
+  (when (stateful-entity/update-state
+          :jobs job-id new-state {:assert-existence true})
+    (messaging/publish "job.updated" {:id job-id :state new-state})))
 
 (defn get-job [job-id]
   (->> (jdbc/query (rdbms/get-ds)
