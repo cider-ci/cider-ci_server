@@ -134,21 +134,6 @@
       ))
 
 
-;### Normalize job properties #################################################
-
-(defn- normalize-empty-tasks-warning [spec]
-  "Adds :empty_tasks_warning `true` if the key is not present.
-  Otherwise normalizes the value of :empty_tasks_warning to a boolean."
-  (let [value (if-not (contains? spec :empty_tasks_warning)
-                true
-                (if (:empty_tasks_warning spec)
-                  true
-                  false))]
-    (assoc spec :empty_tasks_warning value)))
-
-(defn- normalize-job-properties [spec]
-  (-> spec
-      normalize-empty-tasks-warning))
 
 ;### Normalize to top level context ###########################################
 
@@ -170,7 +155,6 @@
   (try
     (-> job-spec
         normalize-to-top-level-context
-        normalize-job-properties
         (#(assoc % :context (-> % :context normalize-context)))
         )
     (catch clojure.lang.ExceptionInfo e (throw e))

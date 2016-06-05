@@ -154,20 +154,19 @@
        :count))
 
 (defn- check-tasks-empty! [job spec]
-  (when (and (:empty_tasks_warning spec)
-             (= 0 (number-of-tasks job)))
-    (jdbc/insert!
-      (rdbms/get-ds) :job_issues
-      {:job_id (:id job)
-       :type "warning"
-       :title "No Tasks Have Been Created"
-       :description
-       (->> ["This job has **no tasks**."
-             " The job passes because this is the consistent behavior."
-             " However, this warning is issued in case this is not intended."
-             " You can set the property `empty_tasks_warning` to false "
-             " to disable this warning in the future."]
-            (clojure.string/join "\n"))})))
+  (when (= 0 (number-of-tasks job))
+    (let [job-id (:id job)]
+      (jdbc/insert!
+        (rdbms/get-ds) :job_issues
+        {:job_id (:id job)
+         :type "warning"
+         :title "No Tasks Have Been Created"
+         :description "This job has **no tasks** and has been set to defective state."})
+      (jdbc/update!
+        (rdbms/get-ds) :jobs
+        {:state "defective"}
+        ["id = ? " job-id])
+      (messaging/publish "job.updated" {:id job-id :state "defective"}))))
 
 (defn create-tasks-and-trials [message]
   (when-let [job (get-job (:job_id message))]
@@ -178,11 +177,8 @@
         (doseq [task (jdbc/query
                        (rdbms/get-ds)
                        ["SELECT id, state FROM tasks WHERE job_id = ?"
-                        (:id job)])]
-          (when (= (:state task) "pending")
-            (messaging/publish "task.create-trials" task)))
-        (check-tasks-empty! job (:data job-spec-row))
-        (messaging/publish "job.evaluate-and-update" (select-keys job [:id]))))))
+                        (:id job)])])
+        (check-tasks-empty! job (:data job-spec-row))))))
 
 ;### initialization ###########################################################
 (defn initialize []

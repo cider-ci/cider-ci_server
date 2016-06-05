@@ -21,7 +21,6 @@
    :context {:validator validate-context!}
    :depends_on nil ; is validated in the configuration validator
    :description {:validator validate-string!}
-   :empty_tasks_warning nil ;is validated in the configuration validator
    :key {:validator validate-string!}
    :name {:validator validate-string!}
    :priority {:validator validate-integer!}
