@@ -10,6 +10,7 @@
     [cider-ci.dispatcher.scripts :refer [create-scripts]]
 
     [cider-ci.utils.config :refer [get-config]]
+    [cider-ci.utils.daemon :refer [defdaemon]]
     [cider-ci.utils.map :refer [convert-to-array]]
     [cider-ci.utils.messaging :as messaging]
     [cider-ci.utils.rdbms :as rdbms]
@@ -20,7 +21,7 @@
     [clojure.tools.logging :as logging]
     [clj-logging-config.log4j :as logging-config]
     [logbug.catcher :as catcher]
-    [logbug.debug :as debug]
+    [logbug.debug :as debug :refer [I> I>> identity-with-logging]]
     [logbug.thrown :as thrown]
 
     ))
@@ -169,16 +170,14 @@
 
 (defn- evaluate-and-create-trials
   "Evaluate task, evaluate state of trials and adjust state of task.
-  Send \"task.state-changed\" message if state changed.
   Create trials according to max_trials and eager_trials properties
-  if task is not in terminal state. The argument task must be a map
-  including an :id key"
-  [task_]
-  (let [task (if (:job_id task_) task_ (get-task (:id task_)))]
-    (create-trials task)
-    (when (evaluate-trials-and-update task)
-      (messaging/publish "task.state-changed" task)
-      (job/evaluate-and-update (:job_id (get-task (:id task)))))))
+  if task is not in terminal state."
+  [task_id]
+  (locking (str "evaluate-and-create-trials_for_" task_id)
+    (let [task (get-task task_id)]
+      (create-trials task)
+      (evaluate-trials-and-update task)
+      (job/evaluate-and-update (:job_id task)))))
 
 (defn- evaluate-on-changed-trial [trial]
   (let [task-id (or (:task_id trial)
@@ -187,18 +186,30 @@
                           ["SELECT trials.task_id FROM trials
                            WHERE id = ?" (:id trial)])
                         first :task_id))]
-    (-> (jdbc/query (rdbms/get-ds)
-                    ["SELECT tasks.* FROM tasks
-                     WHERE id = ?" task-id])
-        first evaluate-and-create-trials)))
+    (evaluate-and-create-trials task-id)))
+
 
 ;### initialize ###############################################################
 
+(defn evaluate-task-eval-notifications []
+  (I>> identity-with-logging
+       "SELECT * FROM task_eval_notifications ORDER BY created_at ASC, task_id ASC LIMIT 100"
+       (jdbc/query (rdbms/get-ds))
+       (map (fn [row]
+              (future
+                (catcher/snatch
+                  {} (evaluate-and-create-trials (:task_id row)))
+                row)))
+       (map deref)
+       (map :id)
+       (map #(jdbc/delete! (rdbms/get-ds) :task_eval_notifications ["id = ?" %]))
+       doall))
+
+(defdaemon "evaluate-task-eval-notifications" 0.25 (evaluate-task-eval-notifications))
+
 (defn initialize []
   (catcher/with-logging {}
-    (messaging/listen "task.create-trials"
-                      #'create-trials
-                      "task.create-trials")
+    (start-evaluate-task-eval-notifications)
     (messaging/listen "trial.state-changed" #'evaluate-on-changed-trial)
     ))
 
