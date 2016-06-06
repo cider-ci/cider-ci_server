@@ -41,6 +41,7 @@
    :max_trials {:validator validate-integer!}
    :name {:validator validate-string!}
    :ports {:validator (build-map-of-validator validate-port!)}
+   :priority {:validator validate-integer!}
    :script_defaults {:validator validate-script!}
    :scripts {:validator (build-map-of-validator validate-script!)}
    :templates {:validator (build-map-of-validator validate-template!)}
