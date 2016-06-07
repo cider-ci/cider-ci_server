@@ -8,6 +8,7 @@
     [cider-ci.dispatcher.dispatch.build-data :as build-data]
     [cider-ci.dispatcher.dispatch.next-trial :as next-trial]
     [cider-ci.dispatcher.trials :as trials]
+    [cider-ci.dispatcher.task :as task]
 
     [cider-ci.utils.rdbms :as rdbms]
     [cider-ci.utils.messaging :as messaging]
@@ -42,7 +43,7 @@
                                   :executor_id (:id executor)}
                                  ["id = ?" trial-id]))
                  (first (jdbc/query tx ["SELECT * FROM trials WHERE id = ?" trial-id])))))]
-    (messaging/publish "trial.state-changed" trial)
+    (task/evaluate-and-create-trials (:task_id trial))
     trial))
 
 (defn- get-trials-to-be-dispatched [executor data]

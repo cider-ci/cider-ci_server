@@ -168,7 +168,7 @@
 
 ;### eval and create trials ###################################################
 
-(defn- evaluate-and-create-trials
+(defn evaluate-and-create-trials
   "Evaluate task, evaluate state of trials and adjust state of task.
   Create trials according to max_trials and eager_trials properties
   if task is not in terminal state."
@@ -178,15 +178,6 @@
       (create-trials task)
       (evaluate-trials-and-update task)
       (job/evaluate-and-update (:job_id task)))))
-
-(defn- evaluate-on-changed-trial [trial]
-  (let [task-id (or (:task_id trial)
-                    (-> (jdbc/query
-                          (rdbms/get-ds)
-                          ["SELECT trials.task_id FROM trials
-                           WHERE id = ?" (:id trial)])
-                        first :task_id))]
-    (evaluate-and-create-trials task-id)))
 
 
 ;### initialize ###############################################################
@@ -205,13 +196,12 @@
        (map #(jdbc/delete! (rdbms/get-ds) :task_eval_notifications ["id = ?" %]))
        doall))
 
-(defdaemon "evaluate-task-eval-notifications" 0.25 (evaluate-task-eval-notifications))
+(defdaemon "evaluate-task-eval-notifications"
+  0.25 (evaluate-task-eval-notifications))
 
 (defn initialize []
   (catcher/with-logging {}
-    (start-evaluate-task-eval-notifications)
-    (messaging/listen "trial.state-changed" #'evaluate-on-changed-trial)
-    ))
+    (start-evaluate-task-eval-notifications)))
 
 ;(messaging/publish "task.create-trials" {:id "de10e33c-c13f-5aba-94aa-db1dca1e5932"})
 

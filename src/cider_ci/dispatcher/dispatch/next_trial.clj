@@ -51,7 +51,7 @@
       (sql-merge-join :tasks [:= :tasks.id :trials.task_id])
       (sql-merge-join [:executors_with_load :exs]
                       (sql-raw "(tasks.traits <@ exs.traits)"))
-      (sql-select :trials.id [:exs.id :executor_id])
+      (sql-select :trials.id :trials.task_id [:exs.id :executor_id])
       (sql-merge-where [:< :exs.relative_load 1])
       (sql-merge-where [:= :exs.enabled true])
       (sql-merge-where (sql-raw (str "(exs.last_ping_at >  "

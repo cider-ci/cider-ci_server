@@ -70,33 +70,37 @@
            (when-let [new-state (new-state trial params)]
              {:state new-state}))))
 
+(defn create-trial-issue [trial-id exception]
+  (jdbc/insert! (rdbms/get-ds)
+                :trial_issues {:trial_id trial-id
+                               :title "Updating the trial failed"
+                               :type "warning"
+                               :description
+                               (str (.getMessage exception)
+                                    "See the logs dispatcher logs for details." )})
+  (jdbc/update! (rdbms/get-ds)
+                :trials {:state "defective" :error (.getMessage exception)}
+                ["id = ?" trial-id])
+  (task/evaluate-and-create-trials (:task_id (get-trial trial-id))))
+
 (defn update-trial [params]
-  (catcher/snatch
+  (catcher/with-logging
     {}
     (let [id (:id params)]
-      (try
-        (assert id)
+      (assert id)
+      (catcher/snatch
+        {:return-fn (fn [e] (create-trial-issue id e))}
         (when-let [update-params (compute-update-params params id)]
           (when-not (empty? update-params)
             (jdbc/update! (rdbms/get-ds)
                           :trials update-params
-                          ["id = ?" id]))
-          ; TODO: publish only if the state has really changed
-          ;(when (not= (:state params) (:state update-params))
-          (messaging/publish "trial.state-changed" (get-trial id)))
-        (catch Exception e
-          (jdbc/insert! (rdbms/get-ds)
-                        :trial_issues {:trial_id id
-                                       :title "Updating the trial failed"
-                                       :type "warning"
-                                       :description (str (thrown/stringify e)
-                                                         "\n\n PARAMS:" params)})
-          (jdbc/update! (rdbms/get-ds)
-                        :trials {:state "defective" :error (thrown/stringify e)}
-                        ["id = ?" id])
-          (messaging/publish "trial.state-changed" (get-trial id)))))))
+                          ["id = ?" id])
+            (when (contains? update-params :state)
+              (task/evaluate-and-create-trials
+                (or (:task_id params)
+                    (:task_id (get-trial id)))))))))))
 
-;(update-trial {:id "82ff77e8-8f45-440b-8505-d0ba6d049354" :state "passed"})
+;(jdbc/update! (rdbms/get-ds) :trials {:error "Blah"} ["id = ?" "f15fcdd5-9be6-411b-9b24-14d53be7a21f"])
 
 ;#### sql helpers #############################################################
 
