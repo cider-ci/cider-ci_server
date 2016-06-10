@@ -4,7 +4,6 @@
 
 (ns cider-ci.dispatcher.abort
   (:require
-    [cider-ci.dispatcher.job :as job]
     [cider-ci.dispatcher.stateful-entity :as stateful-entity]
     [cider-ci.dispatcher.trials :as trials]
     [cider-ci.utils.config :as config :refer [get-config]]

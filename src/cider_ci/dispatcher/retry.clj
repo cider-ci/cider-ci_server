@@ -4,7 +4,6 @@
 
 (ns cider-ci.dispatcher.retry
   (:require
-    [cider-ci.dispatcher.job :as job]
     [cider-ci.dispatcher.stateful-entity :as stateful-entity]
     [cider-ci.dispatcher.task :as task]
     [cider-ci.utils.config :as config :refer [get-config]]
@@ -30,10 +29,15 @@
        (map #(task/create-trial % params))
        doall))
 
+(defn get-job [job-id]
+  (->> (jdbc/query (rdbms/get-ds)
+                   ["SELECT * FROM jobs WHERE id = ?" job-id])
+       first))
+
 (defn retry-and-resume [job-id params]
   ;TODO: wrap with transaction and retry
   (catcher/with-logging {}
-    (let [job (job/get-job job-id)
+    (let [job (get-job job-id)
           job-id (:id job) ]
       (when-not job
         (throw (ex-info "Job not found" {:status 422})))

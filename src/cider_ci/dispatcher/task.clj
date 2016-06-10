@@ -4,7 +4,6 @@
 
 (ns cider-ci.dispatcher.task
   (:require
-    [cider-ci.dispatcher.job :as job]
     [cider-ci.dispatcher.result :as result]
     [cider-ci.dispatcher.stateful-entity :as stateful-entity]
     [cider-ci.dispatcher.scripts :refer [create-scripts]]
