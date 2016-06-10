@@ -120,6 +120,7 @@
 ;### create trial #############################################################
 
 (defn create-trial [task params]
+  ;TODO: wrap with transaction and retry
   (catcher/with-logging {}
     (let [trial (jdbc/with-db-transaction [tx (rdbms/get-ds)]
                   (let [task-id (:id task)
@@ -131,8 +132,7 @@
                                     first)]
                       (create-scripts tx trial scripts)
                       trial)))]
-      (when (evaluate-trials-and-update task)
-        (job/evaluate-and-update (:job_id task)))
+      (evaluate-trials-and-update task)
       trial)))
 
 (defn- create-trials [task]
@@ -176,8 +176,7 @@
   (locking (str "evaluate-and-create-trials_for_" task_id)
     (let [task (get-task task_id)]
       (create-trials task)
-      (evaluate-trials-and-update task)
-      (job/evaluate-and-update (:job_id task)))))
+      (evaluate-trials-and-update task))))
 
 
 ;### initialize ###############################################################

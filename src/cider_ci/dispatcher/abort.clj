@@ -64,13 +64,13 @@
       (recur))))
 
 (defn abort-job [job-id params]
+  ;TODO: wrap with transaction and retry
   (jdbc/update! (rdbms/get-ds) :jobs
                 (merge (select-keys params [:aborted_at :aborted_by])
                        {:state "aborting"})
                 ["id = ? " job-id])
   (set-pending-trials-to-aborted job-id params)
-  (set-processing-trials-to-aborted job-id params)
-  (job/evaluate-and-update job-id))
+  (set-processing-trials-to-aborted job-id params))
 
 
 ;#### abort detached jobs #####################################################

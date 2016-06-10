@@ -31,6 +31,7 @@
        doall))
 
 (defn retry-and-resume [job-id params]
+  ;TODO: wrap with transaction and retry
   (catcher/with-logging {}
     (let [job (job/get-job job-id)
           job-id (:id job) ]
@@ -40,8 +41,7 @@
                     (merge (select-keys params [:resumed_by, :resumed_at])
                            {:state "pending"})
                     ["id = ?" job-id])
-      (retry-unpassed-tasks job {:created_by (:resumed_by params)})
-      (job/evaluate-and-update job-id))))
+      (retry-unpassed-tasks job {:created_by (:resumed_by params)}))))
 
 ;#### retry-task ##############################################################
 
