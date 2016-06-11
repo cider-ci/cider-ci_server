@@ -197,9 +197,8 @@
 (defdaemon "evaluate-task-eval-notifications"
   0.25 (evaluate-task-eval-notifications))
 
-(defn initialize []
-  (catcher/with-logging {}
-    (start-evaluate-task-eval-notifications)))
+;TODO: remove disable and evaluate tasks in builder
+(defn initialize [])
 
 ;(messaging/publish "task.create-trials" {:id "de10e33c-c13f-5aba-94aa-db1dca1e5932"})
 
