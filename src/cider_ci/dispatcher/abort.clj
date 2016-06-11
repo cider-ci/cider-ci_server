@@ -6,16 +6,18 @@
   (:require
     [cider-ci.dispatcher.stateful-entity :as stateful-entity]
     [cider-ci.dispatcher.trials :as trials]
+
     [cider-ci.utils.config :as config :refer [get-config]]
     [cider-ci.utils.daemon :as daemon :refer [defdaemon]]
-    [cider-ci.utils.messaging :as messaging]
     [cider-ci.utils.rdbms :as rdbms :refer [get-ds]]
-    [clj-logging-config.log4j :as logging-config]
+
     [clojure.java.jdbc :as jdbc]
+    [honeysql.sql :refer :all]
+
+    [clj-logging-config.log4j :as logging-config]
     [clojure.tools.logging :as logging]
     [logbug.catcher :as catcher]
     [logbug.debug :as debug]
-    [honeysql.sql :refer :all]
     ))
 
 ;#### abort ###################################################################
@@ -90,12 +92,14 @@
       (sql-merge-where detached-jobs-subquery-part)
       sql-format))
 
-(defn- abort-running-detached-jobs [_]
+(defn- abort-running-detached-jobs []
   (catcher/snatch {}
     (->> (jdbc/query (get-ds) detached-jobs-query)
          (map :id)
          (map #(abort-job % {}))
          doall)))
+
+(defdaemon "abort-running-detached-jobs" 1 (abort-running-detached-jobs))
 
 
 ;#### abort executing trails for dead executors ###############################
@@ -135,7 +139,7 @@
 
 (defn initialize []
   (catcher/with-logging {}
-    (messaging/listen "repository.updated" #'abort-running-detached-jobs)
+    (start-abort-running-detached-jobs)
     (start-dead-executor-trials-aborter)))
 
 

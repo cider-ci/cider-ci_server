@@ -5,7 +5,6 @@
 (ns cider-ci.dispatcher.stateful-entity
   (:require
     [logbug.debug :as debug]
-    [cider-ci.utils.messaging :as messaging]
     [cider-ci.utils.rdbms :as rdbms]
     [logbug.catcher :as catcher]
     [clj-logging-config.log4j :as logging-config]

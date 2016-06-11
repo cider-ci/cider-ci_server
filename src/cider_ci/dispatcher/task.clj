@@ -11,7 +11,6 @@
     [cider-ci.utils.config :refer [get-config]]
     [cider-ci.utils.daemon :refer [defdaemon]]
     [cider-ci.utils.map :refer [convert-to-array]]
-    [cider-ci.utils.messaging :as messaging]
     [cider-ci.utils.rdbms :as rdbms]
 
     [clojure.core.memoize :as core.memoize]
@@ -27,6 +26,7 @@
 
 
 ;### utils ####################################################################
+
 (defn terminal-states []
   (-> (get-config) :constants :STATES :FINISHED set))
 
@@ -75,10 +75,6 @@
          (if (= (-> e ex-data :msg) :do-not-cache)
            nil
            (throw e)))))
-
-;(get-task-spec-data "2b1b1ac7-bfda-54c6-b1c3-78e54ec27f52")
-;(get-task-spec-data-memoized_ "2b1b1ac7-bfda-54c6-b1c3-78e54ec27f52")
-;(get-task-spec-data "2b1b1ac7-bfda-54c6-b1c3-78e54ec27f53")
 
 
 ;### re-evaluate  #############################################################
@@ -165,14 +161,10 @@
               (jdbc/insert! (rdbms/get-ds) "job_issues" row-data))))))))
 
 
-;### eval and create trials ###################################################
-
 ;### initialize ###############################################################
 
-;TODO: remove disable and evaluate tasks in builder
 (defn initialize [])
 
-;(messaging/publish "task.create-trials" {:id "de10e33c-c13f-5aba-94aa-db1dca1e5932"})
 
 ;#### debug ###################################################################
 ;(logging-config/set-logger! :level :debug)

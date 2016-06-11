@@ -11,7 +11,6 @@
     [cider-ci.dispatcher.task :as task]
 
     [cider-ci.utils.rdbms :as rdbms]
-    [cider-ci.utils.messaging :as messaging]
 
     [clj-time.core :as time]
     [clojure.java.jdbc :as jdbc]
