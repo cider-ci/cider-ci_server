@@ -10,7 +10,6 @@
     [cider-ci.repository.git.repositories :as git.repositories]
     [cider-ci.repository.sql.branches :as sql.branches]
     [cider-ci.utils.fs :as ci-fs]
-    [cider-ci.utils.messaging :as messaging]
     [cider-ci.utils.rdbms :as rdbms]
     [cider-ci.utils.system :as system]
     [clj-logging-config.log4j :as logging-config]

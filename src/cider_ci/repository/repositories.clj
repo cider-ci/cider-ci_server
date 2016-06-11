@@ -13,7 +13,6 @@
     [cider-ci.utils.daemon :as daemon :refer [defdaemon]]
     [cider-ci.utils.duration :as duration]
     [cider-ci.utils.fs :as ci-fs]
-    [cider-ci.utils.messaging :as messaging]
     [cider-ci.utils.rdbms :as rdbms]
     [cider-ci.utils.system :as system]
 

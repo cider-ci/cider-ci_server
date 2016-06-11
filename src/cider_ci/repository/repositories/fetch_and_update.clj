@@ -7,7 +7,6 @@
     [cider-ci.repository.branches :as branches]
     [cider-ci.repository.git.repositories :as git.repositories]
     [cider-ci.utils.fs :as ci-fs]
-    [cider-ci.utils.messaging :as messaging]
     [cider-ci.utils.rdbms :as rdbms]
     [cider-ci.utils.system :as system]
     [clj-logging-config.log4j :as logging-config]
@@ -92,33 +91,15 @@
     (system/exec-with-success-or-throw ["git" "update-server-info"]
                                        {:timeout "1 Minute", :dir repository-path, :env {"TERM" "VT-100"}})))
 
-(defn- send-branch-update-notification [action branch]
-  (let [queue-name (str "branch." (name action))]
-    (messaging/publish queue-name branch)))
-
-(defn- send-branch-update-notifications [updated-branches]
-  (catcher/with-logging {}
-    (doseq [action [:created :deleted :updated]]
-      (->> (action updated-branches)
-           (map #(send-branch-update-notification action %))
-           ;(map #(messaging/publish (str "branch." (name action)) %))
-           doall))))
-
-(defn send-repository-update-notification [repository]
-  (messaging/publish "repository.updated"
-                     (select-keys repository [:git_url :name])))
-
 (defn git-update [repository]
   (catcher/with-logging {}
     (let [dir (git.repositories/path repository)
           _ (assert-directory-exists! dir)
           updated-branches (update-branches repository)]
       (update-git-server-info repository)
-      (send-branch-update-notifications updated-branches)
       (when (or (seq (:created updated-branches))
                 (seq (:deleted updated-branches))
-                (seq (:updated updated-branches)))
-        (send-repository-update-notification repository)))))
+                (seq (:updated updated-branches)))))))
 
 (defn git-initialize [repository]
   (catcher/with-logging {}
