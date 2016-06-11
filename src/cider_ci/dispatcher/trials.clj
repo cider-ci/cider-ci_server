@@ -80,8 +80,7 @@
                                     "See the logs dispatcher logs for details." )})
   (jdbc/update! (rdbms/get-ds)
                 :trials {:state "defective" :error (.getMessage exception)}
-                ["id = ?" trial-id])
-  (task/evaluate-and-create-trials (:task_id (get-trial trial-id))))
+                ["id = ?" trial-id]))
 
 (defn update-trial [params]
   (catcher/with-logging
@@ -94,11 +93,7 @@
           (when-not (empty? update-params)
             (jdbc/update! (rdbms/get-ds)
                           :trials update-params
-                          ["id = ?" id])
-            (when (contains? update-params :state)
-              (task/evaluate-and-create-trials
-                (or (:task_id params)
-                    (:task_id (get-trial id)))))))))))
+                          ["id = ?" id])))))))
 
 ;(jdbc/update! (rdbms/get-ds) :trials {:error "Blah"} ["id = ?" "f15fcdd5-9be6-411b-9b24-14d53be7a21f"])
 

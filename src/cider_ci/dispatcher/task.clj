@@ -167,35 +167,7 @@
 
 ;### eval and create trials ###################################################
 
-(defn evaluate-and-create-trials
-  "Evaluate task, evaluate state of trials and adjust state of task.
-  Create trials according to max_trials and eager_trials properties
-  if task is not in terminal state."
-  [task_id]
-  (locking (str "evaluate-and-create-trials_for_" task_id)
-    (let [task (get-task task_id)]
-      (create-trials task)
-      (evaluate-trials-and-update task))))
-
-
 ;### initialize ###############################################################
-
-(defn evaluate-task-eval-notifications []
-  (I>> identity-with-logging
-       "SELECT * FROM task_eval_notifications ORDER BY created_at ASC, task_id ASC LIMIT 100"
-       (jdbc/query (rdbms/get-ds))
-       (map (fn [row]
-              (future
-                (catcher/snatch
-                  {} (evaluate-and-create-trials (:task_id row)))
-                row)))
-       (map deref)
-       (map :id)
-       (map #(jdbc/delete! (rdbms/get-ds) :task_eval_notifications ["id = ?" %]))
-       doall))
-
-(defdaemon "evaluate-task-eval-notifications"
-  0.25 (evaluate-task-eval-notifications))
 
 ;TODO: remove disable and evaluate tasks in builder
 (defn initialize [])
@@ -206,6 +178,5 @@
 ;(logging-config/set-logger! :level :debug)
 ;(logging-config/set-logger! :level :info)
 ;(debug/debug-ns *ns*)
-;(debug/wrap-with-log-debug #'evaluate-and-create-trials)
 ;(debug/wrap-with-log-debug #'eval-new-state)
 ;(debug/re-apply-last-argument #'get-trial-states)

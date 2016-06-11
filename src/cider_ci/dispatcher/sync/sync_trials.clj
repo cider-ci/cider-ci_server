@@ -43,7 +43,6 @@
                                   :executor_id (:id executor)}
                                  ["id = ?" trial-id]))
                  (first (jdbc/query tx ["SELECT * FROM trials WHERE id = ?" trial-id])))))]
-    (task/evaluate-and-create-trials (:task_id trial))
     trial))
 
 (defn- get-trials-to-be-dispatched [executor data]
