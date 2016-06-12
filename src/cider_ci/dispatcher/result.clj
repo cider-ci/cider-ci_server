@@ -4,14 +4,19 @@
 
 (ns cider-ci.dispatcher.result
   (:require
-    [logbug.debug :as debug]
+    [cider-ci.utils.daemon :refer [defdaemon]]
+    [cider-ci.utils.pending-rows :as pending-rows]
+
     [cider-ci.utils.rdbms :as rdbms]
-    [logbug.catcher :as catcher]
-    [clj-logging-config.log4j :as logging-config]
     [clojure.java.jdbc :as jdbc]
-    [clojure.tools.logging :as logging]
     [honeysql.core :as hc]
     [honeysql.helpers :as hh]
+
+    [clojure.tools.logging :as logging]
+    [logbug.catcher :as catcher]
+    [clj-logging-config.log4j :as logging-config]
+    [logbug.debug :as debug]
+
     ))
 
 
@@ -87,6 +92,28 @@
                       ["id = ?" task-id])
         (when (task-has-no-sibblings task-id)
           (update-job-result task-id trial-result))))))
+
+
+;#### processor ###############################################################
+
+(defn process [row]
+  (->> ["SELECT task_id FROM trials WHERE id = ?" (:trial_id row)]
+       (jdbc/query (rdbms/get-ds))
+       first
+       :task_id
+       update-task-and-job-result))
+
+(def process-pending-result-propagations
+  (pending-rows/build-worker
+    "pending_result_propagations"
+    process))
+
+(defdaemon "process-pending-result-propagations"
+  0.25 (process-pending-result-propagations))
+
+
+(defn initialize []
+  (start-process-pending-result-propagations))
 
 
 ;#### debug ###################################################################

@@ -7,6 +7,7 @@
   (:require
     [cider-ci.self]
 
+    [cider-ci.dispatcher.result]
     [cider-ci.dispatcher.abort :as abort]
     [cider-ci.dispatcher.dispatch :as dispatch]
     [cider-ci.dispatcher.dispatch.timeout-sweeper]
@@ -32,6 +33,7 @@
 
     (task/initialize)
     (abort/initialize)
+    (cider-ci.dispatcher.result/initialize)
     (timeout-sweeper/initialize)
 
     ))
