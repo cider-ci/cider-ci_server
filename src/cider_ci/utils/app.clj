@@ -5,7 +5,6 @@
 (ns cider-ci.utils.app
   (:require
     [cider-ci.utils.config :as config :refer [get-config get-db-spec]]
-    [cider-ci.utils.messaging :as messaging]
     [cider-ci.utils.nrepl :as nrepl]
     [cider-ci.utils.rdbms :as rdbms]
     [cider-ci.utils.http-server :as http-server]
@@ -44,11 +43,6 @@
         (nrepl/initialize nrepl-spec)
         (logging/info (str "No nrepl configuration found, "
                            "skipping nrepl initialization.")))
-
-      (if-let [messaging-spec (:messaging (get-config))]
-        (messaging/initialize messaging-spec)
-        (logging/info (str "No messaging configuration found, "
-                           "skipping messaging initialization.")))
 
       (if-not build-http-handler-fn
         (logging/info (str "No build-http-handler-fn given, "
