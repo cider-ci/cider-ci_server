@@ -5,9 +5,10 @@
 (ns cider-ci.utils.app
   (:require
     [cider-ci.utils.config :as config :refer [get-config get-db-spec]]
+    [cider-ci.utils.http-server :as http-server]
+    [cider-ci.utils.json-protocol]
     [cider-ci.utils.nrepl :as nrepl]
     [cider-ci.utils.rdbms :as rdbms]
-    [cider-ci.utils.http-server :as http-server]
     [cider-ci.utils.self]
 
     [logbug.catcher :as catcher]
