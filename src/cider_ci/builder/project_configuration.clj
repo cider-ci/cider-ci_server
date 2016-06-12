@@ -32,8 +32,8 @@
               (str "/project-configuration/" tree-id))]
     (catcher/snatch
       {:return-fn convert-http-exception}
-      (-> url (http/get {:socket-timeout 3000
-                         :conn-timeout 3000
+      (-> url (http/get {:socket-timeout 10000
+                         :conn-timeout 10000
                          :as :json})
           :body))))
 
