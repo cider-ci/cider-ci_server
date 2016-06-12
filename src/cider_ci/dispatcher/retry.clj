@@ -7,7 +7,6 @@
     [cider-ci.dispatcher.stateful-entity :as stateful-entity]
     [cider-ci.dispatcher.task :as task]
     [cider-ci.utils.config :as config :refer [get-config]]
-    [cider-ci.utils.messaging :as messaging]
     [cider-ci.utils.rdbms :as rdbms :refer [get-ds]]
 
     [clojure.java.jdbc :as jdbc]
