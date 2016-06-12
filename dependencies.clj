@@ -1,6 +1,6 @@
 [
  [drtom/honeysql "2.0.0-ALPHA+1"]
- [logbug "4.0.0"]
+ [logbug "4.1.0"]
  [pg-types "2.2.0"]
  [cider-ci/open-session "1.2.0"]
 
