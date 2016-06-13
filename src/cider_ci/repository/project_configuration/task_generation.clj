@@ -30,7 +30,7 @@
   (if-let [generate-spec (:generate_tasks context)]
     (let [repository (sql.repository/resolve git-ref-id)
           include-regex (-> generate-spec :include_match)
-          exclude-regex (-> generate-spec :exclude-match)
+          exclude-regex (-> generate-spec :exclude_match)
           file-list (git.repositories/ls-tree
                       repository git-ref-id include-regex exclude-regex)
           generated-tasks (->> file-list
