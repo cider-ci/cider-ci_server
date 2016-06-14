@@ -2,11 +2,12 @@
 ; Licensed under the terms of the GNU Affero General Public License v3.
 ; See the "LICENSE.txt" file provided with this software.
 
-(ns cider-ci.builder.jobs.sweeper
+(ns cider-ci.builder.retention-sweeper.jobs
   (:require
     [cider-ci.utils.config :refer [get-config parse-config-duration-to-seconds]]
     [cider-ci.utils.daemon :refer [defdaemon]]
     [cider-ci.utils.rdbms :as rdbms :refer [get-ds]]
+    [cider-ci.builder.retention-sweeper.shared :refer [retention-interval]]
 
     [clojure.java.jdbc :as jdbc]
     [honeysql.core :as sql]
@@ -16,22 +17,8 @@
     [logbug.debug :as debug]
     ))
 
-(defn- get-job-retention-interval []
-  (catcher/snatch {}
-    (when-let [job-retention-duration-hours
-               (-> (parse-config-duration-to-seconds :job_retention_duration)
-                   (/ (* 60 60))
-                   BigDecimal.
-                   .toBigInteger)]
-      (when-not (>= job-retention-duration-hours 1)
-        (throw (IllegalArgumentException. "Job retention duration must be at least one hour")))
-      (str job-retention-duration-hours " Hours"))))
-
 (defn- job-overdue-query-part [job-retention-interval]
   (str "(jobs.updated_at < (now() - interval '" job-retention-interval "'))"))
-
-(defn- job-state-condition-query-part []
-  [:in :jobs.state (-> (get-config) :constants :STATES :FINISHED)])
 
 (def ^:private job-not-directly-releated-to-branch-query-part
   [:not [:exists
@@ -42,12 +29,11 @@
                                         :commits.id]))]])
 
 (defn- to-be-swept-jobs-query []
-  (when-let [job-retention-interval (get-job-retention-interval)]
+  (when-let [job-retention-interval (retention-interval :job_retention_duration)]
     (-> (-> (sql/select :jobs.id)
             (sql/from :jobs)
             (sql/merge-where (sql/raw (job-overdue-query-part
                                         job-retention-interval)))
-            (sql/merge-where (job-state-condition-query-part))
             (sql/merge-where job-not-directly-releated-to-branch-query-part)
             )sql/format)))
 
@@ -67,7 +53,7 @@
                               seq)]
         (delete-jobs job-ids)))))
 
-(defdaemon "sweep-jobs" 10 (sweep-jobs))
+(defdaemon "sweep-jobs" 1 (sweep-jobs))
 
 (defn initialize []
   (start-sweep-jobs))

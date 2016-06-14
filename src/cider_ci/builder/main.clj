@@ -11,7 +11,7 @@
 
     [cider-ci.builder.evaluation :as evaluation]
     [cider-ci.builder.trials :as trials]
-    [cider-ci.builder.jobs.sweeper :as jobs.sweeper]
+    [cider-ci.builder.retention-sweeper :as retention-sweeper]
     [cider-ci.builder.jobs.trigger :as jobs.trigger]
     [cider-ci.builder.repository :as repository]
     [cider-ci.builder.tasks :as tasks]
@@ -32,7 +32,7 @@
     (trials/initialize)
     (evaluation/initialize)
     (jobs.trigger/initialize)
-    (jobs.sweeper/initialize)))
+    (retention-sweeper/initialize)))
 
 ;### Debug ####################################################################
 ;(logging-config/set-logger! :level :debug)
