@@ -16,7 +16,6 @@
     [cider-ci.utils.core :refer :all]
     [cider-ci.utils.http :as http]
     [cider-ci.utils.map :refer [convert-to-array]]
-    [cider-ci.utils.messaging :as messaging]
     [cider-ci.utils.rdbms :as rdbms]
 
     [clojure.java.jdbc :as jdbc]
@@ -47,13 +46,7 @@
 
 ;(apply get-dotfile-specification (debug/get-last-argument #'get-dotfile-specification))
 ;(debug/re-apply-last-argument #'get-dotfile-specification)
-
-
 ;(project-configuration/get-project-configuration "7c4f1e1efcdf9854927e1808ffa9182319227839" )
-
-
-(defn find-or-create-specifiation [spec]
-  (spec/get-or-create-job-spec spec))
 
 (defn persist-job [params]
   (->> (jdbc/insert!
@@ -88,17 +81,17 @@
       (let [{tree-id :tree_id job-key :key} params
             spec (-> (get-dotfile-specification tree-id job-key)
                      normalizer/normalize-job-spec )
-            spec-id (-> spec find-or-create-specifiation :id)
+            job-spec (spec/get-or-create-job-spec spec)
             job-params (merge
                          {:key job-key :name job-key}
                          (select-keys spec [:name, :description, :priority])
-                         {:job_specification_id spec-id}
+                         {:job_specification_id (:id job-spec)}
                          (select-keys params [:tree_id :priority :created_by]))
             job (persist-job job-params)]
         (catcher/snatch
           {:return-fn (fn [e] (on-job-exception job e))}
           (job-validator/validate! job)
-          (tasks/create-tasks-and-trials {:job_id (:id job)}))
+          (tasks/create-tasks-and-trials job job-spec))
         job))))
 
 

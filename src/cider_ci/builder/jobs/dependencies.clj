@@ -12,7 +12,6 @@
     [cider-ci.utils.core :refer :all]
     [cider-ci.utils.http :as http]
     [cider-ci.utils.map :refer [convert-to-array]]
-    [cider-ci.utils.messaging :as messaging]
     [cider-ci.utils.rdbms :as rdbms :refer [get-ds]]
 
     [honeysql.core :as sql]

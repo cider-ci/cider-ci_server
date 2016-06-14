@@ -7,11 +7,13 @@
     [cider-ci.utils.config :refer [get-config parse-config-duration-to-seconds]]
     [cider-ci.utils.daemon :refer [defdaemon]]
     [cider-ci.utils.rdbms :as rdbms :refer [get-ds]]
+
     [clojure.java.jdbc :as jdbc]
+    [honeysql.core :as sql]
+
     [clojure.tools.logging :as logging]
     [logbug.catcher :as catcher]
     [logbug.debug :as debug]
-    [honeysql.core :as sql]
     ))
 
 (defn- get-job-retention-interval []

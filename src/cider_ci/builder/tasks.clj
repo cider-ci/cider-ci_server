@@ -6,11 +6,11 @@
   (:require
     [cider-ci.builder.spec :as spec]
     [cider-ci.builder.task :as task]
+    [cider-ci.builder.trials :as trials]
     [cider-ci.builder.util :as util]
 
     [cider-ci.utils.core :refer [deep-merge]]
     [cider-ci.utils.map :refer [convert-to-array]]
-    [cider-ci.utils.messaging :as messaging]
     [cider-ci.utils.rdbms :as rdbms]
 
     [clj-yaml.core :as yaml]
@@ -136,7 +136,8 @@
                 (deep-merge script-base-defaults
                             (or (:script_defaults context-spec) {})))]
     (doseq [raw-task tasks]
-      (task/create-db-task tx raw-task))))
+      (let [task (task/create-db-task tx raw-task)]
+      (trials/create-trials (:id task) {:tx tx :task task :job job})))))
 
 
 ;### create tasks for job ###############################################
@@ -165,28 +166,16 @@
       (jdbc/update!
         (rdbms/get-ds) :jobs
         {:state "defective"}
-        ["id = ? " job-id])
-      (messaging/publish "job.updated" {:id job-id :state "defective"}))))
+        ["id = ? " job-id]))))
 
-(defn create-tasks-and-trials [message]
-  (when-let [job (get-job (:job_id message))]
-    (when-let [job-spec-row (get-job-spec job)]
-      (wrap-exception-create-job-issue
-        job "An exception occurred when creating tasks and trials!"
-        (create-tasks job job-spec-row)
-        (doseq [task (jdbc/query
-                       (rdbms/get-ds)
-                       ["SELECT id, state FROM tasks WHERE job_id = ?"
-                        (:id job)])])
-        (check-tasks-empty! job (:data job-spec-row))))))
+(defn create-tasks-and-trials [job job-spec]
+  (wrap-exception-create-job-issue
+    job "An exception occurred when creating tasks and trials!"
+    (create-tasks job job-spec)
+    (check-tasks-empty! job (:data job-spec))))
 
 ;### initialization ###########################################################
-(defn initialize []
-  (logging/debug "initialize")
-  (catcher/with-logging {}
-    (messaging/listen "job.create-tasks-and-trials"
-                      #'create-tasks-and-trials
-                      "job.create-tasks-and-trials")))
+(defn initialize [])
 
 
 ;### Debug ####################################################################

@@ -9,6 +9,8 @@
     [cider-ci.utils.app]
     [cider-ci.utils.config :refer [get-config]]
 
+    [cider-ci.builder.evaluation :as evaluation]
+    [cider-ci.builder.trials :as trials]
     [cider-ci.builder.jobs.sweeper :as jobs.sweeper]
     [cider-ci.builder.jobs.trigger :as jobs.trigger]
     [cider-ci.builder.repository :as repository]
@@ -20,18 +22,17 @@
     [logbug.thrown]
     ))
 
-
 (defn -main [& args]
   (catcher/snatch
     {:level :fatal
      :throwable Throwable
      :return-fn #(System/exit -1)}
     (cider-ci.utils.app/init web/build-main-handler)
-
     (tasks/initialize)
+    (trials/initialize)
+    (evaluation/initialize)
     (jobs.trigger/initialize)
-    (jobs.sweeper/initialize)
-    ))
+    (jobs.sweeper/initialize)))
 
 ;### Debug ####################################################################
 ;(logging-config/set-logger! :level :debug)
