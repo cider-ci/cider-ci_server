@@ -14,8 +14,7 @@
     [clojure.java.jdbc :as jdbc]
 
     [clojure.tools.logging :as logging]
-    [logbug.debug :as debug]
-
+    [logbug.debug :as debug :refer [I> I>> identity-with-logging]]
   ))
 
 
@@ -66,12 +65,26 @@
                    Math/floor int)))
     (assoc spec :dispatch_storm_delay_seconds (dispatch-storm-delay-default))))
 
+
+(defn- normalize-template-environment-variables [spec]
+  (if-let [scripts (:scripts spec)]
+    (assoc spec :scripts
+           (->> scripts
+                (into [])
+                (map (fn [[k script]]
+                       [k (if (contains? script :template_environment_variables )
+                            script
+                            (assoc script :template_environment_variables true))]))
+                (into {})))
+    spec))
+
 (defn- normalize-task-spec [raw-spec]
   (-> raw-spec
       clojure.walk/keywordize-keys
       (dissoc :job_id)
       normalize-aggregate-succes
-      normalize-dispatch-storm-delay))
+      normalize-dispatch-storm-delay
+      normalize-template-environment-variables))
 
 
 ;##############################################################################
@@ -93,7 +106,6 @@
                         :state (if (empty? errors) "pending" "aborted")
                         :id (util/idid2id job-id (:id db-task-spec))
                         })]
-    (logging/debug task-row)
     (first (jdbc/insert! tx "tasks" task-row))))
 
 
