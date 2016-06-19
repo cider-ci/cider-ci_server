@@ -65,7 +65,6 @@
       (recur))))
 
 (defn abort-job [job-id params]
-  ;TODO: wrap with transaction and retry
   (jdbc/update! (rdbms/get-ds) :jobs
                 (merge (select-keys params [:aborted_at :aborted_by])
                        {:state "aborting"})
