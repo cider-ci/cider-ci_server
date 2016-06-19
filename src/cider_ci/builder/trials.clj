@@ -83,6 +83,7 @@
                         :create-new-trials-count create-new-trials-count
                         :_range _range })
         (when-not (or (some #{"passed"} states)
+                      (= (last states) "aborted")
                       (some #{(:state job)} ["aborted" "aborting"]))
           (doseq [_ _range]
             (create-trial task-id spec tx)))))))
