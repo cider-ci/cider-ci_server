@@ -70,7 +70,8 @@
                        {:state "aborting"})
                 ["id = ? " job-id])
   (set-pending-trials-to-aborted job-id params)
-  (set-processing-trials-to-aborted job-id params))
+  (set-processing-trials-to-aborted job-id params)
+  (jdbc/insert! (get-ds) :pending_job_evaluations {:job_id job-id}))
 
 
 ;#### abort detached jobs #####################################################
@@ -87,7 +88,7 @@
 (def ^:private detached-jobs-query
   (-> (sql-select :id)
       (sql-from :jobs)
-      (sql-merge-where [:in :jobs.state  ["executing","pending"]])
+      (sql-merge-where [:in :jobs.state  ["executing", "pending"]])
       (sql-merge-where detached-jobs-subquery-part)
       sql-format))
 
@@ -126,12 +127,12 @@
                             not-exists-executor-query-part ]))
       sql-format))
 
-(defn set-lost-executor-trials-abrted []
+(defn set-lost-executor-trials-aborted []
   (->> (jdbc/query (get-ds) lost-executor-trials-query)
        (map #(trials/update-trial (assoc % :state "aborted" :error "Executor went dead or was removed." )))
        doall))
 
-(defdaemon "dead-executor-trials-aborter" 3 (set-lost-executor-trials-abrted))
+(defdaemon "dead-executor-trials-aborter" 3 (set-lost-executor-trials-aborted))
 
 
 ;#### initialize ##############################################################

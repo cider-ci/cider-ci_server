@@ -41,10 +41,13 @@
       (when-not job
         (throw (ex-info "Job not found" {:status 422})))
       (jdbc/update! (get-ds) :jobs
-                    (merge (select-keys params [:resumed_by, :resumed_at])
-                           {:state "pending"})
+                    (merge
+                      (select-keys params [:resumed_by, :resumed_at])
+                      {:state "pending"})
                     ["id = ?" job-id])
-      (retry-unpassed-tasks job {:created_by (:resumed_by params)}))))
+      (retry-unpassed-tasks job {:created_by (:resumed_by params)})
+      (jdbc/insert! (get-ds) :pending_job_evaluations {:job_id job-id})
+      )))
 
 ;#### retry-task ##############################################################
 
