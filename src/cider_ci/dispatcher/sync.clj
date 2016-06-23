@@ -21,7 +21,6 @@
     [logbug.debug :as debug]
     ))
 
-
 (defn in-progress-trials-of-executor [executor]
   "Trials believed being in progress on executor
    and which have not been updated within the last minute."
@@ -39,9 +38,11 @@
         in-progress-trials-of-executor-ids (map #(-> % :id str) in-progress-trials-of-executor)]
     (doseq [lost-trial-id  (difference (set in-progress-trials-of-executor-ids)
                                        (set known-trial-ids-by-executor))]
-      (trials/update-trial {:id lost-trial-id
-                            :state "defective"
-                            :error (str "This trial was lost on executor " (:name executor))}))
+      (jdbc/update! (rdbms/get-ds)
+                    :trials {:id lost-trial-id
+                             :state "defective"
+                             :error (str "This trial was lost on executor " (:name executor))}
+                    ["id = ?" lost-trial-id]))
     executor))
 
 (defn sync [executor data]
@@ -55,6 +56,7 @@
        :body (json/write-str payload)})))
 
 ;#### debug ###################################################################
+;(debug/wrap-with-log-debug #'sync)
 ;(logging-config/set-logger! :level :debug)
 ;(logging-config/set-logger! :level :info)
 ;(debug/debug-ns 'cider-ci.utils.http)

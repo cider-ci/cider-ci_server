@@ -81,6 +81,7 @@
 
 
 ;#### debug ###################################################################
+;(debug/wrap-with-log-debug #'sync-trials)
 ;(logging-config/set-logger! :level :debug)
 ;(logging-config/set-logger! :level :info)
 ;(debug/debug-ns *ns*)
