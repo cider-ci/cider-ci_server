@@ -127,12 +127,15 @@
                             not-exists-executor-query-part ]))
       sql-format))
 
-(defn set-lost-executor-trials-aborted []
+(defn defect-lost-trials []
   (->> (jdbc/query (get-ds) lost-executor-trials-query)
-       (map #(trials/update-trial (assoc % :state "aborted" :error "Executor went dead or was removed." )))
+       (map #(trials/update-trial
+               (assoc %
+                      :state "defective"
+                      :error "Executor went dead or was removed." )))
        doall))
 
-(defdaemon "dead-executor-trials-aborter" 3 (set-lost-executor-trials-aborted))
+(defdaemon "defect-lost-trials" 3 (defect-lost-trials))
 
 
 ;#### initialize ##############################################################
@@ -140,7 +143,7 @@
 (defn initialize []
   (catcher/with-logging {}
     (start-abort-running-detached-jobs)
-    (start-dead-executor-trials-aborter)))
+    (start-defect-lost-trials)))
 
 
 ;#### debug ###################################################################
