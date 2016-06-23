@@ -12,7 +12,7 @@
     [clj-logging-config.log4j :as logging-config]
     [clojure.tools.logging :as logging]
     [logbug.catcher :as catcher]
-    [logbug.debug :as debug]
+    [logbug.debug :as debug :refer [I> I>> identity-with-logging]]
     ))
 
 ;##############################################################################
@@ -38,7 +38,7 @@
        (sql-merge-where (sql-raw (str "dispatch_storm_trials.state IN "
                                       "('executing','dispatching')")))
        (sql-merge-where [:= :dispatch_storm_trials.executor_id :exs.id])
-       (sql-merge-where (sql-raw (str "( Coalesce(dispatch_storm_trials.started_at, "
+       (sql-merge-where (sql-raw (str "( Coalesce("
                                       "   dispatch_storm_trials.dispatched_at, "
                                       "   dispatch_storm_trials.created_at) + "
                                       " ( interval '1 second'  "
@@ -90,10 +90,12 @@
            (sql-merge-where [:= :exs.id (:id executor)])
            (sql-merge-where [:= cider-ci.self/VERSION (:version executor)])
            (sql-limit 1) sql-format)
+       identity-with-logging
        (jdbc/query tx)
        first))
 
 ;#### debug ###################################################################
+;(debug/wrap-with-log-debug #'next-trial-for-pull)
 ;(logging-config/set-logger! :level :debug)
 ;(logging-config/set-logger! :level :info)
 ;(debug/debug-ns 'cider-ci.utils.http)
