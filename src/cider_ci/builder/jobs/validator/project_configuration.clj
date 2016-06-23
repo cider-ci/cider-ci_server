@@ -87,7 +87,6 @@
           :required true }
    :name {:validator validate-string!}
    :description {:validator validate-string!}
-   :shared nil ; can be freely chosen
    })
 
 (defn validate! [project-config]
