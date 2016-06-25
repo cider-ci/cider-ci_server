@@ -15,7 +15,7 @@
                  ]
   :java-source-paths ["java"]
   :javac-options ["-target" "1.8" "-source" "1.8" "-Xlint:-options"]
-  :plugins [[cider-ci/lein_cider-ci_dev "0.2.0"]]
+  :plugins [[cider-ci/lein_cider-ci_dev "0.2.1"]]
   :profiles {:dev
              {:dependencies [[midje "1.8.3"]]
               :source-paths ["src" "../clj-utils/src"]
