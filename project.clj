@@ -18,7 +18,7 @@
                  [org.clojure/core.memoize "0.5.8"]
                  [org.clojure/tools.nrepl "0.2.12"]
                  ]
-  :plugins [[cider-ci/lein_cider-ci_dev "0.2.0"]]
+  :plugins [[cider-ci/lein_cider-ci_dev "0.2.1"]]
   :profiles {:dev
              {:dependencies [[midje "1.8.3"]]
               :plugins [[lein-midje "3.1.1"]]
