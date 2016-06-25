@@ -11,7 +11,7 @@
                  [drtom/honeysql "1.3.0-beta.4"]
                  [me.raynes/fs "1.4.6"]
                  ]
-  :plugins [[cider-ci/lein_cider-ci_dev "0.2.0"]]
+  :plugins [[cider-ci/lein_cider-ci_dev "0.2.1"]]
   :profiles {:dev
              {:dependencies [[midje "1.8.3"]]
               :plugins [[lein-midje "3.1.1"]]
