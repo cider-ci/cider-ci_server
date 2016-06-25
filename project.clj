@@ -19,7 +19,7 @@
                  [org.clojure/java.classpath "0.2.3"]
                  [org.clojure/data.json "0.2.6"]
                  ]
-  :plugins [[cider-ci/lein_cider-ci_dev "0.2.0"]]
+  :plugins [[cider-ci/lein_cider-ci_dev "0.2.1"]]
   :source-paths ["src"]
   :test-paths ["test"]
   :profiles {:dev
