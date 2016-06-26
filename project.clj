@@ -9,8 +9,6 @@
             :url "http://www.gnu.org/licenses/agpl-3.0.html"}
   :dependencies [ ]
 
-  ;:plugins [[cider-ci/lein_cider-ci_dev "0.2.0"]]
-
   :profiles {:dev {:dependencies
                    ~(read-string (slurp "dependencies.clj"))
                    :plugins [
