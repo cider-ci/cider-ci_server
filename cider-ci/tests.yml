@@ -1,24 +1,17 @@
-jobs:
-  builder-tests:
-    name: Builder Tests
-    run-on:
-    - type: branch
-      include-match: ^.*$
-    context:
-      task-defaults:
-        git-options:
-          submodules:
-            clone:
-              exclude-match: deploy
-            timeout: 60
-        traits:
-          - jdk-8
-          - leiningen
-        body: |
-          #!/bin/bash
-          set -eux
-          cd builder
-          # export TEST_FILE=$(ruby -e 'puts ENV["CIDER_CI_TASK_FILE"].split("/")[1,100].join("/"))')
-          lein test $CIDER_CI_TASK_FILE
-      _cider-ci_generate-tasks:
-        include-match: test/.*.clj
+task_defaults:
+  git_options:
+    submodules:
+      include_match: ^.*$
+  traits:
+    Leiningen 2: yes
+    JDK 8: yes
+  scripts:
+    test:
+      body: |
+        #!/bin/bash
+        set -eux
+        cd builder
+        # export TEST_FILE=$(ruby -e 'puts ENV["CIDER_CI_TASK_FILE"].split("/")[1,100].join("/"))')
+        lein test $CIDER_CI_TASK_FILE
+generate_tasks:
+  include_match: test/.*.clj
