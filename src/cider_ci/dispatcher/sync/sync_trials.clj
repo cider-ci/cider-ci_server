@@ -44,7 +44,12 @@
                  (first (jdbc/query tx ["SELECT * FROM trials WHERE id = ?" trial-id])))))]
     trial))
 
-(defn- get-trials-to-be-dispatched [executor data]
+(defn- get-trials-in-dispatching-mode [executor]
+  (->> [(str "SELECT * FROM trials WHERE state = 'dispatching' "
+             " AND  executor_id = ? ") (:id executor) ]
+       (jdbc/query (rdbms/get-ds))))
+
+(defn- get-pending-trials-to-be-dispatched [executor data]
   (let [available-load (-> data :available_load)]
     (if (>= 0 available-load)
       []
@@ -56,6 +61,11 @@
               trials))
           trials)))))
 
+
+(defn- get-trials-to-be-dispatched [executor data]
+  (concat
+    (get-trials-in-dispatching-mode executor)
+    (get-pending-trials-to-be-dispatched executor data)))
 
 ;### trials beeing currently processed ########################################
 

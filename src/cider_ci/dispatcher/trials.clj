@@ -94,26 +94,6 @@
                           :trials update-params
                           ["id = ?" id])))))))
 
-;(jdbc/update! (rdbms/get-ds) :trials {:error "Blah"} ["id = ?" "f15fcdd5-9be6-411b-9b24-14d53be7a21f"])
-
-;#### sql helpers #############################################################
-
-(def sql-in-dispatch-timeout
-  " trials.created_at < (SELECT now() -
-  (SELECT max(trial_dispatch_timeout_minutes)  FROM timeout_settings)
-  * interval '1 Minute') ")
-
-(def sql-in-terminal-state-timeout
-  " trials.created_at < (SELECT now() -
-  (SELECT max(trial_end_state_timeout_minutes)  FROM timeout_settings)
-  * interval '1 Minute') ")
-
-(def sql-not-finished
-  " state IN ('pending','dispatching','executing') ")
-
-(def sql-to-be-dispatched
-  " state = 'pending' ")
-
 
 
 ;#### debug ###################################################################

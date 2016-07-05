@@ -102,7 +102,7 @@
 (defdaemon "abort-running-detached-jobs" 1 (abort-running-detached-jobs))
 
 
-;#### abort executing trails for dead executors ###############################
+;#### abort executing trials for dead executors ###############################
 
 (def ^:private executor-dead-condition-query-part
   "(executors.last_ping_at < (now() - interval '1 Minutes'))")
