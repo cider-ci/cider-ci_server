@@ -80,8 +80,7 @@
                     [:tasks.priority :desc]
                     [:tasks.created_at :asc]
                     [:trials.created_at :asc]
-                    [:exs.relative_load :asc]
-                    [:exs.last_ping_at :dsc])))
+                    [:tasks.name :asc])))
 
 ;##############################################################################
 
