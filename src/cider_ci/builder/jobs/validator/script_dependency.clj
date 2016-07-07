@@ -24,5 +24,5 @@
    :states {:validator validate-script-states!}})
 
 (defn validate-script-dependency! [script-dependency chain]
-  (validate-defaults! script-dependency script-dependency-meta-spec chain))
+  (validate-spec-map! script-dependency script-dependency-meta-spec chain))
 

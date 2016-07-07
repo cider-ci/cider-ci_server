@@ -19,10 +19,7 @@
           :required true }})
 
 (defn validate-template! [port chain]
-  (validate-accepted-keys! port template-meta-spec chain)
-  (validate-values! port template-meta-spec chain)
-  (validate-required-keys! port template-meta-spec chain))
-
+  (validate-spec-map! port template-meta-spec chain))
 
 ;### Debug ####################################################################
 ;(logging-config/set-logger! :level :debug)

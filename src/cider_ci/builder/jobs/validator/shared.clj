@@ -31,13 +31,18 @@
        (map (fn [k] (str " _\"" (to-cistr k) "\"_")))
        (clojure.string/join " → ")))
 
+(defn format-type-error [supposed-value-type actual-value chain]
+  (->> ["The item in " (format-chain chain)
+        " must by a \"" supposed-value-type "\","
+        " but it is a \"" (type actual-value) "\"."]
+       (map str)
+       (clojure.string/join " ")))
+
 (defn build-map-of-validator [validator]
   (fn [mp chain]
     (when-not (map? mp)
       (->> {:type "error"
-            :description
-            (str "The item in " (format-chain chain)
-                 " must by a map, but it is " (type mp))}
+            :description (format-type-error "map" mp chain)}
            (ValidationException. "Type Mismatch")
            throw))
     (doseq [[k v] mp]
@@ -49,8 +54,9 @@
               (map? coll))
       (->> {:type "error"
             :description
-            (str "The item in " (format-chain chain)
-                 " must by a collection, but it is " (type coll))}
+            (->> [(format-type-error "collection" coll chain)]
+                 (map str)
+                 (clojure.string/join "\n"))}
            (ValidationException. "Type Mismatch")
            throw))
     (doseq [v coll]
@@ -59,30 +65,33 @@
 
 ;### primitive value validators ################################################
 
+(defn validate-map! [value chain]
+  (when-not (map? value)
+    (->> {:type "error"
+          :description (format-type-error "map" value chain)}
+         (ValidationException. "Type Mismatch")
+         throw)))
+
 (defn validate-boolean!  [value chain]
   (when-not (instance? Boolean value)
     (->> {:type "error"
-          :description (str "The value in " (format-chain chain)
-                            " must be a boolean but it is a \"" (type value)\"".")}
+          :description (format-type-error "boolean" value chain)}
          (ValidationException. "Type Mismatch")
          throw)))
 
 (defn validate-integer!  [value chain]
   (when-not (integer? value)
     (->> {:type "error"
-          :description (str "The value in " (format-chain chain)
-                            " must be an integer but it is a \"" (type value)\"".")}
+          :description (format-type-error "integer" value chain)}
          (ValidationException. "Type Mismatch")
          throw)))
 
 (defn validate-string!  [value chain]
   (when-not (instance? String value)
     (->> {:type "error"
-          :description (str "The value in " (format-chain chain)
-                            " must be a string but it is a \"" (type value)\"".")}
+          :description (format-type-error "string" value chain)}
          (ValidationException. "Type Mismatch")
          throw)))
-
 
 ;### shared validators #########################################################
 
@@ -151,7 +160,8 @@
       (when-let [validator (:validator s)]
         (apply validator [(get test-spec k) (conj chain k)])))))
 
-(defn validate-defaults! [test-specs meta-test-specs chain]
+(defn validate-spec-map! [test-specs meta-test-specs chain]
+  (validate-map! test-specs chain)
   (validate-accepted-keys! test-specs meta-test-specs chain)
   (validate-values! test-specs meta-test-specs chain)
   (validate-required-keys! test-specs meta-test-specs chain))

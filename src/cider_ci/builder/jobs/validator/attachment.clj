@@ -19,11 +19,8 @@
                    :required true }
    :exclude_match {:validator validate-string!}})
 
-(defn validate-attachment! [port chain]
-  (validate-accepted-keys! port attachment-meta-spec chain)
-  (validate-values! port attachment-meta-spec chain)
-  (validate-required-keys! port attachment-meta-spec chain))
-
+(defn validate-attachment! [spec chain]
+  (validate-spec-map! spec attachment-meta-spec chain))
 
 ;### Debug ####################################################################
 ;(logging-config/set-logger! :level :debug)

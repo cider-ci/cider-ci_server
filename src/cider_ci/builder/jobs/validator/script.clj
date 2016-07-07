@@ -27,10 +27,8 @@
    })
 
 (defn validate-script! [script-spec chain]
-  (validate-accepted-keys! script-spec script-meta-spec chain)
-  (validate-values! script-spec script-meta-spec chain))
+  (validate-spec-map! script-spec script-meta-spec chain))
 
-;(validate-script! {:template_environment_variables nil})
 
 ;### Debug ####################################################################
 ;(logging-config/set-logger! :level :debug)

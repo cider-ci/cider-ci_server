@@ -29,7 +29,7 @@
     ))
 
 (defn validate-port! [port chain]
-  (validate-defaults! port ports-meta-spec chain)
+  (validate-spec-map! port ports-meta-spec chain)
   (validate-range! port chain))
 
 

@@ -23,19 +23,8 @@
 
 (declare context-meta-spec)
 
-(defn validate-context-type! [context chain]
-  (when-not (map? context)
-    (->> {:type "error"
-          :description
-          (str "The context " (format-chain chain)
-               " must by a map, but it is " (type context))}
-         (ValidationException. "Type Mismatch")
-         throw)))
-
 (defn validate-context! [context chain]
-  (validate-context-type! context chain)
-  (validate-accepted-keys! context context-meta-spec chain)
-  (validate-values! context context-meta-spec chain))
+  (validate-spec-map! context context-meta-spec chain))
 
 (def context-meta-spec
   {

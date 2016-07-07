@@ -34,16 +34,9 @@
                (:job_specification_id job)]
               (jdbc/query (rdbms/get-ds))
               first :data)))
-
   ([job job-spec]
-   (validate-accepted-keys! job-spec job-meta-spec [(:key job-spec)])
-   (validate-values! job-spec job-meta-spec [(:key job-spec)])
-
-
-   ;(validate-required-keys! job-spec)
-   ;(validate-context! "main" (-> job-spec :data :context))
-   job-spec
-   ))
+   (validate-spec-map! job-spec job-meta-spec [(:key job-spec)])
+   job-spec))
 
 
 ;### Debug ####################################################################

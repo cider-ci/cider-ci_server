@@ -24,7 +24,7 @@
    })
 
 (defn validate-branch-dep! [spec chain]
-  (validate-defaults! spec branch-dep-meta-spec chain)
+  (validate-spec-map! spec branch-dep-meta-spec chain)
   )
 
 ;##############################################################################
@@ -45,7 +45,7 @@
 
 
 (defn validate-job-dep! [spec chain]
-  (validate-defaults! spec job-dep-meta-spec chain))
+  (validate-spec-map! spec job-dep-meta-spec chain))
 
 ;##############################################################################
 
@@ -76,7 +76,7 @@
    })
 
 (defn validate-job! [job-spec chain]
-  (validate-defaults!
+  (validate-spec-map!
     job-spec job-config-meta-spec chain))
 
 
@@ -92,7 +92,7 @@
 (defn validate! [project-config]
   (catcher/with-logging
     {:level :debug}
-    (validate-defaults!
+    (validate-spec-map!
       project-config project-config-meta-spec ["project-configuration"])
     project-config))
 

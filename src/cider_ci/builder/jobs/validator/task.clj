@@ -50,8 +50,7 @@
    :trial_attachments {:validator (build-map-of-validator validate-attachment!)}})
 
 (defn validate-task! [task chain]
-  (validate-accepted-keys! task task-meta-spec chain)
-  (validate-values! task task-meta-spec chain))
+  (validate-spec-map! task task-meta-spec chain))
 
 
 ;### Debug ####################################################################
