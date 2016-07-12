@@ -82,6 +82,12 @@
          :deleted (delete-removed-branches tx git-branches (:git_url repository))}))))
 
 
+;### git url ##################################################################
+
+(defn git-url [repository]
+  (:git_url repository)
+  )
+
 ;### GIT Stuff ################################################################
 
 (defn- update-git-server-info [repository]
@@ -106,12 +112,12 @@
     (let [dir (git.repositories/path repository)]
       (system/exec-with-success-or-throw ["rm" "-rf" dir])
       (system/exec-with-success-or-throw
-        ["git" "clone" "--mirror" (:git_url repository) dir]
+        ["git" "clone" "--mirror" (git-url repository) dir]
         {:timeout "30 Minutes"}))))
 
 (defn- git-fetch [repository path]
   (system/exec-with-success-or-throw
-    ["git" "fetch" (:git_url repository) "--force" "--tags" "--prune"  "+*:*"]
+    ["git" "fetch" (git-url repository) "--force" "--tags" "--prune"  "+*:*"]
     {:timeout "10 Minutes", :dir path, :env {"TERM" "VT-100"}}))
 
 (defn  git-fetch-or-initialize [repository]
