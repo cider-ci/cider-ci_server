@@ -52,7 +52,11 @@
       (sql-merge-join [:executors_with_load :exs]
                       (sql-raw "(tasks.traits <@ exs.traits)"))
       (sql-select :trials.id :trials.task_id [:exs.id :executor_id])
+      ; TODO write this out more explicitly
       (sql-merge-where [:< :exs.relative_load 1])
+      (sql-merge-where (sql-raw (str "tasks.load < "
+                                     "exs.max_load * exs.temporary_overload_factor "
+                                     " - exs.current_load ")))
       (sql-merge-where [:= :exs.enabled true])
       (sql-merge-where (sql-raw (str "(exs.last_ping_at >  "
                                      "(now() - interval '1 Minutes'))")))
