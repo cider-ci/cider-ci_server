@@ -29,6 +29,14 @@
            (ValidationException. "Illegal Value")
            throw))))
 
+(defn validate-load-value! [value chain]
+  (validate-number! value chain)
+  (when-not (> value 0)
+    (->> {:type "error"
+          :description "The value of `load` must be strictly positive."}
+         (ValidationException. "Illegal Value")
+         throw)))
+
 (def task-meta-spec
   {:aggregate_state {:validator validate-aggregate-state!}
    :description {:validator validate-string!}
@@ -38,6 +46,7 @@
    :exclusive_global_resources {:validator (build-map-of-validator validate-boolean!)}
    :git_options {:validator validate-git-options!}
    :key {:validator validate-string!}
+   :load {:validator validate-load-value!}
    :max_trials {:validator validate-integer!}
    :name {:validator validate-string!}
    :ports {:validator (build-map-of-validator validate-port!)}

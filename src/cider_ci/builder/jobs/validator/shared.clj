@@ -93,6 +93,13 @@
          (ValidationException. "Type Mismatch")
          throw)))
 
+(defn validate-number! [value chain]
+  (when-not (number? value)
+    (->> {:type "error"
+          :description (format-type-error "number" value chain)}
+         (ValidationException. "Type Mismatch")
+         throw)))
+
 ;### shared validators #########################################################
 
 (defn validate-duration!
