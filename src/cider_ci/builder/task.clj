@@ -94,7 +94,7 @@
         task-spec (normalize-task-spec raw-task-spec)
         db-task-spec (spec/get-or-create-task-spec task-spec)
         errors (validated-task-spec task-spec)
-        task-row (conj (select-keys task-spec [:name :state :error :priority
+        task-row (conj (select-keys task-spec [:name :state :error :priority :load
                                                :dispatch_storm_delay_seconds])
                        {:job_id job-id
                         :traits (spec-map-to-array (or (:traits task-spec) {}))
