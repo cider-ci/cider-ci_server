@@ -58,6 +58,18 @@
           ["id = ?" (:id executor)])
         (get-executor (:id executor)))))
 
+(defn update-temporary-overload-factor [executor data]
+  (if-let [temporary-overload-factor (:temporary_overload_factor executor)]
+    (if (= temporary-overload-factor (:temporary_overload_factor data))
+      executor
+      (do (jdbc/update!
+            (rdbms/get-ds)
+            :executors
+            {:temporary_overload_factor (:temporary_overload_factor data)}
+            ["id = ?" (:id executor)])
+          (get-executor (:id executor))))
+    executor))
+
 (defn update-version [executor data]
   (let [executor-version (-> data :status :version)
         issue-id (clj-uuid/v5 clj-uuid/+null+ (str :version_mismatch (:id executor)))
@@ -95,6 +107,7 @@
       (update-traits data)
       (update-accepted-repositories data)
       (update-max-load data)
+      (update-temporary-overload-factor data)
       (update-version data)
       update-last-ping-at))
 
