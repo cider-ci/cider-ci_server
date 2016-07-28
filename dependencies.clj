@@ -12,7 +12,7 @@
  [com.mchange/c3p0 "0.9.5.2"]
  [com.novemberain/langohr "3.5.1"]
  [compojure "1.4.0"]
- [danlentz/clj-uuid "0.1.6"]
+ [drtom/clj-uuid  "0.1.7"]
  [joda-time "2.9.2"]
  [log4j/log4j "1.2.17" :exclusions [javax.mail/mail javax.jms/jms com.sun.jdmk/jmxtools com.sun.jmx/jmxri]]
  [me.raynes/fs "1.4.6"]
