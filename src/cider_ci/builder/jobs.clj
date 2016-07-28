@@ -7,11 +7,13 @@
     [cider-ci.builder.issues :as issues]
     [cider-ci.builder.jobs.dependencies :as jobs.dependencies]
     [cider-ci.builder.jobs.normalizer :as normalizer]
+    [cider-ci.builder.jobs.tasks-generator :as tasks-generator]
+    [cider-ci.builder.jobs.validator.job :as job-validator]
+
     [cider-ci.builder.project-configuration :as project-configuration]
     [cider-ci.builder.repository :as repository]
     [cider-ci.builder.spec :as spec]
     [cider-ci.builder.tasks :as tasks]
-    [cider-ci.builder.jobs.validator.job :as job-validator]
 
     [cider-ci.utils.core :refer :all]
     [cider-ci.utils.http :as http]
@@ -79,8 +81,10 @@
                     (issues/create-issue "tree" tree-id ex)
                     (throw ex))}
       (let [{tree-id :tree_id job-key :key} params
-            spec (-> (get-dotfile-specification tree-id job-key)
-                     normalizer/normalize-job-spec )
+            spec (->> (get-dotfile-specification tree-id job-key)
+                     normalizer/normalize-job-spec
+                     (tasks-generator/generate tree-id)
+                     )
             job-spec (spec/get-or-create-job-spec spec)
             job-params (merge
                          {:key job-key :name job-key}

@@ -26,7 +26,7 @@
                    (json/read-str :key-fn keyword))]
       (throw (ex-info (:title data) data)))))
 
-(defn- get-project-configuration_unmemoized [tree-id]
+(defn- raw-project-configuration_unmemoized [tree-id]
   (let [url (http/build-service-url
               :repository
               (str "/project-configuration/" tree-id))]
@@ -37,21 +37,28 @@
                          :as :json})
           :body))))
 
-(def get-project-configuration_without_validation (memo/lru #(get-project-configuration_unmemoized %)
-                                         :lru/threshold 500))
+(def ^:private raw-project-configuration_memoized
+  (memo/lru raw-project-configuration_unmemoized :lru/threshold 64))
+
+(def ^:dynamic *caching-enabled* true)
+
+(defn raw-project-configuration [tree-id]
+  (apply
+    (if *caching-enabled*
+      raw-project-configuration_memoized
+      raw-project-configuration_unmemoized)
+    [tree-id]))
 
 (defn get-project-configuration [tree-id]
   (-> tree-id
-      get-project-configuration_without_validation
+      raw-project-configuration
       project-configuration-validator/validate!
       ))
-
-; disable caching (temporarily)
-;(def get-project-configuration get-project-configuration_unmemoized)
 
 
 ;### Debug ####################################################################
 ;(logging-config/set-logger! :level :debug)
 ;(logging-config/set-logger! :level :info)
 ;(debug/debug-ns 'cider-ci.utils.http)
+;(def ^:dynamic *caching-enabled* false)
 ;(debug/debug-ns *ns*)

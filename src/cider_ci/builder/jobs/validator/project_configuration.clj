@@ -66,6 +66,7 @@
   {:context nil ; will be validated in the job spec
    :depends_on {:validator (build-map-of-validator validate-dependency-or-trigger!)}
    :description {:validator validate-string!}
+   :generate_tasks nil ; part of the compact notation
    :key {:validator validate-string!}
    :name {:validator validate-string!}
    :priority {:validator validate-integer!}

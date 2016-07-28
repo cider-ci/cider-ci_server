@@ -35,7 +35,7 @@
     (parse-path-content path body)))
 
 (def get-path-content
-  (memo/lru get-path-content_unmemoized :lru/threshold 500))
+  (memo/lru get-path-content_unmemoized :lru/threshold 128))
 
 ; disable caching (temporarily)
 ; (def get-path-content get-path-content_unmemoized)
