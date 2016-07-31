@@ -10,7 +10,7 @@ task_defaults:
       body: |
         #!/bin/bash
         set -eux
-        cd builder
+        cd repository
         # export TEST_FILE=$(ruby -e 'puts ENV["CIDER_CI_TASK_FILE"].split("/")[1,100].join("/"))')
         lein test $CIDER_CI_TASK_FILE
 generate_tasks:
