@@ -105,11 +105,40 @@
       (charset "UTF-8")))
 
 
+;##### ls-tree ################################################################
+
+(defn get-ls-tree [request]
+  (->
+    (try
+      (let [git-ref (-> request :params :git_ref)
+            repository (sql.repository/resolve git-ref)]
+        (when-not repository
+          (throw (ex-info "Repository not found." {:status 404})))
+        (let [file-list (git.repositories/ls-tree
+                          repository git-ref
+                          (-> request :params :include_match)
+                          (-> request :params :exclude_match))]
+          {:body (json/write-str file-list)
+           :headers {"Content-Type" "application/json"}}))
+      (catch clojure.lang.ExceptionInfo e
+        (case (-> e ex-data :status )
+          404 {:status 404
+               :headers {"Content-Type" "application/json"}
+               :body (json/write-str (ex-data e)) }
+          422 {:status 422
+               :body (thrown/stringify e)}
+          (respond-with-500 request e)))
+      (catch Throwable e
+        (respond-with-500 request e)))
+    (charset "UTF-8")))
+
+
 ;##### routes #################################################################
 
 (def routes
   (cpj/routes
     (cpj/GET "/project-configuration/:id" _ get-project-configuration)
+    (cpj/GET "/ls-tree" _ get-ls-tree)
     (cpj/GET "/path-content/:id/*" _ get-path-content)
     (cpj/GET "/:id/git/*" _ get-git-file )))
 

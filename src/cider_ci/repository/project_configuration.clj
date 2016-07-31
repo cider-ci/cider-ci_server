@@ -6,17 +6,17 @@
   (:require
     [cider-ci.repository.git.repositories :as git.repositories]
     [cider-ci.repository.project-configuration.expansion :as expansion]
-    [cider-ci.repository.project-configuration.shared :as shared :refer [get-content]]
-    [clj-logging-config.log4j :as logging-config]
+    [cider-ci.repository.project-configuration.shared :as shared :refer :all]
     [clojure.core.memoize :as memo]
     [clojure.data.json :as json]
     [clojure.tools.logging :as logging]
     [logbug.catcher :as catcher]
+    [ring.util.response :refer [charset]]
+
+    [clj-logging-config.log4j :as logging-config]
     [logbug.debug :as debug]
     [logbug.thrown :as thrown]
-    [ring.util.response :refer [charset]]
     ))
-
 
 (def ^:private CONFIG-FILES-ALTERNATIVES
   ["cider-ci_v4.yml" ".cider-ci_v4.yml"
@@ -25,7 +25,8 @@
    "cider-ci.json" ".cider-ci.json"])
 
 (defn- get-content-or-nil [id path]
-  (try (get-content id path)
+  (try (->> (get-content id path [])
+            (parse-path-content path))
        (catch clojure.lang.ExceptionInfo e
          (case (-> e ex-data :status )
            404 nil
@@ -45,8 +46,6 @@
                                 (clojure.string/join ", " CONFIG-FILES-ALTERNATIVES)
                                 " was found.")}))))))
 
-;(get-either-configfile-content "b0c4d792440a24c766b9535db95bcd18426437dc")
-
 (defn- build-project-configuration_unmemoized [id]
   (->> (get-either-configfile-content id)
        (expansion/expand id)))
@@ -55,7 +54,7 @@
   (memo/lru #(build-project-configuration_unmemoized %)
             :lru/threshold 500))
 
-; disable caching for now
+; to disable caching temporarily:
 ;(def build-project-configuration build-project-configuration_unmemoized)
 
 

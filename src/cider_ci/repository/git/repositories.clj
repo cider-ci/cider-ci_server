@@ -9,14 +9,17 @@
     )
   (:require
     [cider-ci.utils.config :as config :refer [get-config get-db-spec]]
-    [logbug.debug :as debug]
+
     [cider-ci.utils.fs :as ci-fs]
     [cider-ci.utils.system :as system]
-    [logbug.catcher :as catcher]
+    [clojure.core.memoize :as memo]
     [clojure.string :as string :refer [blank? split trim]]
-    [clojure.tools.logging :as logging]
-    ))
 
+    [clojure.tools.logging :as logging]
+    [logbug.debug :as debug]
+    [logbug.catcher :as catcher]
+
+    ))
 
 (defn canonic-id
   "Returns the id as a java.lang.UUID of the repository.  Input can either be a
@@ -29,7 +32,6 @@
     "java.lang.String" (java.util.UUID/fromString _repository)
     "java.util.UUID" _repository))
 
-
 (defn path
   "Returns the absolute path to the (git-)repository."
   [repository]
@@ -38,7 +40,6 @@
     (assert (not (blank? path)))
     (assert (not (blank? git-url)))
     (str path (File/separator) (ci-fs/path-proof git-url))))
-
 
 (defn get-path-contents
   [repository id file-path]
@@ -50,8 +51,7 @@
       (throw (ex-info (:err res)
                       res )))))
 
-
-(defn ls-tree [repository id include-regex exclude-regex]
+(defn- ls-tree_unmemoized [repository id include-regex exclude-regex]
   (catcher/with-logging {}
     (->> (-> (system/exec-with-success-or-throw
                ["git" "ls-tree" "-r" "--name-only" id]
@@ -63,6 +63,13 @@
                        (re-find (re-pattern include-regex) %)))
          (filter #(or (not exclude-regex)
                       (not (re-find (re-pattern exclude-regex) %)))))))
+
+(def ls-tree
+  (memo/lru ls-tree_unmemoized :lru/threshold 128))
+
+; to disable caching temporarily:
+;(def ls-tree_unmemoized ls-tree_unmemoized)
+
 
 ;#### debug ###################################################################
 ;(debug/debug-ns *ns*)
