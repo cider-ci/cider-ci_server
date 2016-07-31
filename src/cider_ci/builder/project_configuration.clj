@@ -37,17 +37,12 @@
                          :as :json})
           :body))))
 
-(def ^:private raw-project-configuration_memoized
+(def raw-project-configuration
   (memo/lru raw-project-configuration_unmemoized :lru/threshold 64))
 
-(def ^:dynamic *caching-enabled* true)
+; to disable caching temporarily:
+;(def raw-project-configuration raw-project-configuration_unmemoized)
 
-(defn raw-project-configuration [tree-id]
-  (apply
-    (if *caching-enabled*
-      raw-project-configuration_memoized
-      raw-project-configuration_unmemoized)
-    [tree-id]))
 
 (defn get-project-configuration [tree-id]
   (-> tree-id

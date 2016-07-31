@@ -30,16 +30,11 @@
                    :as :json})
         :body)))
 
-(def ^:private get-file-list_memoized
+(def get-file-list
   (memo/lru get-file-list_unmemoized :lru/threshold 32))
 
-(def ^:dynamic *caching-enabled* true)
-
-(defn get-file-list [& args]
-  (apply (if *caching-enabled*
-           get-file-list_memoized
-           get-file-list_unmemoized)
-         args))
+; to disable caching temporarily:
+;(def get-file-list get-file-list_unmemoized)
 
 (defn generate-tasks-for-this-context [git-ref context]
   (if-let [generate-spec (:generate_tasks context)]

@@ -15,12 +15,6 @@
 
     [clj-yaml.core :as yaml]
     [clojure.java.jdbc :as jdbc]
-    [langohr.basic     :as lb]
-    [langohr.channel   :as lch]
-    [langohr.consumers :as lc]
-    [langohr.core      :as rmq]
-    [langohr.exchange  :as le]
-    [langohr.queue     :as lq]
 
     [clj-logging-config.log4j :as  logging-config]
     [clojure.tools.logging :as logging]
