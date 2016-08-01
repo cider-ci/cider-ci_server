@@ -4,12 +4,16 @@
 
 (ns cider-ci.repository.web
   (:require
-    [cider-ci.auth.authorize :as authorize]
-    [cider-ci.auth.http-basic :as http-basic]
     [cider-ci.repository.git.repositories :as git.repositories]
     [cider-ci.repository.project-configuration :as project-configuration]
     [cider-ci.repository.repositories :as repositories]
     [cider-ci.repository.sql.repository :as sql.repository]
+    [cider-ci.repository.web.ls-tree :as web.ls-tree]
+    [cider-ci.repository.web.shared :refer :all]
+
+
+    [cider-ci.auth.authorize :as authorize]
+    [cider-ci.auth.http-basic :as http-basic]
     [cider-ci.utils.config :as config :refer [get-config]]
     [cider-ci.utils.routing :as routing]
     [cider-ci.utils.status :as status]
@@ -48,10 +52,6 @@
     (if (.exists file)
       (ring.util.response/file-response relative-file-path nil)
       {:status 404})))
-
-(defn respond-with-500 [request ex]
-  (logging/warn "RESPONDING WITH 500" {:exception (thrown/stringify ex) :request request})
-  {:status 500 :body (thrown/stringify ex)})
 
 (defn get-path-content [request]
   (logging/debug request)
@@ -105,40 +105,13 @@
       (charset "UTF-8")))
 
 
-;##### ls-tree ################################################################
-
-(defn get-ls-tree [request]
-  (->
-    (try
-      (let [git-ref (-> request :params :git_ref)
-            repository (sql.repository/resolve git-ref)]
-        (when-not repository
-          (throw (ex-info "Repository not found." {:status 404})))
-        (let [file-list (git.repositories/ls-tree
-                          repository git-ref
-                          (-> request :params :include_match)
-                          (-> request :params :exclude_match))]
-          {:body (json/write-str file-list)
-           :headers {"Content-Type" "application/json"}}))
-      (catch clojure.lang.ExceptionInfo e
-        (case (-> e ex-data :status )
-          404 {:status 404
-               :headers {"Content-Type" "application/json"}
-               :body (json/write-str (ex-data e)) }
-          422 {:status 422
-               :body (thrown/stringify e)}
-          (respond-with-500 request e)))
-      (catch Throwable e
-        (respond-with-500 request e)))
-    (charset "UTF-8")))
-
 
 ;##### routes #################################################################
 
 (def routes
   (cpj/routes
     (cpj/GET "/project-configuration/:id" _ get-project-configuration)
-    (cpj/GET "/ls-tree" _ get-ls-tree)
+    (cpj/GET "/ls-tree" _ #'web.ls-tree/ls-tree)
     (cpj/GET "/path-content/:id/*" _ get-path-content)
     (cpj/GET "/:id/git/*" _ get-git-file )))
 

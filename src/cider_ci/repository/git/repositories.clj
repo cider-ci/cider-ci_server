@@ -60,8 +60,10 @@
              (split #"\n"))
          (map trim)
          (filter #(and include-regex
+                       (not (clojure.string/blank? include-regex))
                        (re-find (re-pattern include-regex) %)))
          (filter #(or (not exclude-regex)
+                      (clojure.string/blank? exclude-regex)
                       (not (re-find (re-pattern exclude-regex) %)))))))
 
 (def ls-tree
