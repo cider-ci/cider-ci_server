@@ -4,6 +4,7 @@
 
 (ns cider-ci.builder.jobs.tasks-generator
   (:require
+    [cider-ci.builder.util :refer [json-write-str]]
     [cider-ci.utils.core :refer :all]
     [cider-ci.utils.http :as http]
 
@@ -22,8 +23,14 @@
 (defn- get-file-list_unmemoized [git-ref generate-spec]
   (let [url (http/build-service-url
               :repository "/ls-tree"
-              (merge generate-spec
-                     {:git_ref git-ref  }))]
+              (->> generate-spec
+                   (merge {:git_ref git-ref
+                           :include_match ""
+                           :exclude_match ""
+                           :submodule []
+                           })
+                   (map (fn [[k v]] [k (json-write-str v)]))
+                   (into {})))]
     (-> url
         (http/get {:socket-timeout 10000
                    :conn-timeout 10000
