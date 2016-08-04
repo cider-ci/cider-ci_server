@@ -64,7 +64,8 @@
   (let [id (java.util.UUID/randomUUID)
         file-path (str (:file_path store) "/" id)
         file (io/file file-path)
-        {content-type :content-type content-length :content-length} request]
+        content-type (-> request :headers (get "content-type"))
+        {content-length :content-length} request]
     (jdbc/with-db-transaction [tx (get-ds)]
       (with-open [in (io/input-stream (:body request))
                   out (io/output-stream file)]
