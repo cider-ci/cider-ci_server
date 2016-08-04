@@ -4,14 +4,45 @@
 
 (ns cider-ci.storage.shared
   (:require
+    [cider-ci.utils.config :as config :refer [get-config]]
     [cider-ci.utils.rdbms :as rdbms]
-    [logbug.debug :as debug]
-    [logbug.catcher :as catcher]
-    [clj-logging-config.log4j :as logging-config]
+    [cider-ci.utils.rdbms :as rdbms :refer [get-ds]]
+
     [clojure.java.jdbc :as jdbc]
-    [clojure.tools.logging :as logging]
     [me.raynes.fs :as fsutils]
+
+    [clj-logging-config.log4j :as logging-config]
+    [clojure.tools.logging :as logging]
+    [logbug.catcher :as catcher]
+    [logbug.debug :as debug :refer [I> I>> identity-with-logging]]
+    [logbug.ring :refer [wrap-handler-with-logging]]
     ))
+
+
+;### new helper ###############################################################
+
+(defn find-store [request]
+  (let [prefix (-> request :route-params :prefix)]
+    (I>> identity-with-logging
+         (get-config)
+         :services :storage :stores
+         (filter #(= (str "/" prefix) (:url_path_prefix %)))
+         first)))
+
+(defn get-table-and-id-name [request]
+  (let [prefix (-> request :route-params :prefix)]
+    (case prefix
+      "tree-attachments" ["tree_attachments" "tree_id"]
+      "trial-attachments" ["trial_attachments" "trial_id"])))
+
+(defn get-row [request]
+  (let [path (-> request :route-params :*)
+        id (-> request :route-params :id)
+        [table-name id-name] (get-table-and-id-name request)
+        query [(str "SELECT * FROM " table-name
+                    "  WHERE " id-name " = ? AND path = ?") id path]]
+    (-> (jdbc/query (get-ds) query)
+        first)))
 
 
 ;##############################################################################
