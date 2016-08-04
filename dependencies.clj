@@ -25,7 +25,7 @@
  [org.yaml/snakeyaml "1.17"]
  [ring "1.5.0"]
  [ring/ring-core "1.5.0"]
- [ring/ring-jetty-adapter "1.5.0"]
+ [aleph "0.4.1"]
  [ring/ring-json "0.4.0"]
 
  ; explicit transient deps to force conflict resolution

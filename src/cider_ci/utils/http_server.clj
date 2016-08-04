@@ -7,7 +7,7 @@
   (:require
     [clj-logging-config.log4j :as logging-config]
     [clojure.tools.logging :as logging]
-    [ring.adapter.jetty :as jetty]
+    [aleph.http :as http-server]
     )
   (:import
     ))
@@ -28,7 +28,7 @@
                           (select-keys conf [:port :host]))]
     (stop)
     (logging/info "starting server " server-conf)
-    (reset! _server (jetty/run-jetty main-handler server-conf)))
+    (reset! _server (http-server/start-server main-handler server-conf)))
   (.addShutdownHook (Runtime/getRuntime)
                     (Thread. (fn [] (stop)))))
 
