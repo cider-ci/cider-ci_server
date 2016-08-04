@@ -31,7 +31,7 @@
   (if (-> request :authenticated-service :username boolean)
     (do (future (Thread/sleep 250)
                 (System/exit 0))
-      {:status 204 })
+        {:status 204})
     {:status 403 :body ""}))
 
 (defn wrap-shutdown [default-handler]

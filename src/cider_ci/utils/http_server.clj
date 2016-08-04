@@ -29,6 +29,6 @@
     (stop)
     (logging/info "starting server " server-conf)
     (reset! _server (http-server/start-server main-handler server-conf)))
-  (.addShutdownHook (Runtime/getRuntime)
-                    (Thread. (fn [] (stop)))))
+  ; (.addShutdownHook (Runtime/getRuntime) (Thread. (fn [] (stop))))
+  )
 
