@@ -18,7 +18,7 @@
 (defn stop []
   (when-let [server @_server]
     (logging/info stop)
-    (.stop server)
+    (.close server)
     (reset! _server nil)))
 
 (defn start [conf main-handler ]
