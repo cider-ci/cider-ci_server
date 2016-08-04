@@ -29,7 +29,8 @@
 
 (defn shutdown [request]
   (if (-> request :authenticated-service :username boolean)
-    (do (future (System/exit 0))
+    (do (future (Thread/sleep 250)
+                (System/exit 0))
       {:status 204 })
     {:status 403 :body ""}))
 
