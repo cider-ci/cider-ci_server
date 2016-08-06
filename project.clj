@@ -7,21 +7,17 @@
   :url "https://github.com/cider-ci/cider-ci_clj-utils"
   :license {:name "GNU AFFERO GENERAL PUBLIC LICENSE Version 3"
             :url "http://www.gnu.org/licenses/agpl-3.0.html"}
-  :dependencies [ ]
+  :dependencies ~(read-string (slurp "project.dependencies.clj"))
 
-  :profiles {:dev {:dependencies
-                   ~(read-string (slurp "dependencies.clj"))
-                   :plugins [
-                             [org.apache.maven.wagon/wagon-ssh-external "2.6"]
-                             ]
-                   :resource-paths ["resources_dev"]
-                   } }
+  :profiles {:dev {:dependencies ~(read-string (slurp "project.dependencies.clj"))
+                   :plugins [ [org.apache.maven.wagon/wagon-ssh-external "2.6"] ]
+                   :resource-paths ["resources" "resources_dev" "../../config"] }}
 
-  :java-source-paths ["java"]
   :javac-options ["-target" "1.8" "-source" "1.8" "-Xlint:-options"]
 
   :repositories [["tmp" {:url "http://maven-repo-tmp.drtom.ch" :snapshots false}]]
   :deploy-repositories [ ["tmp" "scp://maven@schank.ch/tmp/maven-repo/"]]
+  :aot [cider-ci.WebstackException #"cider-ci.*"]
   )
 
 ;(cemerick.pomegranate.aether/register-wagon-factory!  "scp" #(let [c (resolve 'org.apache.maven.wagon.providers.ssh.external.ScpExternalWagon)] (clojure.lang.Reflector/invokeConstructor c (into-array []))))

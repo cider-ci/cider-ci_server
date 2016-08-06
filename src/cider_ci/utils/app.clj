@@ -9,26 +9,25 @@
     [cider-ci.utils.json-protocol]
     [cider-ci.utils.nrepl :as nrepl]
     [cider-ci.utils.rdbms :as rdbms]
-    [cider-ci.utils.self]
+    [cider-ci.utils.self :as self]
 
     [logbug.catcher :as catcher]
     [clojure.tools.logging :as logging]
 
     ))
 
-
 (defn init [build-http-handler-fn]
   (catcher/snatch
     {:level :fatal
      :throwable Throwable
      :return-fn (fn [e] (System/exit -1))}
-    (let [app-name-kw (keyword cider-ci.self/NAME)]
+    (let [app-name-kw (keyword (self/project-name))]
 
       (when-not app-name-kw
         (throw (IllegalStateException.
-                 "Application name is not set in cider-ci.self/NAME!")))
+                 "Project name is not set!")))
 
-      (logging/info cider-ci.utils.self/application-str)
+      (logging/info (self/application-str))
 
       (logbug.thrown/reset-ns-filter-regex #".*cider.ci.*")
 
