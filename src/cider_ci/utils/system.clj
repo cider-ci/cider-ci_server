@@ -18,12 +18,15 @@
     [org.apache.commons.lang3 SystemUtils]
     ))
 
+
+;### helpers ###################################################################
+
+
 (defn create-watchdog
   ([]
    (create-watchdog (ExecuteWatchdog/INFINITE_TIMEOUT)))
   ([timeout-ms]
    (ExecuteWatchdog. timeout-ms )))
-
 
 (defn normalized-timeout-ms [opts]
   (let [timeout (or (:timeout opts)
@@ -34,6 +37,9 @@
                              (* 1000.0))
       (integer? timeout) (* timeout 1.0)
       :else (* 10 1000.0))))
+
+
+;### OLD #######################################################################
 
 (defn exec
   ([command]
@@ -59,6 +65,7 @@
          (throw (ex-info (str "Execution `"
                               (clojure.string/join " " command)
                               "` expired.") opts)))))))
+
 (defn exec-with-success-or-throw [& args]
    (logging/warn "exec-with-success-or-throw is deprecated, use exec! or async-exec")
   (let [res (apply exec args)]
@@ -114,8 +121,6 @@
   ([command opts]
    (let [wrapped-exec (async-exec command opts)
          realized-exec (-> wrapped-exec deref :exec deref)]
-     (logging/warn 'wrapped-exec wrapped-exec)
-     (logging/warn 'realized-exec realized-exec)
      (when-let [ex (-> wrapped-exec deref :exception)] (throw ex))
      (when-not (= 0 (:exit realized-exec))
        (throw  (ex-info (str "Execution `"
@@ -123,16 +128,6 @@
                              "` exited with non zero status!")
                         @wrapped-exec)))
      realized-exec)))
-
-;(exec! ["exit" "1"])
-
-;(exec! ["sleep" "10"] {:timeout "3 Seconds"})
-
-;(exec! ["echo" "Hello World!"])
-
-
-;(def ^:dynamic *P* (async-exec ["sleep" "50"] {:timeout "3 Seconds"}))
-
 
 
 ;### Debug #####################################################################
