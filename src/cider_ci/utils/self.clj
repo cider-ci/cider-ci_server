@@ -89,3 +89,9 @@
            "+" (-> (deploy-info) :tree_id))
       (clojure.string/replace #"\s+" " ")
       clojure.string/trim))
+
+
+;### Debug #####################################################################
+;(debug/debug-ns *ns*)
+;(logging-config/set-logger! :level :debug)
+;(logging-config/set-logger! :level :info)
