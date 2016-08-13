@@ -40,7 +40,8 @@
                      (str "The path value of :read_and_replace_with "
                           " must not be blank but it is in "
                           (json/write-str spec) "."))))
-          (get-content git-ref-id path submodules)))
+          (-> (get-content git-ref-id path submodules)
+              clojure.string/trim)))
     spec))
 
 ;### Debug ####################################################################
