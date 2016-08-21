@@ -53,16 +53,16 @@
   "Returns the authenticated user or nil."
   (catcher/snatch
     {}
-    (let [services-cookie (-> request keywordize-keys :cookies :cider-ci_services-session :value)
-          session-object (decrypt (get-session-secret) services-cookie)
-          user (-> session-object :user_id get-user!)]
-      (validate! (-> session-object :signature)
-                 (get-session-secret)
-                 (-> user :password_digest))
-      (validate-expiration! user session-object)
-      (when-not (:account_enabled user)
-        (throw (IllegalStateException. "Account disabled!")))
-      user)))
+    (when-let [services-cookie (-> request keywordize-keys :cookies :cider-ci_services-session :value)]
+      (let [session-object (decrypt (get-session-secret) services-cookie)
+            user (-> session-object :user_id get-user!)]
+        (validate! (-> session-object :signature)
+                   (get-session-secret)
+                   (-> user :password_digest))
+        (validate-expiration! user session-object)
+        (when-not (:account_enabled user)
+          (throw (IllegalStateException. "Account disabled!")))
+        user))))
 
 (defn authenticate-session-cookie [request handler]
   (if-let [user (authenticated-user request)]
