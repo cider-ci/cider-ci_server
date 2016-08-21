@@ -4,7 +4,11 @@
 
 (ns cider-ci.auth.authorize
   (:require
+
     [clojure.tools.logging :as logging]
+    [clj-logging-config.log4j :as logging-config]
+    [logbug.catcher :as catcher]
+    [logbug.debug :as debug]
     ))
 
 (def unauthorized-401
@@ -16,6 +20,7 @@
 
 (defn wrap-require! [handler options]
   (fn [request]
+    (logging/debug 'wrap-require! {:handler handler :options options :request request})
     (cond (and (:user options)
                (:authenticated-user request)) (handler request)
           (and (:service options)
@@ -25,5 +30,9 @@
           :else unauthorized-401)))
 
 
+;### Debug ####################################################################
+;(debug/debug-ns *ns*)
+;(logging-config/set-logger! :level :debug)
+;(logging-config/set-logger! :level :info)
 
 

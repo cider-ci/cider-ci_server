@@ -49,24 +49,30 @@
           (validate-session-lifetime! max-session-lifetime-secs issued-at)))
       )))
 
+(defn authenticated-user [request]
+  "Returns the authenticated user or nil."
+  (catcher/snatch
+    {}
+    (let [services-cookie (-> request keywordize-keys :cookies :cider-ci_services-session :value)
+          session-object (decrypt (get-session-secret) services-cookie)
+          user (-> session-object :user_id get-user!)]
+      (validate! (-> session-object :signature)
+                 (get-session-secret)
+                 (-> user :password_digest))
+      (validate-expiration! user session-object)
+      (when-not (:account_enabled user)
+        (throw (IllegalStateException. "Account disabled!")))
+      user)))
+
 (defn authenticate-session-cookie [request handler]
-  (if-let [services-cookie (-> request keywordize-keys :cookies :cider-ci_services-session :value)]
-    (catcher/snatch
-      {:return-fn (fn [_] (handler request))}
-      (let [session-object (decrypt (get-session-secret) services-cookie)
-            user (-> session-object :user_id get-user!)]
-        (validate! (-> session-object :signature)
-                   (get-session-secret)
-                   (-> user :password_digest))
-        (validate-expiration! user session-object)
-        (when-not (:account_enabled user)
-          (throw (IllegalStateException. "Account disabled!")))
-        (handler (assoc request :authenticated-user user))))
+  (if-let [user (authenticated-user request)]
+    (handler (assoc request :authenticated-user user))
     (handler request)))
 
 (defn wrap [handler]
-  (fn [request]
-    (authenticate-session-cookie request handler)))
+  "Adds :authenticated-user to the request if the session is intact.
+  Does nothing to the request otherwise."
+  (fn [request] (authenticate-session-cookie request handler)))
 
 ;### Debug ####################################################################
 ;(logging-config/set-logger! :level :debug)
