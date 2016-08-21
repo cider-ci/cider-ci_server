@@ -8,11 +8,11 @@
     [cider-ci.utils.url.ssh :as url.ssh]
     [cider-ci.utils.url.ssh-scp :as url.ssh-scp]
 
-    [clj-logging-config.log4j :as logging-config]
-    [clojure.tools.logging :as logging]
-    [logbug.catcher :as catcher]
-    [logbug.debug :as debug :refer [I> I>> identity-with-logging]]
-    [logbug.thrown :as thrown]
+    ; [clj-logging-config.log4j :as logging-config]
+    ; [clojure.tools.logging :as logging]
+    ; [logbug.catcher :as catcher]
+    ; [logbug.debug :as debug :refer [I> I>> identity-with-logging]]
+    ; [logbug.thrown :as thrown]
     ))
 
 

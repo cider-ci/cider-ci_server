@@ -4,14 +4,9 @@
 
 (ns cider-ci.utils.url.http
   (:require
-    [cider-ci.utils.url.shared :refer :all]
-
-    [clj-logging-config.log4j :as logging-config]
-    [clojure.tools.logging :as logging]
-    [logbug.catcher :as catcher]
-    [logbug.debug :as debug :refer [I> I>> identity-with-logging]]
-    [logbug.thrown :as thrown]
+    [cider-ci.utils.url.shared :refer [host-port-dissect path-dissect auth-dissect]]
     ))
+
 
 (def pattern
   #"(?i)(https?)://([^@]+@)?([^/]+)([^\?|#]+)(\?[^#]+)?(#.*)?" )

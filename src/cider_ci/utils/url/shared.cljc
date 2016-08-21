@@ -3,14 +3,7 @@
 ; See the "LICENSE.txt" file provided with this software.
 
 (ns cider-ci.utils.url.shared
-  (:require
-
-    [clj-logging-config.log4j :as logging-config]
-    [clojure.tools.logging :as logging]
-    [logbug.catcher :as catcher]
-    [logbug.debug :as debug :refer [I> I>> identity-with-logging]]
-    [logbug.thrown :as thrown]
-    ))
+  )
 
 (defn host-port-dissect [host-port]
   (if-not (string? host-port)
@@ -26,7 +19,7 @@
   (if-not path
     {:project_name nil
      :project_namespace nil}
-    (let [segments (clojure.string/split path #"\/")
+    (let [segments (clojure.string/split path #"/")
           project-name (last segments)
           project-namespace (-> segments reverse (nth 1 nil))]
       {:project_name (and project-name
