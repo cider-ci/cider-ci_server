@@ -5,6 +5,12 @@
     (apply merge-with deep-merge vals)
     (last vals)))
 
+(defn presence [v]
+  "Returns nil if v is a blank string. Returns v otherwise."
+  (cond
+    (string? v) (if (clojure.string/blank? v) nil v)
+    :else v))
+
 (defn to-cistr [v]
   "Converts v to a string without preceding colons and preserving `/` if v is a
   keyword.  Converts v to string by applying (str v) if v is not a keyword.
@@ -43,3 +49,5 @@
                    (into {}))
     :else (throw (ex-info (str "I don't know how to convert a"
                                (type sq) " to a cisetmap.") {:input sq}))))
+
+
