@@ -6,6 +6,8 @@
 (ns cider-ci.utils.routing
   (:require
     [logbug.catcher :as catcher]
+    [logbug.thrown :as thrown]
+
     [clojure.tools.logging :as logging]
     [compojure.core :as cpj]
     ))
@@ -20,9 +22,13 @@
     (cpj/ANY "*" [] {:status 404})))
 
 
-(defn wrap-log-exception [handler]
+(defn wrap-exception [handler]
   (fn [request]
-    (catcher/with-logging {}
+    (catcher/snatch
+      {:level :warn
+       :return-fn (fn [e]
+                    {:status 500
+                     :body (thrown/stringify e)})}
       (handler request))))
 
 ;### shutdown #################################################################
