@@ -55,7 +55,8 @@
     {}
     (when-let [services-cookie (-> request keywordize-keys :cookies :cider-ci_services-session :value)]
       (let [session-object (decrypt (get-session-secret) services-cookie)
-            user (-> session-object :user_id get-user!)]
+            user (-> session-object :user_id get-user!
+                     (assoc :auhtentication-method "session"))]
         (validate! (-> session-object :signature)
                    (get-session-secret)
                    (-> user :password_digest))

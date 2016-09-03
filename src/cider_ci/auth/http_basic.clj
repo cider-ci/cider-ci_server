@@ -41,7 +41,7 @@
   (when-let [user (get-user login-or-email)]
     (when (and (:account_enabled user)
                (checkpw password (:password_digest user)))
-      user)))
+      (assoc user :authentication-method "basic-auth"))))
 
 (defn password-matches [password username]
   (or (when-let  [basic-auth-pw (-> (get-config) :basic_auth  :password)]
