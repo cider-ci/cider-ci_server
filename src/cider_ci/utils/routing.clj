@@ -5,6 +5,8 @@
 
 (ns cider-ci.utils.routing
   (:require
+    [cider-ci.auth.authorize :as authorize]
+
     [logbug.catcher :as catcher]
     [logbug.thrown :as thrown]
 
@@ -42,7 +44,9 @@
 
 (defn wrap-shutdown [default-handler]
   (cpj/routes
-    (cpj/POST "/shutdown" request #'shutdown)
+    (cpj/POST "/shutdown" _
+              (authorize/wrap-require!
+                #'shutdown {:service true}))
     (cpj/ANY "*" request default-handler)))
 
 

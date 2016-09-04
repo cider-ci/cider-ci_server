@@ -43,7 +43,7 @@
                (checkpw password (:password_digest user)))
       (assoc user :authentication-method "basic-auth"))))
 
-(defn password-matches [password username]
+(defn password-matches? [password username]
   (or (when-let  [basic-auth-pw (-> (get-config) :basic_auth  :password)]
         (or (= password basic-auth-pw)
             (= password (sha1-hmac username basic-auth-pw))))
@@ -66,7 +66,7 @@
             executor-name])))
 
 (defn authenticate-executor [executor-name password-digest]
-  (when (password-matches password-digest executor-name)
+  (when (password-matches? password-digest executor-name)
     (find-executor executor-name)))
 
 (defn- authenticate-role [request roles]
@@ -75,7 +75,7 @@
       (let [{username :username password :password} ba]
         (logging/debug [ba,username,password])
         (when (:service roles)
-          (when (password-matches password username)
+          (when (password-matches? password username)
             (swap! request
                    (fn [request username]
                      (assoc request :authenticated-service {:username username}))

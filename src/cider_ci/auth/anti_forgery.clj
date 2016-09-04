@@ -5,6 +5,7 @@
 
 (ns cider-ci.auth.anti-forgery
   (:require
+
     [crypto.random]
 
     [clj-logging-config.log4j :as logging-config]
@@ -23,8 +24,10 @@
    })
 
 (defn- session-authentication? [request]
-  (not (#{"basic-auth"}
-         (-> request :authenticated-user :authentication-method))))
+  (boolean
+    (when (-> request :authenticated-user) ; only users can use session auth
+      (not (#{"basic-auth"}
+             (-> request :authenticated-user :authentication-method))))))
 
 (defn- safe-request? [request]
   (boolean
