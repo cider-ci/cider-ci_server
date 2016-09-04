@@ -6,25 +6,74 @@
   :description "Cider-CI Repository"
   :license {:name "GNU AFFERO GENERAL PUBLIC LICENSE Version 3"
             :url "http://www.gnu.org/licenses/agpl-3.0.html"}
-  :dependencies [
-                 [drtom/honeysql "1.3.0-beta.4"]
-                 [logbug "4.0.0"]
 
-                 [cheshire "5.5.0"]
-                 [clj-http "2.1.0"]
-                 [me.raynes/fs "1.4.6"]
-                 [org.apache.commons/commons-io "1.3.2"]
-                 [org.clojure/core.incubator "0.1.3"]
-                 [org.clojure/core.memoize "0.5.8"]
-                 [org.clojure/tools.nrepl "0.2.12"]
-                 ]
-  :plugins [[cider-ci/lein_cider-ci_dev "0.2.1"]]
+  :dependencies ~(concat  (read-string (slurp "project.dependencies.clj"))
+                          (read-string (slurp "../clj-utils/dependencies.clj")))
+
+
+  :source-paths ["./clj-utils/src" "src/clj" "src/cljc"]
+
+  :resource-paths ["../config" "./config" "./resources"]
+
+  :plugins [[lein-environ "1.0.2"]
+            [lein-cljsbuild "1.1.1"]
+            [lein-asset-minifier "0.2.7"
+             :exclusions [org.clojure/clojure]]]
+
+  :cljsbuild {:builds
+              {:min {:source-paths ["clj-utils/src" "src/cljs" "src/cljc" "env/prod/cljs"]
+                     :jar true
+                     :compiler
+                     {:output-to "target/cljsbuild/public/js/app.js"
+                      :output-dir "target/uberjar"
+                      :optimizations :advanced
+                      :pretty-print  false}}
+               :app
+               {:source-paths ["clj-utils/src" "src/cljs" "src/cljc" "env/dev/cljs"]
+                :compiler
+                {:main "repository.dev"
+                 :asset-path "/cider-ci/repositories/js/out"
+                 :output-to "target/cljsbuild/public/js/app.js"
+                 :output-dir "target/cljsbuild/public/js/out"
+                 :source-map true
+                 :optimizations :none
+                 :pretty-print  true}}}}
+
+  :minify-assets {:assets
+                  {"resources/public/css/site.min.css"
+                   "resources/public/css/site.css"}}
+
+  :sass {:src "src/sass"
+         :dst "resources/public/css"}
+
+  :figwheel {:http-server-root "public"
+             :server-port 3449
+             :nrepl-port 7002
+             :nrepl-middleware ["cemerick.piggieback/wrap-cljs-repl"]
+             :css-dirs ["resources/public/css"]}
+
   :profiles {:dev
-             {:dependencies [[midje "1.8.3"]]
-              :plugins [[lein-midje "3.1.1"]]
-              :repositories [["tmp" {:url "http://maven-repo-tmp.drtom.ch" :snapshots false}]]
-              :resource-paths ["../config" "./config" "./resources"]}}
-  :aot [:all]
+             {:dependencies [[ring/ring-mock "0.3.0"]
+                             [ring/ring-devel "1.5.0"]
+                             [prone "1.1.1"]
+                             [figwheel-sidecar "0.5.4-5"]
+                             [org.clojure/tools.nrepl "0.2.12"]
+                             [com.cemerick/piggieback "0.2.2-SNAPSHOT"]
+                             [pjstadig/humane-test-output "0.8.0"]]
+              :plugins [[lein-figwheel "0.5.4-7"]
+                        [lein-sassy "1.0.7"]]
+              :source-paths ["env/dev/clj"]
+              :resource-paths ["target/cljsbuild"]
+              :injections [(require 'pjstadig.humane-test-output)
+                           (pjstadig.humane-test-output/activate!)]
+              :env {:dev true}}
+             :uberjar {:hooks [minify-assets.plugin/hooks]
+                       :source-paths ["env/prod/clj" "./clj-utils/src" "src/clj" "src/cljc"]
+                       :prep-tasks ["compile" ["cljsbuild" "once" "min"]]
+                       :resource-paths ["target/cljsbuild"]
+                       :aot [cider-ci.WebstackException #"cider-ci.*"]
+                       :uberjar-name "repository.jar"
+                       }}
   :main cider-ci.repository.main
   :repl-options {:timeout  120000}
   )
