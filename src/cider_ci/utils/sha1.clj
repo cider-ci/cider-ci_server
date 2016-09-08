@@ -3,7 +3,7 @@
 ; See the "LICENSE.txt" file provided with this software.
 
 
-(ns cider-ci.utils.digest
+(ns cider-ci.utils.sha1
   (:require
     [pandect.algo.sha1 :as sha1]
 
