@@ -48,7 +48,6 @@
                   :headers {"WWW-Authenticate" msg}}))
 
 (defn process [request handler]
-  (logging/info request)
   (let [token (or (-> request :cookies (get cookie-name nil) :value)
                   (crypto.random/base64 32))
         resp (if (and (not (safe-request? request))
