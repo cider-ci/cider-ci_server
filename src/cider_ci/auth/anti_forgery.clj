@@ -40,9 +40,10 @@
         (= x-csrf-header-token token)))))
 
 (def response-401
-  (let [msg "Mutating requests must either authenticate
-            with basic authentication or provide a valid
-            X-CSRF-TOKEN header!"]
+  (let [msg (str "Basic realm=\"Cider-CI; "
+                 "mutating requests must either authenticate "
+                 "with basic authentication or provide a valid "
+                 "X-CSRF-TOKEN header!")]
     response-401 {:status 401
                   :body msg
                   :headers {"WWW-Authenticate" msg}}))
@@ -64,6 +65,8 @@
 (defn wrap [handler]
   (fn [request]
     (process request handler)))
+
+;{"git_url": "https://github.com/cider-ci/cider-ci_deploy.git", "name": "CI Deploy"}
 
 ;#### debug ###################################################################
 ;(logging-config/set-logger! :level :debug)
