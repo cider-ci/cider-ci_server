@@ -59,8 +59,6 @@
 
 ;### Routing ##################################################################
 
-;TODO: add links etc for /task-specifications/:id
-
 (defn build-routes-handler [json-response]
   (cpj/routes
 

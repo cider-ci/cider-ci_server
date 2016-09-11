@@ -60,7 +60,6 @@
       (resources/build-routes-handler)
       routing/wrap-shutdown
       ring.middleware.json/wrap-json-params
-      ring.middleware.json/wrap-json-params
       (ring.middleware.params/wrap-params)
       status/wrap
       (authorize/wrap-require! {:user true :service true})

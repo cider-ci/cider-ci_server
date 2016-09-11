@@ -25,6 +25,7 @@
       :trial (json-roa.links/trial context)
       :tree-attachment-data-stream (json-roa.links/tree-attachment-data-stream
                                      request "{tree_id}" "{path}")
+      :projects (json-roa.links/projects)
       :create_job (json-roa.links/create-job context)
       }
      }))

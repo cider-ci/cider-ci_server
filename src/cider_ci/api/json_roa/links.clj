@@ -146,6 +146,18 @@
     }))
 
 
+;### projects #############################################################
+
+(defn projects
+  ([]
+   {:name "Projects"
+    :href "/cider-ci/repositories/projects/"
+    :relations
+    {:api-doc
+     {:name "API Documentation Projects"
+      :href (str (api-docs-path) "#projects")}}}))
+
+
 ;### script ####################################################################
 
 (defn script-path [prefix id]
