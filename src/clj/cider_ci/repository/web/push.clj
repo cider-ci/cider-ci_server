@@ -1,12 +1,13 @@
 (ns cider-ci.repository.web.push
   (:require
     [cider-ci.repository.state :as state]
+    [cider-ci.repository.web.shared :as web.shared]
     [cider-ci.repository.web.edn]
     [cider-ci.repository.data :refer [sort-data]]
 
     [cider-ci.auth.anti-forgery :as anti-forgery]
     [cider-ci.auth.authorize :as authorize]
-    [cider-ci.utils.digest :refer [sha1]]
+    [cider-ci.utils.digest :refer [digest]]
 
     [clojure.data.json :as json]
     [clojure.set :refer [difference]]
@@ -23,6 +24,9 @@
     ))
 
 (def clients (atom {}))
+
+;(-> @clients first second keys digest)
+;(->> @clients (map #(let [[k _] %] k)))
 
 ;##############################################################################
 
@@ -53,43 +57,29 @@
 
 ;##############################################################################
 
-(defn obfuscate-secret-repository-properties [repository]
-  (->> repository
-       (into [])
-       (map #(let [[k v] %]
-               [k (if (nil? v) v
-                    (case k
-                      :update_notification_token "********"
-                      :remote_http_fetch_token "********"
-                      :remote_api_token "********"
-                      :remote_api_token_bearer "********"
-                      v))]))
-       (into {})))
-
-(defn filter-repositories [db admin?]
+(defn filter-repositories [db user]
   (assoc db :repositories
          (I>> identity-with-logging
               (:repositories db)
               (map #(let [[_ v] %] v))
               (map #(dissoc % :proxy_id))
-              (map #(if admin? % (obfuscate-secret-repository-properties %)))
+              (map #(web.shared/filter-repository-params  % user))
               (map (fn [r] [(:id r) r]))
               (into {}))))
 
 (defn push-data [db user-id]
-  (let [user (get (:users db) user-id {})
-        admin? (:is_admin user)]
+  (let [user (get (:users db) user-id {})]
     (-> db
         (dissoc :users)
         (assoc :user (dissoc user :password_digest))
-        (filter-repositories admin?)
+        (filter-repositories user)
         json/write-str
         (json/read-str :key-fn keyword))))
 
 (defn push-to-client [db client-id]
   (let [user-id (-> client-id (clojure.string/split #"_") first)
         target-remote-state (push-data db user-id)
-        target-remote-state-sha1-digest (-> target-remote-state sort-data prn-str sha1)
+        target-remote-state-digest (digest target-remote-state)
         push-data (atom nil)
         swap-fn (fn [clients]
                   (if-not (contains?  clients client-id)
@@ -97,10 +87,11 @@
                     (do (if-let [current-remote-state (get clients client-id nil)]
                           (let [d (diff current-remote-state target-remote-state)]
                             (reset! push-data {:patch d
-                                               :sha1 target-remote-state-sha1-digest}))
+                                               :digest target-remote-state-digest}))
                           (reset! push-data {:full target-remote-state
-                                             :sha1 target-remote-state-sha1-digest}))
+                                             :digest target-remote-state-digest}))
                         (assoc clients client-id target-remote-state))))]
+    (def ^:dynamic *last-pushed-data* {:data target-remote-state :digest target-remote-state-digest})
     (logging/debug 'target-remote-state (prn-str target-remote-state))
     (swap! clients swap-fn)
     (logging/debug 'pushing [client-id @push-data])

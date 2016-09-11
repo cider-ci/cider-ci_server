@@ -7,7 +7,7 @@
   (:require
     [cider-ci.repository.constants :refer [CONTEXT]]
     [cider-ci.repository.data :refer [sort-data]]
-    [cider-ci.repository.digest :refer [sha1]]
+    [cider-ci.utils.digest :refer [digest]]
 
     [cljsjs.moment]
     [reagent.core :as r]
@@ -61,8 +61,9 @@
     ;(js/console.log "patching server-state")
     (swap! server-state (fn [db p] (patch db p)) p))
   (swap! client-state assoc :server_state_updated_at (js/moment))
-  (let [our-server-state-digest (-> @server-state sort-data prn-str sha1)
-        supposed-digest (:sha1 data)]
+  (let [our-server-state-digest (digest @server-state)
+        supposed-digest (:digest data)]
+    ;(js/console.log (clj->json {:our-server-state-digest our-server-state-digest :supposed-digest supposed-digest}))
     (if (= our-server-state-digest supposed-digest)
       (swap! client-state assoc :server-state-is-in-sync true)
       (swap! client-state assoc :server-state-is-in-sync false))))

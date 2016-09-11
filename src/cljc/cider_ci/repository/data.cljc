@@ -1,7 +1,5 @@
 (ns cider-ci.repository.data
-
   )
-
 
 (defn sort-data [data]
   (cond

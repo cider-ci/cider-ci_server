@@ -11,6 +11,17 @@
     [logbug.thrown :as thrown]
     ))
 
+(defn filter-repository-params [repository user]
+  (as-> repository repository
+    (dissoc repository :proxy_id)
+    (if (:is_admin user)
+      repository
+      (dissoc repository
+              :update_notification_token
+              :remote_http_fetch_token
+              :remote_api_token
+              :remote_api_token_bearer))))
+
 (defn respond-with-500 [request ex]
   (logging/warn "RESPONDING WITH 500" {:exception (thrown/stringify ex) :request request})
   {:status 500 :body (thrown/stringify ex)})

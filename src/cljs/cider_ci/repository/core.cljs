@@ -1,13 +1,16 @@
 (ns cider-ci.repository.core
   (:require
     [cider-ci.repository.constants :refer [CONTEXT]]
-    [cider-ci.repository.digest :refer [sha1]]
     [cider-ci.repository.state :as state]
     [cider-ci.repository.components.projects.edit-new :as projects.edit-new]
     [cider-ci.repository.components.projects.show :as projects.show]
     [cider-ci.repository.components.projects.index :as projects.index]
     [cider-ci.repository.components.navbar :as navbar]
 
+    [cider-ci.utils.digest :refer [digest]]
+
+    [goog.string :as gstring]
+    [goog.string.format]
 
     [reagent.core :as reagent]
     [secretary.core :as secretary :include-macros true]
@@ -34,21 +37,23 @@
       [:pre (with-out-str (pprint @state/client-state))]]
      [:div.server-db
       [:h2 "Server State"]
-      [:pre (with-out-str (pprint @state/server-state))]]]))
+      [:pre (pr-str @state/server-state)]]]))
+
+(defn sync-alert []
+  [:div#sync-alert
+   (when-not (:server-state-is-in-sync @state/client-state)
+     [:div.alert.alert-danger
+      [:strong "Bummer! "]
+      "It seems that the state in your browser and the state
+      on the server got out of sync. "
+      [:strong "Please reload this page at your convenience manually!"]])])
 
 (defn current-page []
   [:div.container-fluid
    [navbar/navbar]
-
    (if (:server_state_updated_at @state/client-state)
      [:div
-      [:div#sync-alert
-       (when-not (:server-state-is-in-sync @state/client-state)
-         [:div.alert.alert-danger
-          [:strong "Bummer! "]
-          "It seems that the state in your browser and the state
-          on the server got out of sync. "
-          [:strong "Please reload this page at your convenience manually!"]])]
+      [sync-alert]
       [:div.page [(-> @state/client-state :current-page :component)]]]
      [:div
       [:div.progress

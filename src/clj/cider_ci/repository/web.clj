@@ -5,14 +5,15 @@
 (ns cider-ci.repository.web
   (:require
     [cider-ci.repository.git.repositories :as git.repositories]
+    [cider-ci.repository.roa.core :as roa]
     [cider-ci.repository.sql.repository :as sql.repository]
     [cider-ci.repository.web.ls-tree :as web.ls-tree]
-    [cider-ci.repository.web.update-notifications :as update-notifications]
-    [cider-ci.repository.web.shared :refer :all]
-    [cider-ci.repository.web.ui :as web.ui]
-    [cider-ci.repository.web.push :as web.push]
     [cider-ci.repository.web.project-configuration :as web.project-configuration]
     [cider-ci.repository.web.projects :as web.projects]
+    [cider-ci.repository.web.push :as web.push]
+    [cider-ci.repository.web.shared :refer :all]
+    [cider-ci.repository.web.ui :as web.ui]
+    [cider-ci.repository.web.update-notifications :as update-notifications]
 
     [cider-ci.auth.anti-forgery :as anti-forgery]
     [cider-ci.auth.authorize :as authorize]
@@ -90,41 +91,32 @@
              (authorize/wrap-require! #'get-path-content {:service true}))
     (cpj/GET "/:id/git/*" _
              (authorize/wrap-require! #'get-git-file {:service true}))
-    (cpj/POST "/projects/" _
-              (authorize/wrap-require! #'web.projects/create-project {:user true}))
-    (cpj/POST "/projects/:id/fetch" _
-              (authorize/wrap-require! #'web.projects/fetch {:user true}))
-    (cpj/PATCH "/projects/:id" _
-                (authorize/wrap-require! #'web.projects/update-project {:user true}))
-    (cpj/DELETE "/projects/:id" _
-              (authorize/wrap-require! #'web.projects/delete-project {:user true}))
-    ))
+    (cpj/ANY "/projects/*" _ web.projects/routes)))
 
 (defn wrap-accept [handler]
   (ring.middleware.accept/wrap-accept
     handler
     {:mime
-     [; "application/json-roa+json" :qs 1
-      "application/json" :qs 1.0 :as :json
-      "text/html" :qs 0.99 :as :html
+     ["application/json-roa+json" :qs 1 :as :json-roa
+      "application/json" :qs 1 :as :json
+      "text/html" :qs 1 :as :html
       ]}))
 
 (defn build-main-handler [context]
   (I> wrap-handler-with-logging
       (cpj.handler/api routes)
+      roa/wrap
+      ring.middleware.json/wrap-json-body
       ring.middleware.json/wrap-json-response
       routing/wrap-shutdown
-      (ring.middleware.params/wrap-params)
-      ring.middleware.json/wrap-json-params
       status/wrap
       web.ui/wrap
       wrap-accept
       web.push/wrap
-      (http-basic/wrap {:service true :user true})
       anti-forgery/wrap
+      (http-basic/wrap {:service true :user true})
       session/wrap
       cookies/wrap-cookies
-      identity-with-logging
       (ring.middleware.defaults/wrap-defaults {:static {:resources "public"}})
       update-notifications/wrap
       (routing/wrap-prefix context)

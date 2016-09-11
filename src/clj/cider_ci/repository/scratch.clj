@@ -4,4 +4,7 @@
 
 
 (ns cider-ci.repository.scratch
-  )
+  (:require
+    [clojure.data.json :as json]
+    ))
+

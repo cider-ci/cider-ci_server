@@ -24,7 +24,6 @@
                            " JOIN commits ON commits.id = branches_commits.commit_id"
                            " WHERE (commits.id = ? OR commits.tree_id = ?)") id id])))
 
-
 (defn get-repository-by-update-notification-token [token]
   (catcher/snatch {}
     (->> (jdbc/query (rdbms/get-ds)
