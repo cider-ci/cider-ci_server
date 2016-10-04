@@ -20,7 +20,7 @@
 
 ;### general ##################################################################
 
-(defn dissect [url]
+(defn dissect-unmemoized [url]
   (cond
     (re-matches url.http/pattern url) (url.http/dissect url)
     (re-matches url.ssh/pattern url) (url.ssh/dissect url)
@@ -29,6 +29,8 @@
     (re-matches url.ssh-scp/pattern url) (url.ssh-scp/dissect url)
     ))
 
+
+(def dissect (memoize dissect-unmemoized))
 
 
 ;### Debug #####################################################################
