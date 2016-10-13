@@ -3,11 +3,7 @@
 ; See the "LICENSE.txt" file provided with this software.
 ;
 
-(ns cider-ci.utils.duration
-  (:require
-    [logbug.debug :as debug]
-    [clojure.tools.logging :as logging]
-    ))
+(ns cider-ci.utils.duration)
 
 (def FILL-REXS
   [#"(?i)and"
@@ -45,11 +41,15 @@
     (re-matches #"(?i)millisecond(s*)(,*)" dt) MILLISECOND
     :else (throw (ex-info (str "The duration " dt " could not be interpreted!") {}))))
 
+(defn parse-float [f]
+  #?(:clj (Double/parseDouble f)
+     :cljs (js/parseFloat f)))
+
 (defn convert-to-seconds-factors [sq]
   (->> sq
        (partition 2 2 "NO-TYPE-GIVEN")
        (map (fn [[d t]]
-              [(* (Double/parseDouble d) (duration-type-into-secs-factor t))]))
+              [(* (parse-float d) (duration-type-into-secs-factor t))]))
        flatten ))
 
 (defn parse-string-to-seconds [duration]
@@ -59,9 +59,19 @@
        convert-to-seconds-factors
        (reduce +)))
 
+(defn valid? [duration]
+  (try
+    (parse-string-to-seconds duration)
+    true
+    #?(:clj (catch Exception _ false)
+       :cljs (catch js/Object _ false))))
+
 ;(parse-string-to-seconds "three days")
+;(valid?  "three days")
 ;(parse-string-to-seconds "3 elephants")
 ;(parse-string-to-seconds "3 milliseconds")
+;(valid? "3 milliseconds")
 ;(parse-string-to-seconds "1 Year")
+;(parse-string-to-seconds "100 Years")
 ;(parse-string-to-seconds "2 weeks")
 ;(parse-string-to-seconds "3 Minutes")
