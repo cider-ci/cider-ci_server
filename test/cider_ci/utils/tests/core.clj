@@ -5,6 +5,29 @@
     [clj-yaml.core :as yaml]
     ))
 
+(deftest test-str
+  (testing "conversion of simple keywords via str"
+    (is (= ":x" (clojure.core/str :x)))
+    (is (= "x" (cider-ci.utils.core/str :x)))))
+
+(deftest test-keyword
+  (testing "conversion to keyword"
+    (is (= nil (clojure.core/keyword 5)))
+    (is (= :5 (cider-ci.utils.core/keyword 5)))
+    (is (= nil
+           (clojure.core/keyword
+             (java.util.UUID/fromString "00000000-0000-4000-0000-000000000000"))))
+    (is (= :00000000-0000-4000-0000-000000000000
+           (cider-ci.utils.core/keyword
+             (java.util.UUID/fromString "00000000-0000-4000-0000-000000000000"))))))
+
+
+(deftest invariant-String-keyword-str
+  (testing  "invariant (= s (-> s keyword str))"
+    (doseq [s ["x" ":y" "a/b/c"]]
+      (is (= s (-> s cider-ci.utils.core/keyword cider-ci.utils.core/str))))))
+
+
 (deftest test-to-cistr
   (testing  "invariant (= s (-> s keyword to-cistr))"
     (doseq [s ["x" ":y" "a/b/c"]]

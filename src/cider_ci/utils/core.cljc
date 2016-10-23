@@ -1,4 +1,36 @@
-(ns cider-ci.utils.core)
+(ns cider-ci.utils.core
+  (:refer-clojure :exclude [str keyword]))
+
+;### override some very basic vars in clojure.core ############################
+
+(defn str
+  "With no args, returns the empty string. With one arg x: returns the empty
+  string when x is nil, the stringified keyword without preceding colon when is
+  a keyword, and x.toString() otherwise.  With more than one arg, returns the
+  concatenation of the str values of the args."
+  (^String [] "")
+  (^String [^Object x] (cond (nil? x) ""
+                             (keyword? x) (subs (clojure.core/str x) 1)
+                             :else (. x (toString))))
+  (^String [x & ys]
+     ((fn [^StringBuilder sb more]
+          (if more
+            (recur (. sb  (append (str (first more)))) (next more))
+            (str sb)))
+      (new StringBuilder (str x)) ys)))
+
+(defn keyword
+  "Like clojure.core/keyword but coerces an unknown single argument x
+  with (-> x cider-ci.utils.core/str cider-ci.utils.core/keyword).
+  In contrast clojure.core/keyword will return nil for anything
+  not being a String, Symbol or a Keyword already (including
+  java.util.UUID, Integer)."
+  ([name] (cond (keyword? name) name
+                (symbol? name) (clojure.lang.Keyword/intern ^clojure.lang.Symbol name)
+                (string? name) (clojure.lang.Keyword/intern ^String name)
+                :else (keyword (str name))))
+  ([ns name] (clojure.lang.Keyword/intern ns name)))
+
 
 (defn deep-merge [& vals]
   (if (every? map? vals)
@@ -16,8 +48,8 @@
   keyword.  Converts v to string by applying (str v) if v is not a keyword.
   Invariant: (= s (-> s keyword to-cistr)) if s is a string."
   (if (keyword? v)
-    (subs (str v) 1)
-    (str v)))
+    (subs (clojure.core/str v) 1)
+    (clojure.core/str v)))
 
 (defn to-ciset [value]
   "Converts a map of key/value pairs to a set of keys. A key is present in the
