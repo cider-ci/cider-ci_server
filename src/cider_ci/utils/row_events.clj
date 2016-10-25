@@ -5,7 +5,7 @@
 
     [clj-logging-config.log4j :as  logging-config]
     [clojure.tools.logging :as logging]
-    [logbug.catcher :as catcher]
+    [logbug.catcher :as catcher :refer [snatch]]
     [logbug.debug :as debug :refer [I> I>> identity-with-logging]]
     [logbug.thrown :as thrown]
     ))
@@ -18,7 +18,7 @@
                                    " ORDER BY created_at DESC, id LIMIT 1")]
                              (jdbc/query (rdbms/get-ds))
                              first)]
-      (row-handler last-row)
+      (snatch {} (row-handler last-row))
       (reset! state-atom last-row)))
   (when-let [after-row @state-atom]
     (if-let [lst (I>> identity-with-logging
@@ -27,10 +27,7 @@
                             " ORDER BY created_at ASC , id LIMIT 100")
                        (:created_at after-row) (:id after-row)]
                       (jdbc/query (rdbms/get-ds))
-                      (map (fn [row] (row-handler row) row))
+                      (map (fn [row] (snatch {} (row-handler row)) row))
                       last)]
       (reset! state-atom lst)
       (reset! state-atom after-row))))
-
-
-
