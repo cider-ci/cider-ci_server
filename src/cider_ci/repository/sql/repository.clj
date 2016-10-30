@@ -3,7 +3,8 @@
 ; See the "LICENSE.txt" file provided with this software.
 
 (ns cider-ci.repository.sql.repository
-  (:refer-clojure :exclude [resolve])
+  (:refer-clojure :exclude [str keyword resolve])
+  (:require [cider-ci.utils.core :refer [keyword str]])
   (:require
     [cider-ci.utils.rdbms :as rdbms]
     [clj-logging-config.log4j :as logging-config]
@@ -12,7 +13,6 @@
     [logbug.catcher :as catcher]
     [logbug.debug :as debug]
     ))
-
 
 (defn resolve
   "Returns a repository given a sha1 commit-id or tree-id."
@@ -23,7 +23,6 @@
                            " JOIN branches_commits ON branches_commits.branch_id = branches.id"
                            " JOIN commits ON commits.id = branches_commits.commit_id"
                            " WHERE (commits.id = ? OR commits.tree_id = ?)") id id])))
-
 
 (defn get-repository-by-update-notification-token [token]
   (catcher/snatch {}

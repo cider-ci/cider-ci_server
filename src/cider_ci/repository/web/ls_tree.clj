@@ -3,6 +3,8 @@
 ; See the "LICENSE.txt" file provided with this software.
 
 (ns cider-ci.repository.web.ls-tree
+  (:refer-clojure :exclude [str keyword])
+  (:require [cider-ci.utils.core :refer [keyword str]])
 
   (:require
 

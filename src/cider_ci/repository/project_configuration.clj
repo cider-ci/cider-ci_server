@@ -3,6 +3,9 @@
 ; See the "LICENSE.txt" file provided with this software.
 
 (ns cider-ci.repository.project-configuration
+  (:refer-clojure :exclude [str keyword])
+  (:require [cider-ci.utils.core :refer [keyword str]])
+
   (:require
     [cider-ci.repository.git.repositories :as git.repositories]
     [cider-ci.repository.project-configuration.expansion :as expansion]

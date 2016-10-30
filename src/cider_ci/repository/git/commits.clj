@@ -4,7 +4,8 @@
 
 
 (ns cider-ci.repository.git.commits
-  (:refer-clojure :exclude [get])
+  (:refer-clojure :exclude [str keyword get])
+  (:require [cider-ci.utils.core :refer [keyword str]])
   (:require
     [cider-ci.utils.system :as system]
 
@@ -31,7 +32,7 @@
 
 (defn get [id repository-path]
   (logging/debug "get-info " id repository-path)
-  (let [res (system/exec-with-success-or-throw
+  (let [res (system/exec!
               ["git" "log" "-n" "1" "--pretty=%T %n%an %n%ae %n%aD %n%cn %n%ce %n%cD %n%s %n%b" id]
               {:dir repository-path})
         out (:out res)
@@ -52,7 +53,7 @@
 ;##############################################################################
 
 (defn get-git-parent-ids [id repository-path]
-  (let [res (system/exec-with-success-or-throw
+  (let [res (system/exec!
               ["git" "rev-list" "-n" "1" "--parents" id]
               {:dir repository-path})
         out (clojure.string/trim (:out res))
@@ -69,7 +70,7 @@
 ;##############################################################################
 
 (defn git-ls-tree-r [commit-id repository-path]
-  (:out (system/exec-with-success-or-throw
+  (:out (system/exec!
           ["git" "ls-tree" "-r" commit-id]
           {:dir repository-path})))
 

@@ -4,11 +4,16 @@
 
 
 (ns cider-ci.repository.git.repositories
+  (:refer-clojure :exclude [str keyword])
+  (:require [cider-ci.utils.core :refer [keyword str]])
+
   (:import
     [java.io File]
     )
   (:require
+    [cider-ci.repository.shared :refer [repository-fs-path]]
     [cider-ci.utils.config :as config :refer [get-config get-db-spec]]
+
 
     [cider-ci.utils.fs :as ci-fs]
     [cider-ci.utils.system :as system]
@@ -32,30 +37,41 @@
     "java.lang.String" (java.util.UUID/fromString _repository)
     "java.util.UUID" _repository))
 
-(defn path
-  "Returns the absolute path to the (git-)repository."
-  [repository]
-  (let [path  (-> (get-config) :services :repository :repositories :path)
-        git-url (:git_url repository)]
-    (assert (not (blank? path)))
-    (assert (not (blank? git-url)))
-    (str path (File/separator) (ci-fs/path-proof git-url))))
-
 (defn get-path-contents
+  "Returns contents of the specified path for the git reference id
+  and the given repository it exits. Throws an ExceptionInfo with {:status 404}
+  if the path doesn't exist. Throws an ExceptionInfo with {:status 500}
+  otherwise."
   [repository id file-path]
-  (let [git-dir-path (path repository)
-        res (system/exec
-              ["git" "show" (str id ":" file-path)]
-              {:dir git-dir-path})]
-    (if (= (:exit res) 0) (:out res)
-      (throw (ex-info (:err res)
-                      res )))))
+  (let [git-dir-path (repository-fs-path repository)]
+    (let [wrapped-exec (system/async-exec
+                         ["git" "show" (str id ":" file-path)]
+                         {:dir git-dir-path})
+          realized-exec (-> wrapped-exec deref :exec deref)]
+      (logging/debug 'realized-exec realized-exec)
+      (def ^:dynamic *realized-exec* realized-exec)
+      (cond
+        (= 0 (:exit realized-exec)) (:out realized-exec)
+        ; throw ex-info with 404 if the file doesn't exist in the commit
+        (and (= 128 (:exit realized-exec))
+             (re-matches #"(?si).*Path.*does not exist in.*"
+                         (or (:err realized-exec) "")))
+        (throw (ex-info (:err realized-exec)
+                        {:status 404}
+                        (-> wrapped-exec deref :exception)))
+        ; throw ex-info with 500 other cases
+        :else (throw
+                (ex-info "Error for get-path-contents"
+                         {:status 500
+                          :wrapped-exec @wrapped-exec
+                          :realized-exec realized-exec}
+                         (-> wrapped-exec deref :exception)))))))
 
 (defn- ls-tree_unmemoized [repository id include-regex exclude-regex]
   (catcher/with-logging {}
-    (->> (-> (system/exec-with-success-or-throw
+    (->> (-> (system/exec!
                ["git" "ls-tree" "-r" "--name-only" id]
-               {:dir (path repository)})
+               {:dir (repository-fs-path repository)})
              :out
              (split #"\n"))
          (map trim)

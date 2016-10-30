@@ -3,6 +3,9 @@
 ; See the "LICENSE.txt" file provided with this software.
 
 (ns cider-ci.repository.sql.commits.depth
+  (:refer-clojure :exclude [str keyword])
+  (:require [cider-ci.utils.core :refer [keyword str]])
+
   (:require
     [cider-ci.utils.rdbms :as rdbms]
     [clojure.java.jdbc :as jdbc]

@@ -3,17 +3,25 @@
 ; See the "LICENSE.txt" file provided with this software.
 
 (ns cider-ci.repository.web
+  (:refer-clojure :exclude [str keyword])
+  (:require [cider-ci.utils.core :refer [keyword str]])
+
   (:require
     [cider-ci.repository.git.repositories :as git.repositories]
-    [cider-ci.repository.project-configuration :as project-configuration]
-    [cider-ci.repository.repositories :as repositories]
+    [cider-ci.repository.roa.core :as roa]
     [cider-ci.repository.sql.repository :as sql.repository]
     [cider-ci.repository.web.ls-tree :as web.ls-tree]
+    [cider-ci.repository.web.project-configuration :as web.project-configuration]
+    [cider-ci.repository.web.projects :as web.projects]
+    [cider-ci.repository.web.push :as web.push]
     [cider-ci.repository.web.shared :refer :all]
+    [cider-ci.repository.web.ui :as web.ui]
+    [cider-ci.repository.web.push-notifications :as push-notifications]
 
-
+    [cider-ci.auth.anti-forgery :as anti-forgery]
     [cider-ci.auth.authorize :as authorize]
     [cider-ci.auth.http-basic :as http-basic]
+    [cider-ci.auth.session :as session]
     [cider-ci.utils.config :as config :refer [get-config]]
     [cider-ci.utils.routing :as routing]
     [cider-ci.utils.status :as status]
@@ -24,6 +32,9 @@
     [compojure.core :as cpj]
     [compojure.handler :as cpj.handler]
     [ring.adapter.jetty :as jetty]
+    [ring.middleware.accept]
+    [ring.middleware.cookies :as cookies]
+    [ring.middleware.defaults]
     [ring.middleware.json]
     [ring.middleware.params]
     [ring.util.response :refer [charset]]
@@ -31,27 +42,12 @@
 
     [clj-logging-config.log4j :as logging-config]
     [clojure.tools.logging :as logging]
-    [logbug.debug :as debug :refer [I> I>>]]
+    [logbug.debug :as debug :refer [I> I>> identity-with-logging]]
     [logbug.ring :refer [wrap-handler-with-logging]]
     [logbug.thrown :as thrown]
     ))
 
-;##### get file ###############################################################
-
-(defn get-git-file [request]
-  (logging/debug get-git-file [request])
-  (let [repository-id (:id (:route-params request))
-        relative-web-path (:* (:route-params request))
-        relative-file-path (str (-> (get-config) :services :repository :repositories :path) "/" repository-id "/" relative-web-path)
-        file (clojure.java.io/file relative-file-path)
-        abs-path (.getAbsolutePath file)]
-    (logging/debug {:repositories-id repository-id
-                    :relative-file-path relative-file-path
-                    :abs-path abs-path
-                    :file-exists? (.exists file)})
-    (if (.exists file)
-      (ring.util.response/file-response relative-file-path nil)
-      {:status 404})))
+;##### get path content #######################################################
 
 (defn get-path-content [request]
   (logging/debug request)
@@ -68,66 +64,48 @@
       (respond-with-500 request e))))
 
 
-;#### repository update notification ##########################################
-
-(defn update-notification-handler [request]
-  (if-let [repository (sql.repository/get-repository-by-update-notification-token
-                        (-> request :params :update_notification_token))]
-    (do (repositories/update-repository repository)
-      {:status 202 :body "OK"})
-    {:status 404 :body "The corresponding repository was not found"}))
-
-(defn wrap-repositories-update-notifications [default-handler]
-  (cpj/routes
-    (cpj/POST "/update-notification/:update_notification_token"
-              _ #'update-notification-handler)
-    (cpj/ANY "*" _ default-handler)))
-
-
-;##### project configuration ##################################################
-
-(defn get-project-configuration [request]
-  (-> (try
-        (when-let [content (project-configuration/build-project-configuration
-                             (-> request :params :id))]
-          {:body (json/write-str content :key-fn #(subs (str %) 1))
-           :headers {"Content-Type" "application/json"}})
-        (catch clojure.lang.ExceptionInfo e
-          (case (-> e ex-data :status )
-            404 {:status 404
-                 :headers {"Content-Type" "application/json"}
-                 :body (json/write-str (ex-data e)) }
-            422 {:status 422
-                 :body (thrown/stringify e)}
-            (respond-with-500 request e)))
-        (catch Throwable e
-          (respond-with-500 request e)))
-      (charset "UTF-8")))
-
-
-
 ;##### routes #################################################################
 
 (def routes
   (cpj/routes
-    (cpj/GET "/project-configuration/:id" _ get-project-configuration)
-    (cpj/GET "/ls-tree" _ #'web.ls-tree/ls-tree)
-    (cpj/GET "/path-content/:id/*" _ get-path-content)
-    (cpj/GET "/:id/git/*" _ get-git-file )))
+    (cpj/GET "/project-configuration/:id" _
+             (authorize/wrap-require!
+               #'web.project-configuration/project-configuration
+               {:service true}))
+    (cpj/GET "/ls-tree" _
+             (authorize/wrap-require! #'web.ls-tree/ls-tree {:service true}))
+    (cpj/GET "/path-content/:id/*" _
+             (authorize/wrap-require! #'get-path-content {:service true}))
+    (cpj/ANY "/projects/*" _ web.projects/routes)))
+
+(defn wrap-accept [handler]
+  (ring.middleware.accept/wrap-accept
+    handler
+    {:mime
+     ["application/json-roa+json" :qs 1 :as :json-roa
+      "application/json" :qs 1 :as :json
+      "text/html" :qs 1 :as :html
+      ]}))
 
 (defn build-main-handler [context]
   (I> wrap-handler-with-logging
       (cpj.handler/api routes)
+      roa/wrap
+      ring.middleware.json/wrap-json-body
+      ring.middleware.json/wrap-json-response
       routing/wrap-shutdown
-      (ring.middleware.params/wrap-params)
-      (ring.middleware.json/wrap-json-params)
+      web.ui/wrap
+      wrap-accept
+      web.push/wrap
+      anti-forgery/wrap
+      (http-basic/wrap {:service true :user true})
+      session/wrap
+      cookies/wrap-cookies
+      (ring.middleware.defaults/wrap-defaults {:static {:resources "public"}})
+      push-notifications/wrap
       status/wrap
-      (authorize/wrap-require! {:service true})
-      (http-basic/wrap {:service true})
-      wrap-repositories-update-notifications
       (routing/wrap-prefix context)
-      (routing/wrap-log-exception)))
-
+      routing/wrap-exception))
 
 
 ;#### debug ###################################################################

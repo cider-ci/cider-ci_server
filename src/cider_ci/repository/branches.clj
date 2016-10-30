@@ -3,6 +3,9 @@
 ; See the "LICENSE.txt" file provided with this software.
 
 (ns cider-ci.repository.branches
+  (:refer-clojure :exclude [str keyword])
+  (:require [cider-ci.utils.core :refer [keyword str]])
+
   (:require
     [cider-ci.repository.commits :as commits]
     [cider-ci.repository.sql.branches :as sql.branches]

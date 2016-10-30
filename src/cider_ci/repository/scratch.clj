@@ -3,27 +3,26 @@
 ; See the "LICENSE.txt" file provided with this software.
 
 
-(ns cider-ci.repository.repositories
+(ns cider-ci.repository.scratch
   (:require
-    [cider-ci.repository.repositories.fetch-and-update :as fetch-and-update]
-    [cider-ci.repository.branches :as branches]
-    [cider-ci.repository.git.repositories :as git.repositories]
-    [cider-ci.repository.sql.branches :as sql.branches]
-    [cider-ci.utils.fs :as ci-fs]
     [cider-ci.utils.rdbms :as rdbms]
-    [cider-ci.utils.system :as system]
-    [clj-logging-config.log4j :as logging-config]
-    [clj-time.core :as time]
+
+    [clojure.data.json :as json]
     [clojure.java.jdbc :as jdbc]
-    [clojure.tools.logging :as logging]
-    [logbug.catcher :as catcher]
-    [logbug.debug :as debug]
-    [logbug.thrown :as thrown]
-    [me.raynes.fs :as fs]
     ))
 
 
-(catcher/snatch {}
-  (jdbc/query (rdbms/get-ds) ["SELECT 1 + )"])
-  )
+(def db (atom {:a 0 :b 0}))
+
+(doseq [_ (range 0 1000)]
+  (future
+    (swap! db
+           (fn [current-db]
+             {:a (inc (:a current-db))
+              :b (dec (:b current-db))}))))
+
+; (= db {:a 1000, :b -1000})
+
+
+
 

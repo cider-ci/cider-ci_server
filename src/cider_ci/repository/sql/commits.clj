@@ -3,7 +3,8 @@
 ; See the "LICENSE.txt" file provided with this software.
 
 (ns cider-ci.repository.sql.commits
-  (:refer-clojure :exclude [find])
+  (:refer-clojure :exclude [str keyword find])
+  (:require [cider-ci.utils.core :refer [keyword str]])
   (:require
     [cider-ci.repository.sql.commits.depth :as depth]
     [clojure.tools.logging :as logging]

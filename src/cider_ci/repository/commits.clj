@@ -3,17 +3,19 @@
 ; See the "LICENSE.txt" file provided with this software.
 
 (ns cider-ci.repository.commits
-  (:refer-clojure :exclude [import])
+  (:refer-clojure :exclude [str keyword import])
+  (:require [cider-ci.utils.core :refer [keyword str]])
   (:require
     [cider-ci.repository.git.commits :as git-commits]
     [cider-ci.repository.sql.commits :as sql.commits]
-
     [clojure.java.jdbc :as jdbc]
-
-    [clojure.tools.logging :as logging]
-    [logbug.debug :as debug]
+    )
+  (:require
     [clj-logging-config.log4j :as logging-config]
-    ))
+    [clojure.tools.logging :as logging]
+    [logbug.catcher :as catcher]
+    [logbug.debug :as debug :refer [I> I>> identity-with-logging]]
+    [logbug.thrown :as thrown]))
 
 ;### create / update ###########################################################
 

@@ -3,17 +3,21 @@
 ; See the "LICENSE.txt" file provided with this software.
 
 (ns cider-ci.repository.git.branches
+  (:refer-clojure :exclude [str keyword])
+  (:require [cider-ci.utils.core :refer [keyword str]])
+
   (:require
     [logbug.thrown :as thrown]
     [cider-ci.utils.system :as system]
     [clojure.tools.logging :as logging]
     ))
 
+
 (defn get-branches
   "Returns a sequence of (git) branches, each branch has
   the properities :branch_name and :current_commit_id"
   [repository-path]
-  (let [res (system/exec
+  (let [res (system/exec!
               ["git" "branch" "--no-abbrev" "--no-color" "-v"]
               {:timeout "1 Minute", :dir repository-path, :env {"TERM" "VT-100"}})
         out (:out res)
