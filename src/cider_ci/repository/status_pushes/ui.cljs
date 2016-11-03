@@ -108,7 +108,6 @@
                  (-> project api-access?))
         [send-button project])]]))
 
-
 (defn page-section [project]
   [:section.push-hooks
    [:h3 [:span [state-icon project]] "Status-Pushes"]

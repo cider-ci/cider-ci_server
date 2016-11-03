@@ -48,12 +48,13 @@
 
 (defn sync-alert []
   [:div#sync-alert
-   (when-not (:server-state-is-in-sync @state/client-state)
-     [:div.alert.alert-danger
-      [:strong "Bummer! "]
-      "It seems that the state in your browser and the state
-      on the server got out of sync. "
-      [:strong "Please reload this page at your convenience manually!"]])])
+   (when false ; DISABLED !
+     (when-not (:server-state-is-in-sync @state/client-state)
+       [:div.alert.alert-danger
+        [:strong "Bummer! "]
+        "It seems that the state in your browser and the state
+        on the server got out of sync. "
+        [:strong "Please reload this page at your convenience manually!"]]))])
 
 (defn connection-status []
   [:div.connection-status

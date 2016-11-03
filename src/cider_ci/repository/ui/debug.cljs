@@ -1,8 +1,12 @@
 (ns cider-ci.repository.ui.debug
-  )
+  (:require
+    [cider-ci.repository.ui.state :as state]
+    ))
 
 
 (defn page []
-  [:h1 "Debug"]
-  )
+  [:section#debug-db
+   [:h1 "Debug DB"]
+   [:pre.code
+    (.stringify js/JSON (clj->js @state/debug-db) nil 2)]])
 

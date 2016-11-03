@@ -4,6 +4,7 @@
     )
   (:require
     [cider-ci.utils.core :refer [presence]]
+    [cider-ci.repository.constants :refer [CONTEXT]]
     [cider-ci.repository.ui.state :as state]
     ))
 
@@ -74,8 +75,8 @@
                 :type "checkbox"
                 :on-change toggle-debug
                 :checked (:debug @state/client-state)
-                }]
-       " Debug "]]]))
+                }] " Debug state"]
+      [:li [:a {:href (str CONTEXT "/ui/debug")} " Debug Page "]]]]))
 
 
 

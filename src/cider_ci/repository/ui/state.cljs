@@ -17,6 +17,8 @@
     ))
 
 
+(defonce debug-db (r/atom {}))
+
 (defonce server-state (r/atom {}))
 
 ; this triggers the state to get out of sync which should show
@@ -57,19 +59,20 @@
   (def chsk-state state))
 
 (defn update-server-state [data]
-  (when-let [full (:full data)]
-    ;(js/console.log "reseting server-state")
-    (reset! server-state full))
-  (when-let [p (:patch data)]
-    ;(js/console.log "patching server-state")
-    (swap! server-state (fn [db p] (patch db p)) p))
-  (swap! client-state assoc :server_state_updated_at (js/moment))
-  (let [our-server-state-digest (digest @server-state)
+  (let [new-state (if-let [full (:full data)]
+                    (reset! server-state full)
+                    (if-let [p (:patch data)]
+                      (swap! server-state (fn [db p] (patch db p)) p)
+                      (throw (ex-info "Either :full or :patch must be supplied" {}))))
+        _ (swap! client-state assoc :server_state_updated_at (js/moment))
+        new-state-digest (digest new-state)
         supposed-digest (:digest data)]
-    ;(js/console.log (clj->json {:our-server-state-digest our-server-state-digest :supposed-digest supposed-digest}))
-    (if (= our-server-state-digest supposed-digest)
+    (if (= new-state-digest supposed-digest)
       (swap! client-state assoc :server-state-is-in-sync true)
-      (swap! client-state assoc :server-state-is-in-sync false))))
+      (do (swap! client-state assoc :server-state-is-in-sync false)
+          (swap! debug-db  assoc
+                 :last-bad-server-state-sync-at (js/moment)
+                 :last-bad-server-state-sync-data new-state)))))
 
 (defn event-msg-handler [{:as message :keys [id ?data event]}]
   ;(js/console.log (clj->js {:id id :message message}))

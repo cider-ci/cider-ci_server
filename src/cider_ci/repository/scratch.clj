@@ -11,18 +11,3 @@
     [clojure.java.jdbc :as jdbc]
     ))
 
-
-(def db (atom {:a 0 :b 0}))
-
-(doseq [_ (range 0 1000)]
-  (future
-    (swap! db
-           (fn [current-db]
-             {:a (inc (:a current-db))
-              :b (dec (:b current-db))}))))
-
-; (= db {:a 1000, :b -1000})
-
-
-
-
