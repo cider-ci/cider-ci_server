@@ -12,7 +12,6 @@
     [cljs-http.client :as http]
     ))
 
-
 (def last-request (r/atom {}))
 
 (defn csrf-token []
@@ -79,7 +78,8 @@
 
 ;##############################################################################
 
-(defn send-off2 [req-opts meta-req]
+(defn send-off2 [req-opts meta-req & {:keys [callback]
+                                      :or {callback nil}}]
   (let [req (deep-merge {:method :post
                          :headers {"accept" "application/json"
                                    "X-CSRF-Token" (csrf-token)}}
@@ -93,5 +93,8 @@
             (when (<= 200 (-> resp :status) 299)
               (js/setTimeout (fn [] (swap! state/client-state
                                            #(update-in %1 [:requests] dissoc %2) id))
-                             5000)))))
+                             5000)))
+          (when callback (callback resp))))
     id))
+
+

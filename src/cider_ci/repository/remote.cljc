@@ -14,13 +14,28 @@
                          (-> repository :git_url url/dissect :host))
                   "https://api.github.com"))))
 
+(defn api-endpoint! [repository]
+  (or (api-endpoint repository)
+      (throw (ex-info "The required api-endpoint could not be inferred"
+                      {:repository repository}))))
+
 (defn api-namespace [repository]
   (presence (or (:remote_api_namespace repository)
                 (-> repository :git_url url/dissect :project_namespace))))
 
+(defn api-namespace! [repository]
+  (or (api-namespace repository)
+      (throw (ex-info "The required api-namespace could not be inferred."
+                      {:repository repository}))))
+
 (defn api-name [repository]
   (presence (or (:remote_api_name repository)
                 (-> repository :git_url url/dissect :project_name))))
+
+(defn api-name! [repository]
+  (or (api-name repository)
+      (throw (ex-info "The required api-name could not be inferred."
+                      {:repository repository}))))
 
 (defn github-api-access? [project]
   (boolean (and

@@ -25,10 +25,14 @@
 ; a nice alert then; TODO: test this (how?)
 ;(js/setTimeout #(swap! server-state assoc :x 42) 5000)
 
+
+(defonce page-state (r/atom {}))
+
 (defonce client-state
   (r/atom
     {:debug false
      :server_state_updated_at nil
+     :edit-new-form-data {}
      :connection {:ever-opened? false
                   :open? false
                   :updated_at (js/moment)}}))

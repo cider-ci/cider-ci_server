@@ -7,50 +7,29 @@
   (:require [cider-ci.utils.core :refer [keyword str]])
   (:require
     [cider-ci.repository.constants :refer [CONTEXT]]
+    [cider-ci.repository.remote :as remote]
     [cider-ci.repository.state :as state]
     [cider-ci.utils.config :refer [get-config]]
     [cider-ci.utils.rdbms :as rdbms]
     [cider-ci.utils.url :as url]
-    [clojure.data.json :as json]
     [clj-http.client :as http-client]
+    [clojure.data.json :as json]
     [clojure.java.jdbc :as jdbc])
   (:require
     [clj-logging-config.log4j :as logging-config]
+
     [clojure.tools.logging :as logging]
     [logbug.catcher :as catcher :refer [snatch]]
     [logbug.debug :as debug :refer [I> I>> identity-with-logging]]
     [logbug.thrown :as thrown]
     ))
 
-;### helpers ##################################################################
-
-(defn remote_api_endpoint! [repository]
-  (let [endpoint (or (:remote_api_endpoint repository)
-                     (when (= "github.com"
-                              (-> repository :git_url url/dissect :host))
-                       "https://api.github.com"))]
-    (assert (not (clojure.string/blank? endpoint)))
-    endpoint))
-
-(defn remote_api_namespace! [repository]
-  (let [project-ns (or (:remote_api_namespace repository)
-                       (-> repository :git_url url/dissect :project_namespace))]
-    (assert (not (clojure.string/blank? project-ns)))
-    project-ns))
-
-(defn remote_api_name! [repository]
-  (let [project-name (or (:remote_api_name repository)
-                         (-> repository :git_url url/dissect :project_name))]
-    (assert (not (clojure.string/blank? project-name)))
-    project-name))
-
-;(-> "https://github.com/cider-ci/cider-ci_demo-project-bash.git"  url/dissect )
-
 ;##############################################################################
+
 (defn hooks-url [repository]
-  (str (remote_api_endpoint! repository)
-       "/repos/" (remote_api_namespace! repository)
-       "/" (remote_api_name! repository) "/hooks"))
+  (str (remote/api-endpoint! repository)
+       "/repos/" (remote/api-namespace! repository)
+       "/" (remote/api-name! repository) "/hooks"))
 
 ;(hooks-url {:git_url "https://github.com/cider-ci/cider-ci_demo-project-bash.git"})
 

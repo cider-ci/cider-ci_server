@@ -2,7 +2,7 @@
   (:require
     [cider-ci.repository.ui.navbar :as navbar]
     [cider-ci.repository.ui.debug]
-    [cider-ci.repository.ui.projects.edit-new :as projects.edit-new]
+    [cider-ci.repository.ui.projects.edit-new.core :as projects.edit-new.core]
     [cider-ci.repository.ui.projects.index :as projects.index]
     [cider-ci.repository.ui.projects.show :as projects.show]
     [cider-ci.repository.constants :refer [CONTEXT]]
@@ -38,13 +38,16 @@
     [:section.debug
      [:hr]
      [:h1 "Debug"]
-     [:div.server-db
+     [:div.client-state
+      [:h2 "Client State"]
+      [:pre (.stringify js/JSON (clj->js @state/client-state) nil 2)]]
+     [:div.server-state
       [:h2 "Server State"]
       [:pre (.stringify js/JSON (clj->js @state/server-state) nil 2)]]
-     [:div.client-db
-      [:h2 "Client State"]
-      [:pre (.stringify js/JSON (clj->js @state/client-state) nil 2)]
-      ]]))
+     [:div.page-state
+      [:h2 "Page/Router State"]
+      [:pre (.stringify js/JSON (clj->js @state/page-state) nil 2)]]
+     ]))
 
 (defn sync-alert []
   [:div#sync-alert
@@ -80,7 +83,7 @@
    (if (:server_state_updated_at @state/client-state)
      [:div
       [sync-alert]
-      [:div.page [(-> @state/client-state :current-page :component)]]]
+      [:div.page [(-> @state/page-state :current-page :component)]]]
      [:div
       [:div.progress
        [:div.progress-bar.progress-bar-warning.progress-bar-striped.active
@@ -98,39 +101,39 @@
 
 
 (secretary/defroute (str CONTEXT "/projects/") [query-params]
-  (swap! state/client-state assoc :current-page
+  (swap! state/page-state assoc :current-page
          {:component #'projects.index/page
           :query-params query-params
           }))
 
 (secretary/defroute (str CONTEXT "/projects/new") []
-  (swap! state/client-state assoc :current-page
-         {:component #'projects.edit-new/new-page }))
+  (swap! state/page-state assoc :current-page
+         {:component #'projects.edit-new.core/new-page }))
 
 (secretary/defroute (str CONTEXT "/projects/:id") {id :id}
-  (swap! state/client-state assoc :current-page
+  (swap! state/page-state assoc :current-page
          {:component #'projects.show/page :id id}))
 
 (secretary/defroute (str CONTEXT "/projects/:id/issues/:keys") {id :id encoded-ks :keys}
-  (swap! state/client-state assoc :current-page
+  (swap! state/page-state assoc :current-page
          {:component #'projects.show/issue
           :id id :issue-keys (->> encoded-ks js/decodeURIComponent
                                   (.parse js/JSON) js->clj (map keyword))}))
 
 (secretary/defroute (str CONTEXT "/projects/:id/error/:keys") {id :id raw-keys :keys}
-  (swap! state/client-state assoc :current-page
+  (swap! state/page-state assoc :current-page
          {:component #'projects.show/issue :id id}))
 
 (secretary/defroute (str CONTEXT "/projects/:id/edit") {id :id}
-  (swap! state/client-state assoc :current-page
-         {:component #'projects.edit-new/edit :id id}))
+  (swap! state/page-state assoc :current-page
+         {:component #'projects.edit-new.core/edit :id id}))
 
 (secretary/defroute (str CONTEXT "/ui/debug") []
-  (swap! state/client-state assoc :current-page
+  (swap! state/page-state assoc :current-page
          {:component #'cider-ci.repository.ui.debug/page}))
 
 (secretary/defroute (str CONTEXT "*") []
-  (swap! state/client-state assoc :current-page
+  (swap! state/page-state assoc :current-page
          {:component #'not-found}))
 
 ;; -------------------------

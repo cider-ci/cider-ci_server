@@ -15,8 +15,7 @@
 ;##############################################################################
 
 (def to-be-removed-properties
-  [[:remote_http_fetch_token
-    :proxy_id]])
+  [[:proxy_id]])
 
 (defn dissoc-in [m ks]
   (if (empty? (rest ks))
@@ -38,9 +37,9 @@
 
 (def to-be-hidden-non-admin-properties
   [[:update_notification_token]
+   [:fetch-and-update :last_error]
    [:remote_api_token]
    [:remote_api_token_bearer]
-   [:fetch-and-update :last_error]
    [:push-hook :hook]
    [:push-hook :last_error]
    [:status-pushes :last_error]

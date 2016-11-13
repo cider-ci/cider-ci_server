@@ -53,3 +53,8 @@
 (defn initialize []
   (update-repositories)
   (start-update-repositories))
+
+;#### debug ###################################################################
+;(logging-config/set-logger! :level :debug)
+;(logging-config/set-logger! :level :info)
+;(debug/debug-ns *ns*)

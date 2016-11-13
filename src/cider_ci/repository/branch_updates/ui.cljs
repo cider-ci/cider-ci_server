@@ -15,7 +15,8 @@
       #{"ok"} "success"
       #{"error"} "danger"
       #{"updating" "waiting"} "executing"
-      #{"initializing"} "default")))
+      #{"initializing"} "default"
+      "warning")))
 
 (defn state-icon [project]
   (r/create-class
@@ -56,7 +57,9 @@
           [:i.fa.fa-refresh] " "])})))
 
 (defn td [project]
-  [:td.text-center.branches {:class (color-class project)}
+  [:td.text-center.branches
+   {:class (color-class project)
+    :data-state (-> project :branch-updates :state)}
    [:span [state-icon project] " "]
    [:span (humanize-datetime (:timestamp @state/client-state)
                              (-> project :branch-updates :updated_at))]

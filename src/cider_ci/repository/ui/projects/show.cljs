@@ -24,7 +24,7 @@
     [reagent.core :as r]))
 
 
-(def id (reaction (-> @state/client-state :current-page :id)))
+(def id (reaction (-> @state/page-state :current-page :id)))
 
 (def project (reaction (-> @state/server-state :repositories (get (keyword @id)))))
 
@@ -178,7 +178,7 @@
   (r/create-class
     {:component-will-mount reset-state!
      :reagent-render
-     (let [ks (-> @state/client-state :current-page :issue-keys)
+     (let [ks (-> @state/page-state :current-page :issue-keys)
            issue (-> @state/server-state
                      :repositories (get (keyword @id)) (get-in ks))]
        (fn []

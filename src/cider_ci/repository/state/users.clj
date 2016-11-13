@@ -35,3 +35,9 @@
 (defn initialize []
   (update-users)
   (start-update-users))
+
+;#### debug ###################################################################
+;(logging-config/set-logger! :level :debug)
+;(logging-config/set-logger! :level :info)
+;(debug/debug-ns 'cider-ci.utils.row-events)
+;(debug/debug-ns *ns*)

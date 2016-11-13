@@ -10,7 +10,6 @@
   :dependencies ~(concat  (read-string (slurp "project.dependencies.clj"))
                           (read-string (slurp "../clj-utils/dependencies.clj")))
 
-
   :source-paths ["clj-utils/src" "src" ]
 
   :resource-paths ["../config" "./config" "./resources"]

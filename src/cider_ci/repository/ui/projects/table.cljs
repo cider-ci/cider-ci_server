@@ -21,7 +21,7 @@
 
 ;### sorting ##################################################################
 
-(def order (reaction (or (-> @state/client-state :current-page :query-params :order)
+(def order (reaction (or (-> @state/page-state :current-page :query-params :order)
                          "name")))
 
 (defn most-recent-first-sort-fn [o]
