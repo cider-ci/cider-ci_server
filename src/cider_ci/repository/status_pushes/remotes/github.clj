@@ -58,7 +58,7 @@
   {"state"  (map-state (:state params))
    "target_url"  (build-target-url params)
    "description" (str (:state params) " - " (:name params))
-   "context"  (str "Cider-CI@" (:hostname (get-config)) " - " (:name params) )})
+   "context" (str (:name-prefix params) " - " (:name params))})
 
 (defn post-status [params]
   (future
