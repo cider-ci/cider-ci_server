@@ -6,23 +6,20 @@
   :description "Cider-CI Builder"
   :license {:name "GNU AFFERO GENERAL PUBLIC LICENSE Version 3"
             :url "http://www.gnu.org/licenses/agpl-3.0.html"}
-  :dependencies [
-                 [org.clojure/core.memoize "0.5.8"]
-                 [camel-snake-kebab "0.3.2"]
-                 [drtom/honeysql "1.3.0-beta.4"]
-                 [org.clojure/core.memoize "0.5.8"]
-                 [org.clojure/tools.nrepl "0.2.12"]
-                 ]
+
+  :dependencies ~(concat  (read-string (slurp "project.dependencies.clj"))
+                         (read-string (slurp "../clj-utils/dependencies.clj")))
+
+  :source-paths ["clj-utils/src" "src"]
   :java-source-paths ["java"]
   :javac-options ["-target" "1.8" "-source" "1.8" "-Xlint:-options"]
-  :plugins [[cider-ci/lein_cider-ci_dev "0.2.1"]]
   :profiles {:dev
              {:dependencies [[midje "1.8.3"]]
-              :source-paths ["src" "../clj-utils/src"]
               :plugins [[lein-midje "3.1.1"]]
               :repositories [["tmp" {:url "http://maven-repo-tmp.drtom.ch" :snapshots false}]]
-              :resource-paths ["../config" "./config" "./resources"]}}
-  :aot [cider-ci.builder.ValidationException #"cider-ci.*"]
+              :resource-paths ["../config" "./config" "./resources"]}
+             :uberjar { :uberjar-name "builder.jar" }}
+  :aot [cider-ci.builder.ValidationException cider-ci.WebstackException #"cider-ci.*"]
   :main cider-ci.builder.main
   :repl-options {:timeout  120000}
   )

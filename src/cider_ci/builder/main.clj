@@ -3,9 +3,10 @@
 ; See the "LICENSE.txt" file provided with this software.
 
 (ns cider-ci.builder.main
+  (:refer-clojure :exclude [str keyword])
+  (:require [cider-ci.utils.core :refer [keyword str]])
   (:gen-class)
   (:require
-    [cider-ci.self]
     [cider-ci.utils.app]
     [cider-ci.utils.config :refer [get-config]]
 
