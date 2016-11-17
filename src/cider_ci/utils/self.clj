@@ -15,18 +15,20 @@
     ))
 
 (defn group-name []
-  (-> "project-info.clj"
-      io/resource
-      slurp
-      read-string
-      :project-group))
+  (snatch
+    {:return-fn (fn [_]
+                  (-> "project.clj" slurp read-string
+                      second  str (clojure.string/split #"\/") first))}
+    (-> "project-info.clj" io/resource
+        slurp read-string :project-group)))
 
 (defn project-name []
-  (-> "project-info.clj"
-      io/resource
-      slurp
-      read-string
-      :project-name))
+  (snatch
+    {:return-fn (fn [_]
+                  (-> "project.clj" slurp read-string
+                      second  str (clojure.string/split #"\/") second))}
+    (-> "project-info.clj" io/resource
+        slurp read-string :project-name)))
 
 (defn release []
   (snatch
@@ -93,5 +95,3 @@
 
 ;### Debug #####################################################################
 ;(debug/debug-ns *ns*)
-;(logging-config/set-logger! :level :debug)
-;(logging-config/set-logger! :level :info)
