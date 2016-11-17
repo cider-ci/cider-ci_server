@@ -32,16 +32,23 @@
     (to-pattern false))
   )
 
+(defn matches? [matcher s]
+  (boolean (re-find (to-pattern matcher) (str s))))
+
+(defn includes? [include-match s]
+  (matches? include-match s))
+
+(defn not-excludes? [exclude-match s]
+  (not (matches? exclude-match s)))
+
 (defn filter [include-match exclude-match coll]
   "Filter a collection of strings according to include-match and exclude-match.
-   Non empty strings are converted to regex matchers and applied.
-   A empty sting is equivalent to a false boolean value.
-   `nil` is equivalent to a false boolean value.
-   A true boolean include-match passes anything and a false nothing.
-   A false boolean exclude-match passes anything and a true nothing."
+  Non empty strings are converted to regex matchers and applied.
+  A empty sting is equivalent to a false boolean value.
+  `nil` is equivalent to a false boolean value.
+  A true boolean include-match passes anything and a false nothing.
+  A false boolean exclude-match passes anything and a true nothing."
   (->> coll
-       (clojure.core/filter
-         #(re-find (to-pattern include-match) (str %)))
-       (clojure.core/filter
-         #(not (re-find (to-pattern exclude-match) (str %))))))
+       (clojure.core/filter #(includes? include-match %))
+       (clojure.core/filter #(not-excludes? exclude-match %))))
 
