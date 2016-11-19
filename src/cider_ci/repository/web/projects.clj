@@ -14,6 +14,7 @@
     [cider-ci.repository.state :as state]
     [cider-ci.repository.web.push]
     [cider-ci.repository.web.shared :as web.shared]
+    [cider-ci.repository.web.projects.update :as web.projects.update]
     [cider-ci.repository.remote :as remote]
 
     [cider-ci.auth.authorize :as authorize]
@@ -95,24 +96,6 @@
       {:body (web.shared/filter-repository-params
                project (:authenticated-user request))})))
 
-(defn update-project [request]
-  (cond
-    (-> request
-        :authenticated-user
-        :is_admin not) {:status 403
-                        :body  "Only admins can update projects!"}
-    :else (let [id (-> request :route-params :id)
-                params (:body request)
-                updated (first (jdbc/update!
-                                 (rdbms/get-ds) :repositories
-                                 params ["id = ?" id]))]
-            (if (= updated 1)
-              (do (state/update-repositories)
-                  {:status 200
-                   :body {:message "updated"}})
-              {:status 500
-               :body "The project update has not been confirmed"}))))
-
 (defn push-statuses [request]
   (let [id (-> request :route-params :id)]
     (let [repository (get-repository id)]
@@ -138,11 +121,9 @@
     (cpj/GET "/projects/:id" _
                (authorize/wrap-require! #'get-project {:user true}))
     (cpj/PATCH "/projects/:id" _
-               (authorize/wrap-require! #'update-project {:user true}))
+               (authorize/wrap-require! #'web.projects.update/update-project {:user true}))
     (cpj/DELETE "/projects/:id" _
                 (authorize/wrap-require! #'delete-project {:user true}))))
-
-
 
 ;### Debug ####################################################################
 ;(logging-config/set-logger! :level :debug)
