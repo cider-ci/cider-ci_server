@@ -68,6 +68,7 @@
        :remote_fetch_interval "1 Minute"
        :branch_trigger_include_match "^.*$"
        :branch_trigger_exclude_match ""
+       :branch_trigger_max_commit_age "12 hours"
        :send_status_notifications true
        :manage_remote_push_hooks false
        })))
@@ -97,6 +98,7 @@
         @project
         [:branch_trigger_exclude_match
          :branch_trigger_include_match
+         :branch_trigger_max_commit_age
          :git_url
          :id
          :manage_remote_push_hooks
