@@ -11,11 +11,12 @@
     [cider-ci.builder.spec :as spec]
     [cider-ci.builder.tasks :as tasks]
     [cider-ci.builder.issues :refer [create-issue]]
+    [cider-ci.builder.jobs.trigger.branches :as trigger.branches]
+    [cider-ci.builder.jobs.trigger.jobs :as trigger.jobs]
 
     [cider-ci.utils.core :refer [deep-merge]]
     [cider-ci.utils.daemon :refer [defdaemon]]
     [cider-ci.utils.http :as http]
-    [cider-ci.utils.include-exclude :as include-exclude]
     [cider-ci.utils.jdbc :refer [insert-or-update]]
     [cider-ci.utils.map :refer [convert-to-array]]
     [cider-ci.utils.rdbms :as rdbms]
@@ -31,58 +32,17 @@
     ))
 
 
-;### trigger jobs #######################################################
 
-(defn- job-trigger-fulfilled? [tree-id job trigger]
-  (logging/debug 'job-trigger-fulfilled? [tree-id job trigger])
-  (let [query (-> (-> (sql/select true)
-                      (sql/from :jobs)
-                      (sql/merge-where [:= :tree_id tree-id])
-                      (sql/merge-where [:= :key (:job_key trigger)])
-                      (sql/merge-where [:in :state (or (:states trigger) ["passed"])])
-                      (sql/limit 1)) sql/format) ]
-    (logging/debug query)
-    (->> query
-         (jdbc/query (rdbms/get-ds))
-         first
-         boolean)))
 
-(defn- branches-for-tree-id [tree-id]
-  (->> (-> (sql/select :name :repository_id)
-           (sql/from :branches)
-           (sql/merge-join
-             :commits
-             [:= :branches.current_commit_id :commits.id])
-           (sql/where [:= :commits.tree_id tree-id])
-           sql/format)
-       (jdbc/query (rdbms/get-ds))))
-
-(defn- branch-trigger-fulfilled? [tree-id job trigger]
-  (boolean
-    (when-let [branches (-> tree-id branches-for-tree-id seq)]
-      (let [repository (->> (-> (sql/select :branch_trigger_include_match
-                                            :branch_trigger_exclude_match)
-                                (sql/from :repositories)
-                                (sql/merge-where [:in :id (map :repository_id branches)])
-                                (sql/format))
-                            (jdbc/query (rdbms/get-ds)) first)
-            branch-names (map :name branches)]
-        (->> branch-names
-             (include-exclude/filter
-               (:include_match trigger)
-               (:exclude_match trigger))
-             (include-exclude/filter
-               (:branch_trigger_include_match repository)
-               (:branch_trigger_exclude_match repository))
-             first)))))
+;##############################################################################
 
 (defn trigger-fulfilled? [tree-id job trigger]
   (case (:type trigger)
-    "job" (job-trigger-fulfilled? tree-id job trigger)
-    "branch" (branch-trigger-fulfilled? tree-id job trigger)
+    "job" (trigger.jobs/job-trigger-fulfilled? tree-id job trigger)
+    "branch" (trigger.branches/branch-trigger-fulfilled? tree-id job trigger)
     (do (logging/warn "unhandled run_when" trigger) false)))
 
-(defn some-job-trigger-fulfilled? [tree-id job]
+(defn some-trigger-fulfilled? [tree-id job]
   (when-let [triggers (:run_when job)]
     (some (fn [[_ trigger]]
             (trigger-fulfilled? tree-id job trigger)) triggers)))
@@ -99,12 +59,13 @@
            :jobs
            convert-to-array
            (filter #(-> % :run_when))
-           (filter #(some-job-trigger-fulfilled? tree-id %))
+           (filter #(some-trigger-fulfilled? tree-id %))
            (map #(assoc % :tree_id tree-id))
            (filter jobs.dependencies/fulfilled?)
            (map jobs/create)
            doall)))
   tree-id)
+
 
 ;##############################################################################
 

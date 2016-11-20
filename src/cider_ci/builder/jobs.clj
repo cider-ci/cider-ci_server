@@ -83,8 +83,7 @@
       (let [{tree-id :tree_id job-key :key} params
             spec (->> (get-dotfile-specification tree-id job-key)
                      normalizer/normalize-job-spec
-                     (tasks-generator/generate tree-id)
-                     )
+                     (tasks-generator/generate tree-id))
             job-spec (spec/get-or-create-job-spec spec)
             job-params (merge
                          {:key job-key :name job-key}
