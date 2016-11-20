@@ -3,7 +3,9 @@
 ; See the "LICENSE.txt" file provided with this software.
 ;
 
-(ns cider-ci.utils.duration)
+(ns cider-ci.utils.duration
+  #?(:clj (:require [clj-time.core :as time]))
+  )
 
 (def FILL-REXS
   [#"(?i)and"
@@ -59,19 +61,20 @@
        convert-to-seconds-factors
        (reduce +)))
 
+#?(:clj
+    (defn period [duration]
+      "Converts the duration into a org.joda.time.ReadablePeriod.
+      This function should be used in favor of (-> s parse-string-to-seconds time/seconds)
+      because the latter will fail for very long durations, e.g. 100 years. "
+      (let [secs (parse-string-to-seconds duration)]
+        (cond
+          (> (/ secs (* 60 60 24 365)) 50) (time/days (/ secs (* 60 60 24)))
+          :else (time/seconds secs)
+          ))))
+
 (defn valid? [duration]
   (try
     (parse-string-to-seconds duration)
     true
     #?(:clj (catch Exception _ false)
        :cljs (catch js/Object _ false))))
-
-;(parse-string-to-seconds "three days")
-;(valid?  "three days")
-;(parse-string-to-seconds "3 elephants")
-;(parse-string-to-seconds "3 milliseconds")
-;(valid? "3 milliseconds")
-;(parse-string-to-seconds "1 Year")
-;(parse-string-to-seconds "100 Years")
-;(parse-string-to-seconds "2 weeks")
-;(parse-string-to-seconds "3 Minutes")

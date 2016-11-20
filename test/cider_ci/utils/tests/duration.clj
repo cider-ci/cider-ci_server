@@ -30,6 +30,8 @@
           (* 1 SECOND)
           (* 3 MILLISECOND))))
 
+  (is (instance? org.joda.time.ReadablePeriod (period "100 Years")))
+
   )
 
 
