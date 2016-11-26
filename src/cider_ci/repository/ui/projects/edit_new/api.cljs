@@ -104,11 +104,12 @@
   [:div.form-group
    [:label "Remote API type"]
    [:select#remote_api_type.form-control
-    {:on-change #(update-form-data-value :remote_api_type (-> % .-target .-value presence))}
-    [:option nil]
-    [:option "github"]
-    [:option "gitlab"]
-    [:option "bitbucket"]
+    {:on-change #(update-form-data-value :remote_api_type (-> % .-target .-value presence))
+     ;:value (-> @form-data :remote_api_type)
+     }
+    [:option {:value nil :selected (= nil (-> @form-data :remote_api_type presence))} ""]
+    [:option {:value "github" :selected (= "github" (-> @form-data :remote_api_type))} "github"]
+    [:option {:value "gitlab" :selected (= "gitlab" (-> @form-data :remote_api_type))} "gitlab"]
     ]])
 
 (defn api-input-fields []
