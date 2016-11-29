@@ -114,7 +114,7 @@
 
 ;#### debug ###################################################################
 ;(debug/wrap-with-log-debug #'next-trial-for-pull)
-(logging-config/set-logger! :level :debug)
+;(logging-config/set-logger! :level :debug)
 ;(logging-config/set-logger! :level :info)
 ;(debug/debug-ns 'cider-ci.utils.http)
-(debug/debug-ns *ns*)
+;(debug/debug-ns *ns*)
