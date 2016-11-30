@@ -25,18 +25,18 @@
 
 (defn- evalute-new-state [job task-states]
   (case (:state job)
-    "aborted" "aborted"
     "aborting" (cond (every? #{"passed"} task-states) "passed"
                      (some #{"aborting"} task-states) "aborting"
                      (every? #{"passed" "failed" "aborted"} task-states) "aborted"
                      :else "aborting")
-    (cond (every? #{"passed"} task-states) "passed"
-          (some #{"executing"} task-states) "executing"
-          (some #{"pending"} task-states) "pending"
-          (some #{"aborted"} task-states) "aborted"
-          (some #{"defective"} task-states) "defective"
-          (some #{"failed"} task-states) "failed"
-          :else (:state job))))
+    (cond
+      (every? #{"passed"} task-states) "passed"
+      (some #{"executing"} task-states) "executing"
+      (some #{"pending"} task-states) "pending"
+      (some #{"aborted"} task-states) "aborted"
+      (some #{"defective"} task-states) "defective"
+      (some #{"failed"} task-states) "failed"
+      :else (:state job))))
 
 (defn evaluate-and-update [row]
   (let [job-id (:job_id row)]
@@ -64,3 +64,12 @@
 (defn initialize []
   (catcher/with-logging {}
     (start-evaluate-pending-job-evaluations)))
+
+
+;### Debug ####################################################################
+;(debug/debug-ns 'cider-ci.utils.http)
+;(logging-config/set-logger! :level :debug)
+;(logging-config/set-logger! :level :info)
+;(debug/wrap-with-log-debug #'create)
+;(debug/debug-ns *ns*)
+

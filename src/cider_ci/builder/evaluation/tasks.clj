@@ -45,8 +45,8 @@
           "dispatching" "executing"
           state))
       (cond (empty? trial-states) "defective"
-            (some #{"passed"} trial-states) "passed"
             (some #{"executing" "dispatching"} trial-states) "executing"
+            (some #{"passed"} trial-states) "passed"
             (= (last trial-states) "aborted") "aborted"
             (every? #{"defective"} trial-states) "defective"
             (some #{"pending"} trial-states) "pending"
