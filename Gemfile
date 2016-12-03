@@ -1,0 +1,18 @@
+source 'https://rubygems.org'
+eval_gemfile 'database/Gemfile'
+
+gem 'activesupport'
+gem 'bcrypt'
+gem 'capybara'
+gem 'cider_ci-support', '3.2'
+gem 'factory_girl'
+gem 'faker'
+gem 'json_roa-client', '=2.0.0.pre.beta.6'
+gem 'poltergeist'
+gem 'pry'
+gem 'pry-nav'
+gem 'rspec'
+gem 'rspec-rails'
+gem 'selenium-webdriver', '2.53.3'
+gem 'sequel'
+

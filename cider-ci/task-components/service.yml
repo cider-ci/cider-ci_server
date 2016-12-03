@@ -1,0 +1,60 @@
+scripts:
+
+  service-run:
+    body: |
+      set -eux
+      export CLASSPATH="dev_resources:target/ui2.jar"
+      java "cider_ci.ui2.main"
+    timeout: 5 Minutes
+    start_when:
+      database has been created:
+        script_key: create-database
+      service is configured:
+        script_key: configure
+      jar has been built:
+        script_key: build-uberjar
+
+  service-is-running:
+    timeout: 15 seconds
+    environment_variables:
+      STATUS_URL: http://localhost:{{UI2_HTTP_PORT}}/cider-ci/ui2/status
+    body: |
+      #!/usr/bin/env bash
+      set -eux
+      until curl --silent --fail \
+        --user test-check-is-running:service-secret \
+        -H 'Accept: application/json' \
+        -I "${STATUS_URL}";  do
+        sleep 1;
+      done
+    start_when:
+      service is executing:
+        script_key: service-run
+        states: [executing]
+
+  test:
+    start_when:
+      service is running:
+        script_key: service-is-running
+
+  service-shutdown:
+    timeout: 3 Seconds
+    start_when:
+      'test is in terminal state':
+        script_key: test
+        states: [aborted, defective, passed, failed, skipped]
+    environment_variables:
+      SHUTDOWN_URL: http://localhost:{{UI2_HTTP_PORT}}/cider-ci/ui2/shutdown
+    body: |
+      #!/usr/bin/env bash
+      set -eux
+      curl -I -X POST --silent \
+        --user shutdown:service-secret \
+        -H 'Accept: application/json' \
+        "${SHUTDOWN_URL}"
+
+  delete-database:
+    start_when:
+      service run is termain:
+        script_key: service-run
+        states: [aborted, defective, passed, failed, skipped]

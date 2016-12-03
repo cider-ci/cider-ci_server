@@ -1,0 +1,18 @@
+# /clj-utils/
+*.class
+*.jar
+*.log
+/.lein-*
+/.nrepl-port
+/.sass-cache
+/checkouts
+/classes
+/config
+/log
+/target
+/tmp
+pom.xml
+pom.xml.asc
+resources/public/css/site.min.css
+resources/public/
+src/cider_ci/self.clj
