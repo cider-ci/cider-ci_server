@@ -1,4 +1,4 @@
-(ns repository.prod
+(ns cider-ci.repository.prod
   (:require [cider-ci.repository.ui.core :as core]))
 
 ;;ignore println statements in prod

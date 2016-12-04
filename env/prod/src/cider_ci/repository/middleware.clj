@@ -1,4 +1,4 @@
-(ns repository.middleware
+(ns cider-ci.repository.middleware
   (:require [ring.middleware.defaults :refer [site-defaults wrap-defaults]]))
 
 (defn wrap-middleware [handler]

@@ -20,7 +20,7 @@
              :exclusions [org.clojure/clojure]]]
 
   :cljsbuild {:builds
-              {:min {:source-paths ["clj-utils/src" "src" "env/prod/cljs"]
+              {:min {:source-paths ["clj-utils/src" "src" "env/prod/src"]
                      :jar true
                      :compiler
                      {:output-to "target/cljsbuild/public/js/app.js"
@@ -28,9 +28,9 @@
                       :optimizations :advanced
                       :pretty-print  false}}
                :app
-               {:source-paths ["clj-utils/src" "src" "env/dev/cljs"]
+               {:source-paths ["clj-utils/src" "src" "env/dev/src"]
                 :compiler
-                {:main "repository.dev"
+                {:main "cider-ci.repository.dev"
                  :asset-path "/cider-ci/repositories/js/out"
                  :output-to "target/cljsbuild/public/js/app.js"
                  :output-dir "target/cljsbuild/public/js/out"
@@ -61,13 +61,13 @@
                              [pjstadig/humane-test-output "0.8.0"]]
               :plugins [[lein-figwheel "0.5.4-7"]
                         [lein-sassy "1.0.7"]]
-              :source-paths ["env/dev/clj"]
+              :source-paths ["env/dev/src"]
               :resource-paths ["target/cljsbuild"]
               :injections [(require 'pjstadig.humane-test-output)
                            (pjstadig.humane-test-output/activate!)]
               :env {:dev true}}
              :uberjar {:hooks [minify-assets.plugin/hooks]
-                       :source-paths ["env/prod/clj" "./clj-utils/src" "src"]
+                       :source-paths ["env/prod/src" "./clj-utils/src" "src"]
                        :prep-tasks ["compile" ["cljsbuild" "once" "min"]]
                        :resource-paths ["target/cljsbuild"]
                        :aot [cider-ci.WebstackException #"cider-ci.*"]

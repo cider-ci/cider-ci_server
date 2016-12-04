@@ -1,4 +1,4 @@
-(ns ^:figwheel-no-load repository.dev
+(ns ^:figwheel-no-load cider-ci.repository.dev
   (:require [cider-ci.repository.ui.core :as core]
             [figwheel.client :as figwheel :include-macros true]))
 
