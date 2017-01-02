@@ -2,7 +2,6 @@ source 'https://rubygems.org'
 eval_gemfile 'database/Gemfile'
 
 gem 'activesupport'
-gem 'bcrypt'
 gem 'capybara'
 gem 'cider_ci-support', '3.2'
 gem 'factory_girl'
