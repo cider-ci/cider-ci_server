@@ -8,7 +8,7 @@
     [cider-ci.utils.core :refer [keyword str presence deep-merge]]
     [cider-ci.ui2.constants :refer [CONTEXT]]
     [cider-ci.ui2.ui.state :as state]
-    [cider-ci.ui2.session.ui :as session]
+    [cider-ci.ui2.session.password.ui :as session.password]
 
     [cider-ci.utils.markdown :as markdown]
     [reagent.core :as reagent]
@@ -16,7 +16,15 @@
     [cljs-http.client :as http]
     ))
 
-(declare page)
+(declare page get-welcome-page-settings)
+
+(secretary/defroute create-admin-path (str CONTEXT "/welcome-page/edit") []
+  (swap! state/page-state assoc :current-page
+         {:component #'page})
+  (swap! state/client-state assoc
+         :welcome-page-settings {:data {:form {}}
+                                 :submit {}})
+  (get-welcome-page-settings))
 
 (def form-data (reaction (-> @state/client-state :welcome-page-settings :data :form)))
 
@@ -73,14 +81,6 @@
           (swap! state/client-state
                  assoc-in [:welcome-page-settings :submit :response]
                  (clojure.walk/keywordize-keys resp))))))
-
-(secretary/defroute create-admin-path (str CONTEXT "/welcome-page/edit") []
-  (swap! state/page-state assoc :current-page
-         {:component #'page})
-  (swap! state/client-state assoc
-         :welcome-page-settings {:data {:form {}}
-                                 :submit {}})
-  (get-welcome-page-settings))
 
 (defn debug []
   (when (:debug @state/client-state)

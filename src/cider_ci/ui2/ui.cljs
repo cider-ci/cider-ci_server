@@ -1,11 +1,17 @@
 (ns cider-ci.ui2.ui
+  (:require-macros
+    [reagent.ratom :as ratom :refer [reaction]]
+    )
   (:require
     [cider-ci.ui2.constants :refer [CONTEXT]]
     [cider-ci.ui2.ui.debug :as debug]
+    [cider-ci.ui2.ui.root]
     [cider-ci.ui2.ui.state :as state]
     [cider-ci.ui2.create-admin.ui]
     [cider-ci.ui2.welcome-page.ui]
-    [cider-ci.ui2.session.ui]
+    [cider-ci.ui2.session.password.ui]
+
+    [cider-ci.ui2.ui.navbar]
 
     [reagent.core :as reagent]
     [secretary.core :as secretary :include-macros true]
@@ -15,6 +21,13 @@
     [cljsjs.bootstrap]
     ))
 
+(def user (reaction (:user @state/server-state)))
+
+(def authentication-providers
+  (reaction (:authentication_providers @state/server-state)))
+
+(def current-url (reaction (:current-url @state/client-state)))
+
 (defn general-debug-section []
   (when (:debug @state/client-state)
     [:section.debug
@@ -23,6 +36,9 @@
      [:div.client-state
       [:h2 "Client State"]
       [:pre (.stringify js/JSON (clj->js @state/client-state) nil 2)]]
+     [:div.client-state
+      [:h2 "Server State"]
+      [:pre (.stringify js/JSON (clj->js @state/server-state) nil 2)]]
      [:div.page-state
       [:h2 "Page State"]
       [:pre (.stringify js/JSON (clj->js @state/page-state) nil 2)]]
@@ -37,30 +53,20 @@
     [:div.container-fluid
      ;[:h1 "TEST"]
      [:div.page [(-> @state/page-state :current-page :component)]]
-     [general-debug-section]
-     ]))
-
-
-(defn root-page []
-  [:h1 "Hello Cider-CI UI2"]
-  )
+     [general-debug-section]]))
 
 ;--- Routes
-
-(secretary/defroute (str CONTEXT "/debug") []
-  (swap! state/page-state assoc :current-page
-         {:component #'debug/page}))
-
-(secretary/defroute (str CONTEXT "/initial-admin") []
-  (swap! state/page-state assoc :current-page
-         {:component #'root-page}))
 
 
 ;--- Initialize
 
-(defn mount-root []
+(defn mount []
   (when-let [app (.getElementById js/document "app")]
-    (reagent/render [current-page] app)))
+    (reagent/render [current-page] app))
+  (when-let [nav-container (.getElementById js/document "nav")]
+    (reagent/render [cider-ci.ui2.ui.navbar/navbar
+                     user current-url authentication-providers] nav-container))
+  )
 
 (defn init! []
   (when-let [app (.getElementById js/document "app")]
@@ -68,4 +74,4 @@
       {:nav-handler (fn [path] (secretary/dispatch! path))
        :path-exists?  (fn [path] (secretary/locate-route path))})
     (accountant/dispatch-current!)
-    (mount-root)))
+    (mount)))

@@ -1,7 +1,8 @@
 (ns cider-ci.ui2.ui.navbar.user
   (:require
+    [cider-ci.ui2.constants :refer [CONTEXT]]
+
     [cider-ci.utils.core :refer [presence]]
-    #?(:clj [logbug.debug :as debug])
     ))
 
 (defn admin-actions [user]
@@ -68,22 +69,5 @@
       [:li.divider]
       [:li [:a {:href (str "/cider-ci/ui2/debug")} " Debug Page "]]]]))
 
-(defn sign-in-nav [current-url current-path]
-  [:div.navbar-form
-   (when-not (= (str "/cider-ci/ui2/session/password-sign-in")
-                @current-path)
-     [:a.btn.btn-info
-      {:href (str "/cider-ci/ui2/session/password-sign-in?url="
-                  #?(:cljs (js/encodeURIComponent @current-url))
-                  #?(:clj "TODO"))}
-      [:i.fa.fa-sign-in.fa-fw]
-      " Sign in with password"
-      ])])
 
-(defn li [user current-url current-path]
-  (if (empty? @user)
-    (sign-in-nav current-url current-path)
-    (user-nav user current-url)
-    ))
-
-;#?(:clj (debug/debug-ns *ns*))
+(defn li [user current-url] (user-nav user current-url))

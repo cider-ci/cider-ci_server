@@ -18,7 +18,6 @@
     [logbug.debug :as debug]
     ))
 
-
 (def default-welcome-message
 "
 # Welcome to Cider-CI
@@ -27,7 +26,6 @@ This is the default welcome-message.
 
 It can be customized via `Administration` → `Welcome page settings`!
 ")
-
 
 (def about-pre-message
 "
@@ -50,7 +48,7 @@ Read more about Cider-CI at [cider-ci.info](http://cider-ci.info/).
           default-welcome-message)
       md2html))
 
-(defn page [req]
+(defn page []
   [:div#welcome-page
    [:div#welcome-message.text-center
     (welcome-message)]

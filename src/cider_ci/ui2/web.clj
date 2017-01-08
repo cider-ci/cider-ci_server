@@ -23,6 +23,7 @@
     [cider-ci.utils.routing :as routing]
     [cider-ci.utils.status :as status]
 
+    [clojure.walk :refer [keywordize-keys]]
     [clj-time.core :as time]
     [clojure.data :as data]
     [compojure.core :as cpj]
@@ -47,7 +48,7 @@
 
 (def routes
   (cpj/routes
-    (cpj/GET "/" [] (web.shared/wrap-static #'root/page))
+    (cpj/GET "/" [] #'dynamic)
     (cpj/GET "/initial-admin" [] #'dynamic)
     (cpj/GET "/debug" [] #'dynamic)
     (cpj/GET "/*" [] #'dynamic)
@@ -62,6 +63,9 @@
       "text/html" :qs 1 :as :html
       ]}))
 
+(defn wrap-keywordize-request [handler]
+  (fn [request] (-> request keywordize-keys handler)))
+
 (defn build-main-handler [context]
   (I> wrap-handler-with-logging
       routes
@@ -73,6 +77,7 @@
       (auth.session/wrap :anti-forgery true)
       ; unauthenticated routes here
       session/wrap-routes
+      wrap-keywordize-request
       cookies/wrap-cookies
       (ring.middleware.json/wrap-json-body {:keywords? true})
       ring.middleware.json/wrap-json-response

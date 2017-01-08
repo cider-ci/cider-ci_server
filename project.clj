@@ -62,7 +62,7 @@
               :plugins [[lein-figwheel "0.5.4-7"]
                         [lein-sassy "1.0.7"]]
               :source-paths ["env/dev/src"]
-              :resource-paths ["dev_resources" "target/cljsbuild"]
+              :resource-paths ["target/cljsbuild"]
               :injections [(require 'pjstadig.humane-test-output)
                            (pjstadig.humane-test-output/activate!)]
               :env {:dev true}}

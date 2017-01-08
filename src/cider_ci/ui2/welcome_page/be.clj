@@ -29,7 +29,7 @@
     (jdbc/update! (rdbms/get-ds)
                   :welcome_page_settings (:body req) [])
     (jdbc/insert! (rdbms/get-ds)
-                  :welcome_page_settings (:body req)))
+                  :welcome_page_settings (merge {:id 0} (:body req))))
   {:status 200})
 
 (defn wrap [handler]
@@ -40,5 +40,5 @@
                                              {:admin true}))
     (cpj/ANY "*" [] handler)))
 
-(debug/debug-ns 'cider-ci.auth.authorize)
+;(debug/debug-ns 'cider-ci.auth.authorize)
 ;(debug/debug-ns *ns*)

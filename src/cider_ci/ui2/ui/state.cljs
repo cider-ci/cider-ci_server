@@ -12,6 +12,8 @@
     [cljsjs.moment]
     [reagent.core :as r]
     [timothypratley.patchin :refer [patch]]
+    [goog.dom :as dom]
+    [goog.dom.dataset :as dataset]
     ))
 
 
@@ -23,10 +25,28 @@
 ; a nice alert then; TODO: test this (how?)
 ;(js/setTimeout #(swap! server-state assoc :x 42) 5000)
 
+(-> (.getElementsByTagName js/document "body")
+    (aget 0))
+
+
 (defonce page-state (r/atom {}))
 
 (defonce client-state (r/atom {:debug true}))
 
 (js/setInterval #(swap! client-state
                        (fn [s] (merge s {:timestamp (js/moment)}))) 1000)
+
+(defn data-attribute [element-name attribute-name]
+  (-> (.getElementsByTagName js/document element-name)
+      (aget 0)
+      (dataset/get attribute-name)
+      (#(.parse js/JSON %))
+      cljs.core/js->clj
+      clojure.walk/keywordize-keys))
+
+(swap! server-state
+       assoc
+       :user (data-attribute "body" "user")
+       :authentication_providers  (data-attribute
+                                    "body" "authproviders"))
 

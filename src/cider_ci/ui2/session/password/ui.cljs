@@ -1,4 +1,4 @@
-(ns cider-ci.ui2.session.ui
+(ns cider-ci.ui2.session.password.ui
   (:refer-clojure :exclude [str keyword])
   (:require
     [cider-ci.ui2.constants :refer [CONTEXT]]
@@ -12,17 +12,15 @@
 
 (declare sign-in-page)
 
-(secretary/defroute sign-in-path (str CONTEXT "/session/password-sign-in") [query-params]
+(secretary/defroute sign-in-path (str CONTEXT "/session/password/sign-in") [query-params]
   (swap! state/page-state assoc :current-page
          {:component #'sign-in-page
           :query-params query-params}))
 
-
 (defn sign-in-form []
   [:form.password-sign-in
-   {:action (str CONTEXT "/session/password-sign-in" )
+   {:action (str CONTEXT "/session/password/sign-in" )
     :method :post}
-   [:input#path {:type :hidden :name :path :value "TODO"}]
    [:input {:type :hidden
             :name :cider-ci_anti-forgery-token
             :value (anti-forgery-token) }]

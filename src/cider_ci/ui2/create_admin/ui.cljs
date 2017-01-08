@@ -9,7 +9,7 @@
     [cider-ci.utils.core :refer [keyword str presence]]
     [cider-ci.ui2.constants :refer [CONTEXT]]
     [cider-ci.ui2.ui.state :as state]
-    [cider-ci.ui2.session.ui :as session]
+    [cider-ci.ui2.session.password.ui :as session.password]
 
     [reagent.core :as reagent]
     [secretary.core :as secretary :include-macros true]
@@ -49,7 +49,7 @@
     (fn []
       (if (< 0 @redirect-in)
         (js/setTimeout #(swap! redirect-in dec) 1000)
-        (secretary/dispatch! (session/sign-in-path)))
+        (secretary/dispatch! (session.password/sign-in-path)))
       [:div.alert.alert-success
        [:h2  "The initial administrator user has been created"]
        [:p "You can sign in with the new account now. We will redirect you in " @redirect-in " seconds."]])))
