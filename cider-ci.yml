@@ -8,6 +8,10 @@ jobs:
     context:
       generate_tasks:
         include_match: spec/.*_spec.rb
+      #tasks:
+      # spec/features/github-authentication_spec.rb:
+      #   environment_variables:
+      #     CIDER_CI_TASK_FILE: spec/features/github-authentication_spec.rb
       task_defaults:
         include:
           - path: cider-ci/task-components/database.yml
@@ -18,6 +22,7 @@ jobs:
           - cider-ci/task-components/configure.yml
           - cider-ci/task-components/ports.yml
           - cider-ci/task-components/service.yml
+          - cider-ci/task-components/github-mock.yml
         environment_variables:
           DATABASE_NAME: cider-ci_ui2_test_{{CIDER_CI_TRIAL_ID}}
           DATABASE_DIR: database
@@ -25,14 +30,22 @@ jobs:
           RUBY_VERSION: 2.3.3
           RUBY: '{{RUBY_ENGINE}}-{{RUBY_VERSION}}'
           RAILS_ENV: test
-        traits:
-          g2016: yes
-        max_trials: 1
+        traits: {}
+        max_trials: 3
+        eager_trials: 1
         git_options:
           submodules:
             include_match: ^.*$
+        trial_attachments:
+          screenshots:
+            include_match: 'tmp\/.+\.png$'
+            content_type: image/png
+          logs:
+            include_match: '\.log$'
+            content_type: text/plain
         scripts:
           test:
+            timeout: 10 Minutes
             body: |
               #!/usr/bin/env bash
               set -eux

@@ -4,6 +4,24 @@ require 'pry'
 
 feature 'GitHub authentication' do
 
+  def sign_in_as login
+    wait_until 3 do
+      visit current_path
+      first('a,button', text: 'Sign in via GitHubMock').click rescue nil
+    end
+    wait_until 3 do
+      first('a,button', text: "Sign in as #{login}").click rescue nil
+    end
+  end
+
+  def signed_in_as! login
+    wait_until 3 do
+      page.has_content? "#{login}@GitHubMock"
+    end
+    expect(page).not_to have_content 'Sign in via GitHubMock'
+  end
+
+
   before :each do
     ci_config = begin
                   YAML.load_file('config/config.yml')
@@ -38,53 +56,44 @@ feature 'GitHub authentication' do
   describe 'test email sign-in strategy' do
     scenario 'adam can sign-in' do
       visit '/cider-ci/ui2/'
-      click_on 'Sign in via GitHubMock'
-      click_on 'Sign in as adam'
-      # we are signed in
-      expect(page).to have_content 'adam@GitHubMock'
-      expect(page).not_to have_content 'Sign in via GitHubMock'
+      sign_in_as 'adam'
+      signed_in_as! 'adam'
     end
   end
 
   describe 'test org sign-in strategy' do
     scenario 'normin can sign-in' do
       visit '/cider-ci/ui2/'
-      click_on 'Sign in via GitHubMock'
-      click_on 'Sign in as normin'
-      expect(page).to have_content 'normin@GitHubMock'
-      expect(page).not_to have_content 'Sign in via GitHubMock'
+      sign_in_as 'normin'
+      signed_in_as! 'normin'
     end
   end
 
   describe 'test team sign-in strategy' do
     scenario 'tessa can sign-in' do
       visit '/cider-ci/ui2/'
-      click_on 'Sign in via GitHubMock'
-      click_on 'Sign in as tessa'
-      expect(page).to have_content 'tessa@GitHubMock'
-      expect(page).not_to have_content 'Sign in via GitHubMock'
+      sign_in_as 'tessa'
+      signed_in_as! 'tessa'
     end
   end
 
   describe 'test no matching sign-in strategy' do
     scenario 'silvan can not sign-in' do
       visit '/cider-ci/ui2/'
-      click_on 'Sign in via GitHubMock'
-      click_on 'Sign in as silvan'
+      sign_in_as 'silvan'
       expect(page).to have_content 'No sign in strategy succeeded!'
       visit '/cider-ci/ui2/'
-      expect(page).to have_content 'Sign in via GitHubMock'
+      wait_until 3 do
+        page.has_content? 'Sign in via GitHubMock'
+      end
     end
   end
 
   describe 'test create attributes' do
     scenario 'adam is admin' do
       visit '/cider-ci/ui2/'
-      click_on 'Sign in via GitHubMock'
-      click_on 'Sign in as adam'
-      # we are signed in
-      expect(page).to have_content 'adam@GitHubMock'
-      expect(page).not_to have_content 'Sign in via GitHubMock'
+      sign_in_as 'adam'
+      signed_in_as! 'adam'
       # adam is an admin
       expect(
         @users.where(login: 'adam@GitHubMock').first[:is_admin]
@@ -95,10 +104,8 @@ feature 'GitHub authentication' do
   describe 'test update attributes' do
     scenario 'sign in as tessa, remove admin attribute, sign in again' do
       visit '/cider-ci/ui2/'
-      click_on 'Sign in via GitHubMock'
-      click_on 'Sign in as tessa'
-      expect(page).to have_content 'tessa@GitHubMock'
-      expect(page).not_to have_content 'Sign in via GitHubMock'
+      sign_in_as 'tessa'
+      signed_in_as! 'tessa'
       # tessa is admin
       expect(
         @users.where(login: 'tessa@GitHubMock').first[:is_admin]
@@ -111,9 +118,7 @@ feature 'GitHub authentication' do
       # sign in again
       click_on 'tessa@GitHubMock'
       click_on 'Sign out'
-      click_on 'Sign in via GitHubMock'
-      click_on 'Sign in as tessa'
-      expect(page).to have_content 'tessa@GitHubMock'
+      sign_in_as 'tessa'
       # tessa is admin again
       expect(
         @users.where(login: 'tessa@GitHubMock').first[:is_admin]
@@ -134,11 +139,8 @@ feature 'GitHub authentication' do
       scenario 'it works' do
 
         visit '/cider-ci/ui2/debug'
-        click_on 'Sign in via GitHubMock'
-        click_on 'Sign in as adam'
-
-        # sign in succeeded
-        expect(page).to have_content 'adam@GitHubMock'
+        sign_in_as 'adam'
+        signed_in_as! 'adam'
 
         # the email_address has been transfered to the new account
         adam_ghm = @users.where(login: 'adam@GitHubMock').first

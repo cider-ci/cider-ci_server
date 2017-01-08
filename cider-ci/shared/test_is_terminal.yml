@@ -1,0 +1,3 @@
+the_test_is_in_terminal_state:
+  script_key: test
+  states: [aborted, defective, passed, failed, skipped]

@@ -47,7 +47,7 @@
 
 ;; dynamic pages
 
-(def mount-target
+(defn mount-target []
   [:div#app
    [:div.container-fluid
     (if (env :dev)
@@ -58,7 +58,8 @@
       [:div.alert.alert-warning
        [:h3 "JavaScript seems to be disabled or missing!"]
        [:p (str "Due to the dynamic nature of Cider-CI "
-                "most pages will not work as expected without JavaScript!")]])]])
+                "most pages will not work as expected without JavaScript!")]])
+    (root/page)]])
 
 (defn navbar [release]
   [:div.navbar.navbar-default {:role :navigation}
@@ -79,8 +80,7 @@
                                      (into {}) json/write-str)}
      [:div.container-fluid
       (navbar (-> (cider-ci.utils.self/release) atom))
-      mount-target
-      (root/page)
+      (mount-target)
       (include-css (str "https://maxcdn.bootstrapcdn.com/"
                         "font-awesome/4.6.3/css/font-awesome.min.css"))
       (include-js (str CONTEXT "/js/app.js"))]]))

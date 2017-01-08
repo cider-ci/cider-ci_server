@@ -5,7 +5,6 @@ scripts:
       set -eux
       export CLASSPATH="dev_resources:target/ui2.jar"
       java "cider_ci.ui2.main"
-    timeout: 5 Minutes
     start_when:
       database has been created:
         script_key: create-database

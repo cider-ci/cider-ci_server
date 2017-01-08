@@ -1,0 +1,42 @@
+scripts:
+
+  run_github-api-mock:
+    timeout: 5 Minutes
+    body: |
+      #!/usr/bin/env bash
+      set -eux
+      export PATH=~/.rubies/$RUBY/bin:$PATH
+      bundle exec ruby github_api_mock.rb -p ${GITHUB_API_MOCK_PORT}
+
+    start_when:
+      'bundled':
+        script_key: bundle-rspec-ruby
+
+  github-api-mock_is-serving:
+    timeout: 30 seconds
+    start_when:
+      the service is running:
+        script_key: run_github-api-mock
+        states: [executing]
+    body: |
+      #!/usr/bin/env bash
+      set -ux
+      until curl --silent --fail -I "http://localhost:${GITHUB_API_MOCK_PORT}/status" ; do
+        sleep 1;
+      done
+
+  test:
+    start_when:
+      the github api mock is serving:
+        script_key: github-api-mock_is-serving
+
+  shutdown_github-api-mock:
+    timeout: 3 Seconds
+    body: |
+      set -eux
+      kill -INT $(lsof -t -wni tcp:${GITHUB_API_MOCK_PORT})
+      sleep 1
+    start_when:
+      include: cider-ci/shared/test_is_terminal.yml
+      we are serving:
+        script_key: github-api-mock_is-serving

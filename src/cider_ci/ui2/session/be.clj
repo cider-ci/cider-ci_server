@@ -42,4 +42,3 @@
 ;(debug/debug-ns 'cider-ci.open-session.encryptor)
 ;(debug/debug-ns 'cider-ci.auth.session)
 ;(debug/debug-ns *ns*)
-

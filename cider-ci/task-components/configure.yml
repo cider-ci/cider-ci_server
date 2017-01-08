@@ -3,6 +3,10 @@ trial_attachments:
     include_match: '.+\.ya?ml$'
     exclude_match: '\/vendor\/|\/cider-ci\/'
     content_type: text/yaml
+  logs:
+    include_match: '\/logs?\/.+\.log$'
+    content_type: text/plain
+
 
 scripts:
   configure:
@@ -21,6 +25,7 @@ scripts:
 
       # storage
       config['services']['ui2']['http']['port']= Integer(ENV['UI2_HTTP_PORT'])
+      config['services']['ui2']['http']['host']= 'localhost'
       config['services']['ui2']['nrepl']['enabled']= false
 
       # write config

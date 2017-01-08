@@ -12,6 +12,11 @@
 
     [ring.util.codec :refer [url-encode]]
 
+    [clj-logging-config.log4j :as logging-config]
+    [clojure.tools.logging :as logging]
+    [logbug.debug :as debug :refer [I> I>> identity-with-logging]]
+    [logbug.ring :refer [wrap-handler-with-logging]]
+    [logbug.thrown :as thrown]
     ))
 
 (defn password-valid? [user password]
@@ -46,3 +51,6 @@
                  :error-message "Sign-in failed: no matching account was found!"}
                 build-query-string)) :see-other)))
 
+
+;#### debug ###################################################################
+;(debug/debug-ns *ns*)

@@ -20,7 +20,9 @@
     [cider-ci.auth.http-basic :as http-basic]
     [cider-ci.auth.session :as auth.session]
     [cider-ci.utils.config :as config :refer [get-config]]
+    [cider-ci.utils.ring]
     [cider-ci.utils.routing :as routing]
+    [cider-ci.utils.shutdown :as shutdown]
     [cider-ci.utils.status :as status]
 
     [clojure.walk :refer [keywordize-keys]]
@@ -63,21 +65,18 @@
       "text/html" :qs 1 :as :html
       ]}))
 
-(defn wrap-keywordize-request [handler]
-  (fn [request] (-> request keywordize-keys handler)))
-
 (defn build-main-handler [context]
   (I> wrap-handler-with-logging
       routes
       create-admin/wrap ;must come after public is served
       welcome-page/wrap
-      routing/wrap-shutdown
+      shutdown/wrap
       ; authentication and primitive authorization
       (http-basic/wrap {:service true :user true})
       (auth.session/wrap :anti-forgery true)
       ; unauthenticated routes here
       session/wrap-routes
-      wrap-keywordize-request
+      cider-ci.utils.ring/wrap-keywordize-request
       cookies/wrap-cookies
       (ring.middleware.json/wrap-json-body {:keywords? true})
       ring.middleware.json/wrap-json-response
@@ -95,5 +94,7 @@
 ;(debug/debug-ns 'cider-ci.auth.http-basic)
 ;(debug/debug-ns 'cider-ci.auth.anti-forgery)
 ;(debug/debug-ns 'cider-ci.auth.session)
+;(debug/debug-ns 'cider-ci.utils.shutdown)
+;(debug/debug-ns 'cider-ci.auth.http-basic)
 ;(debug/debug-ns *ns*)
 
