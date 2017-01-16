@@ -12,5 +12,6 @@
 /tmp
 pom.xml
 pom.xml.asc
+resources/public/
 resources/public/css/site.min.css
 src/cider_ci/self.clj

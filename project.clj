@@ -7,8 +7,8 @@
   :license {:name "GNU AFFERO GENERAL PUBLIC LICENSE Version 3"
             :url "http://www.gnu.org/licenses/agpl-3.0.html"}
 
-  :dependencies ~(concat  (read-string (slurp "project.dependencies.clj"))
-                          (read-string (slurp "../clj-utils/dependencies.clj")))
+  :dependencies ~(concat (read-string (slurp "project.dependencies.clj"))
+                         (read-string (slurp "clj-utils/project.dependencies.clj")))
 
   :source-paths ["clj-utils/src" "src" ]
 
@@ -30,19 +30,18 @@
                :app
                {:source-paths ["clj-utils/src" "src" "env/dev/src"]
                 :compiler
-                {:main "cider-ci.repository.dev"
-                 :asset-path "/cider-ci/repositories/js/out"
+                {:main "cider-ci.ui2.dev"
+                 :asset-path "/cider-ci/ui2/js/out"
                  :output-to "target/cljsbuild/public/js/app.js"
                  :output-dir "target/cljsbuild/public/js/out"
                  :source-map true
                  :optimizations :none
                  :pretty-print  true}}}}
-
   :minify-assets {:assets
                   {"resources/public/css/site.min.css"
                    "resources/public/css/site.css"}}
 
-  :sass {:src "sass"
+  :sass {:src "src_sass"
          :dst "resources/public/css"}
 
   :figwheel {:http-server-root "public"
@@ -67,12 +66,12 @@
                            (pjstadig.humane-test-output/activate!)]
               :env {:dev true}}
              :uberjar {:hooks [minify-assets.plugin/hooks]
-                       :source-paths ["env/prod/src" "./clj-utils/src" "src"]
+                       :source-paths ["env/rod/src" "./clj-utils/src" "src"]
                        :prep-tasks ["compile" ["cljsbuild" "once" "min"]]
                        :resource-paths ["target/cljsbuild"]
                        :aot [cider-ci.WebstackException #"cider-ci.*"]
-                       :uberjar-name "repository.jar"
+                       :uberjar-name "ui2.jar"
                        }}
-  :main cider-ci.repository.main
+  :main cider-ci.ui2.main
   :repl-options {:timeout  120000}
   )

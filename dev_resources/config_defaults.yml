@@ -1,0 +1,39 @@
+database:
+  adapter: "postgresql"
+  classname: "org.postgresl.Driver"
+  subname: "//localhost:5432/cider-ci_v4"
+  subprotocol: "postgresql"
+  user: cider-ci
+  password: secret
+  max_pool_size: 3
+
+github_authtoken: NULL
+
+hostname: localhost
+
+secret: master-secret
+
+basic_auth:
+  password: service-secret
+
+session:
+  secret: session-secret
+  max_lifetime: 7 Days
+
+server_base_url: http://localhost:8888
+
+services:
+
+  ui2:
+
+    http:
+      host: 127.0.0.1
+      port: 8883
+      context: /cider-ci
+      sub_context: /ui2
+      ssl: false
+
+    nrepl:
+      port: 7883
+      bind: "127.0.0.1"
+      enabled: true

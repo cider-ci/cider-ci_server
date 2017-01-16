@@ -1,0 +1,1 @@
+test: <%= ENV['DATABASE_URL'].presence || 'postgresql://cider-ci:secret@localhost/cider-ci_v4?pool=3'  %>
