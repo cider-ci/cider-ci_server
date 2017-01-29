@@ -19,7 +19,7 @@
 
 (defn cookie [token]
   {:value token
-   :http-only true
+   ; :http-only true
    :path "/"
    })
 
@@ -50,7 +50,7 @@
 
 (defn process [request handler]
   (let [token (or (-> request :cookies (get cookie-name nil) :value)
-                  (crypto.random/base64 32))
+                  (crypto.random/url-part 32))
         resp (if (and (not (safe-request? request))
                       (not (valid-forgery-protection? token request))
                       (session-authentication? request))

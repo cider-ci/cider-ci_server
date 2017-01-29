@@ -16,40 +16,37 @@
 
     ))
 
-(defn init [build-http-handler-fn]
+(defn init [service-name build-http-handler-fn]
   (catcher/snatch
     {:level :fatal
      :throwable Throwable
      :return-fn (fn [e] (System/exit -1))}
-    (let [app-name-kw (keyword (self/project-name))]
+    (assert (keyword? service-name))
 
-      (when-not app-name-kw
-        (throw (IllegalStateException.
-                 "Project name is not set!")))
 
-      (logging/info (self/application-str))
+    (logging/info (self/application-str))
 
-      (logbug.thrown/reset-ns-filter-regex #".*cider.ci.*")
+    (logbug.thrown/reset-ns-filter-regex #".*cider.ci.*")
 
-      (config/initialize {:overrides {:basic_auth {:username app-name-kw}
-                                      :service app-name-kw}})
+    (config/initialize {:overrides {:basic_auth {:username service-name}
+                                    :service service-name}})
 
-      (if-let [db-spec (get-db-spec app-name-kw)]
-        (rdbms/initialize db-spec)
-        (logging/info (str "No database configuration found, "
-                           "skipping database initialization.")))
+    (if-let [db-spec (get-db-spec service-name)]
+      (rdbms/initialize db-spec)
+      (logging/info (str "No database configuration found, "
+                         "skipping database initialization.")))
 
-      (if-let [nrepl-spec  (-> (get-config) :services app-name-kw :nrepl)]
-        (nrepl/initialize nrepl-spec)
-        (logging/info (str "No nrepl configuration found, "
-                           "skipping nrepl initialization.")))
+    (if-let [nrepl-spec  (-> (get-config) :services service-name :nrepl)]
+      (nrepl/initialize nrepl-spec)
+      (logging/info (str "No nrepl configuration found, "
+                         "skipping nrepl initialization.")))
 
-      (if-not build-http-handler-fn
-        (logging/info (str "No build-http-handler-fn given, "
-                           "skipping http-server initialization."))
-        (if-let [http-conf (-> (get-config) :services app-name-kw :http)]
-          (let [context (str (:context http-conf) (:sub_context http-conf))]
-            (http-server/start http-conf (build-http-handler-fn context)))
-          (logging/info (str "No build-http-handler-fn given, "
-                             "skipping http-server initialization.")))))))
+    (if-not build-http-handler-fn
+      (logging/info (str "No build-http-handler-fn given, "
+                         "skipping http-server initialization."))
+      (if-let [http-conf (-> (get-config) :services service-name :http)]
+        (let [context (str (:context http-conf) (:sub_context http-conf))]
+          (http-server/start http-conf (build-http-handler-fn context)))
+        (logging/info (str "No http-config given, "
+                           "skipping http-server initialization."))))))
 

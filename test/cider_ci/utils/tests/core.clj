@@ -8,7 +8,10 @@
 (deftest test-str
   (testing "conversion of simple keywords via str"
     (is (= ":x" (clojure.core/str :x)))
-    (is (= "x" (cider-ci.utils.core/str :x)))))
+    (is (= "x" (cider-ci.utils.core/str :x))))
+  (testing "conversion of multiple arguments via str"
+    (is (= "abc:x" (clojure.core/str "a" "b" "c" :x)))
+    (is (= "abcx" (cider-ci.utils.core/str "a" "b" "c" :x)))))
 
 (deftest test-keyword
   (testing "conversion to keyword"

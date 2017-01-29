@@ -114,9 +114,12 @@
 (defn extract-and-add-basic-auth-properties
   "Extracts information from the \"authorization\" header and
   adds a :basic-auth-request key to the request with the value
-  {:name name :password password}."
+  {:name name :password password}.
+  THE REQUEST MAP HAS TO BE CONVERTED TO USE KEYWORDS KEYS THROUGHOUT
+  e.g. with `cider-ci.utils.ring/wrap-keywordize-request` !
+  "
   [request]
-  (if-let [auth-header ((:headers request) "authorization")]
+  (if-let [auth-header (-> request :headers :authorization)]
     (catcher/snatch
       {:return-expr request}
       (let [decoded-val (decode-base64 (last (re-find #"^Basic (.*)$" auth-header)))

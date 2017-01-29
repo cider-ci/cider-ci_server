@@ -33,25 +33,3 @@
                      :body (thrown/stringify e)})}
       (handler request))))
 
-;### shutdown #################################################################
-
-(defn shutdown [request]
-  (if (-> request :authenticated-service :username boolean)
-    (do (future (Thread/sleep 250)
-                (System/exit 0))
-        {:status 204})
-    {:status 403 :body ""}))
-
-(defn wrap-shutdown [default-handler]
-  (cpj/routes
-    (cpj/POST "/shutdown" _
-              (authorize/wrap-require!
-                #'shutdown {:service true}))
-    (cpj/ANY "*" request default-handler)))
-
-
-
-;### Debug ####################################################################
-;(logging-config/set-logger! :level :debug)
-;(logging-config/set-logger! :level :info)
-;(debug/debug-ns *ns*)

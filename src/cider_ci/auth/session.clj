@@ -5,22 +5,26 @@
 
 (ns cider-ci.auth.session
   (:require
-    [clj-time.core :as time]
-    [cider-ci.utils.duration :as duration]
-    [clj-time.format :as time-format]
-    [logbug.debug :as debug]
-    [cider-ci.utils.rdbms :as rdbms]
-    [logbug.catcher :as catcher]
-    [cider-ci.utils.config :as config :refer [get-config]]
-    [clojure.java.jdbc :as jdbc]
-    [clojure.tools.logging :as logging]
+    [cider-ci.auth.anti-forgery :as anti-forgery]
+
     [cider-ci.open-session.encryptor :refer [decrypt]]
     [cider-ci.open-session.signature :refer [validate!]]
+
+    [cider-ci.utils.config :as config :refer [get-config]]
+    [cider-ci.utils.duration :as duration]
+    [cider-ci.utils.rdbms :as rdbms]
+
+    [clj-time.core :as time]
+    [clj-time.format :as time-format]
+    [clojure.java.jdbc :as jdbc]
     [clojure.walk :refer [keywordize-keys]]
+
+    [clojure.tools.logging :as logging]
+    [logbug.catcher :as catcher]
+    [logbug.debug :as debug]
     ))
 
-
-;### Debug ####################################################################
+(def session-cookie-key :cider-ci_services-session)
 
 (defn get-user! [user-id]
   (or (first (jdbc/query (rdbms/get-ds)
@@ -49,17 +53,27 @@
           (validate-session-lifetime! max-session-lifetime-secs issued-at)))
       )))
 
+(defn encrypted-session-cookie-value [request]
+  (-> request keywordize-keys :cookies session-cookie-key :value))
+
+(defn decrypted-session [encrypted-session-cookie-value]
+  (when encrypted-session-cookie-value
+    (decrypt (get-session-secret) encrypted-session-cookie-value)))
+
+(defn session-user [session-object]
+  (-> session-object :user_id get-user!
+      (assoc :auhtentication-method "session")))
+
 (defn authenticated-user [request]
   "Returns the authenticated user or nil."
   (catcher/snatch
     {}
-    (when-let [services-cookie (-> request keywordize-keys :cookies :cider-ci_services-session :value)]
-      (let [session-object (decrypt (get-session-secret) services-cookie)
-            user (-> session-object :user_id get-user!
-                     (assoc :auhtentication-method "session"))]
+    (when-let [session-object  (-> request encrypted-session-cookie-value
+                                   decrypted-session)]
+      (when-let [user (session-user session-object)]
         (validate! (-> session-object :signature)
                    (get-session-secret)
-                   (-> user :password_digest))
+                   (or (-> user :password_digest) ""))
         (validate-expiration! user session-object)
         (when-not (:account_enabled user)
           (throw (IllegalStateException. "Account disabled!")))
@@ -70,10 +84,13 @@
     (handler (assoc request :authenticated-user user))
     (handler request)))
 
-(defn wrap [handler]
+(defn wrap [handler & {:keys [anti-forgery] :or {anti-forgery true}}]
   "Adds :authenticated-user to the request if the session is intact.
   Does nothing to the request otherwise."
-  (fn [request] (authenticate-session-cookie request handler)))
+  (let [handler (if anti-forgery
+                  (anti-forgery/wrap handler)
+                  handler)]
+    (fn [request] (authenticate-session-cookie request handler))))
 
 ;### Debug ####################################################################
 ;(logging-config/set-logger! :level :debug)

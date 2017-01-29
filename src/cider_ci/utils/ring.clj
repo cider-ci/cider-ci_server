@@ -5,23 +5,12 @@
 
 (ns cider-ci.utils.ring
   (:require
+    [clojure.walk :refer [keywordize-keys]]
+
     [logbug.catcher :as catcher]
     [clojure.tools.logging :as logging]
-    )
-  (:import
-    [cider_ci WebstackException]
     ))
 
-(defn ex-web  [s mp]
-  (WebstackException. s mp))
 
-(defn wrap-webstack-exception [handler]
-  (fn [request]
-    (catcher/snatch
-      {:level :warn
-       :return-fn #(if (instance? WebstackException %)
-                     (ex-data %)
-                     (throw %))}
-      (handler request))))
-
-
+(defn wrap-keywordize-request [handler]
+  (fn [request] (-> request keywordize-keys handler)))

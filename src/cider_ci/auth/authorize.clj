@@ -4,7 +4,6 @@
 
 (ns cider-ci.auth.authorize
   (:require
-
     [clojure.tools.logging :as logging]
     [clj-logging-config.log4j :as logging-config]
     [logbug.catcher :as catcher]
@@ -18,16 +17,22 @@
     (str "Basic realm=\"Cider-CI; "
          "sign in or provide credentials\"")}})
 
+(defn forbidden [options]
+  {:status 403
+   :body (str "The authorization requirements are not satisfied: " options)})
+
 (defn wrap-require! [handler options]
   (fn [request]
     (logging/debug 'wrap-require! {:handler handler :options options :request request})
     (cond (and (:user options)
                (:authenticated-user request)) (handler request)
+          (and (:admin options)
+               (-> request :authenticated-user :is_admin)) (handler request)
           (and (:service options)
                (:authenticated-service request)) (handler request)
           (and (:executor options)
                (:authenticated-executor request)) (handler request)
-          :else unauthorized-401)))
+          :else (forbidden options))))
 
 
 ;### Debug ####################################################################

@@ -1,23 +1,19 @@
 (ns cider-ci.utils.core
-  (:refer-clojure :exclude [str keyword]))
+  (:refer-clojure :exclude [str keyword])
+  )
+
 
 ;### override some very basic vars in clojure.core ############################
 
 (defn str
-  "With no args, returns the empty string. With one arg x: returns the empty
-  string when x is nil, the stringified keyword without preceding colon when is
-  a keyword, and x.toString() otherwise.  With more than one arg, returns the
-  concatenation of the str values of the args."
-  (^String [] "")
-  (^String [^Object x] (cond (nil? x) ""
-                             (keyword? x) (subs (clojure.core/str x) 1)
-                             :else (. x (toString))))
-  (^String [x & ys]
-     ((fn [^StringBuilder sb more]
-          (if more
-            (recur (. sb  (append (str (first more)))) (next more))
-            (str sb)))
-      (new StringBuilder (str x)) ys)))
+  "Like clojure.core/str but maps keywords to strings without preceding colon."
+  ([] "")
+  ([x]
+   (if (keyword? x)
+     (subs (clojure.core/str x) 1)
+     (clojure.core/str x)))
+  ([x & yx]
+   (apply clojure.core/str  (concat [(str x)] (apply str yx)))))
 
 (defn keyword
   "Like clojure.core/keyword but coerces an unknown single argument x
@@ -26,11 +22,8 @@
   not being a String, Symbol or a Keyword already (including
   java.util.UUID, Integer)."
   ([name] (cond (keyword? name) name
-                (symbol? name) (clojure.lang.Keyword/intern ^clojure.lang.Symbol name)
-                (string? name) (clojure.lang.Keyword/intern ^String name)
-                :else (keyword (str name))))
-  ([ns name] (clojure.lang.Keyword/intern ns name)))
-
+                :else (clojure.core/keyword (str name))))
+  ([ns name] (clojure.core/keyword ns name)))
 
 (defn deep-merge [& vals]
   (if (every? map? vals)
@@ -38,9 +31,11 @@
     (last vals)))
 
 (defn presence [v]
-  "Returns nil if v is a blank string. Returns v otherwise."
+  "Returns nil if v is a blank string or if v is an empty collection.
+   Returns v otherwise."
   (cond
     (string? v) (if (clojure.string/blank? v) nil v)
+    (coll? v) (if (empty? v) nil v)
     :else v))
 
 (defn to-cistr [v]
