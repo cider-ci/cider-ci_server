@@ -6,15 +6,17 @@
   (:require
     [cider-ci.builder.util :as util]
     [cider-ci.utils.config :as config :refer [get-config]]
-    [logbug.debug :as debug]
     [cider-ci.utils.http :as http]
     [cider-ci.utils.rdbms :as rdbms]
-    [logbug.catcher :as catcher]
+
     [clj-yaml.core :as yaml]
     [clojure.core.memoize :as memo]
     [clojure.java.jdbc :as jdbc]
-    [clojure.tools.logging :as logging]
+
     [clojure.data.json :as json]
+    [clojure.tools.logging :as logging]
+    [logbug.catcher :as catcher]
+    [logbug.debug :as debug]
     ))
 
 
@@ -27,9 +29,9 @@
         :else (throw (IllegalArgumentException. (str "Parsing " path " is not supported.")))))))
 
 (defn- get-path-content_unmemoized [git-ref-id path]
-  (let [url (http/build-service-url
-              :repository
-              (str "/path-content/" git-ref-id "/" path))
+  (let [url (str (:server_base_url (get-config))
+                 "/cider-ci/repositories"
+                 "/path-content/" git-ref-id "/" path)
         res (http/get url {})
         body (:body res)]
     (parse-path-content path body)))

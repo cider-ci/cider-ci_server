@@ -7,8 +7,11 @@
     [cider-ci.builder.jobs.validator.project-configuration :as project-configuration-validator]
     [clojure.data.json :as json]
     [cider-ci.utils.http :as http]
-    [clj-logging-config.log4j :as logging-config]
+    [cider-ci.utils.config :refer [get-config]]
+
     [clojure.core.memoize :as memo]
+
+    [clj-logging-config.log4j :as logging-config]
     [clojure.tools.logging :as logging]
     [logbug.catcher :as catcher]
     [logbug.debug :as debug]
@@ -27,9 +30,9 @@
       (throw (ex-info (:title data) data)))))
 
 (defn- raw-project-configuration_unmemoized [tree-id]
-  (let [url (http/build-service-url
-              :repository
-              (str "/project-configuration/" tree-id))]
+  (let [url (str (:server_base_url (get-config))
+                 "/cider-ci/repositories"
+                 "/project-configuration/" tree-id)]
     (catcher/snatch
       {:return-fn convert-http-exception}
       (-> url (http/get {:socket-timeout 10000

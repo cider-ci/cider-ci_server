@@ -5,15 +5,17 @@
 (ns cider-ci.builder.jobs.tasks-generator
   (:require
     [cider-ci.builder.util :refer [json-write-str]]
+    [cider-ci.utils.config :refer [get-config]]
     [cider-ci.utils.core :refer :all]
     [cider-ci.utils.http :as http]
 
+    [clj-http.client :as http-client]
     [clojure.core.memoize :as memo]
 
     [clj-logging-config.log4j :as logging-config]
+    [clojure.tools.logging :as logging]
     [logbug.catcher :as catcher]
     [logbug.debug :as debug :refer [I> I>> identity-with-logging]]
-    [clojure.tools.logging :as logging]
     ))
 
 (defn- file-name-to-task [file-name]
@@ -21,16 +23,17 @@
               {:CIDER_CI_TASK_FILE file-name}}])
 
 (defn- get-file-list_unmemoized [git-ref generate-spec]
-  (let [url (http/build-service-url
-              :repository "/ls-tree"
-              (->> generate-spec
-                   (merge {:git_ref git-ref
-                           :include_match ""
-                           :exclude_match ""
-                           :submodule []
-                           })
-                   (map (fn [[k v]] [k (json-write-str v)]))
-                   (into {})))]
+  (let [url (str (:server_base_url (get-config))
+                 "/cider-ci/repositories" "/ls-tree" "?"
+                 (http-client/generate-query-string
+                   (->> generate-spec
+                        (merge {:git_ref git-ref
+                                :include_match ""
+                                :exclude_match ""
+                                :submodule []
+                                })
+                        (map (fn [[k v]] [k (json-write-str v)]))
+                        (into {}))))]
     (-> url
         (http/get {:socket-timeout 10000
                    :conn-timeout 10000
