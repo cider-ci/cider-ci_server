@@ -24,6 +24,8 @@
     [cider-ci.auth.session :as session]
     [cider-ci.utils.config :as config :refer [get-config]]
     [cider-ci.utils.routing :as routing]
+    [cider-ci.utils.shutdown :as shutdown]
+
     [cider-ci.utils.status :as status]
 
     [clj-time.core :as time]
@@ -31,7 +33,6 @@
     [clojure.data.json :as json]
     [compojure.core :as cpj]
     [compojure.handler :as cpj.handler]
-    [ring.adapter.jetty :as jetty]
     [ring.middleware.accept]
     [ring.middleware.cookies :as cookies]
     [ring.middleware.defaults]
@@ -93,7 +94,7 @@
       roa/wrap
       ring.middleware.json/wrap-json-body
       ring.middleware.json/wrap-json-response
-      routing/wrap-shutdown
+      shutdown/wrap
       web.ui/wrap
       wrap-accept
       web.push/wrap
@@ -112,4 +113,5 @@
 ;(logging-config/set-logger! :level :debug)
 ;(logging-config/set-logger! :level :info)
 ;(debug/debug-ns 'cider-ci.auth.http-basic)
-;(debug/debug-ns *ns*)
+(debug/debug-ns 'cider-ci.auth.anti-forgery)
+(debug/debug-ns *ns*)

@@ -7,7 +7,7 @@
     [cider-ci.repository.ui.projects.shared :refer [humanize-datetime]]
     [cider-ci.repository.constants :refer [CONTEXT]]
     [cider-ci.repository.ui.request :as request]
-    [cider-ci.repository.ui.state :as state]
+    [cider-ci.client.state :as state]
 
     [cider-ci.utils.core :refer [presence]]
     [cider-ci.utils.url]

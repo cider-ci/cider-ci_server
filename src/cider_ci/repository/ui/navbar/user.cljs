@@ -5,7 +5,7 @@
   (:require
     [cider-ci.utils.core :refer [presence]]
     [cider-ci.repository.constants :refer [CONTEXT]]
-    [cider-ci.repository.ui.state :as state]
+    [cider-ci.client.state :as state]
     ))
 
 (def user (reaction (-> @state/server-state :user presence)))

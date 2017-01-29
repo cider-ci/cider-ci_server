@@ -1,60 +1,79 @@
-(ns cider-ci.repository.ui.state
+(ns cider-ci.client.state
+  (:refer-clojure :exclude [str keyword])
+
   (:require-macros
     [cljs.core.async.macros :as asyncm :refer (go go-loop)]
     [reagent.ratom :as ratom :refer [reaction]]
     )
 
   (:require
-    [cider-ci.repository.constants :refer [CONTEXT]]
-    [cider-ci.repository.data :refer [sort-data]]
+    [cider-ci.utils.core :refer [keyword str presence]]
     [cider-ci.utils.digest :refer [digest]]
 
     [cljsjs.moment]
+    [goog.dom :as dom]
+    [goog.dom.dataset :as dataset]
     [reagent.core :as r]
     [taoensso.sente  :as sente :refer (cb-success?)]
-    [timothypratley.patchin :refer [patch]]
-
+    [timothypratley.patchin :refer [diff patch]]
     ))
 
 
 (defonce debug-db (r/atom {}))
 
+;;; server-state  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (defonce server-state (r/atom {}))
 
-; this triggers the state to get out of sync which should show
-; a nice alert then; TODO: test this (how?)
-;(js/setTimeout #(swap! server-state assoc :x 42) 5000)
+(defn data-attribute [element-name attribute-name]
+  (-> (.getElementsByTagName js/document element-name)
+      (aget 0)
+      (dataset/get attribute-name)
+      (#(.parse js/JSON %))
+      cljs.core/js->clj
+      clojure.walk/keywordize-keys))
 
+(swap! server-state
+       assoc
+       :user (data-attribute "body" "user")
+       :authentication_providers  (data-attribute
+                                    "body" "authproviders"))
+
+
+;;; page-state ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defonce page-state (r/atom {}))
 
-(defonce client-state
-  (r/atom
-    {:debug false
-     :server_state_updated_at nil
-     :edit-new-form-data {}
-     :connection {:ever-opened? false
-                  :open? false
-                  :updated_at (js/moment)}}))
 
-(defn put! [k v]
-  (swap! client-state (fn [cs k v]
-                        (assoc cs k v))
-         k v))
+;;; client-state  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;(defn get [k] (clojure.core/get @client-state k))
+(defonce client-state (r/atom {:debug true}))
 
 (js/setInterval #(swap! client-state
                        (fn [s] (merge s {:timestamp (js/moment)}))) 1000)
 
-(def db (reaction (merge @server-state @client-state)))
+(def client-state-push-to-server-keys
+  [:server-requests])
+
+;;; push-pending? ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defonce push-pending? (atom false))
+
+(add-watch
+  client-state :set-push-pending
+  (fn [_ _ old-state new-state]
+    (when (not= (select-keys old-state client-state-push-to-server-keys)
+                (select-keys new-state client-state-push-to-server-keys))
+      (reset! push-pending? true))))
+
+;;; connect and receive ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn clj->json
   [ds]
   (.stringify js/JSON (clj->js ds)))
 
 (let [{:keys [chsk ch-recv send-fn state]}
-      (sente/make-channel-socket! (str CONTEXT "/ws/chsk")
+      (sente/make-channel-socket! "/cider-ci/server/ws/chsk"
                                   {:type :auto})]
   ;(swap! client-state assoc :ws-connection state)
   (def chsk chsk)
@@ -94,7 +113,25 @@
 
     nil))
 
-
 (sente/start-chsk-router! ch-chsk event-msg-handler)
 
-;(js* "debugger;")
+
+;;; push client state ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(declare push-to-server)
+
+(defn push-to-server []
+  (if-not @push-pending?
+    (js/setTimeout push-to-server 200)
+    (do (reset! push-pending? false)
+        (chsk-send! [:client/state
+                     {:full (select-keys @client-state
+                                         client-state-push-to-server-keys)}]
+                    1000
+                    (fn [reply]
+                      (when-not (sente/cb-success? reply)
+                        (reset! push-pending? true))
+                      (js/setTimeout push-to-server 200))))))
+
+
+(js/setTimeout push-to-server 100)

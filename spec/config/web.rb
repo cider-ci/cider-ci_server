@@ -4,7 +4,7 @@ require 'selenium-webdriver'
 require 'json_roa/client'
 
 def port
-  @port ||= Integer(ENV['UI2_HTTP_PORT'].presence || 8883)
+  @port ||= Integer(ENV['SERVER_HTTP_PORT'].presence || 8881)
 end
 
 def base_url

@@ -1,18 +1,18 @@
 scripts:
   build-uberjar:
-    exclusive_executor_resource: build-ui2
+    exclusive_executor_resource: build-server
     body: |
       #!/usr/bin/env bash
       set -eux
       export LEIN_SNAPSHOTS_IN_RELEASE=yes
       DIGEST=$(git log -n 1 HEAD --pretty=%T)
-      LEIN_UBERJAR_FILE="/tmp/ui2_${DIGEST}.jar"
+      LEIN_UBERJAR_FILE="/tmp/server_${DIGEST}.jar"
       if [ -f "${LEIN_UBERJAR_FILE}" ];then
         echo " ${LEIN_UBERJAR_FILE} exists"
       else
         lein sass once
         lein uberjar
-        mv "target/ui2.jar" "${LEIN_UBERJAR_FILE}"
+        mv "target/server.jar" "${LEIN_UBERJAR_FILE}"
       fi
       mkdir -p target
-      ln -s "$LEIN_UBERJAR_FILE" "target/ui2.jar"
+      ln -s "$LEIN_UBERJAR_FILE" "target/server.jar"

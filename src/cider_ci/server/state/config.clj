@@ -2,15 +2,14 @@
 ; Licensed under the terms of the GNU Affero General Public License v3.
 ; See the "LICENSE.txt" file provided with this software.
 
-(ns cider-ci.repository.state.config
+(ns cider-ci.server.state.config
   (:refer-clojure :exclude [str keyword])
   (:require [cider-ci.utils.core :refer [keyword str]])
 
   (:require
+    [cider-ci.server.state.db :as db]
 
     [cider-ci.utils.config :refer [get-config]]
-    [cider-ci.repository.state.db :as db]
-
     ))
 
 

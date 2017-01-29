@@ -1,7 +1,7 @@
 require 'sequel'
 
 module Helpers
-  module Global
+  module DB
     extend self
 
     def database

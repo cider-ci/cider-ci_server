@@ -3,7 +3,7 @@
   (:require
     [cider-ci.ui2.constants :refer [CONTEXT]]
     [cider-ci.ui2.shared :refer [anti-forgery-token]]
-    [cider-ci.ui2.ui.state :as state]
+    [cider-ci.client.state :as state]
 
     [cider-ci.utils.core :refer [keyword str presence]]
 

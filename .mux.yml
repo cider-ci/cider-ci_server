@@ -1,0 +1,33 @@
+windows:
+  '2':
+    name: repl
+    command: |
+      lein do clean, repl
+    post_command_send_keys: |
+      (-main)
+  '3':
+    name: figwheel
+    command: |
+      # give lein clean from window 3 some time before we start figwheel
+      sleep 10
+      lein figwheel
+  5:
+    name: database
+    command: |
+      psql -d cider-ci_v4
+  6:
+    name: github-mock
+    command: |
+      export GITHUB_API_MOCK_PORT=8998
+      bundle exec ruby github_api_mock.rb -p ${GITHUB_API_MOCK_PORT}
+  '7':
+    name: test
+    command: |
+      export GITHUB_API_MOCK_PORT=8998
+      export RAILS_ENV=test
+  '8':
+    name: log
+    command: |
+      mkdir -p log && echo " " > log/debug.log && tail -f log/debug.log
+
+

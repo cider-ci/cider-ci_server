@@ -8,10 +8,7 @@ feature 'Session expiration', type: :feature do
 
     before :each do
       PgTasks.truncate_tables()
-      password_digest = '$2a$06$YXyaPR7IzANgRuOx5JJTzO8THVxfeQ8wVTB.NZJzySLP6Qg5v3zhW'
-      @users = database[:users]
-      @users.insert(login: 'normin', is_admin: false, password_digest: password_digest)
-      @users.insert(login: 'admin', is_admin: true, password_digest: password_digest)
+      create_default_users
     end
 
     context "The max_session_lifetime of every user is set to 15 seconds" do

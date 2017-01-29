@@ -26,13 +26,14 @@
     [clojure.tools.logging :as logging]
     ))
 
-(defn assert-proper-context! []
-  (let [defined-context (str CONTEXT)
-        configured-context (->> [:context :sub_context]
-                                (map #(-> (get-config) :services
-                                          :repository :http (get %)))
-                                clojure.string/join)]
-    (assert (= defined-context configured-context))))
+(defn initialize []
+  (state/initialize)
+  (cider-ci.repository.web.push/initialize)
+  (branch-updates/initialize)
+  (fetch-and-update/initialize)
+  (push-hooks/initialize)
+  (status-pushes/initialize)
+  (sweeper/initialize))
 
 (defn -main [& args]
   (catcher/snatch
@@ -40,11 +41,4 @@
      :throwable Throwable
      :return-fn (fn [e] (System/exit -1))}
     (cider-ci.utils.app/init web/build-main-handler)
-    (state/initialize)
-    (cider-ci.repository.web.push/initialize)
-    (assert-proper-context!)
-    (branch-updates/initialize)
-    (fetch-and-update/initialize)
-    (push-hooks/initialize)
-    (status-pushes/initialize)
-    (sweeper/initialize)))
+    (initialize)))

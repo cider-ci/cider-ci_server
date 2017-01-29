@@ -2,13 +2,15 @@
 ; Licensed under the terms of the GNU Affero General Public License v3.
 ; See the "LICENSE.txt" file provided with this software.
 
-(ns cider-ci.repository.state.db
+(ns cider-ci.server.state
   (:refer-clojure :exclude [str keyword])
   (:require [cider-ci.utils.core :refer [keyword str]])
 
   (:require
-
-    [cider-ci.utils.self :as self]
+    [cider-ci.server.state.config :as config]
+    [cider-ci.server.state.db :as db]
+    [cider-ci.server.state.repositories :as repositories]
+    [cider-ci.server.state.users :as users]
 
     [clj-logging-config.log4j :as logging-config]
     [clojure.tools.logging :as logging]
@@ -18,17 +20,18 @@
 
     ))
 
-(def db (atom {:release (self/release)
-               :repositories {}
-               :users {}}))
+(defn get-db [] @db/db)
 
-(defn watch [k fun]
-  (apply add-watch [db k fun]))
+(defn watch-db [k fun]
+  (add-watch db/db k
+             (fn [_key _ref _old _new]
+               (when (not= _old _new)
+                 (fun _key _ref _old _new)))))
 
-(add-watch db :debug-watch
-           (fn [_ _ before after]
-             (logging/debug 'DB-CHANGE {:before (:repositories before) :after (:repositories after)})
-             ))
+(defn initialize []
+  (users/initialize)
+  (config/initialize)
+  (repositories/initialize))
 
-;(fipp.edn/pprint @db)
+
 ;(debug/debug-ns *ns*)

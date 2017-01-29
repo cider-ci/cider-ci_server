@@ -7,7 +7,7 @@
     [cider-ci.repository.ui.projects.show :as projects.show]
     [cider-ci.repository.constants :refer [CONTEXT]]
     [cider-ci.repository.ui.request :as request]
-    [cider-ci.repository.ui.state :as state]
+    [cider-ci.client.state :as state]
     [cider-ci.repository.ui.projects.shared :refer [humanize-datetime]]
 
     [cljsjs.jquery]
@@ -100,20 +100,6 @@
 ;; Routes
 
 
-(secretary/defroute (str CONTEXT "/projects/") [query-params]
-  (swap! state/page-state assoc :current-page
-         {:component #'projects.index/page
-          :query-params query-params
-          }))
-
-(secretary/defroute (str CONTEXT "/projects/new") []
-  (swap! state/page-state assoc :current-page
-         {:component #'projects.edit-new.core/new-page }))
-
-(secretary/defroute (str CONTEXT "/projects/:id") {id :id}
-  (swap! state/page-state assoc :current-page
-         {:component #'projects.show/page :id id}))
-
 (secretary/defroute (str CONTEXT "/projects/:id/issues/:keys") {id :id encoded-ks :keys}
   (swap! state/page-state assoc :current-page
          {:component #'projects.show/issue
@@ -123,10 +109,6 @@
 (secretary/defroute (str CONTEXT "/projects/:id/error/:keys") {id :id raw-keys :keys}
   (swap! state/page-state assoc :current-page
          {:component #'projects.show/issue :id id}))
-
-(secretary/defroute (str CONTEXT "/projects/:id/edit") {id :id}
-  (swap! state/page-state assoc :current-page
-         {:component #'projects.edit-new.core/edit :id id}))
 
 (secretary/defroute (str CONTEXT "/ui/debug") []
   (swap! state/page-state assoc :current-page

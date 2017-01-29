@@ -5832,12 +5832,3 @@ button.close {
 
 .breadcrumb.with-circle-separator > li + li:before {
   content: "○"; }
-
-table tbody.table-bordered td {
-  border: 1px solid #dddddd; }
-
-table.table-project tbody > tr > td {
-  width: 20%; }
-
-table.table-projects tbody > tr > td {
-  width: 16.6%; }

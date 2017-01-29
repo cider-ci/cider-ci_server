@@ -4,7 +4,7 @@
     )
   (:require
     [cider-ci.utils.core :refer [presence]]
-    [cider-ci.repository.ui.state :as state]
+    [cider-ci.client.state :as state]
     [cider-ci.repository.ui.navbar.user :as user-navbar]
     ))
 

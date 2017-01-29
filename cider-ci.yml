@@ -24,7 +24,7 @@ jobs:
           - cider-ci/task-components/service.yml
           - cider-ci/task-components/github-mock.yml
         environment_variables:
-          DATABASE_NAME: cider-ci_ui2_test_{{CIDER_CI_TRIAL_ID}}
+          DATABASE_NAME: cider-ci_server_test_{{CIDER_CI_TRIAL_ID}}
           DATABASE_DIR: database
           RUBY_ENGINE: ruby
           RUBY_VERSION: 2.3.3

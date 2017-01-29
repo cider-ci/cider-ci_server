@@ -20,7 +20,7 @@
 
 (defn repositories-fs-base-path []
   (let [path (-> (get-config) :services
-                 :repository :repositories :path)]
+                 :server :repositories :path)]
     (assert (not (blank? path)))
     path))
 

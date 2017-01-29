@@ -1,11 +1,9 @@
-(ns cider-ci.repository.state.users
+(ns cider-ci.server.state.users
   (:refer-clojure :exclude [str keyword])
   (:require [cider-ci.utils.core :refer [keyword str]])
-
   (:require
-
-    [cider-ci.repository.state.db :as db]
-    [cider-ci.repository.state.shared :refer :all]
+    [cider-ci.server.state.db :as db]
+    [cider-ci.server.state.shared :refer [update-rows-in-db]]
 
     [cider-ci.utils.config :refer [get-config]]
     [cider-ci.utils.daemon :as daemon :refer [defdaemon]]
@@ -13,11 +11,7 @@
 
     [clojure.java.jdbc :as jdbc]
     [cider-ci.utils.rdbms :as rdbms]
-
-
     ))
-
-
 
 (defn- update-users []
   (->> ["SELECT * from users"]

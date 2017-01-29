@@ -10,7 +10,7 @@
     [cider-ci.repository.ui.projects.shared :refer [humanize-datetime]]
     [cider-ci.repository.status-pushes.ui :as status-pushes]
     [cider-ci.repository.constants :refer [CONTEXT]]
-    [cider-ci.repository.ui.state :as state]
+    [cider-ci.client.state :as state]
 
     [accountant.core :as accountant]
     [clojure.contrib.humanize]
@@ -79,7 +79,7 @@
 
 (defn table []
   [:div
-      [:table.table.table-striped.table-projects
+   [:table.table.table-striped.table-projects
     [:thead
      [:tr.text-center {:key :thr}
       [th-name]
@@ -87,9 +87,10 @@
       [fetch-and-update/th]
       [push-notifications/th]
       [push-hooks/th]
-      [status-pushes/th]]]
+      [status-pushes/th]
+      ]]
     [:tbody.table-bordered
-     (for [[id project] (->> @state/db
+     (for [[id project] (->> @state/server-state
                              :repositories
                              (sort-by (fn [[k v]] (apply @sort-fn [v]))))]
        ^{:key (str "project_row_" id)} [row id project])]]])

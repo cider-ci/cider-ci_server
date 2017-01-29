@@ -15,14 +15,21 @@
     [cider-ci.repository.ui.projects.shared :as projects-components]
 
     [cider-ci.repository.constants :refer [CONTEXT]]
-    [cider-ci.repository.ui.state :as state]
+    [cider-ci.client.state :as state]
 
     [cider-ci.utils.url]
 
+    [secretary.core :as secretary :include-macros true]
     [accountant.core :as accountant]
     [cljs.pprint :refer [pprint]]
     [reagent.core :as r]))
 
+
+(declare page)
+
+(secretary/defroute project-path (str CONTEXT "/projects/:id") {id :id}
+  (swap! state/page-state assoc :current-page
+         {:component #'page :id id}))
 
 (def id (reaction (-> @state/page-state :current-page :id)))
 

@@ -8,8 +8,6 @@
   (:require
     [cider-ci.repository.state.db :as db]
     [cider-ci.repository.state.repositories :as state.repositories]
-    [cider-ci.repository.state.users :as state.users]
-    [cider-ci.repository.state.config :as state.config]
     [clj-time.core :as time]
     )
   (:require
@@ -48,9 +46,7 @@
 ;### initialize ###############################################################
 
 (defn initialize []
-  (state.repositories/initialize)
-  (state.users/initialize)
-  (state.config/initialize))
+  (state.repositories/initialize))
 
 
 ;#### debug ###################################################################

@@ -10,13 +10,31 @@
     [cider-ci.repository.ui.projects.edit-new.basics :as edit-new.basics]
     [cider-ci.repository.ui.projects.edit-new.permissions :as edit-new.permissions]
     [cider-ci.repository.ui.request :as request]
-    [accountant.core :as accountant]
 
-    [cider-ci.repository.ui.state :as state]
+    [accountant.core :as accountant]
+    [secretary.core :as secretary :include-macros true]
+
+    [cider-ci.client.state :as state]
     [cider-ci.repository.ui.projects.edit-new.shared :refer [id project form-data update-form-data update-form-data-value]]
     [reagent.core :as r]
     ))
 
+(declare new-page edit-page)
+
+(secretary/defroute project-new-path
+  (str CONTEXT "/projects/new") [query-params]
+  (swap! state/page-state assoc :current-page
+         {:component #'new-page
+          :query-params query-params})
+  (swap! state/client-state assoc :server-requests
+         {:projects true}))
+
+(secretary/defroute project-edit-path
+  (str CONTEXT "/projects/:id/edit") {id :id}
+  (swap! state/page-state assoc :current-page
+         {:component #'edit-page :id id})
+  (swap! state/client-state assoc :server-requests
+         {:projects true}))
 
 (defn form-component []
   [:div.form
@@ -115,7 +133,7 @@
          :update_notification_token]))))
 
 
-(defn edit []
+(defn edit-page []
   (r/create-class
     {:component-will-mount reset-for-edit-state!
      :reagent-render

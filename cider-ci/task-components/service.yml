@@ -3,8 +3,8 @@ scripts:
   service-run:
     body: |
       set -eux
-      export CLASSPATH="dev_resources:target/ui2.jar"
-      java "cider_ci.ui2.main"
+      export CLASSPATH="dev_resources:target/server.jar"
+      java "cider_ci.main"
     start_when:
       database has been created:
         script_key: create-database
@@ -16,7 +16,7 @@ scripts:
   service-is-running:
     timeout: 15 seconds
     environment_variables:
-      STATUS_URL: http://localhost:{{UI2_HTTP_PORT}}/cider-ci/ui2/status
+      STATUS_URL: http://localhost:{{SERVER_HTTP_PORT}}/cider-ci/ui2/status
     body: |
       #!/usr/bin/env bash
       set -eux
@@ -43,7 +43,7 @@ scripts:
         script_key: test
         states: [aborted, defective, passed, failed, skipped]
     environment_variables:
-      SHUTDOWN_URL: http://localhost:{{UI2_HTTP_PORT}}/cider-ci/ui2/shutdown
+      SHUTDOWN_URL: http://localhost:{{SERVER_HTTP_PORT}}/cider-ci/ui2/shutdown
     body: |
       #!/usr/bin/env bash
       set -eux

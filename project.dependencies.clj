@@ -18,6 +18,7 @@
  [clojure-humanize "0.2.0"]
  [com.taoensso/sente "1.10.0"]
  [compojure "1.5.1"]
+ [fipp "0.6.8"]
  [hiccup "1.0.5"]
  [org.clojure/clojurescript "1.9.93" :scope "provided"]  ; see guava below; also check `lein tree` and sync
  [prismatic/schema "1.1.3"]

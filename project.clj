@@ -2,8 +2,8 @@
 ; Licensed under the terms of the GNU Affero General Public License v3.
 ; See the "LICENSE.txt" file provided with this software.
 
-(defproject cider-ci/repository "0.0.0-PLACEHOLDER"
-  :description "Cider-CI Repository"
+(defproject cider-ci/server "0.0.0-PLACEHOLDER"
+  :description "Cider-CI Server"
   :license {:name "GNU AFFERO GENERAL PUBLIC LICENSE Version 3"
             :url "http://www.gnu.org/licenses/agpl-3.0.html"}
 
@@ -37,6 +37,7 @@
                  :source-map true
                  :optimizations :none
                  :pretty-print  true}}}}
+
   :minify-assets {:assets
                   {"resources/public/css/site.min.css"
                    "resources/public/css/site.css"}}
@@ -70,8 +71,8 @@
                        :prep-tasks ["compile" ["cljsbuild" "once" "min"]]
                        :resource-paths ["target/cljsbuild"]
                        :aot [cider-ci.WebstackException #"cider-ci.*"]
-                       :uberjar-name "ui2.jar"
+                       :uberjar-name "server.jar"
                        }}
-  :main cider-ci.ui2.main
+  :main cider-ci.main
   :repl-options {:timeout  120000}
   )

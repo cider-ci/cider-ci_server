@@ -58,7 +58,7 @@ ORGS = {
 USER = USERS[(ENV['GITHUB_MOCK_USER'].presence || 'adam')]
 
 CALLBACK_URL = 'http://localhost:' \
-   << (ENV['UI2_HTTP_PORT'].presence || '8883') \
+   << (ENV['SERVER_HTTP_PORT'].presence || '8881') \
    << '/cider-ci/ui2/session/oauth/github/sign-in'
 
 def find_user_by_access_token(access_token)

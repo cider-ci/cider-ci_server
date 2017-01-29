@@ -5,7 +5,7 @@
   (:require
     [cider-ci.repository.constants :refer [CONTEXT]]
     [cider-ci.repository.ui.projects.edit-new.shared :refer [form-data dissected-git-url id project update-form-data update-form-data-value section]]
-    [cider-ci.repository.ui.state :as state]
+    [cider-ci.client.state :as state]
     [cider-ci.utils.core :refer [presence]]
     [cider-ci.utils.duration :as duration]
     ))

@@ -24,9 +24,9 @@ scripts:
       config['database']['subname']= "//localhost:#{ENV['PGPORT']}/#{ENV['DATABASE_NAME']}"
 
       # storage
-      config['services']['ui2']['http']['port']= Integer(ENV['UI2_HTTP_PORT'])
-      config['services']['ui2']['http']['host']= 'localhost'
-      config['services']['ui2']['nrepl']['enabled']= false
+      config['services']['server']['http']['port']= Integer(ENV['SERVER_HTTP_PORT'])
+      config['services']['server']['http']['host']= 'localhost'
+      config['services']['server']['nrepl']['enabled']= false
 
       # write config
       File.open('config/config.yml','w') { |file| file.write config.to_yaml }

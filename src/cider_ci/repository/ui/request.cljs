@@ -6,7 +6,7 @@
   (:refer-clojure :exclude [send-off])
   (:require
     [reagent.core :as r]
-    [cider-ci.repository.ui.state :as state]
+    [cider-ci.client.state :as state]
     [cider-ci.utils.core :refer [deep-merge]]
     [cider-ci.utils.url]
     [cljs-http.client :as http]

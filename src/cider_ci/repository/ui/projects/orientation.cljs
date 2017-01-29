@@ -6,7 +6,7 @@
   (:require
     [cider-ci.repository.constants :refer [CONTEXT]]
     [cider-ci.repository.ui.request :as request]
-    [cider-ci.repository.ui.state :as state]
+    [cider-ci.client.state :as state]
 
     [cider-ci.utils.url]
 

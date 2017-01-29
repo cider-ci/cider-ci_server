@@ -6,16 +6,18 @@ require 'config/bundle'
 require 'config/rails'
 require 'config/database'
 require 'config/web'
-require 'helpers/global'
-require 'helpers/sequel'
 require 'rspec-rails'
+
+require 'helpers/global'
+require 'helpers/db'
+require 'helpers/users'
 
 require 'pry'
 
-
-
 RSpec.configure do |config|
   config.include Helpers::Global
+  config.include Helpers::DB
+  config.include Helpers::Users
 
   config.before :all do
     @spec_seed = \

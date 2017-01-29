@@ -8,7 +8,7 @@
     [cider-ci.repository.constants :refer [CONTEXT]]
     [cider-ci.repository.remote :as remote]
     [cider-ci.repository.ui.request :as request]
-    [cider-ci.repository.ui.state :as state]
+    [cider-ci.client.state :as state]
     [cider-ci.repository.remote :refer [api-access?]]
 
     [cider-ci.utils.core :refer [presence]]

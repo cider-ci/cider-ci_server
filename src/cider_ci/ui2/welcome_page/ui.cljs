@@ -7,7 +7,7 @@
     [cider-ci.ui2.shared :refer [pre-component anti-forgery-token]]
     [cider-ci.utils.core :refer [keyword str presence deep-merge]]
     [cider-ci.ui2.constants :refer [CONTEXT]]
-    [cider-ci.ui2.ui.state :as state]
+    [cider-ci.client.state :as state]
     [cider-ci.ui2.session.password.ui :as session.password]
 
     [cider-ci.utils.markdown :as markdown]

@@ -1,6 +1,6 @@
 (ns cider-ci.repository.ui.debug
   (:require
-    [cider-ci.repository.ui.state :as state]
+    [cider-ci.client.state :as state]
     ))
 
 
