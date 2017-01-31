@@ -3,10 +3,10 @@
 ; See the "LICENSE.txt" file provided with this software.
 
 (ns cider-ci.dispatcher.main
+  (:refer-clojure :exclude [str keyword])
+  (:require [cider-ci.utils.core :refer [keyword str]])
   (:gen-class)
   (:require
-    [cider-ci.self]
-
     [cider-ci.dispatcher.result]
     [cider-ci.dispatcher.abort :as abort]
     [cider-ci.dispatcher.dispatch :as dispatch]
@@ -24,17 +24,17 @@
     ))
 
 
+(defn initialize []
+  (task/initialize)
+  (abort/initialize)
+  (cider-ci.dispatcher.result/initialize)
+  (timeout-sweeper/initialize))
+
 (defn -main [& args]
   (catcher/snatch
     {:level :fatal
      :throwable Throwable
      :return-fn (fn [_] (System/exit -1))}
     (cider-ci.utils.app/init web/build-main-handler)
-
-    (task/initialize)
-    (abort/initialize)
-    (cider-ci.dispatcher.result/initialize)
-    (timeout-sweeper/initialize)
-
-    ))
+    (initialize)))
 

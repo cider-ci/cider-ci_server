@@ -8,6 +8,7 @@
   (:require
     [cider-ci.server.web]
     [cider-ci.repository.web]
+    [cider-ci.dispatcher.web]
     [cider-ci.ui2.web]
 
     [compojure.core :as cpj]
@@ -28,6 +29,9 @@
 (def repositories-handler
   (cider-ci.repository.web/build-main-handler "/cider-ci/repositories"))
 
+(def dispatcher-handler
+  (cider-ci.dispatcher.web/build-main-handler "/cider-ci/dispatcher"))
+
 (def ui2-handler
   (cider-ci.ui2.web/build-main-handler "/cider-ci/ui2" ))
 
@@ -42,6 +46,7 @@
     (cpj/ANY "/cider-ci/repositories/*" [] repositories-handler)
     (cpj/ANY "/cider-ci/ui2/*" [] ui2-handler)
     (cpj/ANY "/cider-ci/server/*" [] server-handler)
+    (cpj/ANY "/cider-ci/dispatcher/*" [] dispatcher-handler)
     (cpj/GET "/" [] redirect-to-ui2)
     (cpj/ANY "*" [] dead-end-handler)))
 
@@ -53,4 +58,4 @@
 ;(logging-config/set-logger! :level :debug)
 ;(logging-config/set-logger! :level :info)
 ;(debug/debug-ns 'cider-ci.auth.http-basic)
-(debug/debug-ns *ns*)
+;(debug/debug-ns *ns*)

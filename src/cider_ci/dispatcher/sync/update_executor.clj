@@ -5,13 +5,16 @@
 (ns cider-ci.dispatcher.sync.update-executor
   (:refer-clojure :exclude [update])
   (:require
+
     [cider-ci.dispatcher.executor :as executor-entity]
+
+    [cider-ci.utils.self :as self]
     [cider-ci.utils.http :as http]
     [cider-ci.utils.rdbms :as rdbms :refer [get-ds]]
     [cider-ci.utils.jdbc :refer [insert-or-update]]
+
     [clojure.data.json :as json]
     [clojure.java.jdbc :as jdbc]
-
 
     [clj-logging-config.log4j :as logging-config]
     [clojure.tools.logging :as logging]
@@ -74,7 +77,7 @@
   (let [executor-version (-> data :status :version)
         issue-id (clj-uuid/v5 clj-uuid/+null+ (str :version_mismatch (:id executor)))
         where-clause ["executor_id = ? AND id = ?" (:id executor) issue-id]]
-    (if (= executor-version cider-ci.self/VERSION)
+    (if (= executor-version (self/version))
       (jdbc/delete! (get-ds) :executor_issues where-clause)
       (insert-or-update (get-ds)
         "executor_issues"  where-clause
@@ -83,7 +86,7 @@
          :title "Version Mismatch"
          :description (str "The executor `" (:name executor) "` is on version `"
                            executor-version "`, but we are on `"
-                           cider-ci.self/VERSION "`! \n"
+                           (self/version) "`! \n"
                            "No trials will be dispatched to this executor!\n"
                            )}))
     (if (= (:version executor) executor-version)

@@ -57,7 +57,7 @@
                                        request)
         {username :username password :password} (:basic-auth-request
                                                   request-with-auth-properties)]
-    (if-not (http-basic/password-matches password username)
+    (if-not (http-basic/password-matches? password username)
       {:status 403 :body "Password missmatch."}
       (if-let [executor (find-or-create-executor username)]
         (sync/sync executor (:body request))

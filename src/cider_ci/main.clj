@@ -3,12 +3,13 @@
   (:require [cider-ci.utils.core :refer [keyword str]])
   (:gen-class)
   (:require
-    [cider-ci.utils.app :as app]
+    [cider-ci.dispatcher.main]
     [cider-ci.repository.main]
     [cider-ci.server]
+    [cider-ci.utils.app :as app]
     [cider-ci.web :as web]
-    [logbug.catcher :as catcher]
 
+    [logbug.catcher :as catcher]
     ))
 
 
@@ -19,4 +20,6 @@
      :return-fn (fn [e] (System/exit -1))}
     (app/init :server web/build-main-handler)
     (cider-ci.server/initialize)
-    (cider-ci.repository.main/initialize)))
+    (cider-ci.repository.main/initialize)
+    (cider-ci.dispatcher.main/initialize)
+    ))

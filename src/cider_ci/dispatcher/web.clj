@@ -8,7 +8,6 @@
     [cider-ci.dispatcher.retry :as retry]
     [cider-ci.dispatcher.web.executor :as web.executor]
 
-
     [cider-ci.auth.authorize :as authorize]
     [cider-ci.auth.http-basic :as http-basic]
     [cider-ci.utils.config :as config :refer [get-config]]
@@ -17,6 +16,7 @@
     [cider-ci.utils.routing :as routing]
     [cider-ci.utils.ring :as ci-utils-ring]
     [cider-ci.utils.status :as status]
+    [cider-ci.utils.shutdown :as shutdown]
 
     [clojure.data :as data]
     [clojure.data.json :as json]
@@ -107,7 +107,7 @@
   (I> wrap-handler-with-logging
       (cpj.handler/api routes)
       status/wrap
-      routing/wrap-shutdown
+      shutdown/wrap
       (authorize/wrap-require! {:service true})
       (http-basic/wrap {:service true})
       web.executor/wrap-dispatch-executor-routes

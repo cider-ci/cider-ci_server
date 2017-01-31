@@ -10,6 +10,7 @@
     [cider-ci.dispatcher.sync.sync-trials :as sync-trials]
     [cider-ci.dispatcher.sync.update-executor :as update-executor]
     [cider-ci.dispatcher.trials :as trials]
+    [cider-ci.utils.self :as self]
 
     [cider-ci.utils.rdbms :as rdbms]
     [clj-logging-config.log4j :as logging-config]
@@ -51,7 +52,7 @@
                       (defect-trials-lost-on-executor (:trials data))
                       (update-executor/update data)
                       (sync-trials/sync-trials data)
-                      (assoc :version cider-ci.self/VERSION))]
+                      (assoc :version (self/version)))]
       {:status 200
        :body (json/write-str payload)})))
 

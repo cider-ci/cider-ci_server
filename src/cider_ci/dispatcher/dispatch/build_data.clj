@@ -39,7 +39,7 @@
   (http/build-service-path :storage  (str "/tree-attachments/" tree-id "/")))
 
 (defn- patch-path [executor trial-id]
-  (http/build-service-path :dispatcher (str "/trials/" trial-id )))
+  (str "/cider-ci/dispatcher/trials/" trial-id ))
 
 ;### templates ################################################################
 

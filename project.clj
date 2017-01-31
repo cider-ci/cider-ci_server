@@ -73,6 +73,7 @@
                        :aot [cider-ci.WebstackException #"cider-ci.*"]
                        :uberjar-name "server.jar"
                        }}
+  :aot [cider-ci.WebstackException]
   :main cider-ci.main
   :repl-options {:timeout  120000}
   )

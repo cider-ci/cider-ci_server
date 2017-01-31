@@ -7,6 +7,8 @@
     [cider-ci.dispatcher.stateful-entity :as stateful-entity]
     [cider-ci.dispatcher.task :as task]
     [cider-ci.utils.config :as config :refer [get-config]]
+    [cider-ci.utils.ring :refer [web-ex]]
+
     [cider-ci.utils.rdbms :as rdbms :refer [get-ds]]
 
     [clojure.java.jdbc :as jdbc]
@@ -39,7 +41,7 @@
     (let [job (get-job job-id)
           job-id (:id job) ]
       (when-not job
-        (throw (ex-info "Job not found" {:status 422})))
+        (throw (web-ex "Job not found" {:status 422})))
       (jdbc/update! (get-ds) :jobs
                     (merge
                       (select-keys params [:resumed_by, :resumed_at])
@@ -55,7 +57,7 @@
   (let [task (task/get-task task-id)
         task-id (:id task) ]
     (when-not task
-      (throw (ex-info "Task not found" {:status 404})))
+      (throw (web-ex "Task not found" {:status 404 :body "Task not found!"})))
     (task/create-trial task params)))
 
 

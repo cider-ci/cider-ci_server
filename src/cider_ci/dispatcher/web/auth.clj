@@ -1,7 +1,7 @@
 (ns cider-ci.dispatcher.web.auth
   (:require
     [cider-ci.utils.rdbms :as rdbms :refer [get-ds]]
-    [cider-ci.utils.ring :refer [ex-web]]
+    [cider-ci.utils.ring :refer [web-ex]]
 
     [honeysql.sql :refer :all]
     [clojure.data.json :as json]
@@ -16,8 +16,7 @@
     )
   (:import
     [cider_ci WebstackException]
-    )
-  )
+    ))
 
 (defn valid-token-for-trial? [trial-id token]
   (let [query (-> (sql-select true)
@@ -31,12 +30,12 @@
 (defn validate-trial-token! [request trial-id]
   (let [{{token "trial-token"} :headers} request]
     (when-not token
-      (throw (ex-web "Trial-token header is missing!"
+      (throw (web-ex "Trial-token header is missing!"
                       {:status 403
                        :body (json/write-str {:message "trial-token header required"})
                        :content-type "application/json"})))
     (when-not (valid-token-for-trial? trial-id token)
-      (throw (ex-web "Token is not valid!"
+      (throw (web-ex "Token is not valid!"
                       {:status 403
                        :body (json/write-str {:message "token is not valid"})
                        :content-type "application/json"})))))

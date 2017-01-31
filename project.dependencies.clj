@@ -11,6 +11,7 @@
  [org.clojure/core.memoize "0.5.8"]
  [org.clojure/tools.nrepl "0.2.12"]
 
+ [camel-snake-kebab "0.4.0"]
  [cljs-http "0.1.41"]
  [cljsjs/bootstrap "3.3.6-1"]
  [cljsjs/jquery "2.2.4-0"]

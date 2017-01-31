@@ -4,8 +4,9 @@
 
 (ns cider-ci.dispatcher.dispatch.next-trial
   (:require
-    [cider-ci.self]
     [cider-ci.utils.rdbms :as rdbms]
+    [cider-ci.utils.self :as self]
+
     [clojure.java.jdbc :as jdbc]
     [honeysql.sql :refer :all]
     [cider-ci.utils.config :as config :refer [get-config]]
@@ -106,7 +107,7 @@
 (defn next-trial-for-pull [tx executor]
   (->> (-> (trials-excutors-query-ordered)
            (sql-merge-where [:= :exs.id (:id executor)])
-           (sql-merge-where [:= cider-ci.self/VERSION (:version executor)])
+           (sql-merge-where [:= (self/version) (:version executor)])
            (sql-limit 1) sql-format)
        identity-with-logging
        (jdbc/query tx)
