@@ -1,12 +1,11 @@
 (ns cider-ci.builder.jobs.validator.shared
   (:require
-    [cider-ci.utils.core :refer :all]
+    [cider-ci.builder.ValidationException]
 
+    [cider-ci.utils.core :refer :all]
     [cider-ci.utils.duration :refer [parse-string-to-seconds]]
 
     [clojure.set :refer :all]
-
-    ;[cider-ci.builder.ValidationException]
 
     [clj-logging-config.log4j :as logging-config]
     [logbug.catcher :as catcher]

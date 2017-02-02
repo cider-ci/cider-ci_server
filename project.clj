@@ -70,10 +70,10 @@
                        :source-paths ["env/rod/src" "./clj-utils/src" "src"]
                        :prep-tasks ["compile" ["cljsbuild" "once" "min"]]
                        :resource-paths ["target/cljsbuild"]
-                       :aot [cider-ci.WebstackException #"cider-ci.*"]
+                       :aot [cider-ci.WebstackException cider-ci.builder.ValidationException #"cider-ci.*"]
                        :uberjar-name "server.jar"
                        }}
-  :aot [cider-ci.WebstackException]
+  :aot [cider-ci.WebstackException cider-ci.builder.ValidationException]
   :main cider-ci.main
   :repl-options {:timeout  120000}
   )

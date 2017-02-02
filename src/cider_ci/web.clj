@@ -6,13 +6,13 @@
   (:refer-clojure :exclude [str keyword])
   (:require [cider-ci.utils.core :refer [keyword str]])
   (:require
-    [cider-ci.server.web]
-    [cider-ci.repository.web]
+    [cider-ci.builder.web]
     [cider-ci.dispatcher.web]
+    [cider-ci.repository.web]
+    [cider-ci.server.web]
     [cider-ci.ui2.web]
 
     [compojure.core :as cpj]
-
     [ring.util.response]
 
     [clj-logging-config.log4j :as logging-config]
@@ -26,11 +26,14 @@
   {:status 404
    :body "Not found!"})
 
-(def repositories-handler
-  (cider-ci.repository.web/build-main-handler "/cider-ci/repositories"))
+(def builder-handler
+  (cider-ci.builder.web/build-main-handler "/cider-ci/builder"))
 
 (def dispatcher-handler
   (cider-ci.dispatcher.web/build-main-handler "/cider-ci/dispatcher"))
+
+(def repositories-handler
+  (cider-ci.repository.web/build-main-handler "/cider-ci/repositories"))
 
 (def ui2-handler
   (cider-ci.ui2.web/build-main-handler "/cider-ci/ui2" ))
@@ -43,10 +46,11 @@
 
 (def routes
   (cpj/routes
-    (cpj/ANY "/cider-ci/repositories/*" [] repositories-handler)
-    (cpj/ANY "/cider-ci/ui2/*" [] ui2-handler)
-    (cpj/ANY "/cider-ci/server/*" [] server-handler)
+    (cpj/ANY "/cider-ci/builder/*" [] builder-handler)
     (cpj/ANY "/cider-ci/dispatcher/*" [] dispatcher-handler)
+    (cpj/ANY "/cider-ci/repositories/*" [] repositories-handler)
+    (cpj/ANY "/cider-ci/server/*" [] server-handler)
+    (cpj/ANY "/cider-ci/ui2/*" [] ui2-handler)
     (cpj/GET "/" [] redirect-to-ui2)
     (cpj/ANY "*" [] dead-end-handler)))
 

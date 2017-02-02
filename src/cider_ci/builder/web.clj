@@ -86,7 +86,6 @@
 (defn build-main-handler [context]
   (I> wrap-handler-with-logging
       top-handler
-      routing/wrap-shutdown
       wrap-jobs
       ring.middleware.json/wrap-json-response
       ring.middleware.json/wrap-json-body

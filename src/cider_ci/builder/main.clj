@@ -23,17 +23,20 @@
     [logbug.thrown]
     ))
 
+(defn initialize []
+  (tasks/initialize)
+  (trials/initialize)
+  (evaluation/initialize)
+  (jobs.trigger/initialize)
+  (retention-sweeper/initialize))
+
 (defn -main [& args]
   (catcher/snatch
     {:level :fatal
      :throwable Throwable
      :return-fn #(System/exit -1)}
     (cider-ci.utils.app/init web/build-main-handler)
-    (tasks/initialize)
-    (trials/initialize)
-    (evaluation/initialize)
-    (jobs.trigger/initialize)
-    (retention-sweeper/initialize)))
+    (initialize)))
 
 ;### Debug ####################################################################
 ;(logging-config/set-logger! :level :debug)
