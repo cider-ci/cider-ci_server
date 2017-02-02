@@ -1,3 +1,2 @@
 basic_auth:
-  username: cider-ci_dispatcher
-
+  username: cider-ci_server

@@ -10,7 +10,7 @@ task_defaults:
       body: |
         #!/bin/bash
         set -eux
-        cd repository
+        cd server
         lein test $CIDER_CI_TASK_FILE
 generate_tasks:
   include_match: test/.*.clj

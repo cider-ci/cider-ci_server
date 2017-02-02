@@ -2,8 +2,6 @@
 *.jar
 *.log
 /.lein-*
-/.lein-*
-/.nrepl-port
 /.nrepl-port
 /.sass-cache
 /checkouts
@@ -14,8 +12,6 @@
 /tmp
 conf.yml
 pom.xml
-pom.xml
-pom.xml.asc
 pom.xml.asc
 resources/public/
 resources/public/css/site.min.css
