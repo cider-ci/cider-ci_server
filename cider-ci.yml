@@ -1,4 +1,17 @@
 jobs:
+  tests:
+    name: Run tests
+    run_when:
+      any branch matches:
+        type: branch
+        include_match: ^.*$
+    context:
+      tasks:
+        task-tests:
+          git_options:
+            submodules:
+              include_match: ^.*$
+          body: lein test
   specs:
     name: Run specs
     run_when:
