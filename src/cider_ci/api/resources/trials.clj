@@ -6,8 +6,11 @@
   (:require
     [cider-ci.api.pagination :as pagination]
     [cider-ci.api.util :as util]
+
     [cider-ci.utils.http :as utils-http]
     [cider-ci.utils.rdbms :as rdbms]
+    [cider-ci.utils.config :refer [get-config]]
+
     [clojure.data.json :as json]
     [clojure.java.jdbc :as jdbc]
     [compojure.core :as cpj]
@@ -60,8 +63,8 @@
 (defn retry [request]
   (let [task-id (-> request :route-params :task_id)
         user-id (-> request :authenticated-user :id)
-        url (utils-http/build-service-url
-              :dispatcher (str "/tasks/" task-id "/retry"))
+        url (str (:server_base_url (get-config))
+                 "/cider-ci/dispatcher/tasks" task-id "/retry")
         _ (logging/info {:url url})
         body (json/write-str {:created_by user-id})
         params {:body body :throw-exceptions false}

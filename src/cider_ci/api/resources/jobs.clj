@@ -5,10 +5,13 @@
 (ns cider-ci.api.resources.jobs
   (:require
     [cider-ci.api.pagination :as pagination]
+
     [cider-ci.utils.http :as http]
     [cider-ci.utils.http :as utils-http]
     [cider-ci.utils.http-server :as http-server]
     [cider-ci.utils.rdbms :as rdbms]
+    [cider-ci.utils.config :refer [get-config]]
+
     [clojure.data.json :as json]
     [clojure.java.jdbc :as jdbc]
     [compojure.core :as cpj]
@@ -138,7 +141,7 @@
     {:status 422
      :body {:message "The request body must exactly contain the keys 'tree_id' and 'key'"}}
     (let [user-id (-> request :authenticated-user :id)
-          url (utils-http/build-service-url :builder "/jobs/")
+          url (str (:server_base_url (get-config)) "/cider-ci/builder/jobs")
           body (-> request :json-params
                    (assoc :created_by user-id)
                    json/write-str)
