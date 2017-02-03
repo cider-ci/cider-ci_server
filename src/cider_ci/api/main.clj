@@ -5,7 +5,6 @@
 (ns cider-ci.api.main
   (:gen-class)
   (:require
-    [cider-ci.self]
     [cider-ci.utils.app]
     [cider-ci.api.web :as web]
 

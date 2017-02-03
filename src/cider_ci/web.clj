@@ -6,6 +6,7 @@
   (:refer-clojure :exclude [str keyword])
   (:require [cider-ci.utils.core :refer [keyword str]])
   (:require
+    [cider-ci.api.web]
     [cider-ci.builder.web]
     [cider-ci.dispatcher.web]
     [cider-ci.repository.web]
@@ -25,6 +26,9 @@
 (defn dead-end-handler [req]
   {:status 404
    :body "Not found!"})
+
+(def api-handler
+  (cider-ci.api.web/build-main-handler "/cider-ci/api"))
 
 (def builder-handler
   (cider-ci.builder.web/build-main-handler "/cider-ci/builder"))
@@ -46,6 +50,8 @@
 
 (def routes
   (cpj/routes
+    (cpj/ANY "/cider-ci/api/*" [] api-handler)
+    (cpj/GET "/cider-ci/api" [] (ring.util.response/redirect "/cider-ci/api/"))
     (cpj/ANY "/cider-ci/builder/*" [] builder-handler)
     (cpj/ANY "/cider-ci/dispatcher/*" [] dispatcher-handler)
     (cpj/ANY "/cider-ci/repositories/*" [] repositories-handler)

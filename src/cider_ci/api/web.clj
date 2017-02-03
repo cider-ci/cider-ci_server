@@ -58,7 +58,6 @@
 (defn build-main-handler [context]
   (I> wrap-handler-with-logging
       (resources/build-routes-handler)
-      routing/wrap-shutdown
       ring.middleware.json/wrap-json-params
       (ring.middleware.params/wrap-params)
       status/wrap
@@ -70,7 +69,7 @@
       content-type/wrap-content-type
       cors/wrap
       (routing/wrap-prefix context)
-      (routing/wrap-log-exception)))
+      ))
 
 
 

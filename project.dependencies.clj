@@ -13,6 +13,7 @@
  [environ "1.1.0"]
  [fipp "0.6.8"]
  [hiccup "1.0.5"]
+ [json-roa/clj-utils "1.0.0"]
  [logbug "4.0.0"]
  [me.raynes/fs "1.4.6"]
  [org.apache.commons/commons-io "1.3.2"]
