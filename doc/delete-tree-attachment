@@ -1,0 +1,2 @@
+curl -i --user ci:secret -X DELETE \
+  http://127.0.0.1:8883/cider-ci/storage/tree-attachments/93f92758e79f3c6a89bed5cc55f0d3bf1dd2ae96/image.png
