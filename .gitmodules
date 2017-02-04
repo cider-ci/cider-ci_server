@@ -7,3 +7,6 @@
 [submodule "json-roa_browser"]
 	path = resources/api-browser
 	url = https://github.com/json-roa/json-roa_browser_build.git
+[submodule "vendor"]
+	path = vendor
+	url = https://github.com/cider-ci/cider-ci_clj-utils_vendor.git

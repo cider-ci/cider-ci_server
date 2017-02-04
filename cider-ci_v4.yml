@@ -1,0 +1,14 @@
+jobs:
+  tests:
+    run_when:
+      any branch has been updated:
+        type: branch
+        include_match: ^.*$
+    context:
+      task_defaults:
+        traits:
+          - JDK 8
+          - Leiningen 2
+        body: lein test $CIDER_CI_TASK_FILE
+      generate_tasks:
+        include_match: test/.*.clj

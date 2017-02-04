@@ -1,5 +1,6 @@
 *.class
 *.jar
+<<<<<<< HEAD
 *.log
 /.lein-*
 /.nrepl-port
@@ -17,3 +18,15 @@ pom.xml.asc
 resources/public/
 resources/public/css/site.min.css
 src/cider_ci/self.clj
+=======
+/.lein-*
+/.nrepl-port
+/checkouts
+/classes
+/target
+/tmp
+pom.xml
+pom.xml.asc
+src/cider_ci/self.clj
+
+>>>>>>> 562ece7
