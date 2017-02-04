@@ -7,10 +7,7 @@
   :license {:name "GNU AFFERO GENERAL PUBLIC LICENSE Version 3"
             :url "http://www.gnu.org/licenses/agpl-3.0.html"}
 
-  :dependencies ~(concat (read-string (slurp "project.dependencies.clj"))
-                         (read-string (slurp "clj-utils/project.dependencies.clj")))
-
-  :source-paths ["clj-utils/src" "src" ]
+  :dependencies ~(concat (read-string (slurp "project.dependencies.clj")))
 
   :resource-paths ["../config" "./config" "./resources"]
 
@@ -20,7 +17,7 @@
              :exclusions [org.clojure/clojure]]]
 
   :cljsbuild {:builds
-              {:min {:source-paths ["clj-utils/src" "src" "env/prod/src"]
+              {:min {:source-paths ["src" "env/prod/src"]
                      :jar true
                      :compiler
                      {:output-to "target/cljsbuild/public/js/app.js"
@@ -28,7 +25,7 @@
                       :optimizations :advanced
                       :pretty-print  false}}
                :app
-               {:source-paths ["clj-utils/src" "src" "env/dev/src"]
+               {:source-paths ["src" "env/dev/src"]
                 :compiler
                 {:main "cider-ci.ui2.dev"
                  :asset-path "/cider-ci/ui2/js/out"
@@ -67,7 +64,7 @@
                            (pjstadig.humane-test-output/activate!)]
               :env {:dev true}}
              :uberjar {:hooks [minify-assets.plugin/hooks]
-                       :source-paths ["env/rod/src" "./clj-utils/src" "src"]
+                       :source-paths ["env/rod/src" "src"]
                        :prep-tasks ["compile" ["cljsbuild" "once" "min"]]
                        :resource-paths ["target/cljsbuild"]
                        :aot [cider-ci.WebstackException cider-ci.builder.ValidationException #"cider-ci.*"]

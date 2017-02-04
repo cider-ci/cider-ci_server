@@ -2,16 +2,20 @@ jobs:
   tests:
     name: Run tests
     run_when:
-      any branch matches:
+      any branch has been updated:
         type: branch
         include_match: ^.*$
     context:
-      tasks:
-        task-tests:
-          git_options:
-            submodules:
-              include_match: ^.*$
-          body: lein test
+      task_defaults:
+        git_options:
+          submodules:
+            include_match: ^.*$
+        traits:
+          - JDK 8
+          - Leiningen 2
+        body: lein test $CIDER_CI_TASK_FILE
+      generate_tasks:
+        include_match: test/.*.clj
   specs:
     name: Run specs
     run_when:
