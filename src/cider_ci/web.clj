@@ -11,6 +11,7 @@
     [cider-ci.dispatcher.web]
     [cider-ci.repository.web]
     [cider-ci.server.web]
+    [cider-ci.storage.web]
     [cider-ci.ui2.web]
 
     [compojure.core :as cpj]
@@ -39,6 +40,9 @@
 (def repositories-handler
   (cider-ci.repository.web/build-main-handler "/cider-ci/repositories"))
 
+(def storage-handler
+  (cider-ci.storage.web/build-main-handler "/cider-ci/storage"))
+
 (def ui2-handler
   (cider-ci.ui2.web/build-main-handler "/cider-ci/ui2" ))
 
@@ -56,6 +60,8 @@
     (cpj/ANY "/cider-ci/dispatcher/*" [] dispatcher-handler)
     (cpj/ANY "/cider-ci/repositories/*" [] repositories-handler)
     (cpj/ANY "/cider-ci/server/*" [] server-handler)
+    (cpj/ANY "/cider-ci/storage/*" [] storage-handler)
+    (cpj/GET "/cider-ci/storage" [] (ring.util.response/redirect "/cider-ci/storage/"))
     (cpj/ANY "/cider-ci/ui2/*" [] ui2-handler)
     (cpj/GET "/" [] redirect-to-ui2)
     (cpj/ANY "*" [] dead-end-handler)))

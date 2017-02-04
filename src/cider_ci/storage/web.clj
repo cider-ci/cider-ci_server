@@ -60,7 +60,6 @@
 (def base-handler
   (I> (wrap-handler-with-logging :trace)
       storage-routes
-      routing/wrap-shutdown
       cpj.handler/api))
 
 (defn wrap-auth [handler]
@@ -78,8 +77,7 @@
       base-handler
       wrap-auth
       status/wrap
-      (routing/wrap-prefix context)
-      routing/wrap-log-exception))
+      (routing/wrap-prefix context)))
 
 
 ;### Debug ####################################################################

@@ -16,7 +16,7 @@ scripts:
 
       ### CIDER-CI Service Configuration ######################################
 
-      config = YAML.load_file 'dev_resources/config_defaults.yml'
+      config = YAML.load_file 'resources_dev/config_defaults.yml'
 
       # database
       config['database']['user']= ENV['PGUSER']

@@ -56,8 +56,7 @@
 (defn wrap-includ-storage-service-prefix [handler]
   (fn [request]
     (handler (assoc-in request [:storage_service_prefix]
-                       (let [storage-config (-> (get-config) :services :storage :http)]
-                         (str (:context storage-config) (:sub_context storage-config)))))))
+                       "/cider-ci/storage"))))
 
 ;### init #####################################################################
 

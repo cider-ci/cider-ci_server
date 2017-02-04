@@ -6,7 +6,10 @@
     [cider-ci.builder.main]
     [cider-ci.dispatcher.main]
     [cider-ci.repository.main]
+    [cider-ci.storage.main]
+
     [cider-ci.server]
+
     [cider-ci.utils.app :as app]
     [cider-ci.web :as web]
 
@@ -24,4 +27,5 @@
     (cider-ci.repository.main/initialize)
     (cider-ci.builder.main/initialize)
     (cider-ci.dispatcher.main/initialize)
+    (cider-ci.storage.main/initialize)
     ))

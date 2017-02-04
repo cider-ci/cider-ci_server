@@ -25,7 +25,7 @@
   (let [prefix (-> request :route-params :prefix)]
     (I>> identity-with-logging
          (get-config)
-         :services :storage :stores
+         :services :server :stores
          (filter #(= (str "/" prefix) (:url_path_prefix %)))
          first)))
 

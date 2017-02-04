@@ -59,4 +59,5 @@
  ; explicit transient deps to force conflict resolution
  [com.google.guava/guava "19.0"]
  [org.clojure/tools.nrepl "0.2.12"]
+
  ]

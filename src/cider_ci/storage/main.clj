@@ -6,7 +6,6 @@
 (ns cider-ci.storage.main
   (:gen-class)
   (:require
-    [cider-ci.self]
     [cider-ci.storage.shared :as shared]
     [cider-ci.storage.sweeper :as sweeper]
     [cider-ci.storage.web :as web]
@@ -28,14 +27,17 @@
         (fsutils/mkdirs directory-path)))))
 
 
+(defn initialize []
+  (create-dirs (-> (get-config) :services :server :stores))
+  (sweeper/initialize (-> (get-config) :services :server :stores)))
+
 (defn -main [& args]
   (catcher/snatch
     {:level :fatal
      :throwable Throwable
      :return-fn #(System/exit -1)}
     (cider-ci.utils.app/init web/build-main-handler)
-    (create-dirs (-> (get-config) :services :storage :stores))
-    (sweeper/initialize (-> (get-config) :services :storage :stores))))
+    (initialize)))
 
 ;### Debug ####################################################################
 ;(debug/debug-ns *ns*)

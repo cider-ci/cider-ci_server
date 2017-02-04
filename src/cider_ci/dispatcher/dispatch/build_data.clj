@@ -33,10 +33,10 @@
     :git_url))
 
 (defn- trial-attachments-path [trial-id]
-  (http/build-service-path :storage  (str "/trial-attachments/" trial-id "/")))
+  (str "/cider-ci/storage/trial-attachments/" trial-id "/"))
 
 (defn- tree-attachments-path [tree-id]
-  (http/build-service-path :storage  (str "/tree-attachments/" tree-id "/")))
+  (str "/cider-ci/storage/tree-attachments/" tree-id "/"))
 
 (defn- patch-path [executor trial-id]
   (str "/cider-ci/dispatcher/trials/" trial-id ))
