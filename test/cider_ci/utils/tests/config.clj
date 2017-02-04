@@ -5,9 +5,8 @@
     [clj-logging-config.log4j :as logging-config]
     ))
 
-
 (deftest custom_resource
-  (initialize {:resource-names ["config_custom.yml"]})
+  (initialize {:filenames [] :resource-names ["config_custom.yml"]})
   (is (= (-> (get-config)
              :the_custom_resource_defined_key)
          7))
@@ -25,23 +24,14 @@
              :the_custom_resource_defined_key)
          nil)))
 
-(deftest default_config_file
-  (initialize {})
-  (is (= (-> (get-config)
-             :default_config_file_defined_key)
-         27))
-  (is (= (-> (get-config)
-             :custom_config_file_defined_key)
-         nil)))
-
 (deftest custom_config_file
-  (initialize {:filenames ["config/custom_config.yml"]})
+  (initialize {:filenames ["resources_test/config_custom.yml"]})
   (is (= (-> (get-config)
              :default_config_file_defined_key)
          nil))
   (is (= (-> (get-config)
-             :custom_config_file_defined_key)
-         69)))
+             :the_custom_resource_defined_key)
+         7)))
 
 (deftest defaults
   (testing "defaults are considered"
@@ -58,12 +48,6 @@
                  :overrides
                  {:will_be_overridden "is_overridden"}})
     (is (= (-> (get-config)
-               :the_default_resource_defined_key)
-           42))
-    (is (= (-> (get-config)
-               :default_config_file_defined_key)
-           27))
-    (is (= (-> (get-config)
                :will_be_overridden)
            "is_overridden"))))
 
@@ -72,12 +56,8 @@
     (is (= (initialize {:bogus nil})
            "EXITED!"))))
 
-
 (deftest overrides
   (initialize {:overrides {:default_config_file_defined_key 99}})
   (is (= (-> (get-config)
              :default_config_file_defined_key)
          99)))
-
-
-

@@ -69,7 +69,9 @@
                        :resource-paths ["target/cljsbuild"]
                        :aot [cider-ci.WebstackException cider-ci.builder.ValidationException #"cider-ci.*"]
                        :uberjar-name "server.jar"
-                       }}
+                       }
+             :test {:resource-paths ["resources_test"]
+                    }}
   :aot [cider-ci.WebstackException cider-ci.builder.ValidationException]
   :main cider-ci.main
   :repl-options {:timeout  120000}
