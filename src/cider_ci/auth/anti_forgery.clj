@@ -36,7 +36,8 @@
 (defn- valid-forgery-protection? [token request]
   (boolean
     (when token
-      (when-let [x-csrf-header-token (-> request :headers (get "x-csrf-token"))]
+      (when-let [x-csrf-header-token (or (-> request :headers :x-csrf-token)
+                                         (-> request :headers (get "x-csrf-token")))]
         (= x-csrf-header-token token)))))
 
 (def response-401
@@ -50,6 +51,7 @@
 
 (defn process [request handler]
   (let [token (or (-> request :cookies (get cookie-name nil) :value)
+                  (-> request :cookies (get (keyword cookie-name) nil) :value)
                   (crypto.random/url-part 32))
         resp (if (and (not (safe-request? request))
                       (not (valid-forgery-protection? token request))
