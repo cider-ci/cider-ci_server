@@ -34,6 +34,10 @@
     [logbug.ring :refer [wrap-handler-with-logging]]
     ))
 
+(defn body-input-stream [request]
+  (try (io/input-stream (:body request))
+       (catch Exception _
+         (logging/warn "Failed to open body for file put request: " request))))
 
 (defn save-file-and-presist-row [request store]
   (let [id (java.util.UUID/randomUUID)
@@ -42,7 +46,7 @@
         content-type (-> request :headers (get "content-type"))
         {content-length :content-length} request]
     (jdbc/with-db-transaction [tx (get-ds)]
-      (with-open [in (io/input-stream (:body request))
+      (with-open [in (body-input-stream request)
                   out (io/output-stream file)]
         (clojure.java.io/copy in out))
       (let [[table-name id-name] (get-table-and-id-name request)
