@@ -9,7 +9,8 @@
     [cider-ci.repository.ui.projects.edit-new.api :as edit-new.api]
     [cider-ci.repository.ui.projects.edit-new.basics :as edit-new.basics]
     [cider-ci.repository.ui.projects.edit-new.permissions :as edit-new.permissions]
-    [cider-ci.repository.ui.request :as request]
+
+    [cider-ci.client.request :as request]
 
     [accountant.core :as accountant]
     [secretary.core :as secretary :include-macros true]
@@ -50,7 +51,7 @@
   (let [req {:method  (if @id :patch :post)
              :json-params @form-data
              :url (str CONTEXT "/projects/" @id)}]
-    (request/send-off2
+    (request/send-off
       req {:title (if @id
                     (str "Update project \"" (:name @project) "\"")
                     (str "Create new project"))}
@@ -60,7 +61,8 @@
                           (str CONTEXT "/projects/" @id))
                     201 (let [id (-> resp :body :id)
                               path (str CONTEXT "/projects/" id)]
-                          (accountant/navigate! path)))))))
+                          (accountant/navigate! path))
+                    nil )))))
 
 (def form-valid?
   (reaction (and @edit-new.basics/git-url-valid?

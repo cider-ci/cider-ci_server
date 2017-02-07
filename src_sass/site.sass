@@ -6,6 +6,26 @@ $state-executing-border: mix($state-danger-border,$state-success-border) !defaul
 @include table-row-variant('executing', $state-executing-bg)
 
 
+.modal-danger
+  background-color: $alert-danger-bg
+  border-color: $alert-danger-bg
+  color: $alert-danger-text
+  border-radius: $border-radius-large
+
+.modal-success
+  background-color: $alert-success-bg
+  border-color: $alert-success-bg
+  color: $alert-success-text
+  border-radius: $border-radius-large
+
+.modal-warning
+  background-color: $alert-warning-bg
+  border-color: $alert-warning-bg
+  color: $alert-warning-text
+  border-radius: $border-radius-large
+
+
+
 .breadcrumb.with-circle-separator
   > li
     + li:before

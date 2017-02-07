@@ -27,5 +27,26 @@ feature 'Admin manages Repositories', type: :feature do
     wait_until(5) { page.has_content?  /Add a new project/ }
     expect(find(".table-projects")).not_to have_content "UpdatedName"
   end
+
+  scenario 'Try to add an repository as a non-admin user' do
+    sign_in_as 'normin'
+    visit '/'
+    click_on 'Projects'
+    wait_until(5) { page.has_content? 'Add a new project'}
+    # however it is disabled because normin is not an admin
+    expect(first(".disabled", text: 'Add a new project')).to be
+    # we can easily circumvent the disabled link by visiting the route
+    visit '/cider-ci/repositories/projects/new'
+    find('input#git_url').set 'https://github.com/cider-ci/cider-ci_demo-project-bash.git'
+    find('input#name').set 'TestRepo'
+    find('input#name').set 'TestRepo'
+    click_on 'Submit'
+    # this causes an error which causes an modal to be dismissed
+    wait_until(5) { first(".modal .modal-danger").has_content? "ERROR 403" }
+    click_on "Dismiss"
+    wait_until(3) { all(".modal").empty? }
+    expect(current_path).to match /projects\/new/
+  end
+
 end
 

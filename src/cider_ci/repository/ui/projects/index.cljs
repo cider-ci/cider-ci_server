@@ -35,7 +35,9 @@
      [:ul.actions.list-inline.pull-right
       [:li
        [:a.btn.btn-primary
-        {:href (str CONTEXT "/projects/new")}
+        {:href (str CONTEXT "/projects/new")
+         :class (when-not (-> @state/server-state :user :is_admin) "disabled")
+         }
         [:i.fa.fa-plus-circle] " Add a new project"]]]
      [:h2 "Projects"]
      [:p "This page is is mainly concerned with the "

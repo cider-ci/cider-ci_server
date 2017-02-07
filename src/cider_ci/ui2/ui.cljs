@@ -1,19 +1,26 @@
 (ns cider-ci.ui2.ui
+  (:refer-clojure :exclude [str keyword])
   (:require-macros
     [reagent.ratom :as ratom :refer [reaction]]
     )
   (:require
+    [cider-ci.utils.core :refer [keyword str presence]]
+
     [cider-ci.ui2.constants :refer [CONTEXT]]
     [cider-ci.ui2.ui.debug :as debug]
     [cider-ci.ui2.ui.root]
+
     [cider-ci.client.state :as state]
+    [cider-ci.client.request :as request]
+
     [cider-ci.ui2.create-admin.ui]
     [cider-ci.ui2.welcome-page.ui]
     [cider-ci.ui2.session.password.ui]
+    [cider-ci.ui2.ui.navbar]
 
     [cider-ci.repository.ui]
 
-    [cider-ci.ui2.ui.navbar]
+    [fipp.edn :refer [pprint]]
 
     [reagent.core :as reagent]
     [secretary.core :as secretary :include-macros true]
@@ -37,7 +44,7 @@
      [:h1 "Debug"]
      [:div.client-state
       [:h2 "Client State"]
-      [:pre (.stringify js/JSON (clj->js @state/client-state) nil 2)]]
+      [:pre (with-out-str (pprint @state/client-state))]]
      [:div.client-state
       [:h2 "Server State"]
       [:pre (.stringify js/JSON (clj->js @state/server-state) nil 2)]]
@@ -46,6 +53,8 @@
       [:pre (.stringify js/JSON (clj->js @state/page-state) nil 2)]]
      ]))
 
+
+
 (defn current-page []
   (let [location-href (-> js/window .-location .-href)
         location-url (goog.Uri. location-href)]
@@ -53,7 +62,7 @@
            :current-url location-href
            :current-path (.getPath location-url))
     [:div.container-fluid
-     ;[:h1 "TEST"]
+     [request/modal]
      [:div.page [(-> @state/page-state :current-page :component)]]
      [general-debug-section]]))
 

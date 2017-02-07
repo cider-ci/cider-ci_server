@@ -5830,6 +5830,24 @@ button.close {
 .table-hover > tbody > tr > th.executing:hover, .table-hover > tbody > tr.executing:hover > td, .table-hover > tbody > tr:hover > .executing, .table-hover > tbody > tr.executing:hover > th {
   background-color: #deddcb; }
 
+.modal-danger {
+  background-color: #f2dede;
+  border-color: #f2dede;
+  color: #a94442;
+  border-radius: 6px; }
+
+.modal-success {
+  background-color: #dff0d8;
+  border-color: #dff0d8;
+  color: #3c763d;
+  border-radius: 6px; }
+
+.modal-warning {
+  background-color: #fcf8e3;
+  border-color: #fcf8e3;
+  color: #8a6d3b;
+  border-radius: 6px; }
+
 .breadcrumb.with-circle-separator > li + li:before {
   content: "○"; }
 
