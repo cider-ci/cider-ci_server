@@ -35,9 +35,8 @@
     ))
 
 (defn body-input-stream [request]
-  (try (io/input-stream (:body request))
-       (catch Exception _
-         (logging/warn "Failed to open body for file put request: " request))))
+  (io/input-stream
+    (or (:body request) (byte-array []))))
 
 (defn save-file-and-presist-row [request store]
   (let [id (java.util.UUID/randomUUID)
