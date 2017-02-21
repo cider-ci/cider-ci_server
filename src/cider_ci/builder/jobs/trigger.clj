@@ -3,6 +3,8 @@
 ; See the "LICENSE.txt" file provided with this software.
 
 (ns cider-ci.builder.jobs.trigger
+  (:refer-clojure :exclude [str keyword])
+  (:require [cider-ci.utils.core :refer [keyword str]])
   (:require
     [cider-ci.builder.jobs :as jobs]
     [cider-ci.builder.jobs.dependencies :as jobs.dependencies]
@@ -51,7 +53,7 @@
 ;##############################################################################
 
 (defn- trigger-jobs [tree-id]
-  (locking tree-id
+  (locking (str tree-id)
     (catcher/snatch
       {:return-fn (fn [e] (create-issue "tree" tree-id e))}
       (I>> identity-with-logging

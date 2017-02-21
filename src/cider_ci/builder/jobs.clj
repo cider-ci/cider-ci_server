@@ -3,6 +3,8 @@
 ; See the "LICENSE.txt" file provided with this software.
 
 (ns cider-ci.builder.jobs
+  (:refer-clojure :exclude [str keyword])
+  (:require [cider-ci.utils.core :refer [keyword str]])
   (:require
     [cider-ci.builder.issues :as issues]
     [cider-ci.builder.jobs.dependencies :as jobs.dependencies]
@@ -31,37 +33,26 @@
 
 ;### create job #########################################################
 
-(defn get-dotfile-specification [tree-id job-key]
+(defn raw-job-spec [tree-id job-key]
   (catcher/with-logging {}
     (->> (project-configuration/get-project-configuration tree-id)
-         debug/identity-with-logging
-         :jobs
-         debug/identity-with-logging
-         convert-to-array
-         doall
-         debug/identity-with-logging
+         :jobs convert-to-array doall
          (some #(when (= (keyword (:key %)) (keyword job-key))%) )
-         debug/identity-with-logging
          (#(or % (throw (ex-info (str "No job with the key '"
                                       job-key "' found.")
                                  {:status 404 :tree-id tree-id :job-key job-key})))))))
 
-;(apply get-dotfile-specification (debug/get-last-argument #'get-dotfile-specification))
-;(debug/re-apply-last-argument #'get-dotfile-specification)
-;(project-configuration/get-project-configuration "7c4f1e1efcdf9854927e1808ffa9182319227839" )
-
-(defn persist-job [params]
+(defn persist-job [params tx]
   (->> (jdbc/insert!
-         (rdbms/get-ds)
-         :jobs
+         tx :jobs
          (select-keys params
                       [:tree_id, :job_specification_id, :created_by
                        :name, :description, :priority, :key, :user_id]))
        first))
 
-(defn on-job-exception [job ex]
+(defn- on-job-exception [job ex tx]
   (jdbc/update!
-    (rdbms/get-ds) :jobs {:state "defective"}
+    tx :jobs {:state "defective"}
     ["jobs.id = ?" (:id job)])
   (let [issue (merge
                 {:title (.getMessage ex)
@@ -70,8 +61,7 @@
                  :job_id (:id job) }
                 (or (ex-data ex) {}))]
     (jdbc/insert!
-      (rdbms/get-ds)
-      :job_issues
+      tx :job_issues
       (select-keys issue [:id :job_id :title :description :type]))))
 
 (defn create [params]
@@ -80,22 +70,23 @@
       {:return-fn (fn [ex]
                     (issues/create-issue "tree" tree-id ex)
                     (throw ex))}
-      (let [{tree-id :tree_id job-key :key} params
-            spec (->> (get-dotfile-specification tree-id job-key)
-                     normalizer/normalize-job-spec
-                     (tasks-generator/generate tree-id))
-            job-spec (spec/get-or-create-job-spec spec)
-            job-params (merge
-                         {:key job-key :name job-key}
-                         (select-keys spec [:name, :description, :priority])
-                         {:job_specification_id (:id job-spec)}
-                         (select-keys params [:tree_id :priority :created_by]))
-            job (persist-job job-params)]
-        (catcher/snatch
-          {:return-fn (fn [e] (on-job-exception job e))}
-          (job-validator/validate! job)
-          (tasks/create-tasks-and-trials job job-spec))
-        job))))
+      (jdbc/with-db-transaction [tx (rdbms/get-ds)]
+        (let [{job-key :key} params
+              normalized-spec (->> (raw-job-spec tree-id job-key)
+                                   normalizer/normalize-job-spec
+                                   (tasks-generator/generate tree-id))
+              job-spec-row (spec/get-or-create-job-spec normalized-spec tx)
+              job-params (merge
+                           {:key job-key :name job-key}
+                           (select-keys normalized-spec [:name, :description, :priority])
+                           {:job_specification_id (:id job-spec-row)}
+                           (select-keys params [:tree_id :priority :created_by]))
+              job (persist-job job-params tx)]
+          (catcher/snatch
+            {:return-fn (fn [e] (on-job-exception job e tx))}
+            (job-validator/validate! job (:data job-spec-row)))
+          (tasks/create-tasks-and-trials job job-spec-row tx)
+          job)))))
 
 
 ;### available jobs #####################################################
@@ -114,4 +105,4 @@
 ;(logging-config/set-logger! :level :debug)
 ;(logging-config/set-logger! :level :info)
 ;(debug/wrap-with-log-debug #'create)
-;(debug/debug-ns *ns*)
+(debug/debug-ns *ns*)

@@ -136,37 +136,32 @@
 
 ;### create tasks for job ###############################################
 
-(defn create-tasks [job spec]
-  (jdbc/with-db-transaction [tx (rdbms/get-ds)]
-    (let [context-spec (-> spec :data :context)]
-      (build-tasks tx job context-spec))))
+(defn create-tasks [job spec tx]
+  (let [context-spec (-> spec :data :context)]
+    (build-tasks tx job context-spec)))
 
-(defn number-of-tasks [job]
+(defn number-of-tasks [job tx]
   (->> ["SELECT count(*) AS count FROM tasks WHERE job_id = ?"
         (:id job)]
-       (jdbc/query (rdbms/get-ds))
+       (jdbc/query tx)
        first
        :count))
 
-(defn- check-tasks-empty! [job spec]
-  (when (= 0 (number-of-tasks job))
+(defn- check-tasks-empty! [job spec tx]
+  (when (= 0 (number-of-tasks job tx))
     (let [job-id (:id job)]
       (jdbc/insert!
-        (rdbms/get-ds) :job_issues
+        tx :job_issues
         {:job_id (:id job)
          :type "warning"
          :title "No Tasks Have Been Created"
-         :description "This job has **no tasks** and has been set to defective state."})
-      (jdbc/update!
-        (rdbms/get-ds) :jobs
-        {:state "defective"}
-        ["id = ? " job-id]))))
+         :description "This job has **no tasks** and has been set to defective state."}))))
 
-(defn create-tasks-and-trials [job job-spec]
+(defn create-tasks-and-trials [job job-spec tx]
   (wrap-exception-create-job-issue
     job "An exception occurred when creating tasks and trials!"
-    (create-tasks job job-spec)
-    (check-tasks-empty! job (:data job-spec))))
+    (create-tasks job job-spec tx)
+    (check-tasks-empty! job (:data job-spec) tx)))
 
 ;### initialization ###########################################################
 (defn initialize [])

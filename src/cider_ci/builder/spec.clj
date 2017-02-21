@@ -13,19 +13,22 @@
     [clojure.java.jdbc :as jdbc]
     ))
 
-(defn- get-or-create-spec [data table-name]
-  (let [id (util/id-hash data)]
-    (or (first (jdbc/query (rdbms/get-ds)
-                           [(str "SELECT * FROM " table-name
-                                 " WHERE id = ?") id]))
-        (first (jdbc/insert! (rdbms/get-ds) table-name
-                             {:id id :data data})))))
+(defn- get-or-create-spec
+  ([data table-name tx]
+   (let [id (util/id-hash data)]
+     (or (first (jdbc/query tx
+                            [(str "SELECT * FROM " table-name
+                                  " WHERE id = ?") id]))
+         (first (jdbc/insert! tx table-name
+                              {:id id :data data}))))))
 
-(defn get-or-create-job-spec [data]
-  (get-or-create-spec data "job_specifications"))
+(defn get-or-create-job-spec
+  ([data] (get-or-create-job-spec data (rdbms/get-ds)))
+  ([data tx] (get-or-create-spec data "job_specifications" tx)))
 
-(defn get-or-create-task-spec [data]
-  (get-or-create-spec data "task_specifications"))
+(defn get-or-create-task-spec
+  ([data] (get-or-create-task-spec data (rdbms/get-ds)))
+  ([data tx] (get-or-create-spec data "task_specifications" tx)))
 
 
 ;### Debug ####################################################################
