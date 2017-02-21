@@ -42,6 +42,7 @@ feature 'Admin manages Repositories', type: :feature do
     find('input#name').set 'TestRepo'
     click_on 'Submit'
     # this causes an error which causes an modal to be dismissed
+    wait_until(5) { first(".modal .modal-danger") }
     wait_until(5) { first(".modal .modal-danger").has_content? "ERROR 403" }
     click_on "Dismiss"
     wait_until(3) { all(".modal").empty? }
