@@ -155,7 +155,13 @@
         {:job_id (:id job)
          :type "warning"
          :title "No Tasks Have Been Created"
-         :description "This job has **no tasks** and has been set to defective state."}))))
+         :description (str "This job has **no tasks**. It has been set to "
+                           "success state which is the consistent behavior. "
+                           "This warning is issued in case this is not intended.")})
+      (when (->> [(str "SELECT true AS is_pending "
+                       " FROM jobs WHERE id = ? AND state = 'pending'") job-id]
+                 (jdbc/query tx) first :is_pending)
+        (jdbc/update! tx :jobs {:state "passed"} ["id = ?" job-id])))))
 
 (defn create-tasks-and-trials [job job-spec tx]
   (wrap-exception-create-job-issue
