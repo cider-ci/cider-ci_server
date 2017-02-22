@@ -49,6 +49,13 @@
     (some (fn [[_ trigger]]
             (trigger-fulfilled? tree-id job trigger)) triggers)))
 
+(defn job-does-not-exist-yet [job-config]
+  (->> [(str "SELECT true AS exists_yet FROM jobs "
+             "WHERE tree_id = ? AND key = ? ")
+        (:tree_id job-config) (:key job-config)]
+       (jdbc/query (rdbms/get-ds))
+       first :exists_yet not))
+
 
 ;##############################################################################
 
@@ -64,6 +71,7 @@
            (filter #(some-trigger-fulfilled? tree-id %))
            (map #(assoc % :tree_id tree-id))
            (filter jobs.dependencies/fulfilled?)
+           (filter job-does-not-exist-yet)
            (map jobs/create)
            doall)))
   tree-id)
