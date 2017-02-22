@@ -9,7 +9,6 @@
 
     [cider-ci.utils.config :as config]
     [cider-ci.utils.duration :as duration]
-    [cider-ci.utils.rdbms :as rdbms]
 
     [clojure.java.jdbc :as jdbc]
 
@@ -89,7 +88,7 @@
 
 ;##############################################################################
 
-(defn create-db-task [tx raw-task-spec]
+(defn build-task-row [raw-task-spec]
   (let [job-id (:job_id raw-task-spec)
         task-spec (normalize-task-spec raw-task-spec)
         db-task-spec (spec/get-or-create-task-spec task-spec)
@@ -106,7 +105,8 @@
                         :state (if (empty? errors) "pending" "aborted")
                         :id (util/idid2id job-id (:id db-task-spec))
                         })]
-    (first (jdbc/insert! tx "tasks" task-row))))
+    task-row))
+    ;(first (jdbc/insert! tx "tasks" task-row))
 
 
 ;### Debug ####################################################################

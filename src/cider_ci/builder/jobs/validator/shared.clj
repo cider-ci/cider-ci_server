@@ -163,7 +163,6 @@
 
 (defn validate-values! [test-spec meta-spec chain]
   (doseq [[k s] meta-spec]
-    (logging/debug [k s])
     (when (contains? test-spec k)
       (when-let [validator (:validator s)]
         (apply validator [(get test-spec k) (conj chain k)])))))

@@ -123,15 +123,17 @@
   "Build the tasks for the given top-level context spec"
   [tx job context-spec]
   (let [context-spec (clojure.walk/keywordize-keys context-spec)
-        tasks (build-tasks-for-single-context
-                context-spec
-                (conj (or (:task_defaults context-spec) {})
-                      {:job_id (:id job)})
-                (deep-merge script-base-defaults
-                            (or (:script_defaults context-spec) {})))]
-    (doseq [raw-task tasks]
-      (let [task (task/create-db-task tx raw-task)]
-      (trials/create-trials (:id task) {:tx tx :task task :job job})))))
+        raw-tasks (build-tasks-for-single-context
+                    context-spec
+                    (conj (or (:task_defaults context-spec) {})
+                          {:job_id (:id job)})
+                    (deep-merge script-base-defaults
+                                (or (:script_defaults context-spec) {})))
+        rows (map task/build-task-row raw-tasks)
+        _ (logging/debug 'rows rows)
+        tasks (jdbc/insert-multi! tx :tasks rows)]
+    (doseq [task tasks]
+      (trials/create-trials (:id task) {:tx tx :task task :job job}))))
 
 
 ;### create tasks for job ###############################################

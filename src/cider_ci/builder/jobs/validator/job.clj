@@ -1,4 +1,6 @@
 (ns cider-ci.builder.jobs.validator.job
+  (:refer-clojure :exclude [str keyword])
+  (:require [cider-ci.utils.core :refer [keyword str]])
   (:require
     [cider-ci.builder.jobs.validator.context :refer [validate-context!]]
     [cider-ci.builder.jobs.validator.shared :refer :all]

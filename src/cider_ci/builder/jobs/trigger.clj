@@ -56,7 +56,7 @@
   (locking (str tree-id)
     (catcher/snatch
       {:return-fn (fn [e] (create-issue "tree" tree-id e))}
-      (I>> identity-with-logging
+      (->> ;identity-with-logging
            (project-configuration/get-project-configuration tree-id)
            :jobs
            convert-to-array
@@ -72,7 +72,7 @@
 ;##############################################################################
 
 (defn evaluate-tree-id-notifications []
-  (I>> identity-with-logging
+  (->> ;identity-with-logging
        "SELECT * FROM tree_id_notifications ORDER BY created_at ASC LIMIT 100"
        (jdbc/query (rdbms/get-ds))
        (map (fn [row]
