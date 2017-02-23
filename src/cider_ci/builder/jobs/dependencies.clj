@@ -3,6 +3,8 @@
 ; See the "LICENSE.txt" file provided with this software.
 
 (ns cider-ci.builder.jobs.dependencies
+  (:refer-clojure :exclude [str keyword])
+  (:require [cider-ci.utils.core :refer [keyword str]])
   (:require
     [cider-ci.builder.repository :as repository]
     [cider-ci.builder.spec :as spec]
@@ -121,9 +123,7 @@
 
 (defn- evaluate-dependencies [job]
   (if-let [dependencies (->> job :depends_on (map second) seq)]
-    (do
-      (logging/debug 'dependencies dependencies)
-      (reduce evaluate-dependency job dependencies))
+    (reduce evaluate-dependency job dependencies)
     job))
 
 ;##############################################################################
@@ -132,7 +132,8 @@
   (->> jobs
        (map evaluate-name-clash)
        (map evaluate-key-clash)
-       (map evaluate-dependencies)))
+       (map evaluate-dependencies)
+       doall))
 
 (defn fulfilled? [job]
   (-> job
