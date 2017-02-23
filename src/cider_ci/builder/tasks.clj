@@ -132,8 +132,7 @@
         rows (map task/build-task-row raw-tasks)
         _ (logging/debug 'rows rows)
         tasks (jdbc/insert-multi! tx :tasks rows)]
-    (doseq [task tasks]
-      (trials/create-trials (:id task) {:tx tx :task task :job job}))))
+    tasks))
 
 
 ;### create tasks for job ###############################################
