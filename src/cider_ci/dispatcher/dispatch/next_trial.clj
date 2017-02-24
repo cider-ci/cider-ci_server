@@ -98,8 +98,6 @@
       (sql-order-by [:jobs.priority :desc]
                     [:jobs.created_at :asc]
                     [:tasks.priority :desc]
-                    [:tasks.created_at :asc]
-                    [:trials.created_at :asc]
                     [:tasks.name :asc])))
 
 ;##############################################################################
