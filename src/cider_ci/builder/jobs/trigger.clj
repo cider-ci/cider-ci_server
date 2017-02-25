@@ -73,7 +73,8 @@
            (filter jobs.dependencies/fulfilled?)
            (filter job-does-not-exist-yet)
            (map jobs/create)
-           doall)))
+           doall)
+      (jdbc/delete! (rdbms/get-ds) :tree_issues ["tree_id = ?" tree-id])))
   tree-id)
 
 
