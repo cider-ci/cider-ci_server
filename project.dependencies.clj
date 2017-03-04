@@ -13,6 +13,7 @@
  [cljsjs/jquery "2.2.4-0"]
  [cljsjs/moment "2.10.6-4"]
  [clojure-humanize "0.2.0"]
+ [com.cronutils/cron-utils "5.0.5"]
  [com.github.mfornos/humanize-slim "1.2.2"]
  [com.mchange/c3p0 "0.9.5.2"]
  [com.taoensso/sente "1.10.0"]

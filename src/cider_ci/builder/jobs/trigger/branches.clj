@@ -79,6 +79,13 @@
        filter-by-repository-params
        empty? not))
 
+(defn branch-dependency-fulfilled? [tree-id job dependency]
+  "Almost the same as branch-dependency-fulfilled? but does not honor
+  the params defined in the repository."
+  (->> (-> tree-id branches)
+       (filter-by-trigger dependency)
+       empty? not))
+
 
 ;### Debug ####################################################################
 ;(debug/debug-ns 'cider-ci.utils.http)

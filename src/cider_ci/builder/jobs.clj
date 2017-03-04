@@ -105,4 +105,4 @@
 ;(logging-config/set-logger! :level :debug)
 ;(logging-config/set-logger! :level :info)
 ;(debug/wrap-with-log-debug #'create)
-(debug/debug-ns *ns*)
+;(debug/debug-ns *ns*)

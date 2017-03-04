@@ -2,7 +2,7 @@
   (:refer-clojure :exclude [str keyword])
   (:require [cider-ci.utils.core :refer [keyword str]])
   (:require
-    [cider-ci.builder.ValidationException]
+    [cider-ci.ValidationException]
 
     [cider-ci.utils.core :refer :all]
     [cider-ci.utils.duration :refer [parse-string-to-seconds]]
@@ -16,7 +16,7 @@
     )
 
   (:import
-    [cider_ci.builder ValidationException]
+    [cider_ci ValidationException]
     ))
 
 

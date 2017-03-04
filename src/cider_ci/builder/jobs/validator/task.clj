@@ -15,7 +15,7 @@
     [clojure.tools.logging :as logging]
     )
   (:import
-    [cider_ci.builder ValidationException]
+    [cider_ci ValidationException]
     ))
 
 (defn validate-aggregate-state! [value chain]

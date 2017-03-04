@@ -1,4 +1,10 @@
+; Copyright © 2013 - 2017 Dr. Thomas Schank <Thomas.Schank@AlgoCon.ch>
+; Licensed under the terms of the GNU Affero General Public License v3.
+; See the "LICENSE.txt" file provided with this software.
+
 (ns cider-ci.builder.jobs.validator.project-configuration
+  (:refer-clojure :exclude [str keyword])
+  (:require [cider-ci.utils.core :refer [keyword str]])
   (:require
     [cider-ci.builder.jobs.validator.shared :refer :all]
 
@@ -11,10 +17,26 @@
     [clojure.tools.logging :as logging]
     )
   (:import
-    [cider_ci.builder ValidationException]
+    [cider_ci ValidationException]
     ))
 
-;##############################################################################
+;### cron dependency or trigger ###############################################
+
+(defn validate-cron-value! [spec chain]
+  ; TODO
+  )
+
+(def cron-dep-meta-spec
+  {:type {:required true
+          :validator validate-string!}
+   :value {:validator validate-cron-value!}
+   })
+
+(defn validate-cron-dep! [spec chain]
+  (validate-spec-map! spec cron-dep-meta-spec chain)
+  )
+
+;### branch dependency or trigger #############################################
 
 (def branch-dep-meta-spec
   {:type {:required true
@@ -27,7 +49,7 @@
   (validate-spec-map! spec branch-dep-meta-spec chain)
   )
 
-;##############################################################################
+;### job dependency or trigger ################################################
 
 (defn validate-job-states! [states chain]
   (validate-states!
@@ -51,12 +73,13 @@
 
 (defn validate-dependency-or-trigger! [spec chain]
   (case (:type spec)
+    "cron" (validate-cron-dep! spec chain)
     "job" (validate-job-dep! spec chain)
     "branch" (validate-branch-dep! spec chain)
     (->> {:type "error"
           :description
           (str "The type _\"" (:type spec) "\"_ in " (format-chain chain)
-               " must be either _\"job\"_ or _\"branch\"_." )}
+               " must be either _\"cron\"_, _\"branch\"_, or _\"job\"_." )}
          (ValidationException. "Invalide Type")
          throw)))
 

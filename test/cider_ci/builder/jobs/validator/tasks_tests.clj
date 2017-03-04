@@ -12,7 +12,7 @@
     [clojure.tools.logging :as logging]
     )
   (:import
-    [cider_ci.builder ValidationException]
+    [cider_ci ValidationException]
     ))
 
 (def job-spec-with-a-bogus-key-in-a-task

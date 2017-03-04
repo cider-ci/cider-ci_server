@@ -2,14 +2,14 @@ windows:
   '2':
     name: repl
     command: |
-      lein do clean, repl
+      lein do clean, compile, repl
     post_command_send_keys: |
       (-main)
   '3':
     name: figwheel
     command: |
       # give lein clean from window 3 some time before we start figwheel
-      sleep 10
+      sleep 30
       lein figwheel
   5:
     name: database

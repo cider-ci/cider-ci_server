@@ -6,6 +6,7 @@
   (:refer-clojure :exclude [str keyword])
   (:require [cider-ci.utils.core :refer [keyword str]])
   (:require
+    [cider-ci.builder.jobs.trigger.branches :as trigger.branches]
     [cider-ci.builder.repository :as repository]
     [cider-ci.builder.spec :as spec]
     [cider-ci.builder.tasks :as tasks]
@@ -105,9 +106,8 @@
         (sql/merge-where subquery)
         sql/format)))
 
-(defn- evaluate-job-dependency [job dependency]
-  (let [tree-id (:tree_id job)
-        query (build-job-dependency-query tree-id dependency)]
+(defn- evaluate-job-dependency [tree-id job dependency]
+  (let [query (build-job-dependency-query tree-id dependency)]
     (if-not (seq (jdbc/query (get-ds) query))
       (set-un-runnable job (str "The dependency `" dependency "` is not fulfilled!"))
       job)))
@@ -115,11 +115,23 @@
 
 ;##############################################################################
 
+(defn evaluate-branch-dependency [tree-id job dependency]
+  (if-not (trigger.branches/branch-dependency-fulfilled? tree-id job dependency)
+    (set-un-runnable job (str "The dependency `" dependency "` is not fulfilled!"))
+    job))
+
+
+;##############################################################################
+
 (defn- evaluate-dependency [job dependency]
-  (case (-> dependency :type to-cistr)
-    "job" (evaluate-job-dependency job dependency)
-    (set-un-runnable job (str "The type of the dependency `"
-                              dependency "` is not applicable!"))))
+  (let [tree-id (:tree_id job)]
+    (case (-> dependency :type to-cistr)
+      "job" (evaluate-job-dependency tree-id job dependency)
+      "branch" (evaluate-branch-dependency tree-id job dependency)
+      (do
+        (logging/warn "unhandled dependency" dependency)
+        (set-un-runnable job (str "The type of the dependency `"
+                                  dependency "` is not applicable!"))))))
 
 (defn- evaluate-dependencies [job]
   (if-let [dependencies (->> job :depends_on (map second) seq)]

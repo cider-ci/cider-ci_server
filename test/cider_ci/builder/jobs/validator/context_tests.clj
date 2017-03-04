@@ -7,7 +7,7 @@
     [clj-yaml.core :as yaml]
     )
   (:import
-    [cider_ci.builder ValidationException]
+    [cider_ci ValidationException]
     ))
 
 (def job-spec-with-a-bogus-key-in-the-top-level-context
