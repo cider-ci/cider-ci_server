@@ -37,6 +37,7 @@
   {(schema/optional-key :branch_trigger_exclude_match) String
    (schema/optional-key :branch_trigger_include_match) String
    (schema/optional-key :branch_trigger_max_commit_age) DurationOrNull
+   (schema/optional-key :cron_trigger_enabled) Boolean
    (schema/optional-key :git_url) NotBlank
    (schema/optional-key :manage_remote_push_hooks) Boolean
    (schema/optional-key :name) NotBlank

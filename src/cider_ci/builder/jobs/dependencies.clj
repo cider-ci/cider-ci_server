@@ -6,7 +6,7 @@
   (:refer-clojure :exclude [str keyword])
   (:require [cider-ci.utils.core :refer [keyword str]])
   (:require
-    [cider-ci.builder.jobs.trigger.branches :as trigger.branches]
+    [cider-ci.builder.jobs.dependencies.branch :as branch-dependency]
     [cider-ci.builder.repository :as repository]
     [cider-ci.builder.spec :as spec]
     [cider-ci.builder.tasks :as tasks]
@@ -116,7 +116,7 @@
 ;##############################################################################
 
 (defn evaluate-branch-dependency [tree-id job dependency]
-  (if-not (trigger.branches/branch-dependency-fulfilled? tree-id job dependency)
+  (if-not (branch-dependency/fulfilled? tree-id job dependency)
     (set-un-runnable job (str "The dependency `" dependency "` is not fulfilled!"))
     job))
 

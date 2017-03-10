@@ -13,7 +13,7 @@
     [cider-ci.builder.evaluation :as evaluation]
     [cider-ci.builder.trials :as trials]
     [cider-ci.builder.retention-sweeper :as retention-sweeper]
-    [cider-ci.builder.jobs.trigger :as jobs.trigger]
+    [cider-ci.builder.jobs.triggers :as triggers]
     [cider-ci.builder.repository :as repository]
     [cider-ci.builder.tasks :as tasks]
     [cider-ci.builder.web :as web]
@@ -27,7 +27,7 @@
   (tasks/initialize)
   (trials/initialize)
   (evaluation/initialize)
-  (jobs.trigger/initialize)
+  (triggers/initialize)
   (retention-sweeper/initialize))
 
 (defn -main [& args]

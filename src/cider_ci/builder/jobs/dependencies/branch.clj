@@ -2,11 +2,13 @@
 ; Licensed under the terms of the GNU Affero General Public License v3.
 ; See the "LICENSE.txt" file provided with this software.
 
-(ns cider-ci.builder.jobs.trigger.branches
+(ns cider-ci.builder.jobs.dependencies.branch
   (:require
     [cider-ci.utils.include-exclude :as include-exclude]
     [cider-ci.utils.rdbms :as rdbms]
     [cider-ci.utils.duration :as duration]
+    [cider-ci.utils.map :refer [convert-to-array]]
+
 
     [clj-time.core :as time]
     [clojure.java.jdbc :as jdbc]
@@ -47,44 +49,19 @@
                    (matcher-fn branch)
                    (:name branch))))))
 
-(defn period-or-nil [branch duration-fn]
-  (try
-    (-> branch duration-fn duration/period)
-    (catch Exception _ nil)))
-
-(defn filter-max-commit-age [duration-fn branches]
-  (->> branches
-       (filter (fn [branch]
-                 (when-let [commited-at (:commited_at branch)]
-                   (if-let [period (period-or-nil branch duration-fn)]
-                     (time/after? commited-at (time/minus (time/now) period))
-                     true
-                     ))))))
-
 (defn- filter-by-trigger [trigger branches]
   (->> branches
        (filter-includes (fn [_] (:include_match trigger)))
-       (filter-not-excludes (fn [_] (:exclude_match trigger)))
-       (filter-max-commit-age (fn [branch] (:max_commit_age trigger)))))
+       (filter-not-excludes (fn [_] (:exclude_match trigger)))))
 
-(defn- filter-by-repository-params [branches]
-  (->> branches
-       (filter-includes (fn [branch] (:branch_trigger_include_match branch)))
-       (filter-not-excludes (fn [branch] (:branch_trigger_exclude_match branch)))
-       (filter-max-commit-age (fn [branch] (:max_commit_age branch)))))
 
-(defn branch-trigger-fulfilled? [tree-id job trigger]
-  (->> (-> tree-id branches)
-       (filter-by-trigger trigger)
-       filter-by-repository-params
-       empty? not))
+; #############################################################################
 
-(defn branch-dependency-fulfilled? [tree-id job dependency]
-  "Almost the same as branch-dependency-fulfilled? but does not honor
-  the params defined in the repository."
+(defn fulfilled? [tree-id job dependency]
   (->> (-> tree-id branches)
        (filter-by-trigger dependency)
        empty? not))
+
 
 
 ;### Debug ####################################################################

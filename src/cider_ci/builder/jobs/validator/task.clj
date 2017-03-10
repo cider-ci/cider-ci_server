@@ -1,4 +1,6 @@
 (ns cider-ci.builder.jobs.validator.task
+  (:refer-clojure :exclude [get str keyword])
+  (:require [cider-ci.utils.core :refer [keyword str]])
   (:require
     [cider-ci.builder.jobs.validator.script :refer [validate-script!]]
     [cider-ci.builder.jobs.validator.ports :refer [validate-port!]]

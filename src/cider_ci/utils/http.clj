@@ -1,6 +1,6 @@
 (ns cider-ci.utils.http
-  (:refer-clojure
-    :exclude [get])
+  (:refer-clojure :exclude [get str keyword])
+  (:require [cider-ci.utils.core :refer [keyword str]])
   (:require
     [cider-ci.utils.core :refer :all]
     [cider-ci.auth.http-basic :as http-basic]

@@ -3,6 +3,9 @@
 ; See the "LICENSE.txt" file provided with this software.
 
 (ns cider-ci.builder.jobs.normalizer
+  (:refer-clojure :exclude [get str keyword])
+  (:require [cider-ci.utils.core :refer [keyword str]])
+
   (:require
     [cider-ci.utils.core :refer :all]
 
