@@ -64,29 +64,32 @@
       tx :job_issues
       (select-keys issue [:id :job_id :title :description :type]))))
 
-(defn create [params]
-  (let [{tree-id :tree_id} params]
-    (catcher/snatch
-      {:return-fn (fn [ex]
-                    (issues/create-issue "tree" tree-id ex)
-                    (throw ex))}
-      (jdbc/with-db-transaction [tx (rdbms/get-ds)]
-        (let [{job-key :key} params
-              normalized-spec (->> (raw-job-spec tree-id job-key)
-                                   normalizer/normalize-job-spec
-                                   (tasks-generator/generate tree-id))
-              job-spec-row (spec/get-or-create-job-spec normalized-spec tx)
-              job-params (merge
-                           {:key job-key :name job-key}
-                           (select-keys normalized-spec [:name, :description, :priority])
-                           {:job_specification_id (:id job-spec-row)}
-                           (select-keys params [:tree_id :priority :created_by]))
-              job (persist-job job-params tx)]
-          (catcher/snatch
-            {:return-fn (fn [e] (on-job-exception job e tx))}
-            (job-validator/validate! job (:data job-spec-row)))
-          (tasks/create-tasks-and-trials job job-spec-row tx)
-          job)))))
+(defn create
+  ([params]
+   (jdbc/with-db-transaction [tx (rdbms/get-ds)]
+     (create params tx)))
+  ([params tx]
+   (let [{tree-id :tree_id} params]
+     (catcher/snatch
+       {:return-fn (fn [ex]
+                     (issues/create-issue "tree" tree-id ex)
+                     (throw ex))}
+       (let [{job-key :key} params
+             normalized-spec (->> (raw-job-spec tree-id job-key)
+                                  normalizer/normalize-job-spec
+                                  (tasks-generator/generate tree-id))
+             job-spec-row (spec/get-or-create-job-spec normalized-spec tx)
+             job-params (merge
+                          {:key job-key :name job-key}
+                          (select-keys normalized-spec [:name, :description, :priority])
+                          {:job_specification_id (:id job-spec-row)}
+                          (select-keys params [:tree_id :priority :created_by]))
+             job (persist-job job-params tx)]
+         (catcher/snatch
+           {:return-fn (fn [e] (on-job-exception job e tx))}
+           (job-validator/validate! job (:data job-spec-row)))
+         (tasks/create-tasks-and-trials job job-spec-row tx)
+         job)))))
 
 
 ;### available jobs #####################################################

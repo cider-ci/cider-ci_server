@@ -20,7 +20,8 @@
     [cider_ci ValidationException]
     ))
 
-;### cron dependency or trigger ###############################################
+
+;### cron trigger #############################################################
 
 (defn validate-cron-value! [spec chain]
   ; TODO
@@ -29,12 +30,14 @@
 (def cron-dep-meta-spec
   {:type {:required true
           :validator validate-string!}
-   :value {:validator validate-cron-value!}
-   })
+   :value {:required true
+           :validator validate-cron-value!}
+   :rerun {:required false
+           :validator validate-boolean!}})
 
 (defn validate-cron-dep! [spec chain]
-  (validate-spec-map! spec cron-dep-meta-spec chain)
-  )
+  (validate-spec-map! spec cron-dep-meta-spec chain))
+
 
 ;### branch dependency or trigger #############################################
 
