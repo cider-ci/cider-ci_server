@@ -47,7 +47,8 @@
          tx :jobs
          (select-keys params
                       [:tree_id, :job_specification_id, :created_by
-                       :name, :description, :priority, :key, :user_id]))
+                       :name, :description, :priority, :key, :user_id,
+                       :trigger_event]))
        first))
 
 (defn- on-job-exception [job ex tx]
@@ -83,7 +84,7 @@
                           {:key job-key :name job-key}
                           (select-keys normalized-spec [:name, :description, :priority])
                           {:job_specification_id (:id job-spec-row)}
-                          (select-keys params [:tree_id :priority :created_by]))
+                          (select-keys params [:tree_id :priority :created_by :trigger_event]))
              job (persist-job job-params tx)]
          (catcher/snatch
            {:return-fn (fn [e] (on-job-exception job e tx))}

@@ -97,6 +97,7 @@
     (->> (shared/filtered-run-when-event-type-jobs
            (:tree_id event) (:type event))
          (filter #(some-branch-run-when-fulfilled? (:branch_name event) %))
+         (map #(assoc % :trigger_event event))
          seq)))
 
 ;##############################################################################
@@ -121,4 +122,3 @@
 ;(logging-config/set-logger! :level :debug)
 ;(logging-config/set-logger! :level :info)
 ;(debug/debug-ns *ns*)
-
