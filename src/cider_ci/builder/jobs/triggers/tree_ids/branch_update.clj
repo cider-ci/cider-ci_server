@@ -78,6 +78,7 @@
   (and (repository-branch-include-satisfied? event)
        (repository-branch-not-exclude-satisfied? event)))
 
+; TODO move the above to shared
 
 ;##############################################################################
 

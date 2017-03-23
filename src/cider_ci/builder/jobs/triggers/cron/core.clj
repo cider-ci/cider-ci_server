@@ -10,8 +10,9 @@
     [cider-ci.builder.jobs.dependencies :as jobs.dependencies]
     [cider-ci.builder.jobs.triggers.shared :as shared]
     [cider-ci.shared.cron]
-    [cider-ci.utils.rdbms :as rdbms]
+    [cider-ci.utils.include-exclude :as include-exclude]
     [cider-ci.utils.map :refer [convert-to-array]]
+    [cider-ci.utils.rdbms :as rdbms]
 
     [clojure.java.jdbc :as jdbc]
     [honeysql.core :as sql]
@@ -37,6 +38,17 @@
 
 ;##############################################################################
 
+(defn cron-branch-include-exclude-satisfied? [event cron-run-when]
+  (and (include-exclude/not-excludes?
+         (:branch_exclude_match cron-run-when)
+         (:branch_name event))
+       (include-exclude/includes?
+         (:branch_include_match cron-run-when)
+         (:branch_name event))))
+
+
+;##############################################################################
+
 
 (defn- cron-run-when-fulfilled? [cron-run-when]
   (cider-ci.shared.cron/fire? (:value cron-run-when) 3))
@@ -45,6 +57,7 @@
   (->> job-config :run_when convert-to-array
        (filter (fn [rw] (= (-> rw :type keyword) :cron)))
        (filter cron-run-when-fulfilled?)
+       (filter #(cron-branch-include-exclude-satisfied? event %))
        (map #(assoc job-config :run_when_trigger %))
        seq))
 
