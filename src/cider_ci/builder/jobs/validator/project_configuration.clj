@@ -32,6 +32,10 @@
           :validator validate-string!}
    :value {:required true
            :validator validate-cron-value!}
+   :branch_include_match {:required false
+                          :validator validate-string!}
+   :branch_exclude_match {:required false
+                          :validator validate-string!}
    :rerun {:required false
            :validator validate-boolean!}})
 
