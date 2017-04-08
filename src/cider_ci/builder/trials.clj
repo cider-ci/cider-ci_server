@@ -92,7 +92,12 @@
 ;### worker ###################################################################
 
 (defn- evaluate-row [row]
-  (create-trials (:task_id row) {}))
+  (try (catcher/with-logging {}
+         (create-trials (:task_id row) {}))
+       (catch Exception _
+         (jdbc/update!
+           (rdbms/get-ds) :tasks {:state "defective"}
+           ["tasks.id = ?" (:task_id row)]))))
 
 (def evaluate-pending-create-trials-evaluations
   (pending-rows/build-worker
