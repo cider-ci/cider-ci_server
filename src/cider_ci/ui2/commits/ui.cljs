@@ -9,6 +9,7 @@
     [cider-ci.utils.core :refer [keyword str presence]]
     [cider-ci.ui2.constants :refer [CONTEXT]]
     [cider-ci.client.state :as state]
+    [cider-ci.client.routes :as routes]
 
     [cider-ci.repository.ui.projects.shared :refer [humanize-datetime]]
     [cider-ci.utils.sha1]
@@ -43,13 +44,6 @@
 
 (declare page)
 
-(secretary/defroute commits-path (str CONTEXT "/commits/") {:keys [query-params]}
-  (fetch-commits)
-  (swap! state/client-state assoc-in [:commits-page :form-data] query-params)
-  (swap! state/page-state assoc :current-page
-         {:component #'page
-          :query-params query-params}))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn update-form-data [fun]
@@ -82,9 +76,9 @@
       :value (-> @form-data :branch_name)
       }]]
    [:div.form-group.row
-    [:div.col-xs-6 [:a.btn.btn-warning {:href (commits-path)} [:i.fa.fa-remove] " Reset "]]
+    [:div.col-xs-6 [:a.btn.btn-warning {:href (routes/commits-path)} [:i.fa.fa-remove] " Reset "]]
     [:div.col-xs-6 [:a.pull-right.btn.btn-primary
-                    {:href (commits-path {:query-params @form-data})}
+                    {:href (routes/commits-path {:query-params @form-data})}
                     [:i.fa.fa-filter]  " Filter "]]]])
 
 
@@ -141,7 +135,7 @@
                  } dist-from-head]]])
 
 (defn branch-filter [project branch]
-  [:a {:href (commits-path {:query-params (merge (-> @state/page-state :current-page :query-params)
+  [:a {:href (routes/commits-path {:query-params (merge (-> @state/page-state :current-page :query-params)
                                                  {:project_name (:name project)
                                                   :branch_name (:name branch)})})}
    [:i.fa.fa-filter] " "])
@@ -234,6 +228,7 @@
 
 
 (defn post-mount-setup [component]
+  (fetch-commits)
   (.tooltip (js/$ (reagent.core/dom-node component))))
 
 (defn page []

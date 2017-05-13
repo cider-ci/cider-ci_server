@@ -1,7 +1,7 @@
 (ns cider-ci.ui2.prod
-  (:require [cider-ci.ui2.ui :as ui]))
+  (:require [cider-ci.client.main]))
 
 ;;ignore println statements in prod
 (set! *print-fn* (fn [& _]))
 
-(ui/init!)
+(cider-ci.client.main/init!)

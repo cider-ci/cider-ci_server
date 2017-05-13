@@ -28,7 +28,8 @@
                {:source-paths ["src" "env/dev/src"]
                 :compiler
                 {:main "cider-ci.ui2.dev"
-                 :asset-path "/cider-ci/ui2/js/out"
+                 ;:asset-path "/cider-ci/ui2/js/out"
+                 :asset-path "/cider-ci/js/out"
                  :output-to "target/cljsbuild/public/js/app.js"
                  :output-dir "target/cljsbuild/public/js/out"
                  :source-map true

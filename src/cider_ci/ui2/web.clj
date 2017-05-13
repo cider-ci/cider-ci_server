@@ -96,5 +96,5 @@
 ;(debug/debug-ns 'cider-ci.auth.session)
 ;(debug/debug-ns 'cider-ci.utils.shutdown)
 ;(debug/debug-ns 'cider-ci.auth.http-basic)
-;(debug/debug-ns *ns*)
+(debug/debug-ns *ns*)
 

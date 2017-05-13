@@ -13,6 +13,7 @@
     [clojure.data.codec.base64 :as base64]
     [clojure.java.jdbc :as jdbc]
     [clojure.string :refer [lower-case]]
+    [crypto.random]
     [pandect.algo.sha1 :refer [sha1-hmac]]
 
     [clojure.tools.logging :as logging]
@@ -21,6 +22,12 @@
     [logbug.debug :as debug]
     ))
 
+(->> 18
+     crypto.random/bytes
+     base64/encode
+     (map char)
+     (apply str)
+     )
 
 (defn get-user [login-or-email]
   (catcher/snatch {}

@@ -1,13 +1,12 @@
 (ns cider-ci.ui2.ui.navbar
   (:require
+    [cider-ci.client.routes :as routes]
     [cider-ci.client.state :as state]
-    [cider-ci.ui2.commits.ui]
     [cider-ci.ui2.constants :refer [CONTEXT]]
     [cider-ci.ui2.session.password.ui :as session.password]
     [cider-ci.ui2.ui.debug :as debug]
     [cider-ci.ui2.ui.navbar.release :as navbar.release]
     [cider-ci.ui2.ui.navbar.user :as navbar.user]
-
     [cider-ci.utils.core :refer [presence]]
     ))
 
@@ -62,11 +61,15 @@
         [:ul.dropdown-menu
          [:li [:a {:href "/cider-ci/ui2/"} "Root"]]
          [:li.divider]
-         [:li [:a {:href (cider-ci.ui2.commits.ui/commits-path)} "Commits " [:em "(Alpha!)"]]]
+         [:li [:a {:href (routes/commits-path)} "Commits " [:em "(Alpha!)"]]]
          [:li.divider]
          [:li [:a {:href (str CONTEXT "/create-admin")} "Create Admin"]]
          [:li [:a {:href "/cider-ci/ui2/session/password/sign-in"} "Sign in"]]
          [:li [:a {:href "/cider-ci/ui2/welcome-page/edit"} "Edit Welcome Page"]]
+         [:li.divider]
+         [:li [:a {:href "#"} "Account"]]
+         [:li [:a {:href (str "/cider-ci/users/" (:id @user) "/api-tokens/")} "API-Tokens" ]]
+         [:li [:a {:href (routes/user-api-tokens-path {:user-id (:id @user)})} "API-Tokens" ]]
          [:li.divider]
          [:li [:a {:href (debug/path) } "Debug page"]]
          [:li [:a {:hred "#"

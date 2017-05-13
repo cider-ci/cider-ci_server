@@ -1,6 +1,7 @@
-; Copyright © 2013 - 2016 Dr. Thomas Schank <Thomas.Schank@AlgoCon.ch>
+; Copyright © 2013 - 2017 Dr. Thomas Schank <Thomas.Schank@AlgoCon.ch>
 ; Licensed under the terms of the GNU Affero General Public License v3.
 ; See the "LICENSE.txt" file provided with this software.
+
 
 (ns cider-ci.web
   (:refer-clojure :exclude [str keyword])
@@ -13,6 +14,12 @@
     [cider-ci.server.web]
     [cider-ci.storage.web]
     [cider-ci.ui2.web]
+    [cider-ci.users.web]
+    [cider-ci.client.web]
+
+    [cider-ci.utils.routing :as routing]
+    [cider-ci.auth.anti-forgery :as anti-forgery]
+
 
     [compojure.core :as cpj]
     [ring.util.response]
@@ -24,51 +31,76 @@
     [logbug.thrown :as thrown]
     ))
 
+
 (defn dead-end-handler [req]
   {:status 404
    :body "Not found!"})
 
 (def api-handler
-  (cider-ci.api.web/build-main-handler "/cider-ci/api"))
+  (cider-ci.api.web/build-main-handler "/api"))
 
 (def builder-handler
-  (cider-ci.builder.web/build-main-handler "/cider-ci/builder"))
+  (cider-ci.builder.web/build-main-handler "/builder"))
 
 (def dispatcher-handler
-  (cider-ci.dispatcher.web/build-main-handler "/cider-ci/dispatcher"))
+  (cider-ci.dispatcher.web/build-main-handler "/dispatcher"))
 
 (def repositories-handler
-  (cider-ci.repository.web/build-main-handler "/cider-ci/repositories"))
+  (cider-ci.repository.web/build-main-handler "/repositories"))
 
 (def storage-handler
-  (cider-ci.storage.web/build-main-handler "/cider-ci/storage"))
+  (cider-ci.storage.web/build-main-handler "/storage"))
 
 (def ui2-handler
-  (cider-ci.ui2.web/build-main-handler "/cider-ci/ui2" ))
+  (cider-ci.ui2.web/build-main-handler "/ui2" ))
 
 (def redirect-to-ui2
   (ring.util.response/redirect "/cider-ci/ui2/"))
 
 (def server-handler
-  (cider-ci.server.web/build-main-handler "/cider-ci/server"))
+  (cider-ci.server.web/build-main-handler "/server"))
+
+
+;;; routes ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (def routes
   (cpj/routes
-    (cpj/ANY "/cider-ci/api/*" [] api-handler)
-    (cpj/GET "/cider-ci/api" [] (ring.util.response/redirect "/cider-ci/api/"))
-    (cpj/ANY "/cider-ci/builder/*" [] builder-handler)
-    (cpj/ANY "/cider-ci/dispatcher/*" [] dispatcher-handler)
-    (cpj/ANY "/cider-ci/repositories/*" [] repositories-handler)
-    (cpj/ANY "/cider-ci/server/*" [] server-handler)
-    (cpj/ANY "/cider-ci/storage/*" [] storage-handler)
-    (cpj/GET "/cider-ci/storage" [] (ring.util.response/redirect "/cider-ci/storage/"))
-    (cpj/ANY "/cider-ci/ui2/*" [] ui2-handler)
+    (cpj/ANY "/api/*" [] api-handler)
+    (cpj/GET "/api" [] (ring.util.response/redirect "/cider-ci/api/"))
+    (cpj/ANY "/builder/*" [] builder-handler)
+    (cpj/ANY "/dispatcher/*" [] dispatcher-handler)
+    (cpj/ANY "/repositories/*" [] repositories-handler)
+    (cpj/ANY "/server/*" [] server-handler)
+    (cpj/ANY "/storage/*" [] storage-handler)
+    (cpj/GET "/storage" [] (ring.util.response/redirect "/cider-ci/storage/"))
+    (cpj/ANY "/ui2/*" [] ui2-handler)
+    (cpj/ANY "/users/*" [] cider-ci.users.web/routes)
     (cpj/GET "/" [] redirect-to-ui2)
     (cpj/ANY "*" [] dead-end-handler)))
 
+
+;;; default wrappers ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn wrap-accept [handler]
+  (ring.middleware.accept/wrap-accept
+    handler
+    {:mime
+     ["application/json-roa+json" :qs 1 :as :json-roa
+      "application/json" :qs 1 :as :json
+      "text/html" :qs 1 :as :html
+      ]}))
+
 (defn build-main-handler [_]
   (I> wrap-handler-with-logging
-      routes))
+      routes
+      (ring.middleware.json/wrap-json-body {:keywords? true})
+      ring.middleware.json/wrap-json-response
+      cider-ci.client.web/wrap
+      wrap-accept
+      (ring.middleware.defaults/wrap-defaults {:static {:resources "public"}})
+      (routing/wrap-prefix "/cider-ci")
+      routing/wrap-exception
+      ))
 
 ;#### debug ###################################################################
 ;(logging-config/set-logger! :level :debug)

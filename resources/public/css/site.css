@@ -5865,3 +5865,6 @@ table.table-projects tbody > tr > td {
 
 ul.tree-commits > li:nth-child(odd) {
   background-color: lightgrey; }
+
+input[type=checkbox][disabled] + label {
+  color: #cccccc; }
