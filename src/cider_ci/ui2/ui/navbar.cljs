@@ -1,9 +1,12 @@
 (ns cider-ci.ui2.ui.navbar
   (:require
-    [cider-ci.ui2.ui.navbar.release :as navbar.release]
-    [cider-ci.ui2.ui.navbar.user :as navbar.user]
+    [cider-ci.client.state :as state]
+    [cider-ci.ui2.commits.ui]
     [cider-ci.ui2.constants :refer [CONTEXT]]
     [cider-ci.ui2.session.password.ui :as session.password]
+    [cider-ci.ui2.ui.debug :as debug]
+    [cider-ci.ui2.ui.navbar.release :as navbar.release]
+    [cider-ci.ui2.ui.navbar.user :as navbar.user]
 
     [cider-ci.utils.core :refer [presence]]
     ))
@@ -49,6 +52,7 @@
    (when (-> @user empty? not)
      [:div.navbar-left
       [:ul.navbar-nav.nav
+       [:li [:a {:href "/cider-ci/ui/workspace"} [:i.fa.fa-dashboard] " Workspace"]]
        [:li
         [:a.dropdown-toggle
          {:data-toggle "dropdown"
@@ -58,12 +62,18 @@
         [:ul.dropdown-menu
          [:li [:a {:href "/cider-ci/ui2/"} "Root"]]
          [:li.divider]
+         [:li [:a {:href (cider-ci.ui2.commits.ui/commits-path)} "Commits " [:em "(Alpha!)"]]]
+         [:li.divider]
          [:li [:a {:href (str CONTEXT "/create-admin")} "Create Admin"]]
          [:li [:a {:href "/cider-ci/ui2/session/password/sign-in"} "Sign in"]]
          [:li [:a {:href "/cider-ci/ui2/welcome-page/edit"} "Edit Welcome Page"]]
          [:li.divider]
-         [:li [:a {:href "/cider-ci/ui2/debug"} "Debug"]]]]
-       [:li [:a {:href "/cider-ci/ui/workspace"} [:i.fa.fa-dashboard] " Workspace"]]
+         [:li [:a {:href (debug/path) } "Debug page"]]
+         [:li [:a {:hred "#"
+                   :on-click debug/toggle-debug}
+               [:input {:type "checkbox"
+                        ;:on-change debug/toggle-debug
+                        :checked (:debug @state/client-state)}] "Toggle debug display" ]]]]
        [:li [:a {:href "/cider-ci/repositories/projects/"} [:i.fa.fa-git-square] " Projects "]]
        [:li [:a {:href "/cider-ci/api/api-browser/index.html#/cider-ci/api"} [:i.fa.fa-magic] " API Browser "]]
        [:li [:a {:href "/cider-ci/docs/"}  [:i.fa.fa-file-text-o] " Documentation "]]

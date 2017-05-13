@@ -5859,3 +5859,9 @@ table.table-project tbody > tr > td {
 
 table.table-projects tbody > tr > td {
   width: 16.6%; }
+
+.git-ref, .tree-id, .job-id, .commit-id {
+  font-family: Menlo, Monaco, Consolas, "Courier New", monospace; }
+
+ul.tree-commits > li:nth-child(odd) {
+  background-color: lightgrey; }

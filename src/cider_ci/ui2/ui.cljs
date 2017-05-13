@@ -81,7 +81,10 @@
 (defn init! []
   (when-let [app (.getElementById js/document "app")]
     (accountant/configure-navigation!
-      {:nav-handler (fn [path] (secretary/dispatch! path))
+      {:nav-handler (fn [path]
+                      ;(js/console.log (clj->js ['nav-handler path]))
+                      (swap! state/client-state assoc-in [:current-page :full-path] path)
+                      (secretary/dispatch! path))
        :path-exists?  (fn [path] (secretary/locate-route path))})
     (accountant/dispatch-current!)
     (mount)))

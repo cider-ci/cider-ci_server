@@ -47,13 +47,15 @@
 
 ;;; client-state  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defonce client-state (r/atom {:debug true}))
+(defonce client-state (r/atom {:debug false
+                               :commits-page {:form-data {}}
+                               }))
 
 (js/setInterval #(swap! client-state
                        (fn [s] (merge s {:timestamp (js/moment)}))) 1000)
 
 (def client-state-push-to-server-keys
-  [:server-requests])
+  [:current-page])
 
 ;;; push-pending? ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

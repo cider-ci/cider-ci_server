@@ -18,7 +18,7 @@
 
 (declare page get-welcome-page-settings)
 
-(secretary/defroute create-admin-path (str CONTEXT "/welcome-page/edit") []
+(secretary/defroute welcome-page-edit-path (str CONTEXT "/welcome-page/edit") []
   (swap! state/page-state assoc :current-page
          {:component #'page})
   (swap! state/client-state assoc

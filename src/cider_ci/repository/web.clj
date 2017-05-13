@@ -7,6 +7,7 @@
   (:require [cider-ci.utils.core :refer [keyword str]])
 
   (:require
+    [cider-ci.repository.tree-commits.web :as tree-commits]
     [cider-ci.repository.git.repositories :as git.repositories]
     [cider-ci.repository.roa.core :as roa]
     [cider-ci.repository.sql.repository :as sql.repository]
@@ -14,9 +15,9 @@
     [cider-ci.repository.web.project-configuration :as web.project-configuration]
     [cider-ci.repository.web.projects :as web.projects]
     [cider-ci.repository.web.push :as web.push]
+    [cider-ci.repository.web.push-notifications :as push-notifications]
     [cider-ci.repository.web.shared :refer :all]
     [cider-ci.repository.web.ui :as web.ui]
-    [cider-ci.repository.web.push-notifications :as push-notifications]
 
     [cider-ci.auth.anti-forgery :as anti-forgery]
     [cider-ci.auth.authorize :as authorize]
@@ -77,7 +78,9 @@
              (authorize/wrap-require! #'web.ls-tree/ls-tree {:service true}))
     (cpj/GET "/path-content/:id/*" _
              (authorize/wrap-require! #'get-path-content {:service true}))
-    (cpj/ANY "/projects/*" _ web.projects/routes)))
+    (cpj/ANY "/projects/*" _ web.projects/routes)
+    (cpj/ANY "/tree-commits/*" _ #'tree-commits/routes)
+    ))
 
 (defn wrap-accept [handler]
   (ring.middleware.accept/wrap-accept

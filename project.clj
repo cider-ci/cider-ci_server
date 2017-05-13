@@ -64,7 +64,7 @@
                            (pjstadig.humane-test-output/activate!)]
               :env {:dev true}}
              :uberjar {:hooks [minify-assets.plugin/hooks]
-                       :source-paths ["env/rod/src" "src"]
+                       :source-paths ["env/prod/src" "src"]
                        :prep-tasks ["compile" ["cljsbuild" "once" "min"]]
                        :resource-paths ["target/cljsbuild"]
                        :aot [cider-ci.WebstackException cider-ci.ValidationException #"cider-ci.*"]

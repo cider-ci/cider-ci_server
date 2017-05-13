@@ -2,8 +2,7 @@
 
  [aleph "0.4.1"]
  [camel-snake-kebab "0.4.0"]
- [cheshire "5.5.0"]
- [cheshire "5.6.3"]
+ [cheshire "5.7.0"]
  [cider-ci/open-session "1.3.0"]
  [clj-http "3.1.0"]
  [clj-time "0.12.0"]

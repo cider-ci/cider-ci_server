@@ -12,7 +12,7 @@
 
 (declare page)
 
-(secretary/defroute (str CONTEXT "/debug") []
+(secretary/defroute path (str CONTEXT "/debug") []
   (swap! state/page-state assoc :current-page
          {:component #'page}))
 
