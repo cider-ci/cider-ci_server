@@ -54,8 +54,12 @@
 (js/setInterval #(swap! client-state
                        (fn [s] (merge s {:timestamp (js/moment)}))) 1000)
 
-(def client-state-push-to-server-keys
-  [:current-page])
+(def client-state-push-to-server-keys [:current-page])
+
+(defn clj->json
+  [ds]
+  (.stringify js/JSON (clj->js ds)))
+
 
 ;;; push-pending? ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -68,11 +72,10 @@
                 (select-keys new-state client-state-push-to-server-keys))
       (reset! push-pending? true))))
 
+(when true
+
 ;;; connect and receive ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn clj->json
-  [ds]
-  (.stringify js/JSON (clj->js ds)))
 
 (let [{:keys [chsk ch-recv send-fn state]}
       (sente/make-channel-socket! "/cider-ci/server/ws/chsk"
@@ -137,3 +140,5 @@
 
 
 (js/setTimeout push-to-server 100)
+
+)

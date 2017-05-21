@@ -31,8 +31,8 @@
     [compojure.core :as cpj]
     [compojure.handler :as cpj.handler]
     [compojure.route :as cpj.route]
-    [json-roa.ring-middleware.request]
-    [json-roa.ring-middleware.response]
+    [cider-ci.utils.json-roa.request]
+    [cider-ci.utils.json-roa.response]
     [ring.adapter.jetty :as jetty]
     [ring.middleware.cookies :as cookies]
     [ring.middleware.json]
@@ -53,10 +53,12 @@
 
 ;### include storage_servic_prefix ############################################
 
-(defn wrap-includ-storage-service-prefix [handler]
-  (fn [request]
-    (handler (assoc-in request [:storage_service_prefix]
-                       "/cider-ci/storage"))))
+(defn- include-storage-service-prefix [request handler]
+  (handler (assoc-in request [:storage_service_prefix]
+                     "/cider-ci/storage")))
+
+(defn wrap-include-storage-service-prefix [handler]
+  (fn [request] (include-storage-service-prefix request handler)))
 
 ;### init #####################################################################
 
@@ -112,11 +114,10 @@
 (defn build-routes-handler []
   (I> wrap-handler-with-logging
       routes
-      (json-roa.ring-middleware.request/wrap json-roa/handler)
-      json-roa.ring-middleware.response/wrap
-      wrap-includ-storage-service-prefix
+      (cider-ci.utils.json-roa.request/wrap json-roa/handler)
+      cider-ci.utils.json-roa.response/wrap
+      wrap-include-storage-service-prefix
       wrapp-error
-      ring.middleware.json/wrap-json-response
       wrap-keywordize-query-params))
 
 
@@ -126,3 +127,5 @@
 ;(debug/debug-ns 'clojure.java.jdbc)
 ;(debug/debug-ns 'ring.middleware.json)
 ;(debug/debug-ns *ns*)
+;(debug/debug-ns 'json-roa.ring-middleware.request)
+;(debug/debug-ns 'json-roa.ring-middleware.response)

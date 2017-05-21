@@ -1,26 +1,25 @@
-(ns cider-ci.ui2.create-admin.ui
+(ns cider-ci.create-initial-admin.ui
   (:refer-clojure :exclude [str keyword])
   (:require-macros
     [reagent.ratom :as ratom :refer [reaction]]
     [cljs.core.async.macros :refer [go]]
     )
   (:require
-    [cider-ci.ui2.shared :refer [pre-component]]
-    [cider-ci.utils.core :refer [keyword str presence]]
-    [cider-ci.ui2.constants :refer [CONTEXT]]
+    [cider-ci.client.routes :as routes]
     [cider-ci.client.state :as state]
+    [cider-ci.ui2.constants :refer [CONTEXT]]
     [cider-ci.ui2.session.password.ui :as session.password]
-
+    [cider-ci.utils.core :refer [keyword str presence]]
+    [cljs-http.client :as http]
+    [fipp.edn :refer [pprint]]
     [reagent.core :as reagent]
     [secretary.core :as secretary :include-macros true]
-    [cljs-http.client :as http]
     ))
 
 (declare page)
 
-(secretary/defroute create-admin-path (str CONTEXT "/create-admin") []
-  (swap! state/page-state assoc :current-page
-         {:component #'page}))
+(defn pre-component [data]
+  [:pre (with-out-str (pprint data))])
 
 (def data (reaction (-> @state/client-state :create-admin)))
 (def form-data (reaction (-> @data :form-data)))
@@ -33,7 +32,7 @@
 ;; post
 
 (defn post-create-admin []
-  (let [request {:url (str CONTEXT "/create-admin")
+  (let [request {:url (routes/create-admin-path)
                  :method :post
                  :json-params (select-keys @form-data [:login :password])}]
     (swap! state/client-state
@@ -134,6 +133,8 @@
      [pre-component @request?]
      [:h3 "Response Pending"]
      [pre-component @response-pending?]]))
+
+;(swap! state/client-state assoc :debug true)
 
 (defn page []
   [:div.create-initial-admin

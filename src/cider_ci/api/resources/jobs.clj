@@ -11,6 +11,8 @@
     [cider-ci.utils.http-server :as http-server]
     [cider-ci.utils.rdbms :as rdbms]
     [cider-ci.utils.config :refer [get-config]]
+    [cider-ci.builder :as builder]
+
 
     [clojure.data.json :as json]
     [clojure.java.jdbc :as jdbc]
@@ -137,23 +139,17 @@
 ;### create job #################################################################
 
 (defn create-job [request]
-  (if-not (= (->> request :json-params keys (map keyword) set) #{:tree_id  :key})
+  (if-not (= (->> request :body keys set) #{:tree_id  :key})
     {:status 422
      :body {:message "The request body must exactly contain the keys 'tree_id' and 'key'"}}
     (let [user-id (-> request :authenticated-user :id)
-          url (str (:server_base_url (get-config)) "/cider-ci/builder/jobs")
-          body (-> request :json-params
-                   (assoc :created_by user-id)
-                   json/write-str)
-          params {:body body
-                  :throw-exceptions false
-                  :socket-timeout 3000
-                  :conn-timeout 3000}
-          response (http/request :post url params)]
-      (if (map? (:body response))
-        (select-keys response [:body :status])
-        {:status (:status response)
-         :body {:message {:body (-> response :body str)}}}))))
+          params (assoc (select-keys (:body request) [:tree_id :key])
+                        :created_by (-> request :authenticated-user :id))]
+      (if-let [job (builder/create-job params)]
+        {:status 201
+         :body job}
+        (throw (ex-info "Creating job failed " params))))))
+
 
 ;### routes #####################################################################
 
@@ -167,4 +163,4 @@
 ;### Debug ####################################################################
 ;(logging-config/set-logger! :level :debug)
 ;(logging-config/set-logger! :level :info)
-;(debug/debug-ns *ns*)
+(debug/debug-ns *ns*)

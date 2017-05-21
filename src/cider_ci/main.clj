@@ -7,7 +7,6 @@
     [cider-ci.dispatcher.main]
     [cider-ci.repository.main]
     [cider-ci.storage.main]
-
     [cider-ci.server]
 
     [cider-ci.utils.app :as app]

@@ -36,14 +36,6 @@
                                "/css/site.css"
                                "/css/site.min.css")))])
 
-(defn admins? []
-  (->> ["SELECT true AS exists FROM users
-        WHERE is_admin = true limit 1"]
-       (jdbc/query (rdbms/get-ds))
-       first
-       :exists
-       boolean))
-
 
 ;; dynamic pages
 

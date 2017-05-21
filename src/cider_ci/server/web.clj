@@ -43,10 +43,7 @@
       cider-ci.server.push/wrap
       (http-basic/wrap {:service true :user true})
       (auth.session/wrap :anti-forgery true)
-      ;cider-ci.utils.ring/wrap-keywordize-request
-      ring.middleware.json/wrap-json-response
       ring.middleware.cookies/wrap-cookies
-      (ring.middleware.json/wrap-json-body {:keywords? true})
       ring.middleware.params/wrap-params
       status/wrap
       (routing/wrap-prefix context)))

@@ -1,9 +1,6 @@
-(ns cider-ci.ui2.create-admin.be
+(ns cider-ci.create-initial-admin.web
   (:refer-clojure :exclude [str keyword])
   (:require
-    [cider-ci.ui2.constants :refer [CONTEXT]]
-    [cider-ci.ui2.web.shared :as shared]
-
     [cider-ci.utils.core :refer [keyword str presence]]
     [cider-ci.open-session.bcrypt :as bcrypt]
 
@@ -19,12 +16,18 @@
     [logbug.thrown :as thrown]
     ))
 
+(defn some-admin-exists? []
+  (->> ["SELECT true AS exists FROM users
+        WHERE is_admin = true limit 1"]
+       (jdbc/query (rdbms/get-ds))
+       first :exists boolean))
+
 (defn- users-insert [row]
   (jdbc/insert! (rdbms/get-ds) :users row))
 
 (defn create-admin [request]
   (Thread/sleep 1000)
-  (if (shared/admins?)
+  (if (some-admin-exists?)
     {:status 409
      :body "An admin exists already!"}
     (if (->> {:login (-> request :body :login)
@@ -37,17 +40,16 @@
        :body "failed"})))
 
 (defn- redirect [request handler]
-  (if (or (shared/admins?)
-          (= "/create-admin"
-             (-> request :route-params :* )))
+  (if (or (some-admin-exists?)
+          (= "/create-initial-admin" (-> request :route-params :* )))
     (handler request)
     (ring.util.response/redirect
-      (str CONTEXT "/create-admin")
+      (str "/cider-ci/create-initial-admin")
       :see-other)))
 
 (defn wrap [handler]
   (cpj/routes
-    (cpj/POST "/create-admin" [] #'create-admin)
+    (cpj/POST "/create-initial-admin" [] #'create-admin)
     (cpj/GET "*" [] (fn [req] (redirect req handler)))
     (cpj/ANY "*" [] handler)))
 
@@ -60,5 +62,3 @@
 ;(debug/debug-ns 'cider-ci.auth.session)
 ;(debug/debug-ns 'cider-ci.open-session.bcrypt)
 ;(debug/debug-ns *ns*)
-
-

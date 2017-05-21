@@ -24,7 +24,6 @@
  [fipp "0.6.8"]
  [hiccup "1.0.5"]
  [joda-time "2.9.7"]
- [json-roa/clj-utils "1.0.0"]
  [log4j/log4j "1.2.17" :exclusions [javax.mail/mail javax.jms/jms com.sun.jdmk/jmxtools com.sun.jmx/jmxri]]
  [logbug "4.0.0"]
  [logbug "4.2.2"]

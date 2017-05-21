@@ -11,7 +11,6 @@
     [cider-ci.ui2.session.be :as session]
 
     [cider-ci.ui2.web.shared :as web.shared :refer [dynamic]]
-    [cider-ci.ui2.create-admin.be :as create-admin]
     [cider-ci.ui2.welcome-page.be :as welcome-page]
     [cider-ci.ui2.root :as root]
 
@@ -68,7 +67,6 @@
 (defn build-main-handler [context]
   (I> wrap-handler-with-logging
       routes
-      create-admin/wrap ;must come after public is served
       welcome-page/wrap
       shutdown/wrap
       ; authentication and primitive authorization
@@ -78,8 +76,6 @@
       session/wrap-routes
       cider-ci.utils.ring/wrap-keywordize-request
       cookies/wrap-cookies
-      (ring.middleware.json/wrap-json-body {:keywords? true})
-      ring.middleware.json/wrap-json-response
       ring.middleware.params/wrap-params
       (ring.middleware.defaults/wrap-defaults {:static {:resources "public"}})
       wrap-accept
@@ -96,5 +92,5 @@
 ;(debug/debug-ns 'cider-ci.auth.session)
 ;(debug/debug-ns 'cider-ci.utils.shutdown)
 ;(debug/debug-ns 'cider-ci.auth.http-basic)
-(debug/debug-ns *ns*)
+;(debug/debug-ns *ns*)
 

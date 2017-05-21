@@ -58,8 +58,8 @@
 (defn build-main-handler [context]
   (I> wrap-handler-with-logging
       (resources/build-routes-handler)
-      ring.middleware.json/wrap-json-params
-      (ring.middleware.params/wrap-params)
+      ;ring.middleware.json/wrap-json-params
+      ;(ring.middleware.params/wrap-params)
       status/wrap
       (authorize/wrap-require! {:user true :service true})
       (http-basic/wrap {:user true :service true})

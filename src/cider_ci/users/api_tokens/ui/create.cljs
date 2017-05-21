@@ -13,7 +13,6 @@
     [cider-ci.client.state :as state]
     [cider-ci.users.api-tokens.ui.form :as form]
     [cider-ci.utils.core :refer [keyword str presence]]
-
     [fipp.edn :refer [pprint]]
     [accountant.core :as accountant]
     [reagent.core :as r]

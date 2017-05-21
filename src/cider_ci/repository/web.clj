@@ -95,13 +95,11 @@
   (I> wrap-handler-with-logging
       (cpj.handler/api routes)
       roa/wrap
-      ring.middleware.json/wrap-json-body
-      ring.middleware.json/wrap-json-response
       shutdown/wrap
       web.ui/wrap
       wrap-accept
       web.push/wrap
-      anti-forgery/wrap
+      ;anti-forgery/wrap
       (http-basic/wrap {:service true :user true})
       session/wrap
       cookies/wrap-cookies

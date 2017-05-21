@@ -73,11 +73,14 @@
 
 (defn dispatch [request handler]
   (cond
+    (->> request :route-params :*
+         (re-matches #"/api/api-browser.*")) (handler request)
+    (->> request :route-params :*
+         (re-matches #"/storage/\w+-attachments/.*")) (handler request)
+    (->> request :route-params :*
+         (re-matches #"/server/ws.*")) (handler request)
     (and (= (-> request :request-method) :get)
-         (= (-> request :accept :mime) :html)
-         (not (->> request :route-params :* (re-matches #"/server/ws.*")))
-         ) {:status 200
-            :body (html request)}
+         (= (-> request :accept :mime) :html)) {:status 200 :body (html request)}
     :else (handler request)))
 
 (defn wrap [handler]
@@ -86,4 +89,4 @@
 
 ;#### debug ###################################################################
 
-(debug/debug-ns *ns*)
+;(debug/debug-ns *ns*)

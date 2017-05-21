@@ -8,7 +8,7 @@ feature 'Initial admin', type: :feature do
 
     PgTasks.truncate_tables()
 
-    visit '/cider-ci/ui2/'
+    visit '/cider-ci/'
 
     #############################################################
     ### create initial admin and sign in
@@ -69,7 +69,7 @@ feature 'Initial admin', type: :feature do
 
     scenario "It is not possible to create an initial admin" do
 
-      visit '/cider-ci/ui2/create-admin'
+      visit '/cider-ci/create-initial-admin'
 
       within ".create-initial-admin"  do
         find('input#login').set 'anotheradmin'

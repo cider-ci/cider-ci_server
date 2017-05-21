@@ -87,8 +87,6 @@
   (I> wrap-handler-with-logging
       top-handler
       wrap-jobs
-      ring.middleware.json/wrap-json-response
-      ring.middleware.json/wrap-json-body
       status/wrap
       (routing/wrap-prefix context)
       (authorize/wrap-require! {:service true})

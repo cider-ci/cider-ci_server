@@ -16,7 +16,7 @@
     [cider-ci.ui2.web]
     [cider-ci.users.web]
     [cider-ci.client.web]
-
+    [cider-ci.create-initial-admin.web :as create-initial-admin]
     [cider-ci.utils.routing :as routing]
     [cider-ci.auth.anti-forgery :as anti-forgery]
 
@@ -93,9 +93,11 @@
 (defn build-main-handler [_]
   (I> wrap-handler-with-logging
       routes
+      cider-ci.client.web/wrap
+      create-initial-admin/wrap
+      ring.middleware.params/wrap-params
       (ring.middleware.json/wrap-json-body {:keywords? true})
       ring.middleware.json/wrap-json-response
-      cider-ci.client.web/wrap
       wrap-accept
       (ring.middleware.defaults/wrap-defaults {:static {:resources "public"}})
       (routing/wrap-prefix "/cider-ci")

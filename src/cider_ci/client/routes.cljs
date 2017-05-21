@@ -7,6 +7,10 @@
     [secretary.core :as secretary :include-macros true]
     ))
 
+(secretary/defroute create-admin-path "/cider-ci/create-initial-admin" []
+  (swap! state/page-state assoc :current-page
+         {:component "cider-ci.create-initial-admin.ui/page"}))
+
 (secretary/defroute commits-path
   "/cider-ci/ui2/commits/" {:keys [query-params]}
   (swap! state/client-state assoc-in [:commits-page :form-data] query-params)

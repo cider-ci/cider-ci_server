@@ -12,16 +12,18 @@
     [cider-ci.repository.ui]
     [cider-ci.ui2.commits.ui]
     [cider-ci.ui2.constants :refer [CONTEXT]]
-    [cider-ci.ui2.create-admin.ui]
     [cider-ci.ui2.session.password.ui]
     [cider-ci.ui2.ui.debug :as debug]
     [cider-ci.ui2.ui.navbar]
     [cider-ci.ui2.ui.root]
     [cider-ci.ui2.welcome-page.ui]
+
     [cider-ci.users.api-tokens.ui.create]
     [cider-ci.users.api-tokens.ui.edit]
     [cider-ci.users.api-tokens.ui.index]
     [cider-ci.users.api-tokens.ui.show]
+
+    [cider-ci.create-initial-admin.ui]
 
     [clojure.string :as str]
     [fipp.edn :refer [pprint]]
@@ -40,6 +42,7 @@
    "cider-ci.users.api-tokens.ui.edit/page" cider-ci.users.api-tokens.ui.edit/page
    "cider-ci.users.api-tokens.ui.index/page" cider-ci.users.api-tokens.ui.index/page
    "cider-ci.users.api-tokens.ui.show/page" cider-ci.users.api-tokens.ui.show/page
+   "cider-ci.create-initial-admin.ui/page" cider-ci.create-initial-admin.ui/page
    })
 
 (def user (reaction (:user @state/server-state)))

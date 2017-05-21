@@ -66,7 +66,8 @@
 
 (defn wrap [handler]
   (fn [request]
-    (process request handler)))
+    ;(process request handler)
+    (handler request)))
 
 ;{"git_url": "https://github.com/cider-ci/cider-ci_deploy.git", "name": "CI Deploy"}
 

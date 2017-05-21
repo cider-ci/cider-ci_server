@@ -111,7 +111,6 @@
       (authorize/wrap-require! {:service true})
       (http-basic/wrap {:service true})
       web.executor/wrap-dispatch-executor-routes
-      (ring.middleware.json/wrap-json-body {:keywords? true})
       (routing/wrap-prefix context)
       ci-utils-ring/wrap-webstack-exception))
 
