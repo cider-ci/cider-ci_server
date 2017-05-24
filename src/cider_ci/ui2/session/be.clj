@@ -21,13 +21,12 @@
     [logbug.thrown :as thrown]
     ))
 
-(defn wrap-routes [default-handler]
+(def routes
   (cpj/routes
     (cpj/POST "/session/sign-out" _ #'sign-out)
     (cpj/POST "/session/password/sign-in" _ #'password/sign-in)
     (cpj/POST "/session/oauth/request-sign-in" [] #'oauth/request-sign-in)
     (cpj/GET "/session/oauth/:type/sign-in" [] #'oauth/sign-in)
-    (cpj/ANY "*" _ default-handler)
     ))
 
 
@@ -38,7 +37,5 @@
 ;(debug/debug-ns 'cider-ci.open-session.bcrypt)
 ;(debug/debug-ns 'cider-ci.open-session.signature)
 ;(debug/debug-ns 'cider-ci.open-session.encryptor)
-;(debug/debug-ns 'cider-ci.auth.http-basic)
 ;(debug/debug-ns 'cider-ci.open-session.encryptor)
-;(debug/debug-ns 'cider-ci.auth.session)
 ;(debug/debug-ns *ns*)

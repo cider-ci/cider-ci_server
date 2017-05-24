@@ -16,12 +16,9 @@
 
     [cider-ci.auth.anti-forgery :as anti-forgery]
     [cider-ci.auth.authorize :as authorize]
-    [cider-ci.auth.http-basic :as http-basic]
-    [cider-ci.auth.session :as auth.session]
     [cider-ci.utils.config :as config :refer [get-config]]
     [cider-ci.utils.ring]
     [cider-ci.utils.routing :as routing]
-    [cider-ci.utils.shutdown :as shutdown]
     [cider-ci.utils.status :as status]
 
     [clojure.walk :refer [keywordize-keys]]
@@ -49,36 +46,22 @@
 
 (def routes
   (cpj/routes
+    (cpj/ANY "/session*" [] #'session/routes)
     (cpj/GET "/" [] #'dynamic)
     (cpj/GET "/initial-admin" [] #'dynamic)
     (cpj/GET "/debug" [] #'dynamic)
     (cpj/GET "/*" [] #'dynamic)
     ))
 
-(defn wrap-accept [handler]
-  (ring.middleware.accept/wrap-accept
-    handler
-    {:mime
-     ["application/json-roa+json" :qs 1 :as :json-roa
-      "application/json" :qs 1 :as :json
-      "text/html" :qs 1 :as :html
-      ]}))
-
 (defn build-main-handler [context]
   (I> wrap-handler-with-logging
       routes
       welcome-page/wrap
-      shutdown/wrap
       ; authentication and primitive authorization
-      (http-basic/wrap {:service true :user true})
-      (auth.session/wrap :anti-forgery true)
-      ; unauthenticated routes here
-      session/wrap-routes
       cider-ci.utils.ring/wrap-keywordize-request
       cookies/wrap-cookies
       ring.middleware.params/wrap-params
       (ring.middleware.defaults/wrap-defaults {:static {:resources "public"}})
-      wrap-accept
       status/wrap
       (routing/wrap-prefix context)
       routing/wrap-exception))
@@ -87,10 +70,7 @@
 ;#### debug ###################################################################
 ;(logging-config/set-logger! :level :debug)
 ;(logging-config/set-logger! :level :info)
-;(debug/debug-ns 'cider-ci.auth.http-basic)
 ;(debug/debug-ns 'cider-ci.auth.anti-forgery)
 ;(debug/debug-ns 'cider-ci.auth.session)
-;(debug/debug-ns 'cider-ci.utils.shutdown)
 ;(debug/debug-ns 'cider-ci.auth.http-basic)
 ;(debug/debug-ns *ns*)
-

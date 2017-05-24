@@ -14,17 +14,14 @@
     ))
 
 (defn- shutdown [request]
-  (if (-> request :authenticated-service :username boolean)
-    (do (future (Thread/sleep 250)
-                (System/exit 0))
-        {:status 204})
-    {:status 403 :body ""}))
+  (do (future (Thread/sleep 250)
+              (System/exit 0))
+      {:status 204}))
 
 (defn wrap [default-handler]
   (cpj/routes
     (cpj/POST "/shutdown" _
-              (authorize/wrap-require!
-                #'shutdown {:service true}))
+              (authorize/wrap-require!  #'shutdown {:service true}))
     (cpj/ANY "*" request default-handler)))
 
 

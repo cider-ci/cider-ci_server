@@ -45,7 +45,7 @@
 
 (defn user-client-id [req]
   (logging/debug 'user-client-id req)
-  (str (-> req :authenticated-user :id) "_" (:client-id req)))
+  (str (-> req :authenticated-entity :id) "_" (:client-id req)))
 
 (defn anti-forgery-token [req]
   (logging/debug 'anti-forgery-token req)
@@ -181,6 +181,5 @@
 ;#### debug ###################################################################
 ;(logging-config/set-logger! :level :debug)
 ;(logging-config/set-logger! :level :info)
-;(debug/debug-ns 'cider-ci.auth.http-basic)
 ;(debug/debug-ns 'cider-ci.auth.authorize)
 ;(debug/debug-ns *ns*)

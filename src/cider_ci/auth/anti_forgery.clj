@@ -24,10 +24,7 @@
    })
 
 (defn- session-authentication? [request]
-  (boolean
-    (when (-> request :authenticated-user) ; only users can use session auth
-      (not (#{"basic-auth"}
-             (-> request :authenticated-user :authentication-method))))))
+  (= (-> request :authenticated-entity :authentication-method) :session))
 
 (defn- safe-request? [request]
   (boolean
@@ -66,6 +63,7 @@
 
 (defn wrap [handler]
   (fn [request]
+    ; TODO
     ;(process request handler)
     (handler request)))
 

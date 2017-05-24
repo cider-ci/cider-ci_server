@@ -62,7 +62,8 @@
 
 (defn retry [request]
   (let [task-id (-> request :route-params :task_id)
-        user-id (-> request :authenticated-user :id)
+        user-id (-> request :authenticated-entity :id)
+        _ (assert (= (-> request :authenticated-entity :type) :user))
         url (str (:server_base_url (get-config))
                  "/cider-ci/dispatcher/tasks" task-id "/retry")
         _ (logging/info {:url url})

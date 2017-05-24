@@ -1,10 +1,7 @@
 (ns cider-ci.utils.tests.require
   (:require
     [clojure.test :refer :all]
-
     [cider-ci.auth.authorize]
-    [cider-ci.auth.http_basic]
-    [cider-ci.auth.session]
 
     [cider-ci.utils.app]
     [cider-ci.utils.config]

@@ -9,6 +9,7 @@
     [cider-ci.client.request :as request]
     [cider-ci.client.routes :as routes]
     [cider-ci.client.state :as state]
+    [cider-ci.client.ws :as ws]
     [cider-ci.repository.ui]
     [cider-ci.ui2.commits.ui]
     [cider-ci.ui2.constants :refer [CONTEXT]]
@@ -45,12 +46,13 @@
    "cider-ci.create-initial-admin.ui/page" cider-ci.create-initial-admin.ui/page
    })
 
-(def user (reaction (:user @state/server-state)))
+(def user* (reaction (and (= (-> @state/server-state :user :type) "user")
+                          (:user @state/server-state))))
 
-(def authentication-providers
+(def authentication-providers*
   (reaction (:authentication_providers @state/server-state)))
 
-(def current-url (reaction (:current-url @state/client-state)))
+(def current-url* (reaction (:current-url @state/client-state)))
 
 (defn general-debug-section []
   (when (:debug @state/client-state)
@@ -59,14 +61,19 @@
      [:h1 "Debug"]
      [:div.page-state
       [:h2 "Page State"]
-      [:pre (.stringify js/JSON (clj->js @state/page-state) nil 2)]]
+      ;[:pre (with-out-str (pprint @state/page-state))]
+      [:pre (.stringify js/JSON (clj->js @state/page-state) nil 2)]
+      ]
      [:div.client-state
       [:h2 "Client State"]
+      ;[:pre (with-out-str (pprint @state/client-state))]
       [:pre (.stringify js/JSON (clj->js @state/client-state) nil 2)]
-      [:pre (with-out-str (pprint @state/client-state))]]
+      ]
      [:div.server-state
       [:h2 "Server State"]
-      [:pre (.stringify js/JSON (clj->js @state/server-state) nil 2)]]
+      ;[:pre (with-out-str (pprint @state/server-state))]
+      [:pre (.stringify js/JSON (clj->js @state/server-state) nil 2)]
+      ]
      ]))
 
 
@@ -98,7 +105,8 @@
     (reagent/render [current-page] app))
   (when-let [nav-container (.getElementById js/document "nav")]
     (reagent/render [cider-ci.ui2.ui.navbar/navbar
-                     user current-url authentication-providers] nav-container)))
+                     user* current-url* authentication-providers*]
+                    nav-container)))
 
 (defn init! []
   (when-let [app (.getElementById js/document "app")]
@@ -109,4 +117,7 @@
                       (secretary/dispatch! path))
        :path-exists?  (fn [path] (secretary/locate-route path))})
     (accountant/dispatch-current!)
-    (mount)))
+    (mount)
+    (state/init)
+    (when @user*
+      (ws/init))))

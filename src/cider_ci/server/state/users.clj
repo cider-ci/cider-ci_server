@@ -16,7 +16,8 @@
 (defn- update-users []
   (->> ["SELECT * from users"]
        (jdbc/query (rdbms/get-ds))
-       (map (fn [repo] [(-> repo :id str) repo]))
+       (map #(assoc % :type :user))
+       (map (fn [u] [(-> u :id str) u]))
        (into {})
        (swap! db/db update-rows-in-db :users {})))
 

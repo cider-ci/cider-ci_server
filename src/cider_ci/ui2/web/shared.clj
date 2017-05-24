@@ -65,8 +65,11 @@
   (html5
     (head)
     [:body {:class "body-container"
-            :data-user (-> req :authenticated-user
-                           (select-keys [:login :is_admin]) json/write-str)
+            :data-user (-> req :authenticated-entity
+                           (select-keys [:login :is_admin :type
+                                         :scope_read :scope_write
+                                         :scope_admin_read :scope_admin_write])
+                           json/write-str)
             :data-authproviders (->> (get-config) :authentication_providers
                                      (map (fn [[k v]] [k (:name v)]))
                                      (into {}) json/write-str)}

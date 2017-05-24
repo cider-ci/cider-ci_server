@@ -43,7 +43,7 @@ scripts:
         script_key: test
         states: [aborted, defective, passed, failed, skipped]
     environment_variables:
-      SHUTDOWN_URL: http://localhost:{{SERVER_HTTP_PORT}}/cider-ci/ui2/shutdown
+      SHUTDOWN_URL: http://localhost:{{SERVER_HTTP_PORT}}/cider-ci/shutdown
     body: |
       #!/usr/bin/env bash
       set -eux

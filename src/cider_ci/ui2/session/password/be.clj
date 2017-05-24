@@ -6,7 +6,7 @@
     [cider-ci.ui2.session.shared :refer [sign-in!]]
     [cider-ci.ui2.constants :refer [CONTEXT]]
 
-    [cider-ci.auth.http-basic]
+    [cider-ci.auth.authentication.password]
     [cider-ci.open-session.bcrypt :refer [checkpw]]
     [cider-ci.utils.core :refer [presence]]
 
@@ -30,7 +30,7 @@
        (clojure.string/join "&")))
 
 (defn sign-in [request]
-  (if-let [user (cider-ci.auth.http-basic/get-user
+  (if-let [user (cider-ci.auth.authentication.password/get-user
                   (-> request :form-params :login))]
     (if (:account_enabled user)
       (if (password-valid? user (-> request :form-params :password))

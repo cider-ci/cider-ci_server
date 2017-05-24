@@ -5,7 +5,6 @@
 (ns cider-ci.builder.web
   (:require
     [cider-ci.auth.authorize :as authorize]
-    [cider-ci.auth.http-basic :as http-basic]
     [cider-ci.builder.jobs :as jobs]
     [cider-ci.builder.util :as util]
     [cider-ci.utils.config :refer [get-config]]
@@ -89,8 +88,7 @@
       wrap-jobs
       status/wrap
       (routing/wrap-prefix context)
-      (authorize/wrap-require! {:service true})
-      (http-basic/wrap {:service true})))
+      (authorize/wrap-require! {:service true})))
 
 
 ;#### the server ##############################################################
@@ -106,6 +104,5 @@
 ;(logging-config/set-logger! :level :info)
 ;(debug/debug-ns 'ring.middleware.resource)
 ;(debug/debug-ns 'cider-ci.auth.core)
-;(debug/debug-ns 'cider-ci.auth.session)
 ;(debug/wrap-with-log-debug #'create-job)
 ;(debug/debug-ns *ns*)

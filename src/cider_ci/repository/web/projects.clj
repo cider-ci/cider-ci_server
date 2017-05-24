@@ -35,9 +35,9 @@
 (defn create-project [request]
   (cond
     (-> request
-        :authenticated-user
-        :is_admin not) {:status 403
-                        :body  "Only admins can create new projects!"}
+        :authenticated-entity
+        :scope_admin_write not) {:status 403
+                                 :body  "Only admins can create new projects!"}
     :else (let [created (first (jdbc/insert!
                                  (rdbms/get-ds) :repositories
                                  (:body request)))]
@@ -48,9 +48,9 @@
 (defn delete-project [request]
   (cond
     (-> request
-        :authenticated-user
-        :is_admin not) {:status 403
-                        :body  "Only admins can delete new projects!"}
+        :authenticated-entity
+        :scope_admin_write not) {:status 403
+                                 :body  "Only admins can delete new projects!"}
     :else (let [deleted (jdbc/delete!
                           (rdbms/get-ds) :repositories
                           ["id = ?" (-> request :route-params :id)])]
@@ -94,7 +94,7 @@
         project (get-repository id)]
     (if-not project {:status 404}
       {:body (web.shared/filter-repository-params
-               project (:authenticated-user request))})))
+               project (:authenticated-entity request))})))
 
 (defn push-statuses [request]
   (let [id (-> request :route-params :id)]

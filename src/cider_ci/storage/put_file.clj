@@ -8,8 +8,6 @@
     [cider-ci.storage.shared :refer :all]
 
     [cider-ci.auth.authorize :as authorize]
-    [cider-ci.auth.http-basic :as http-basic]
-    [cider-ci.auth.session :as session]
     [cider-ci.open-session.cors :as cors]
     [cider-ci.utils.http :as http]
     [cider-ci.utils.http-server :as http-server]
@@ -147,5 +145,4 @@
 ;(logging-config/set-logger! :level :debug)
 ;(debug/wrap-with-log-debug #'save-file-and-presist-row)
 ;(logging-config/set-logger! :level :info)
-;(debug/debug-ns 'cider-ci.auth.session)
 ;(debug/debug-ns *ns*)

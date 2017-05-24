@@ -9,8 +9,6 @@
     [cider-ci.storage.shared :refer :all]
 
     [cider-ci.auth.authorize :as authorize]
-    [cider-ci.auth.http-basic :as http-basic]
-    [cider-ci.auth.session :as session]
     [cider-ci.open-session.cors :as cors]
     [cider-ci.utils.config :as config :refer [get-config]]
     [cider-ci.utils.http :as http]
@@ -66,9 +64,6 @@
   (I> (wrap-handler-with-logging :trace)
       handler
       (authorize/wrap-require! {:user true :service true :executor true})
-      (http-basic/wrap {:user true :service true :executor true})
-      session/wrap
-      cookies/wrap-cookies
       cors/wrap
       (public/wrap-shortcut handler)))
 
@@ -86,5 +81,4 @@
 ;26e3c8953dee7a179f1b5152570f5388b75c3453(debug/wrap-with-log-debug #'put-authorized?)
 ;(debug/wrap-with-log-debug #'find-store)
 ;(logging-config/set-logger! :level :info)
-;(debug/debug-ns 'cider-ci.auth.session)
 ;(debug/debug-ns *ns*)

@@ -77,5 +77,4 @@
 ;### Debug ####################################################################
 ;(logging-config/set-logger! :level :debug)
 ;(logging-config/set-logger! :level :info)
-;(debug/debug-ns 'cider-ci.auth.session)
 ;(debug/debug-ns *ns*)

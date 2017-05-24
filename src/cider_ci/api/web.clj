@@ -6,8 +6,6 @@
   (:require
     [cider-ci.api.resources :as resources]
     [cider-ci.auth.authorize :as authorize]
-    [cider-ci.auth.http-basic :as http-basic]
-    [cider-ci.auth.session :as session]
     [cider-ci.open-session.cors :as cors]
     [cider-ci.utils.config :refer [get-config]]
     [cider-ci.utils.http-server :as http-server]
@@ -62,9 +60,6 @@
       ;(ring.middleware.params/wrap-params)
       status/wrap
       (authorize/wrap-require! {:user true :service true})
-      (http-basic/wrap {:user true :service true})
-      session/wrap
-      cookies/wrap-cookies
       wrap-static-resources-dispatch
       content-type/wrap-content-type
       cors/wrap
@@ -78,7 +73,5 @@
 ;(logging-config/set-logger! :level :info)
 ;(debug/debug-ns 'ring.middleware.resource)
 ;(debug/debug-ns 'cider-ci.auth.core)
-;(debug/debug-ns 'cider-ci.auth.session)
-;(debug/debug-ns 'cider-ci.auth.http-basic)
 ;(debug/debug-ns 'cider-ci.open-session.encryptor)
 ;(debug/debug-ns *ns*)

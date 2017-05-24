@@ -41,6 +41,8 @@ feature 'Session expiration', type: :feature do
         # normin will be signed off after 15 seconds of the initial sign-in
         sleep(10)
         visit current_path
+        expect(page).to have_content "Session has expired!"
+        visit current_path
         expect(first(".navbar")).to have_content "Sign in with password"
         expect(first(".navbar .user")).not_to have_content "normin"
       end
@@ -93,6 +95,8 @@ feature 'Session expiration', type: :feature do
 
         # normin will be signed off after 15 seconds of the initial sign-in
         sleep(10)
+        visit current_path
+        expect(page).to have_content "Session has expired!"
         visit current_path
         expect(first(".navbar")).to have_content "Sign in with password"
         expect(first(".navbar .user")).not_to have_content "normin"

@@ -46,9 +46,9 @@
         [:span "Sign in via "
          [:b provider-name]]]])]])
 
-(defn navbar [user current-url auth-providers]
+(defn navbar [user* current-url* auth-providers]
   [:div
-   (when (-> @user empty? not)
+   (when @user*
      [:div.navbar-left
       [:ul.navbar-nav.nav
        [:li [:a {:href "/cider-ci/ui/workspace"} [:i.fa.fa-dashboard] " Workspace"]]
@@ -68,8 +68,8 @@
          [:li [:a {:href "/cider-ci/ui2/welcome-page/edit"} "Edit Welcome Page"]]
          [:li.divider]
          [:li [:a {:href "#"} "Account"]]
-         [:li [:a {:href (str "/cider-ci/users/" (:id @user) "/api-tokens/")} "API-Tokens" ]]
-         [:li [:a {:href (routes/user-api-tokens-path {:user-id (:id @user)})} "API-Tokens" ]]
+         [:li [:a {:href (str "/cider-ci/users/" (:id @user*) "/api-tokens/")} "API-Tokens" ]]
+         [:li [:a {:href (routes/user-api-tokens-path {:user-id (:id @user*)})} "API-Tokens" ]]
          [:li.divider]
          [:li [:a {:href (debug/path) } "Debug page"]]
          [:li [:a {:hred "#"
@@ -80,9 +80,9 @@
        [:li [:a {:href "/cider-ci/repositories/projects/"} [:i.fa.fa-git-square] " Projects "]]
        [:li [:a {:href "/cider-ci/api/api-browser/index.html#/cider-ci/api"} [:i.fa.fa-magic] " API Browser "]]
        [:li [:a {:href "/cider-ci/docs/"}  [:i.fa.fa-file-text-o] " Documentation "]]
-       (navbar.user/admin-actions user)]])
-   (when-not (empty? @user)
-     [:ul.nav.navbar-nav.navbar-right.user (navbar.user/li user current-url)])
+       (navbar.user/admin-actions user*)]])
+   (when @user*
+     [:ul.nav.navbar-nav.navbar-right.user (navbar.user/li user* current-url*)])
    [:div.sign-ins
-    (when (empty? @user)
-      [sign-ins current-url auth-providers])]])
+    (when-not @user*
+      [sign-ins current-url* auth-providers])]])

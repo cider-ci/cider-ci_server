@@ -9,7 +9,7 @@ feature 'Admin manages Repositories', type: :feature do
 
   scenario 'Create a repository, editing and deleting it' do
     sign_in_as 'admin'
-    visit '/'
+    visit '/cider-ci/'
     click_on 'Projects'
     wait_until(5) { page.has_content? 'Add a new project'}
     click_on 'Add a new project'
@@ -30,7 +30,7 @@ feature 'Admin manages Repositories', type: :feature do
 
   scenario 'Try to add an repository as a non-admin user' do
     sign_in_as 'normin'
-    visit '/'
+    visit '/cider-ci/'
     click_on 'Projects'
     wait_until(5) { page.has_content? 'Add a new project'}
     # however it is disabled because normin is not an admin

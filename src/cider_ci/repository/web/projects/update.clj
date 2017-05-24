@@ -61,12 +61,9 @@
                     params ["id = ?" id])))
       (throw (ex-info "Persisting the project update failed!" {}))))
 
-(defn auth-user-is-admin? [request]
-  (-> request :authenticated-user :is_admin))
-
 (defn update-project [request]
   (let [params (-> request :body clojure.walk/keywordize-keys (dissoc :id))]
-    (if-not  (auth-user-is-admin? request)
+    (if-not (-> request :authenticated-entity :scope_admin_write)
       {:status 403 :body  "Only admins can update projects!"}
       (if-let [invalid (check params)]
         {:status 422 :body (str  "The request parameters are not valid: " invalid)}

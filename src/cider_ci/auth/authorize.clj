@@ -23,16 +23,20 @@
 
 (defn wrap-require! [handler options]
   (fn [request]
-    (logging/debug 'wrap-require! {:handler handler :options options :request request})
-    (cond (and (:user options)
-               (:authenticated-user request)) (handler request)
-          (and (:admin options)
-               (-> request :authenticated-user :is_admin)) (handler request)
-          (and (:service options)
-               (:authenticated-service request)) (handler request)
-          (and (:executor options)
-               (:authenticated-executor request)) (handler request)
-          :else (forbidden options))))
+    (logging/debug 'wrap-require! {:handler handler
+                                   :options options
+                                   :request request})
+    (if (or (and (:user options)
+                 (= (-> request :authenticated-entity :type) :user))
+            (and (:admin options)
+                 (-> request :authenticated-entity :scope_admin_read)
+                 (-> request :authenticated-entity :scope_admin_write))
+            (and (:service options)
+                 (= (-> request :authenticated-entity :type) :service))
+            (and (:executor options)
+                 (= (-> request :authenticated-entity :type) :executor)))
+      (handler request)
+      (forbidden options))))
 
 
 ;### Debug ####################################################################

@@ -21,11 +21,8 @@
 
     [cider-ci.auth.anti-forgery :as anti-forgery]
     [cider-ci.auth.authorize :as authorize]
-    [cider-ci.auth.http-basic :as http-basic]
-    [cider-ci.auth.session :as session]
     [cider-ci.utils.config :as config :refer [get-config]]
     [cider-ci.utils.routing :as routing]
-    [cider-ci.utils.shutdown :as shutdown]
 
     [cider-ci.utils.status :as status]
 
@@ -95,13 +92,10 @@
   (I> wrap-handler-with-logging
       (cpj.handler/api routes)
       roa/wrap
-      shutdown/wrap
       web.ui/wrap
       wrap-accept
       web.push/wrap
-      ;anti-forgery/wrap
-      (http-basic/wrap {:service true :user true})
-      session/wrap
+      (authorize/wrap-require! {:service true :user true})
       cookies/wrap-cookies
       (ring.middleware.defaults/wrap-defaults {:static {:resources "public"}})
       push-notifications/wrap
@@ -113,6 +107,5 @@
 ;#### debug ###################################################################
 ;(logging-config/set-logger! :level :debug)
 ;(logging-config/set-logger! :level :info)
-;(debug/debug-ns 'cider-ci.auth.http-basic)
 ;(debug/debug-ns 'cider-ci.auth.anti-forgery)
 ;(debug/debug-ns *ns*)

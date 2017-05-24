@@ -4,7 +4,11 @@
 
 
 (ns cider-ci.utils.ring
+  (:refer-clojure :exclude [str keyword])
+  (:require [cider-ci.utils.core :refer [keyword str]])
   (:require
+    [cider-ci.constants :refer [SESSION-COOKIE-KEY]]
+
     [clojure.walk :refer [keywordize-keys]]
     [cider-ci.WebstackException]
 
@@ -30,3 +34,7 @@
                      (ex-data %)
                      (throw %))}
       (handler request))))
+
+(defn delete-session-cookie [response]
+  (assoc-in response [:cookies (str SESSION-COOKIE-KEY)]
+            {:value "" :path "/" :max-age 0}))

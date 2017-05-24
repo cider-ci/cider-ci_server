@@ -8,18 +8,18 @@
   (:require [cider-ci.utils.core :refer [keyword str]])
   (:require
     [cider-ci.api.web]
+    [cider-ci.auth.authentication :as authentication]
     [cider-ci.builder.web]
+    [cider-ci.client.web]
+    [cider-ci.create-initial-admin.web :as create-initial-admin]
     [cider-ci.dispatcher.web]
     [cider-ci.repository.web]
     [cider-ci.server.web]
     [cider-ci.storage.web]
     [cider-ci.ui2.web]
     [cider-ci.users.web]
-    [cider-ci.client.web]
-    [cider-ci.create-initial-admin.web :as create-initial-admin]
     [cider-ci.utils.routing :as routing]
-    [cider-ci.auth.anti-forgery :as anti-forgery]
-
+    [cider-ci.utils.shutdown :as shutdown]
 
     [compojure.core :as cpj]
     [ring.util.response]
@@ -94,18 +94,20 @@
   (I> wrap-handler-with-logging
       routes
       cider-ci.client.web/wrap
+      shutdown/wrap
       create-initial-admin/wrap
+      authentication/wrap
       ring.middleware.params/wrap-params
       (ring.middleware.json/wrap-json-body {:keywords? true})
       ring.middleware.json/wrap-json-response
       wrap-accept
       (ring.middleware.defaults/wrap-defaults {:static {:resources "public"}})
       (routing/wrap-prefix "/cider-ci")
-      routing/wrap-exception
-      ))
+      routing/wrap-exception))
 
 ;#### debug ###################################################################
 ;(logging-config/set-logger! :level :debug)
 ;(logging-config/set-logger! :level :info)
-;(debug/debug-ns 'cider-ci.auth.http-basic)
 ;(debug/debug-ns *ns*)
+;(debug/debug-ns 'cider-ci.utils.shutdown)
+

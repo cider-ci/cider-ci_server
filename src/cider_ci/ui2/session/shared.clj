@@ -2,15 +2,15 @@
   (:refer-clojure :exclude [str keyword])
   (:require [cider-ci.utils.core :refer [keyword str]])
 
-
   (:require
     [cider-ci.ui2.constants :refer [CONTEXT]]
+    [cider-ci.constants :refer [SESSION-COOKIE-KEY]]
 
-    [cider-ci.auth.session]
     [cider-ci.open-session.encryptor :as encryptor]
     [cider-ci.open-session.signature :as signature]
     [cider-ci.utils.config :refer [get-config]]
     [cider-ci.utils.core :refer [presence]]
+    [cider-ci.utils.ring :refer [delete-session-cookie]]
 
     [clj-time.core :as time]
 
@@ -26,10 +26,7 @@
         (or (-> request :form-params :url presence)
             (str CONTEXT "/"))
         :see-other)
-      (assoc-in [:cookies (name cider-ci.auth.session/session-cookie-key)]
-                {:value ""
-                 :path "/"
-                 :max-age 0})))
+      delete-session-cookie))
 
 (defn session-secret []
   (-> (get-config) :session :secret))
@@ -47,10 +44,9 @@
   (-> (ring.util.response/redirect
         redirect-target
         :see-other)
-      (assoc-in [:cookies (name cider-ci.auth.session/session-cookie-key)]
+      (assoc-in [:cookies (str SESSION-COOKIE-KEY)]
                 {:value (encrypted-sign-in-cookie-value user)
-                 :http-only true
-                 :path "/"
+                 :http-only true :path "/"
                  :max-age (* 10 356 24 60 60)})))
 
 ;(debug/debug-ns 'cider-ci.open-session.signature)

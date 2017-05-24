@@ -10,8 +10,6 @@
     [cider-ci.server.push]
 
     [cider-ci.utils.status :as status]
-    [cider-ci.auth.http-basic :as http-basic]
-    [cider-ci.auth.session :as auth.session]
     [cider-ci.utils.routing :as routing]
     [cider-ci.utils.ring]
 
@@ -41,8 +39,6 @@
   (I> wrap-handler-with-logging
       routes
       cider-ci.server.push/wrap
-      (http-basic/wrap {:service true :user true})
-      (auth.session/wrap :anti-forgery true)
       ring.middleware.cookies/wrap-cookies
       ring.middleware.params/wrap-params
       status/wrap
@@ -51,6 +47,4 @@
 ;#### debug ###################################################################
 ;(logging-config/set-logger! :level :debug)
 ;(logging-config/set-logger! :level :info)
-;(debug/debug-ns 'cider-ci.auth.http-basic)
-;(debug/debug-ns 'cider-ci.auth.session)
 ;(debug/debug-ns *ns*)

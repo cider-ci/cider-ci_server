@@ -17,8 +17,12 @@ module Helpers
         find('input#password').set 'secret'
         click_on 'Sign me in'
       end
-      expect(first(".navbar .user")).to have_content user
+      wait_until 10 do
+        first(".navbar .user")
+      end
+      wait_until 10 do
+        first(".navbar .user").has_content? user
+      end
     end
-
   end
 end

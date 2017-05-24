@@ -142,9 +142,10 @@
   (if-not (= (->> request :body keys set) #{:tree_id  :key})
     {:status 422
      :body {:message "The request body must exactly contain the keys 'tree_id' and 'key'"}}
-    (let [user-id (-> request :authenticated-user :id)
+    (let [user-id (-> request :authenticated-entity :id)
           params (assoc (select-keys (:body request) [:tree_id :key])
-                        :created_by (-> request :authenticated-user :id))]
+                        :created_by user-id)]
+      (assert (= (-> request :authenticated-entity :type) :user))
       (if-let [job (builder/create-job params)]
         {:status 201
          :body job}
@@ -163,4 +164,4 @@
 ;### Debug ####################################################################
 ;(logging-config/set-logger! :level :debug)
 ;(logging-config/set-logger! :level :info)
-(debug/debug-ns *ns*)
+;(debug/debug-ns *ns*)

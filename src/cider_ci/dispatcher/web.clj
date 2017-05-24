@@ -9,14 +9,12 @@
     [cider-ci.dispatcher.web.executor :as web.executor]
 
     [cider-ci.auth.authorize :as authorize]
-    [cider-ci.auth.http-basic :as http-basic]
     [cider-ci.utils.config :as config :refer [get-config]]
     [cider-ci.utils.http :as http]
     [cider-ci.utils.http-server :as http-server]
     [cider-ci.utils.routing :as routing]
     [cider-ci.utils.ring :as ci-utils-ring]
     [cider-ci.utils.status :as status]
-    [cider-ci.utils.shutdown :as shutdown]
 
     [clojure.data :as data]
     [clojure.data.json :as json]
@@ -100,23 +98,19 @@
     (cpj/POST "/jobs/:id/abort" _ #'abort-job)
     (cpj/POST "/jobs/:id/retry-and-resume" _ #'retry-and-resume)
     (cpj/POST "/tasks/:id/retry" _ #'retry-task)
-    (cpj/GET "/" [] "OK")
-    ))
+    (cpj/GET "/" [] "OK")))
 
 (defn build-main-handler [context]
   (I> wrap-handler-with-logging
       (cpj.handler/api routes)
       status/wrap
-      shutdown/wrap
       (authorize/wrap-require! {:service true})
-      (http-basic/wrap {:service true})
       web.executor/wrap-dispatch-executor-routes
       (routing/wrap-prefix context)
       ci-utils-ring/wrap-webstack-exception))
 
 
 ;#### debug ###################################################################
-;(debug/debug-ns 'cider-ci.auth.http-basic)
 ;(logging-config/set-logger! :level :debug)
 ;(logging-config/set-logger! :level :info)
 ;(debug/debug-ns *ns*)

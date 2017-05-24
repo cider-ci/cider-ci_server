@@ -5,17 +5,17 @@ require 'pry'
 feature 'GitHub authentication' do
 
   def sign_in_as login
-    wait_until 3 do
+    wait_until 10 do
       visit current_path
       first('a,button', text: 'Sign in via GitHubMock').click rescue nil
     end
-    wait_until 3 do
+    wait_until 10 do
       first('a,button', text: "Sign in as #{login}").click rescue nil
     end
   end
 
   def signed_in_as! login
-    wait_until 3 do
+    wait_until 10 do
       page.has_content? "#{login}@GitHubMock"
     end
     expect(page).not_to have_content 'Sign in via GitHubMock'
@@ -46,6 +46,7 @@ feature 'GitHub authentication' do
 
   before :each do
     PgTasks.truncate_tables
+    create_default_users
   end
 
   before :all do
@@ -83,7 +84,7 @@ feature 'GitHub authentication' do
       sign_in_as 'silvan'
       expect(page).to have_content 'No sign in strategy succeeded!'
       visit '/cider-ci/ui2/'
-      wait_until 3 do
+      wait_until 10 do
         page.has_content? 'Sign in via GitHubMock'
       end
     end
@@ -111,7 +112,7 @@ feature 'GitHub authentication' do
         @users.where(login: 'tessa@GitHubMock').first[:is_admin]
       ).to be true
       # make tessa a non admin
-      @users.update(is_admin: false)
+      @users.where(login: 'tessa@GitHubMock').update(is_admin: false)
       expect(
         @users.where(login: 'tessa@GitHubMock').first[:is_admin]
       ).to be false
