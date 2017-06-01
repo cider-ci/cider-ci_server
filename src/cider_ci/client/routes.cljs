@@ -18,6 +18,41 @@
          {:component "cider-ci.ui2.commits.ui/page"
           :query-params query-params}))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(secretary/defroute executor-path
+  "/cider-ci/executors/:executor-id"
+  {executor-id :executor-id}
+  (swap! state/page-state
+         assoc :current-page
+         {:component "cider-ci.executors.ui.show/page"
+          :executor-id executor-id}))
+
+(secretary/defroute executor-edit-path
+  "/cider-ci/executors/:executor-id/edit"
+  {executor-id :executor-id}
+  (swap! state/page-state
+         assoc :current-page
+         {:component "cider-ci.executors.ui.edit/page"
+          :executor-id executor-id}))
+
+(secretary/defroute executors-path
+  "/cider-ci/executors/" {}
+  (swap! state/page-state
+         assoc :current-page
+         {:component "cider-ci.executors.ui.index/page"}))
+
+(secretary/defroute executors-create-path
+  "/cider-ci/executors/:executor-id/create"
+  {executor-id :executor-id}
+  (swap! state/page-state
+         assoc :current-page
+         {:component "cider-ci.executors.ui.create/page"
+          :executor-id executor-id }))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (secretary/defroute user-api-token-path
   "/cider-ci/users/:user-id/api-tokens/:api-token-id"
   {user-id :user-id api-token-id :api-token-id}

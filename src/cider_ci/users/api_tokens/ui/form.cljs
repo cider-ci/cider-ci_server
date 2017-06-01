@@ -75,7 +75,7 @@
     (->> (-> scope str (split "_")) (drop 1) (join " "))]])
 
 (defn scope-presets-component []
-  [:p.help-block "Presets: "
+  [:p.scope-presets.help-block "Presets: "
    (for [[pk pv] scope-presets]
      [:span
       [:button.btn.btn-xs.btn-default

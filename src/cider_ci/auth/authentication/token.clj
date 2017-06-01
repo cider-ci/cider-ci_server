@@ -62,7 +62,7 @@
       (assoc request :authenticated-entity
              (assoc user-token
                     :type :user
-                    :method :token
+                    :authentication-method :token
                     :scope_admin_read (and (:scope_admin_read user-token)
                                            (:is_admin user-token))
                     :scope_admin_write (and (:scope_admin_write user-token)

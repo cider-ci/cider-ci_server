@@ -3,24 +3,30 @@ require 'pg_tasks'
 require 'pry'
 
 feature 'GitHub authentication' do
-
-  def sign_in_as login
+  def sign_in_as(login)
     wait_until 10 do
       visit current_path
-      first('a,button', text: 'Sign in via GitHubMock').click rescue nil
+      begin
+        first('a,button', text: 'Sign in via GitHubMock').click
+      rescue
+        nil
+      end
     end
     wait_until 10 do
-      first('a,button', text: "Sign in as #{login}").click rescue nil
+      begin
+        first('a,button', text: "Sign in as #{login}").click
+      rescue
+        nil
+      end
     end
   end
 
-  def signed_in_as! login
+  def signed_in_as!(login)
     wait_until 10 do
       page.has_content? "#{login}@GitHubMock"
     end
     expect(page).not_to have_content 'Sign in via GitHubMock'
   end
-
 
   before :each do
     ci_config = begin
@@ -39,9 +45,9 @@ feature 'GitHub authentication' do
                   {}
                 end.with_indifferent_access
 
-  IO.write 'config/config.yml', \
-    ci_config.except(:github_authtoken, :authentication_providers) \
-    .as_json.to_yaml
+    IO.write 'config/config.yml', \
+             ci_config.except(:github_authtoken, :authentication_providers) \
+      .as_json.to_yaml
   end
 
   before :each do
@@ -127,9 +133,7 @@ feature 'GitHub authentication' do
     end
   end
 
-
   describe 'test email-transfer and redirect to original url' do
-
     context 'user adam0 with email_address "adam.admin@example.com" ' do
       before :each do
         password_digest = '$2a$06$YXyaPR7IzANgRuOx5JJTzO8THVxfeQ8wVTB.NZJzySLP6Qg5v3zhW'
@@ -138,27 +142,22 @@ feature 'GitHub authentication' do
       end
 
       scenario 'it works' do
-
         visit '/cider-ci/ui2/debug'
         sign_in_as 'adam'
         signed_in_as! 'adam'
 
         # the email_address has been transfered to the new account
         adam_ghm = @users.where(login: 'adam@GitHubMock').first
-        expect(@email_addresses.count).to be== 1
+        expect(@email_addresses.count).to be == 1
         expect(
           @email_addresses.first[:user_id]
-        ).to be== adam_ghm[:id]
+        ).to be == adam_ghm[:id]
 
         # we have been redirected back to the url where we clicked on sign in
-        expect(current_path).to be== '/cider-ci/ui2/debug'
-
+        expect(current_path).to be == '/cider-ci/ui2/debug'
       end
     end
   end
-
-
-
 
   let :github_config do
     YAML.load <<-YML.strip_heredoc
@@ -229,7 +228,4 @@ feature 'GitHub authentication' do
                 account_enabled: true
     YML
   end
-
 end
-
-

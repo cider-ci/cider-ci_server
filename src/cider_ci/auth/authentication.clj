@@ -9,9 +9,12 @@
     [cider-ci.auth.authentication.guest :as guest]
     [cider-ci.auth.authentication.password :as password]
     [cider-ci.auth.authentication.session :as session]
+    [cider-ci.auth.authentication.executor :as executor]
     [cider-ci.auth.authentication.token :as token]
     [cider-ci.auth.authentication.token-header :as token-header]
+    [cider-ci.auth.authentication.system-admin :as system-admin]
 
+    [compojure.core :as cpj]
     [ring.middleware.cookies]
 
     [clojure.tools.logging :as logging]
@@ -31,16 +34,31 @@
 (defn authenticate [request handler]
   (-> request handler add-www-auth-header-if-401))
 
+(defn authenticated-entity [request]
+  (if-let [entity (:authenticated-entity request)]
+    {:status 200
+     :body {:authenticated-entity entity}}
+    {:status 404
+     :body "no entity has been authenticated"}))
+
+(defn wrap-entity-route [handler]
+  (cpj/routes
+    (cpj/GET "/authenticated-entity" _ authenticated-entity)
+    (cpj/ANY "*" _ handler)))
+
 (defn wrap [handler]
   (fn [request]
     (authenticate request
                   (I> wrap-handler-with-logging
                       handler
                       anti-forgery/wrap
+                      wrap-entity-route
                       guest/wrap
                       session/wrap-authenticate
                       password/wrap-authenticate
                       token/wrap-authenticate
+                      executor/wrap-authenticate
+                      system-admin/wrap-authenticate
                       token-header/wrap-extract
                       basic-header/wrap-extract
                       ring.middleware.cookies/wrap-cookies

@@ -19,6 +19,11 @@
     [cider-ci.ui2.ui.root]
     [cider-ci.ui2.welcome-page.ui]
 
+    [cider-ci.executors.ui.create]
+    [cider-ci.executors.ui.edit]
+    [cider-ci.executors.ui.index]
+    [cider-ci.executors.ui.show]
+
     [cider-ci.users.api-tokens.ui.create]
     [cider-ci.users.api-tokens.ui.edit]
     [cider-ci.users.api-tokens.ui.index]
@@ -38,12 +43,16 @@
 
 (def components
   {
+   "cider-ci.create-initial-admin.ui/page" cider-ci.create-initial-admin.ui/page
+   "cider-ci.executors.ui.create/page" cider-ci.executors.ui.create/page
+   "cider-ci.executors.ui.edit/page" cider-ci.executors.ui.edit/page
+   "cider-ci.executors.ui.index/page" cider-ci.executors.ui.index/page
+   "cider-ci.executors.ui.show/page" cider-ci.executors.ui.show/page
    "cider-ci.ui2.commits.ui/page" cider-ci.ui2.commits.ui/page
    "cider-ci.users.api-tokens.ui.create/page" cider-ci.users.api-tokens.ui.create/page
    "cider-ci.users.api-tokens.ui.edit/page" cider-ci.users.api-tokens.ui.edit/page
    "cider-ci.users.api-tokens.ui.index/page" cider-ci.users.api-tokens.ui.index/page
    "cider-ci.users.api-tokens.ui.show/page" cider-ci.users.api-tokens.ui.show/page
-   "cider-ci.create-initial-admin.ui/page" cider-ci.create-initial-admin.ui/page
    })
 
 (def user* (reaction (and (= (-> @state/server-state :user :type) "user")
@@ -66,7 +75,7 @@
       ]
      [:div.client-state
       [:h2 "Client State"]
-      ;[:pre (with-out-str (pprint @state/client-state))]
+      [:pre (with-out-str (pprint @state/client-state))]
       [:pre (.stringify js/JSON (clj->js @state/client-state) nil 2)]
       ]
      [:div.server-state

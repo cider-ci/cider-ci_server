@@ -104,15 +104,6 @@
 
 ;#### abort executing trials for dead executors ###############################
 
-(def ^:private executor-dead-condition-query-part
-  "(executors.last_ping_at < (now() - interval '1 Minutes'))")
-
-(def ^:private exists-dead-executor-trials-query-part
-  [:exists (-> (sql-select 1)
-               (sql-from :executors)
-               (sql-merge-where [:= :trials.executor_id :executors.id])
-               (sql-merge-where (sql-raw executor-dead-condition-query-part)))])
-
 (def ^:private not-exists-executor-query-part
   [:not [:exists
          (-> (sql-select 1)
@@ -123,8 +114,7 @@
   (-> (-> (sql-select :trials.*)
           (sql-from :trials)
           (sql-merge-where [:= :trials.state "executing"])
-          (sql-merge-where [:or exists-dead-executor-trials-query-part
-                            not-exists-executor-query-part ]))
+          (sql-merge-where [:or not-exists-executor-query-part ]))
       sql-format))
 
 (defn defect-lost-trials []

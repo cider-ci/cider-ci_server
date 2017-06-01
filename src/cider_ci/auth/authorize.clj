@@ -10,33 +10,52 @@
     [logbug.debug :as debug]
     ))
 
-(def unauthorized-401
-  {:status 401
-   :headers
-   {"WWW-Authenticate"
-    (str "Basic realm=\"Cider-CI; "
-         "sign in or provide credentials\"")}})
+(defn system-admin? [request]
+  (= (-> request :authenticated-entity :type) :system-admin))
 
-(defn forbidden [options]
+(defn guest? [request]
+  (= (-> request :authenticated-entity :type) :guest))
+
+(defn user? [request]
+  (= (-> request :authenticated-entity :type) :user))
+
+(defn forbidden [options-fn]
   {:status 403
-   :body (str "The authorization requirements are not satisfied: " options)})
+   :body (str "The authorization requirements are not satisfied: " options-fn)})
 
-(defn wrap-require! [handler options]
+(defn eval-fn [request fun] (fun request))
+
+(defn eval-options [request options]
+  (or (and (:guest options) (guest? request))
+      (and (:user options) (user? request))
+      (and (:admin options)
+           (-> request :authenticated-entity :scope_admin_read)
+           (-> request :authenticated-entity :scope_admin_write))
+      (and (:service options)
+           (= (-> request :authenticated-entity :type) :service))
+      (and (:executor options)
+           (= (-> request :authenticated-entity :type) :executor))))
+
+
+(defn- dispatch-optoins-fn [request options-fn]
+  (if (fn? options-fn)
+    (eval-fn request options-fn)
+    (eval-options request options-fn)))
+
+(defn- require! [handler request options-fn]
+  (logging/debug 'wrap-require!
+                 {:handler handler :options-fn options-fn :request request})
+  (if (or (system-admin? request)
+          (dispatch-optoins-fn request options-fn))
+    (handler request)
+    (if (guest? request)
+      {:status 401}
+      {:status 403
+       :body (str "The authorization requirements are not satisfied: " options-fn)})))
+
+(defn wrap-require! [handler options-fn]
   (fn [request]
-    (logging/debug 'wrap-require! {:handler handler
-                                   :options options
-                                   :request request})
-    (if (or (and (:user options)
-                 (= (-> request :authenticated-entity :type) :user))
-            (and (:admin options)
-                 (-> request :authenticated-entity :scope_admin_read)
-                 (-> request :authenticated-entity :scope_admin_write))
-            (and (:service options)
-                 (= (-> request :authenticated-entity :type) :service))
-            (and (:executor options)
-                 (= (-> request :authenticated-entity :type) :executor)))
-      (handler request)
-      (forbidden options))))
+    (require! handler request options-fn)))
 
 
 ;### Debug ####################################################################

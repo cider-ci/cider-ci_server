@@ -6,7 +6,6 @@
   (:refer-clojure :exclude [sync])
   (:require
     [cider-ci.dispatcher.executor :as executor-entity]
-    [cider-ci.dispatcher.sync.ping :as ping]
     [cider-ci.dispatcher.sync.sync-trials :as sync-trials]
     [cider-ci.dispatcher.sync.update-executor :as update-executor]
     [cider-ci.dispatcher.trials :as trials]

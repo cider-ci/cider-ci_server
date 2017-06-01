@@ -5,8 +5,7 @@ module Helpers
     extend self
 
     def database
-      @db ||= Sequel.connect Rails.configuration.database_configuration["test"]
+      @db ||= Sequel.connect Rails.configuration.database_configuration['test']
     end
-
   end
 end

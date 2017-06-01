@@ -19,6 +19,7 @@
     [logbug.thrown :as thrown]
     )
   (:import
+    [com.google.common.io BaseEncoding]
     [java.time OffsetDateTime]
     [org.joda.time DateTime]
     ))
@@ -71,16 +72,18 @@
        (map char)
        (apply str)))
 
+(def b32 (BaseEncoding/base32))
+
 (defn secret [n]
   (->> n crypto.random/bytes
-       base64/encode
+       (.encode b32)
        (map char)
        (apply str)))
 
 (defn create [req]
   (let [user-id (-> req :route-params :user-id)]
     ;TODO check permissions here: user-id either signed in user or admin
-    (let [secret (secret 18)
+    (let [secret (secret 20)
           token-hash (hash-string secret)
           create-params (assoc (dissoc (-> req :body) :id)
                                 :token_hash token-hash

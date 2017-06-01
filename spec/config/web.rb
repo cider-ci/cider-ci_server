@@ -30,13 +30,16 @@ def set_capybara_values
   Capybara.server_port = port
 end
 
-def set_browser example
+def set_browser(example)
   Capybara.current_driver = \
-    ENV['CAPYBARA_DRIVER'].presence.try(:to_sym) \
-    || example.metadata[:driver] \
-    || :selenium rescue :selenium
+    begin
+      ENV['CAPYBARA_DRIVER'].presence.try(:to_sym) \
+          || example.metadata[:driver] \
+          || :selenium
+    rescue
+      :selenium
+    end
 end
-
 
 RSpec.configure do |config|
   Capybara.current_driver = :selenium

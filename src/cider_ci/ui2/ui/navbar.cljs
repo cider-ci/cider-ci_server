@@ -68,8 +68,9 @@
          [:li [:a {:href "/cider-ci/ui2/welcome-page/edit"} "Edit Welcome Page"]]
          [:li.divider]
          [:li [:a {:href "#"} "Account"]]
-         [:li [:a {:href (str "/cider-ci/users/" (:id @user*) "/api-tokens/")} "API-Tokens" ]]
          [:li [:a {:href (routes/user-api-tokens-path {:user-id (:id @user*)})} "API-Tokens" ]]
+         [:li.divider]
+         [:li [:a {:href (routes/executors-path {})} [:i.fa.fa-fw.fa-cog] "Executors" ]]
          [:li.divider]
          [:li [:a {:href (debug/path) } "Debug page"]]
          [:li [:a {:hred "#"

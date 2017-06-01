@@ -13,6 +13,7 @@
     [cider-ci.client.web]
     [cider-ci.create-initial-admin.web :as create-initial-admin]
     [cider-ci.dispatcher.web]
+    [cider-ci.executors]
     [cider-ci.repository.web]
     [cider-ci.server.web]
     [cider-ci.storage.web]
@@ -66,15 +67,16 @@
 (def routes
   (cpj/routes
     (cpj/ANY "/api/*" [] api-handler)
-    (cpj/GET "/api" [] (ring.util.response/redirect "/cider-ci/api/"))
     (cpj/ANY "/builder/*" [] builder-handler)
     (cpj/ANY "/dispatcher/*" [] dispatcher-handler)
+    (cpj/ANY "/executors/*" [] cider-ci.executors/routes)
     (cpj/ANY "/repositories/*" [] repositories-handler)
     (cpj/ANY "/server/*" [] server-handler)
     (cpj/ANY "/storage/*" [] storage-handler)
-    (cpj/GET "/storage" [] (ring.util.response/redirect "/cider-ci/storage/"))
     (cpj/ANY "/ui2/*" [] ui2-handler)
     (cpj/ANY "/users/*" [] cider-ci.users.web/routes)
+    (cpj/GET "/api" [] (ring.util.response/redirect "/cider-ci/api/"))
+    (cpj/GET "/storage" [] (ring.util.response/redirect "/cider-ci/storage/"))
     (cpj/GET "/" [] redirect-to-ui2)
     (cpj/ANY "*" [] dead-end-handler)))
 

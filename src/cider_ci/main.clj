@@ -8,6 +8,8 @@
     [cider-ci.repository.main]
     [cider-ci.storage.main]
     [cider-ci.server]
+    [cider-ci.executors]
+
 
     [cider-ci.utils.app :as app]
     [cider-ci.web :as web]
@@ -27,4 +29,5 @@
     (cider-ci.builder.main/initialize)
     (cider-ci.dispatcher.main/initialize)
     (cider-ci.storage.main/initialize)
+    (cider-ci.executors/initialize)
     ))

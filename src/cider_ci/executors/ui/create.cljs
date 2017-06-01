@@ -2,7 +2,7 @@
 ; Licensed under the terms of the GNU Affero General Public License v3.
 ; See the "LICENSE.txt" file provided with this software.
 
-(ns cider-ci.users.api-tokens.ui.create
+(ns cider-ci.executors.ui.create
   (:refer-clojure :exclude [str keyword])
   (:require-macros
     [reagent.ratom :as ratom :refer [reaction]]
@@ -11,7 +11,7 @@
     [cider-ci.client.request :as request]
     [cider-ci.client.routes :as routes]
     [cider-ci.client.state :as state]
-    [cider-ci.users.api-tokens.ui.form :as form]
+    [cider-ci.executors.ui.form :as form]
     [cider-ci.utils.core :refer [keyword str presence]]
     [fipp.edn :refer [pprint]]
     [accountant.core :as accountant]
@@ -19,31 +19,30 @@
     ))
 
 (def created? (reaction (= 201 (-> @state/client-state
-                                   :api-token :response
+                                   :executor :response
                                    :status))))
 
 (defn reset []
-  (form/reset-api-token-form-data)
+  (form/reset-executor-form-data)
   (swap! state/client-state
-         assoc-in [:api-token :response] nil))
+         assoc-in [:executor :response] nil))
 
 (defn create! []
   (request/send-off
-    {:url (routes/user-api-tokens-path
-            {:user-id (-> @state/page-state :current-page :user-id)})
+    {:url (routes/executors-path)
      :method :post
      :json-params @form/form-data* }
-    {:title "Create New API-Token"}
+    {:title "Add a new Executor"}
     :callback (fn [resp]
                 (swap! state/client-state
-                       assoc-in [:api-token :response] resp))))
+                       assoc-in [:executor :response] resp))))
 
 (defn continue []
   (let [user-id (-> @state/page-state :current-page :user-id)
-        token-id (-> @state/client-state :api-token :response :body :id) ]
+        token-id (-> @state/client-state :executor :response :body :id) ]
     (reset)
-    (accountant/navigate! (routes/user-api-token-path
-                            {:user-id user-id :api-token-id token-id}))))
+    (accountant/navigate! (routes/executor-path
+                            {:user-id user-id :executor-id token-id}))))
 
 (defn show-secret-modal []
   [:div
@@ -51,10 +50,10 @@
     [:div.modal-dialog
      [:div.modal-content.modal-success
       [:div.modal-header
-       [:h4 "A new API-token has been created!"]]
+       [:h4 "A new Executor has been created!"]]
       [:div.modal-body
        [:p.token [:code.text-center {:style {:font-size "1.5em"}}
-            (-> @state/client-state :api-token :response :body :secret)]]
+            (-> @state/client-state :executor :response :body :token)]]
        [:p "We store the first 5 characters of this token for your convenience."]
        [:p.text-warning
         "The full token is shown only once here and now! "
@@ -68,12 +67,16 @@
 (defn show-form []
   [:div
    [form/form-component]
+   [:div.pull-left
+    [:a.btn.btn-warning
+     {:href (routes/executors-path)}
+     "Back"]]
    [:div.pull-right
     [:button.btn.btn-primary
      {:href "#"
       :disabled (not @form/form-valid*?)
       :on-click create!}
-     "Create"]]
+     "Add"]]
    [:div.clearfix]])
 
 (defn debug-component []
@@ -85,9 +88,18 @@
                                  }))]
     ]])
 
+(defn orientation-component []
+  [:div.orientation.row
+   [:div.col-xs-6
+    [:ol.breadcrumb.pull-left
+     [:li [:a {:href (routes/executors-path)} "Executors" ]]]]
+   [:div.col-xs-6
+    [:ol.breadcrumb.pull-right]]])
+
 (defn page-component []
   [:div
-   [:h1 "Create a New API-Token"]
+   [orientation-component]
+   [:h1 "Add a new Executor"]
    (when @created?
      [show-secret-modal])
    [show-form]
@@ -98,3 +110,5 @@
   (r/create-class
     {:component-did-mount reset
      :reagent-render page-component}))
+
+

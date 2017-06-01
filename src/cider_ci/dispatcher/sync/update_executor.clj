@@ -100,10 +100,7 @@
         (get-executor (:id executor))))))
 
 (defn update-last-ping-at [executor]
-  (jdbc/execute! (rdbms/get-ds)
-                 ["UPDATE executors SET last_ping_at = now()
-                  WHERE executors.id = ?" (:id executor)])
-  (get-executor (:id executor)))
+  (logging/warn 'update-last-ping-at :TODO))
 
 (defn update [executor data]
   (-> executor

@@ -30,6 +30,6 @@
       {:level :warn
        :return-fn (fn [e]
                     {:status 500
-                     :body (thrown/stringify e #".*" ",\\n")})}
+                     :body (thrown/stringify e)})}
       (handler request))))
 
