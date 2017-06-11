@@ -4,8 +4,6 @@ require 'pry'
 
 feature 'Initial admin', type: :feature do
   scenario 'Create an initial admin and sign works ' do
-    PgTasks.truncate_tables
-
     visit '/cider-ci/'
 
     #############################################################
@@ -50,13 +48,13 @@ feature 'Initial admin', type: :feature do
     wait_until(3) do
       current_path == '/cider-ci/ui2/'
     end
-
-    expect(first('.navbar .user')).to have_content 'admin'
+    wait_until 10 do
+      first('.navbar .user').try(:has_content?, 'admin')
+    end
   end
 
   context 'An admin already exists' do
     before :each do
-      PgTasks.truncate_tables
       users = database[:users]
       users.insert(login: 'admin', is_admin: true)
     end

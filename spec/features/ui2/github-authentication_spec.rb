@@ -4,19 +4,13 @@ require 'pry'
 
 feature 'GitHub authentication' do
   def sign_in_as(login)
-    wait_until 10 do
-      visit current_path
-      begin
-        first('a,button', text: 'Sign in via GitHubMock').click
-      rescue
-        nil
-      end
+    wait_until 15 do
+      first('a,button', text: 'Sign in via GitHubMock')
     end
+    first('a,button', text: 'Sign in via GitHubMock').click
     wait_until 10 do
       begin
-        first('a,button', text: "Sign in as #{login}").click
-      rescue
-        nil
+        first('a,button', text: "Sign in as #{login}").try(:click)
       end
     end
   end
@@ -51,7 +45,6 @@ feature 'GitHub authentication' do
   end
 
   before :each do
-    PgTasks.truncate_tables
     create_default_users
   end
 

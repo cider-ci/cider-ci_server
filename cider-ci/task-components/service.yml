@@ -3,8 +3,8 @@ scripts:
   service-run:
     body: |
       set -eux
-      export CLASSPATH="resources_dev:target/server.jar"
-      java "cider_ci.main"
+      export CLASSPATH="resources_dev:target/cider-ci.jar"
+      java -jar target/cider-ci.jar server run
     start_when:
       database has been created:
         script_key: create-database

@@ -40,6 +40,8 @@ scripts:
         config[env]['password']= ENV['PGPASSWORD']
         config[env]['database']= ENV['DATABASE_NAME']
         config[env]['port']= Integer(ENV['PGPORT'])
+        config[env]['variables']= {}
+        config[env]['variables']['statement_timeout']=3000
       end
       ['spec/config/database.yml', 'database/config/database.yml'].each do |file|
         File.open(file, 'w') { |file| file.write config.to_yaml }

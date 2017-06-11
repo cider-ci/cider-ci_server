@@ -5,7 +5,6 @@ require 'pry'
 feature 'Session expiration', type: :feature do
   context 'Users admin and normin' do
     before :each do
-      PgTasks.truncate_tables
       create_default_users
     end
 

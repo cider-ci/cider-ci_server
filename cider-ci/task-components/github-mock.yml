@@ -26,6 +26,7 @@ scripts:
       done
 
   test:
+    # either passes in less than 20 seconds or not and then would run for minutes
     start_when:
       the github api mock is serving:
         script_key: github-api-mock_is-serving

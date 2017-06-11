@@ -2,7 +2,6 @@ require 'spec_helper'
 
 feature 'Admin manages Repositories', type: :feature do
   before :each do
-    PgTasks.truncate_tables
     create_default_users
   end
 

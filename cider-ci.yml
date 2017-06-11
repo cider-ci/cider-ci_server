@@ -15,7 +15,7 @@ jobs:
           - Leiningen 2
         body: lein test $CIDER_CI_TASK_FILE
       generate_tasks:
-        include_match: test/.*.clj
+        include_match: src/test/.*.clj
   specs:
     name: Run specs
     run_when:
@@ -48,8 +48,8 @@ jobs:
           RUBY: '{{RUBY_ENGINE}}-{{RUBY_VERSION}}'
           RAILS_ENV: test
         traits: {}
-        max_trials: 3
-        eager_trials: 1
+        max_trials: 5
+        eager_trials: 2
         git_options:
           submodules:
             include_match: ^.*$
@@ -62,7 +62,6 @@ jobs:
             content_type: text/plain
         scripts:
           test:
-            timeout: 10 Minutes
             body: |
               #!/usr/bin/env bash
               set -eux

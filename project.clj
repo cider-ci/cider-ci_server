@@ -11,13 +11,16 @@
 
   :resource-paths ["../config" "./config" "./resources"]
 
+  :source-paths ["src/all"]
+  :test-paths ["src/test"]
+
   :plugins [[lein-environ "1.0.2"]
             [lein-cljsbuild "1.1.1"]
             [lein-asset-minifier "0.2.7"
              :exclusions [org.clojure/clojure]]]
 
   :cljsbuild {:builds
-              {:min {:source-paths ["src" "env/prod/src"]
+              {:min {:source-paths ["src/all" "src/prod"]
                      :jar true
                      :compiler
                      {:output-to "target/cljsbuild/public/js/app.js"
@@ -25,9 +28,9 @@
                       :optimizations :advanced
                       :pretty-print  false}}
                :app
-               {:source-paths ["src" "env/dev/src"]
+               {:source-paths ["src/all" "src/dev"]
                 :compiler
-                {:main "cider-ci.ui2.dev"
+                {:main "cider-ci.server.ui2.dev"
                  ;:asset-path "/cider-ci/ui2/js/out"
                  :asset-path "/cider-ci/js/out"
                  :output-to "target/cljsbuild/public/js/app.js"
@@ -40,7 +43,7 @@
                   {"resources/public/css/site.min.css"
                    "resources/public/css/site.css"}}
 
-  :sass {:src "src_sass"
+  :sass {:src "sass"
          :dst "resources/public/css"}
 
   :figwheel {:http-server-root "public"
@@ -59,17 +62,17 @@
                              [pjstadig/humane-test-output "0.8.0"]]
               :plugins [[lein-figwheel "0.5.4-7"]
                         [lein-sassy "1.0.7"]]
-              :source-paths ["env/dev/src"]
+              :source-paths ["src/all" "src/dev"]
               :resource-paths ["target/cljsbuild"]
               :injections [(require 'pjstadig.humane-test-output)
                            (pjstadig.humane-test-output/activate!)]
               :env {:dev true}}
              :uberjar {:hooks [minify-assets.plugin/hooks]
-                       :source-paths ["env/prod/src" "src"]
+                       :source-paths ["src/all" "src/prod"]
                        :prep-tasks ["compile" ["cljsbuild" "once" "min"]]
                        :resource-paths ["target/cljsbuild"]
                        :aot [cider-ci.WebstackException cider-ci.ValidationException #"cider-ci.*"]
-                       :uberjar-name "server.jar"
+                       :uberjar-name "cider-ci.jar"
                        }
              :test {:resource-paths ["resources_test"]
                     }}

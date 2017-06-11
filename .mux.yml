@@ -1,15 +1,12 @@
 windows:
   2:
-    name: repl
+    name: server
     command: |
-      lein do clean, compile, repl
-    post_command_send_keys: |
-      (-main)
+      lein do run -- server run
   3:
     name: figwheel
     command: |
       # give lein clean from window 3 some time before we start figwheel
-      sleep 30
       lein figwheel
   5:
     name: database
@@ -29,3 +26,11 @@ windows:
     name: log
     command: |
       mkdir -p log && echo " " > log/debug.log && tail -f log/debug.log
+
+  9:
+    name: executor
+    command: |
+      set ­euxo
+      mkdir -p ../executor
+      lein run -- executor -c ../executor/config.yml write-default-config -f
+      lein do run -- executor -c ../executor/config.yml run --nrepl-enabled yes -t TestExecutor1234
