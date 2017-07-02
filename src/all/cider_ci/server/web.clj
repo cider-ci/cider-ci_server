@@ -23,6 +23,7 @@
     [cider-ci.server.web]
     [cider-ci.utils.routing :as routing]
     [cider-ci.utils.shutdown :as shutdown]
+    [cider-ci.utils.status :as status]
 
     [compojure.core :as cpj]
     [ring.middleware.defaults :refer [site-defaults wrap-defaults]]
@@ -107,6 +108,7 @@
       ring.middleware.json/wrap-json-response
       wrap-accept
       (ring.middleware.defaults/wrap-defaults {:static {:resources "public"}})
+      status/wrap
       (routing/wrap-prefix "/cider-ci")
       routing/wrap-exception))
 

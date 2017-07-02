@@ -37,7 +37,6 @@
            [:i.fa.fa-fw.fa-plus-circle] "Add a New Executor " ]]]]])
 
 (defn executor-row-component [executor]
-  (js/console.log (clj->js executor))
   [:tr.executor {:id (:id executor) :key (:id executor)}
    [:td.name {:key :name}
     [:a {:href (routes/executor-path {:executor-id (:id executor)})}

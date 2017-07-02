@@ -28,7 +28,9 @@
     :callback (fn [resp]
                 (swap! state/client-state
                        assoc-in [:executors]
-                       (->> resp :body :executors))
+                       (->> resp :body :executors
+                            (map (fn [[k v]] [k (assoc v :key k)]))
+                            (into {})))
                 (when callback
                   (callback resp)))))
 
