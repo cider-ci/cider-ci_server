@@ -30,12 +30,12 @@
 
 (defn download []
   (let [tmpdir (System/getProperty "user.dir")
-        tmppath (clojure.string/join File/separator [tmpdir "executor.jar.download"])
+        tmppath (clojure.string/join File/separator [tmpdir "cider-ci.jar.download"])
         target  (clojure.string/join File/separator
                                      [(System/getProperty "user.dir")
-                                      "executor.jar"])
+                                      "cider-ci.jar"])
         url (str (:server_base_url (get-config))
-                 "/cider-ci/downloads/executor/executor.jar")]
+                 "/cider-ci/downloads/cider-ci.jar")]
     (with-open [in (io/input-stream url)
                 out (io/output-stream tmppath)]
       (io/copy in out))
