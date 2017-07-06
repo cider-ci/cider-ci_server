@@ -10,6 +10,7 @@
     [cider-ci.utils.core :refer [str keyword deep-merge]]
     [cider-ci.utils.url]
 
+    [cljs.core.async :as async]
     [cljs-http.client :as http]
     [cljs-uuid-utils.core :as uuid]
     [cljs.core.async :refer [timeout]]
@@ -41,24 +42,41 @@
                     :autoremove-on-success true
                     :autoremove-delay 1000})
 
-(defn send-off [req-opts meta-opts & {:keys [callback]
-                                      :or {callback nil}}]
-  (let [req (deep-merge {:method :post
+(defn update-progress [id progress-chan]
+  (go (let [progress (<! progress-chan)]
+        ;(js/console.log (clj->js {:progress progress}))
+        (swap! state/client-state
+               (fn [state id progress]
+                 (if-not (-> state :requests (get id))
+                   state
+                   (assoc-in state [:requests id :progress] progress)))
+               id progress))))
+
+(defn request [id req meta chan callback]
+  (go (<! (timeout cider-ci.env/request-delay))
+      (let [resp (<! (http/request req))]
+        (when (-> @state/client-state :requests (get id))
+          (swap! state/client-state assoc-in [:requests id :response] resp)
+          (when (and (response-success? resp)
+                     (:autoremove-on-success meta))
+            (autoremove id meta)))
+        (when callback (callback resp))
+        (when chan (>! chan resp)))))
+
+(defn send-off [req-opts meta-opts & {:keys [callback chan]
+                                      :or {callback nil chan nil}}]
+  (let [id (uuid/uuid-string (uuid/make-random-uuid))
+        progress-chan (async/chan)
+        req (deep-merge {:method :post
                          :headers {"accept" "application/json"
-                                   "X-CSRF-Token" (csrf-token)}}
+                                   "X-CSRF-Token" (csrf-token)}
+                         :progress progress-chan}
                         req-opts)
-        meta (deep-merge META-DEFAULTS meta-opts)
-        id (uuid/uuid-string (uuid/make-random-uuid))]
+        meta (deep-merge META-DEFAULTS meta-opts)]
     (swap! state/client-state assoc-in [:requests id]
            {:request req :meta meta})
-    (go (<! (timeout cider-ci.env/request-delay))
-        (let [resp (<! (http/request req))]
-          (when (-> @state/client-state :requests (get id))
-            (swap! state/client-state assoc-in [:requests id :response] resp)
-            (when (and (response-success? resp)
-                       (:autoremove-on-success meta))
-              (autoremove id meta)))
-          (when callback (callback resp))))
+    (update-progress id progress-chan)
+    (request id req meta chan callback)
     id))
 
 
@@ -77,9 +95,16 @@
   (when-let [request @modal-request]
     (let [bootstrap-status (cond (= nil (-> request :response)) :pending
                                  (-> request :response :success) :success
-                                 :else :danger)]
-      [:div {:style {:opacity (case bootstrap-status :pending "0.8" "1.0")}}
-       [:div.modal {:style {:display "block"}}
+                                 :else :danger)
+          progress-part (if-let [progress (-> request :progress)]
+                          (if-let [total (-> progress :total)]
+                            (max 0.1 (/ (:loaded progress) total))
+                            0.1)
+                          0.1)]
+      [:div {:style {:opacity (case bootstrap-status :pending "0.8" "1.0")
+                     :z-index 10000}}
+       [:div.modal {:style {:display "block"
+                            :z-index 10000}}
         [:div.modal-dialog
          [:div.modal-content {:class (str "modal-" bootstrap-status)}
           (when-not (= bootstrap-status :pending)
@@ -92,9 +117,16 @@
                          nil))
               (-> request :response :status)]])
           [:div.modal-body
+           [:div.progress
+            [:div.progress-bar
+             {:class (case bootstrap-status
+                       :pending "progress-bar-striped active"
+                       :success "progress-bar-success"
+                       :danger "progress-bar-danger")
+              :style {:width (str (* progress-part 100) "%")}}]]
            (if-let [response (:response request)]
              [:p (-> response :body)]
-             [:p.text-center [:i.fa.fa-fw.fa-5x.fa-spin.fa-circle-o-notch]])]
+             )]
           [:div.modal-footer
            [:div.clearfix]
            [:button.btn

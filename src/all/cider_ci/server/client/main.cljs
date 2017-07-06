@@ -96,7 +96,7 @@
     (swap! state/client-state assoc
            :current-url location-href
            :current-path (.getPath location-url))
-    [:div.container-fluid
+    [:div
      [request/modal]
      [:div.page
       (let [component (-> @state/page-state :current-page :component)]
