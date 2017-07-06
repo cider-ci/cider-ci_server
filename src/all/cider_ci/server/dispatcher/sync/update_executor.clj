@@ -52,7 +52,8 @@
         (get-executor (:id executor)))))
 
 (defn update-max-load [executor data]
-  (if (= (:max_load executor) (:max_load data))
+  (if (= (float (:max_load executor))
+         (float (:max_load data)))
     executor
     (do (jdbc/update!
           (rdbms/get-ds)
