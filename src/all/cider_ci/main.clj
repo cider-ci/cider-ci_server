@@ -48,7 +48,7 @@
       (:release-info options) (println "Cider-CI" (cider-ci.utils.self/version) "\n"
                                        (:description (cider-ci.utils.self/release)))
       :else (case (-> arguments first keyword)
-              :server (apply server/-main arguments)
+              :server (apply server/-main (rest arguments))
               :executor (apply executor/-main (rest arguments))
               (println (usage summary {:options options}))))))
 
