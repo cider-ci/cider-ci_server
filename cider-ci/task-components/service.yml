@@ -6,8 +6,8 @@ scripts:
       export CLASSPATH="resources_dev:target/cider-ci.jar"
       java -jar target/cider-ci.jar server run
     start_when:
-      database has been created:
-        script_key: create-database
+      database has been migrated:
+        script_key: migrate-database
       service is configured:
         script_key: configure
       jar has been built:

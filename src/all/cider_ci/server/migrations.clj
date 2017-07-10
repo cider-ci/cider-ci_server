@@ -134,12 +134,16 @@
        flatten (clojure.string/join \newline)))
 
 (defn main [& args]
-  (let [{:keys [options arguments errors summary]} (parse-opts args cli-options :in-order true)
-        {ds :database-url version :version} options]
-    (cond
-      (:help options) (println (usage summary {:args args :options options}))
-      (:show options) (println (show (compute ds version)))
-      :else (migrate ds version))))
+  (catcher/snatch
+    {:level :fatal
+     :throwable Throwable
+     :return-fn (fn [_] (System/exit -1))}
+    (let [{:keys [options arguments errors summary]} (parse-opts args cli-options :in-order true)
+          {ds :database-url version :version} options]
+      (cond
+        (:help options) (println (usage summary {:args args :options options}))
+        (:show options) (println (show (compute ds version)))
+        :else (migrate ds version)))))
 
 ; help
 ;(main "-h")

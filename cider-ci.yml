@@ -31,10 +31,8 @@ jobs:
       #     CIDER_CI_TASK_FILE: spec/features/github-authentication_spec.rb
       task_defaults:
         include:
-          - path: cider-ci/task-components/database.yml
-            submodule: ["database"]
-          - path: cider-ci/task-components/ruby-bundle.yml
-            submodule: ["database"]
+          - cider-ci/task-components/database.yml
+          - cider-ci/task-components/ruby-bundle.yml
           - cider-ci/task-components/build-uberjar.yml
           - cider-ci/task-components/configure.yml
           - cider-ci/task-components/ports.yml

@@ -1,5 +1,4 @@
 require 'spec_helper'
-require 'pg_tasks'
 
 feature 'Executor authentication methods' do
   before :each do

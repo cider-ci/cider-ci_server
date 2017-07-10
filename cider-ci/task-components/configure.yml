@@ -31,18 +31,3 @@ scripts:
       # write config
       File.open('config/config.yml','w') { |file| file.write config.to_yaml }
 
-
-      ### Database configuration ##############################################
-
-      config = YAML.load_file 'database/config/database.yml'
-      %w(default development test production).each do |env|
-        config[env]['username']= ENV['PGUSER']
-        config[env]['password']= ENV['PGPASSWORD']
-        config[env]['database']= ENV['DATABASE_NAME']
-        config[env]['port']= Integer(ENV['PGPORT'])
-        config[env]['variables']= {}
-        config[env]['variables']['statement_timeout']=3000
-      end
-      ['spec/config/database.yml', 'database/config/database.yml'].each do |file|
-        File.open(file, 'w') { |file| file.write config.to_yaml }
-      end

@@ -1,5 +1,4 @@
 require 'spec_helper'
-require 'pg_tasks'
 require 'pry'
 
 feature 'Initial admin', type: :feature do

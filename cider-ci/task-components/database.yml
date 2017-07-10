@@ -1,0 +1,31 @@
+traits:
+  PostgreSQL 9.5: true
+scripts:
+
+  create-database:
+    body: |
+      #!/usr/bin/env bash
+      set -eux
+      createdb $DATABASE_NAME
+
+  migrate-database:
+    start_when:
+      the database has been created:
+        script_key: create-database
+      the uberjar is ready:
+        script_key: build-uberjar
+    body: |
+      #!/usr/bin/env bash
+      set -eux
+      java -jar target/cider-ci.jar server migrate -d "jdbc:postgresql://${PGUSER}:${PGPASSWORD}@localhost:${PGPORT}/${DATABASE_NAME}"
+
+  delete-database:
+    body: |
+      #!/usr/bin/env bash
+      set -eux
+      dropdb $DATABASE_NAME
+    ignore_state: true
+    start_when:
+      'the database has been created':
+        script_key: create-database
+        states: [passed]

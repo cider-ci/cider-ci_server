@@ -1,5 +1,5 @@
 require 'spec_helper'
-require 'pg_tasks'
+require 'yaml'
 require 'pry'
 
 feature 'GitHub authentication' do

@@ -1,17 +1,12 @@
 require 'active_support/all'
-ENV['RAILS_ENV'] = ENV['RAILS_ENV'].presence || 'test'
 
-require 'faker'
-require 'config/bundle'
-require 'config/rails'
 require 'config/database'
 require 'config/web'
-require 'rspec-rails'
-
-require 'helpers/global'
+require 'faker'
 require 'helpers/db'
+require 'helpers/global'
 require 'helpers/users'
-
+require 'logger'
 require 'pry'
 
 RSpec.configure do |config|
@@ -57,7 +52,8 @@ RSpec.configure do |config|
         nil
       end
     else
-      Rails.logger.warn 'Taking screenshots is not implemented for ' \
+      logger = Logger.new(STDOUT)
+      logger.warn 'Taking screenshots is not implemented for ' \
         "#{Capybara.current_driver}."
     end
   end

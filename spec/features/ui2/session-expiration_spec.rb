@@ -1,5 +1,4 @@
 require 'spec_helper'
-require 'pg_tasks'
 require 'pry'
 
 feature 'Session expiration', type: :feature do

@@ -1,5 +1,4 @@
 require 'spec_helper'
-require 'pg_tasks'
 
 feature 'Create and authenticate an executor' do
   before :each do
