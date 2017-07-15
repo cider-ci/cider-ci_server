@@ -11,6 +11,7 @@
     [cider-ci.server.executors]
     [cider-ci.server.migrations.schema-migrations :as schema-migrations]
     [cider-ci.server.migrations.433]
+    [cider-ci.server.migrations.434]
     [cider-ci.server.push]
     [cider-ci.server.repository.main]
     [cider-ci.server.state]
@@ -26,9 +27,10 @@
     [logbug.catcher :as catcher]
     ))
 
-
 (def migrations
-  {"433" {:up cider-ci.server.migrations.433/up}})
+  {"433" {:up cider-ci.server.migrations.433/up}
+   "434" {:up cider-ci.server.migrations.434/up}})
+
 
 ;;; migrate ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

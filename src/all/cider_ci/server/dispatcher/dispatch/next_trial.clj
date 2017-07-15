@@ -77,6 +77,15 @@
       (sql-merge-where (with-defective-trial-delay))
       ))
 
+(def ^:private accepted-repositories
+  (sql-raw
+    (->> [" ((repositories.git_url ~ 																		"
+          " 		ANY(array_filter_regex_vals(exs.accepted_repositories)))"
+          "  OR 																											  "
+          "   repositories.git_url = ANY(exs.accepted_repositories))    "]
+         (map clojure.string/trim)
+         (clojure.string/join " " ))))
+
 (defn ^:private trials-excutors-base-with-repo []
   (-> (trials-excutors-base-query)
       (sql-merge-join :jobs [:= :tasks.job_id :jobs.id])
@@ -86,10 +95,7 @@
       (sql-merge-join :branches [:= :bcts.branch_id :branches.id])
       (sql-merge-join :repositories
                       [:= :branches.repository_id :repositories.id])
-      (sql-merge-where
-        [:or
-         (sql-raw " repositories.git_url ~ ANY(exs.accepted_repositories) ")
-         (sql-raw " repositories.git_url = ANY(exs.accepted_repositories) ")])))
+      (sql-merge-where accepted-repositories)))
 
 (defn ^:private trials-excutors-query-ordered []
   (-> (trials-excutors-base-with-repo)
