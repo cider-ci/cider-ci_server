@@ -7,7 +7,6 @@
  [cider-ci/open-session "1.3.0"]
  [clj-http "3.1.0"]
  [clj-time "0.13.0"]
- [io.forward/yaml "1.0.6"]
  [cljs-http "0.1.41"]
  [cljsjs/bootstrap "3.3.6-1"]
  [cljsjs/jquery "2.2.4-0"]
@@ -26,6 +25,8 @@
  [environ "1.1.0"]
  [fipp "0.6.8"]
  [hiccup "1.0.5"]
+ [hickory "0.7.1"]
+ [io.forward/yaml "1.0.6"]
  [joda-time "2.9.4"]
  [joda-time "2.9.7"]
  [log4j/log4j "1.2.17" :exclusions [javax.mail/mail javax.jms/jms com.sun.jdmk/jmxtools com.sun.jmx/jmxri]]
@@ -38,7 +39,7 @@
  [org.clojars.hozumi/clj-commons-exec "1.2.0"]
  [org.clojure/algo.generic "0.1.2"]
  [org.clojure/clojure "1.8.0"]
- [org.clojure/clojurescript "1.9.93" :scope "provided"]  ; see guava below; also check `lein tree` and sync
+ [org.clojure/clojurescript "1.9.854" :scope "provided"]  ; see guava below; also check `lein tree` and sync
  [org.clojure/core.incubator "0.1.3"]
  [org.clojure/core.memoize "0.5.8"]
  [org.clojure/data.json "0.2.6"]
@@ -60,6 +61,7 @@
  [selmer "1.0.0"]
  [timothypratley/patchin "0.3.5"]
  [venantius/accountant "0.1.7" :exclusions [org.clojure/tools.reader]]
+ [viz-cljc "0.1.0"]
  [yogthos/config "0.8"]
 
  ; explicit transient deps to force conflict resolution

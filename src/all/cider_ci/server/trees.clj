@@ -76,6 +76,7 @@
     (cpj/GET "/trees/:tree-id/available-jobs/" [tree-id] (available-jobs tree-id))
     (cpj/GET "/trees/:tree-id/jobs/" [tree-id] (jobs tree-id))
     (cpj/GET "/trees/:tree-id/project-configuration" [tree-id] (project-configuration tree-id))
+    (cpj/GET "/trees/:tree-id/project-configuration/dependencies" [tree-id] nil)
     (cpj/POST "/trees/:tree-id/jobs/:job-key" [] #'create-job)
     (cpj/ANY "/trees/*" [] {:status 404 :body "No such route for /trees."})))
 

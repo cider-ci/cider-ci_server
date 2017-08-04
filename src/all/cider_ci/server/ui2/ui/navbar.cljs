@@ -73,7 +73,7 @@
          [:li [:a {:href (routes/executors-path {})} [:i.fa.fa-fw.fa-cog] "Executors" ]]
          [:li.divider]
          [:li [:a {:href (debug/path) } "Debug page"]]
-         [:li [:a {:hred "#"
+         [:li [:a {:href "#"
                    :on-click debug/toggle-debug}
                [:input {:type "checkbox"
                         ;:on-change debug/toggle-debug
