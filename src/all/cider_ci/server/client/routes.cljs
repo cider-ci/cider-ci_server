@@ -12,10 +12,10 @@
          {:component "cider-ci.server.create-initial-admin.ui/page"}))
 
 (secretary/defroute commits-path
-  "/cider-ci/ui2/commits/" {:keys [query-params]}
+  "/cider-ci/commits/" {:keys [query-params]}
   (swap! state/client-state assoc-in [:commits-page :form-data] query-params)
   (swap! state/page-state assoc :current-page
-         {:component "cider-ci.server.ui2.commits.ui/page"
+         {:component "cider-ci.server.commits.ui/page"
           :query-params query-params}))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -49,6 +49,33 @@
          assoc :current-page
          {:component "cider-ci.server.executors.ui.create/page"
           :executor-id executor-id }))
+
+
+;;; treeish ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(secretary/defroute tree-path
+  "/cider-ci/trees/:tree-id"
+  {tree-id :tree-id}
+  (swap! state/page-state
+         assoc :current-page
+         {:component "cider-ci.server.trees.ui/page"
+          :tree-id tree-id}))
+
+(secretary/defroute project-configuration-path
+  "/cider-ci/trees/:tree-id/project-configuration"
+  {tree-id :tree-id}
+  (swap! state/page-state
+         assoc :current-page
+         {:component "cider-ci.server.trees.ui.project-configuration/page"
+          :tree-id tree-id}))
+
+(secretary/defroute runnalbe-jobs-path
+  "/cider-ci/trees/:tree-id/available-jobs/"
+  {tree-id :tree-id}
+  (swap! state/page-state
+         assoc :current-page
+         {:component "cider-ci.server.trees.ui.available-jobs/page"
+          :tree-id tree-id}))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

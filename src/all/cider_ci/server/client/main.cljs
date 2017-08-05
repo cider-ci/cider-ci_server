@@ -10,8 +10,11 @@
     [cider-ci.server.client.routes :as routes]
     [cider-ci.server.client.state :as state]
     [cider-ci.server.client.ws :as ws]
+    [cider-ci.server.commits.ui]
     [cider-ci.server.repository.ui]
-    [cider-ci.server.ui2.commits.ui]
+    [cider-ci.server.trees.ui]
+    [cider-ci.server.trees.ui.available-jobs]
+    [cider-ci.server.trees.ui.project-configuration]
     [cider-ci.server.ui2.constants :refer [CONTEXT]]
     [cider-ci.server.ui2.session.password.ui]
     [cider-ci.server.ui2.ui.debug :as debug]
@@ -43,12 +46,15 @@
 
 (def components
   {
+   "cider-ci.server.commits.ui/page" cider-ci.server.commits.ui/page
    "cider-ci.server.create-initial-admin.ui/page" cider-ci.server.create-initial-admin.ui/page
    "cider-ci.server.executors.ui.create/page" cider-ci.server.executors.ui.create/page
    "cider-ci.server.executors.ui.edit/page" cider-ci.server.executors.ui.edit/page
    "cider-ci.server.executors.ui.index/page" cider-ci.server.executors.ui.index/page
    "cider-ci.server.executors.ui.show/page" cider-ci.server.executors.ui.show/page
-   "cider-ci.server.ui2.commits.ui/page" cider-ci.server.ui2.commits.ui/page
+   "cider-ci.server.trees.ui/page" cider-ci.server.trees.ui/page
+   "cider-ci.server.trees.ui.available-jobs/page" cider-ci.server.trees.ui.available-jobs/page
+   "cider-ci.server.trees.ui.project-configuration/page" cider-ci.server.trees.ui.project-configuration/page
    "cider-ci.server.users.api-tokens.ui.create/page" cider-ci.server.users.api-tokens.ui.create/page
    "cider-ci.server.users.api-tokens.ui.edit/page" cider-ci.server.users.api-tokens.ui.edit/page
    "cider-ci.server.users.api-tokens.ui.index/page" cider-ci.server.users.api-tokens.ui.index/page
@@ -97,7 +103,7 @@
            :current-url location-href
            :current-path (.getPath location-url))
     [:div
-     [request/modal]
+     [request/modal-component]
      [:div.page
       (let [component (-> @state/page-state :current-page :component)]
         (let [resolved-component (or (if (string? component)

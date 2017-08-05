@@ -7,8 +7,13 @@
   (:require [cider-ci.utils.core :refer [keyword str]])
   (:require
     [cider-ci.server.builder.jobs :as jobs]
+    [cider-ci.server.builder.project-configuration]
     ))
 
-(defn create-job [params]
-  (jobs/create params))
+(def create-job jobs/create)
 
+(defn available-jobs [tree-id]
+  (jobs/available-jobs tree-id))
+
+(def project-configuration
+  cider-ci.server.builder.project-configuration/get-project-configuration)

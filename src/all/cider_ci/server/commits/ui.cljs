@@ -1,4 +1,4 @@
-(ns cider-ci.server.ui2.commits.ui
+(ns cider-ci.server.commits.ui
   (:refer-clojure :exclude [str keyword])
   (:require-macros
     [reagent.ratom :as ratom :refer [reaction]]
@@ -208,7 +208,8 @@
 
 (defn tree-commit-component [tree-commit]
   [:span
-   [:span.tree-id
+   [:a.tree-id
+    {:href (routes/tree-path {:tree-id (:tree_id tree-commit)})}
     [:i.fa.fa-tree.text-muted]
     [:span " "]
     [:span.git-ref.tree-id (->> tree-commit :tree_id (take 6) clojure.string/join)]]
@@ -253,4 +254,14 @@
         [form-component]
         [:ul.tree-commits.list-unstyled
          (doall (for [tree-commit @tree-commits]
-                  [:li {:key (:tree_id tree-commit)}(tree-commit-component tree-commit)]))]])}))
+                  [:li {:key (:tree_id tree-commit)}(tree-commit-component tree-commit)]))]
+
+        (when (:debug @state/client-state)
+          [:div.page-debug
+           [:hr.clearfix]
+           [:h2 "Page Debug"]
+           [:h4 "Tree-Commits"]
+           (pre-component @tree-commits)
+           ])
+
+        ])}))

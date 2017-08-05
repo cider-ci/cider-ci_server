@@ -18,9 +18,11 @@
     [cider-ci.server.push]
     [cider-ci.server.repository.web]
     [cider-ci.server.storage.web]
+    [cider-ci.server.trees]
     [cider-ci.server.ui2.web]
     [cider-ci.server.users.web]
     [cider-ci.server.web]
+
     [cider-ci.utils.routing :as routing]
     [cider-ci.utils.shutdown :as shutdown]
     [cider-ci.utils.status :as status]
@@ -82,6 +84,7 @@
     (cpj/ANY "/api" [] (ring.util.response/redirect "/cider-ci/api/"))
     (cpj/ANY "/storage" [] (ring.util.response/redirect "/cider-ci/storage/"))
     (cpj/ANY "/server/ws*" [] cider-ci.server.push/routes)
+    (cpj/ANY "/trees/*" []  cider-ci.server.trees/routes)
     (cpj/GET "/" [] redirect-to-ui2)
     (cpj/ANY "*" [] dead-end-handler)))
 
@@ -117,4 +120,3 @@
 ;(logging-config/set-logger! :level :info)
 ;(debug/debug-ns 'cider-ci.utils.shutdown)
 ;(debug/debug-ns *ns*)
-

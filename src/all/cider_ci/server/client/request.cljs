@@ -7,7 +7,7 @@
   (:require
     [cider-ci.server.client.state :as state]
     [cider-ci.env]
-    [cider-ci.utils.core :refer [str keyword deep-merge]]
+    [cider-ci.utils.core :refer [str keyword deep-merge presence]]
     [cider-ci.utils.url]
 
     [cljs.core.async :as async]
@@ -90,18 +90,32 @@
           (when r
             (assoc r :id id))))))
 
+(defn progress-bar-component [status bootstrap-status request]
+  (let [progress-part (if-let [progress (-> request :progress)]
+                        (if-let [total (-> progress :total)]
+                          (max 0.1 (/ (:loaded progress) total))
+                          0.1)
+                        0.1)]
+    [:div.progress
+     [:div.progress-bar
+      {:class (case status
+                :pending "progress-bar-striped active"
+                :success "progress-bar-success"
+                :error "progress-bar-danger")
+       :style {:width (str (* progress-part 100) "%")}}]]))
 
-(defn modal []
+(defn modal-component []
   (when-let [request @modal-request]
-    (let [bootstrap-status (cond (= nil (-> request :response)) :pending
-                                 (-> request :response :success) :success
-                                 :else :danger)
-          progress-part (if-let [progress (-> request :progress)]
-                          (if-let [total (-> progress :total)]
-                            (max 0.1 (/ (:loaded progress) total))
-                            0.1)
-                          0.1)]
-      [:div {:style {:opacity (case bootstrap-status :pending "0.8" "1.0")
+    (let [status (cond (= nil (-> request :response)) :pending
+                       (-> request :response :success) :success
+                       :else :error)
+          bootstrap-status (case status
+                             :pending :default
+                             :success :success
+                             :error :danger)]
+      [:div {:style {:opacity (case status
+                                :pending "0.8"
+                                "1.0")
                      :z-index 10000}}
        [:div.modal {:style {:display "block"
                             :z-index 10000}}
@@ -112,21 +126,17 @@
              [:h4 (str " Request "
                        (when-let [title (-> request :meta :title)]
                          (str " \"" title "\" "))
-                       (case bootstrap-status
-                         :danger " ERROR "
+                       (case status
+                         :error " ERROR "
+                         :success " OK "
+                         :pending " PENDING "
                          nil))
               (-> request :response :status)]])
           [:div.modal-body
-           [:div.progress
-            [:div.progress-bar
-             {:class (case bootstrap-status
-                       :pending "progress-bar-striped active"
-                       :success "progress-bar-success"
-                       :danger "progress-bar-danger")
-              :style {:width (str (* progress-part 100) "%")}}]]
-           (if-let [response (:response request)]
-             [:p (-> response :body)]
-             )]
+           (when (= status :pending)
+             [progress-bar-component status bootstrap-status request])
+           (if-let [body (-> :response :body presence)]
+             [:p body])]
           [:div.modal-footer
            [:div.clearfix]
            [:button.btn
@@ -134,6 +144,5 @@
              :on-click #(swap! state/client-state
                                update-in [:requests]
                                (fn [rx] (dissoc rx (:id request))))}
-            "Dismiss"]
-           ]]]]
+            "Dismiss"]]]]]
        [:div.modal-backdrop {:style {:opacity "0.2"}}]])))
