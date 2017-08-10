@@ -25,7 +25,8 @@
  [cljsjs/moment "2.17.1-1"]
  [clojure-humanize "0.2.2"]
  [clojure-ini "0.0.2"]
- [com.cronutils/cron-utils "6.0.2"]
+ ; TODO upgrade com.cronutils/cron-utils >= "6.0.0"
+ [com.cronutils/cron-utils "5.0.5"]
  [com.github.mfornos/humanize-slim "1.2.2"]
  [com.lucasbradstreet/cljs-uuid-utils "1.0.2"]
  [com.mchange/c3p0 "0.9.5.2"]
