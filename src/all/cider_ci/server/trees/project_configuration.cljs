@@ -14,6 +14,7 @@
     [cider-ci.utils.markdown :as markdown]
     [cider-ci.utils.sha1]
 
+    [cljs-uuid-utils.core :as uuid]
     [cljs.pprint :refer [pprint]]
     [clojure.walk :as walk]
     [fipp.edn :refer [pprint] :rename {pprint fipp}]
@@ -28,6 +29,8 @@
     [reagent.core :as reagent]
     ))
 
+;;; data ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (def tree-id* (reaction (-> @state/page-state :current-page :tree-id)))
 
 (def dependency-and-trigger-graph* (ratom/atom nil))
@@ -36,7 +39,8 @@
 
 (def project-configuration* (ratom/atom (get @project-configurations* @tree-id* nil)))
 
-;;; graph ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;; hiccup graph ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn normalize-hiccup-graph [hiccup-svg]
   (walk/postwalk (fn [node]
@@ -51,73 +55,58 @@
                      :else node))
                  hiccup-svg))
 
-(defn submodule-depenency-name-key [dependency]
-  (->>
-    (conj
-      (or (:submodule dependency) [])
-      (:job_key dependency))
-    (clojure.string/join "/")
-    keyword))
 
-(defn labe-prefix-for-kind [d-or-t]
-  (case (:kind d-or-t)
-    "trigger" "T"
-    "dependency" "D"
-    "UNSPECIFIED KIND"))
+;;; loom graph ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn create-or-add-edge-label [graph arc d-or-t]
+  (let [existing-label (presence (loom.attr/attr graph arc :label))
+        add-label (str  (str (:type d-or-t) " " (:kind d-or-t) ":\n") (:key d-or-t))
+        new-label (str (if existing-label (str existing-label "\n \n") "")
+                       add-label)]
+    (loom.attr/add-attr graph arc :label new-label)))
+
+(defn add-edge [graph arc d-or-t]
+  (-> graph
+      (loom.graph/add-edges arc)
+      (create-or-add-edge-label arc d-or-t)))
+
+(defn add-node [graph node-key node-shape node-label]
+  (-> graph
+      (loom.graph/add-nodes node-key)
+      (loom.attr/add-attr node-key :shape node-shape)
+      (loom.attr/add-attr node-key :label node-label)))
+
+(defn submodule-depenency-name-key [dependency]
+  (->> (conj
+         (or (:submodule dependency) [])
+         (:job_key dependency))
+       (clojure.string/join "/")
+       keyword))
 
 (defn add-dependency-or-trigger [graph job d-or-t]
-  (js/console.log "ADD-DEPENDENCY-OR-TRIGGER")
-  (js/console.log (with-out-str (pprint {:graph graph
-                                         :job job
-                                         :d-or-t d-or-t})))
   (as-> graph graph
     (case (:type d-or-t)
       "job" (let [source-key (submodule-depenency-name-key d-or-t)
                   target-key (-> job :key keyword)]
               (-> graph
-                  (loom.graph/add-nodes target-key)
-                  (loom.graph/add-nodes source-key)
-                  (loom.attr/add-attr target-key :label (str target-key))
-                  (loom.attr/add-attr target-key :shape "box")
-                  (loom.attr/add-attr source-key :label (str source-key))
-                  (loom.attr/add-attr source-key :shape "box")
-                  (loom.graph/add-edges [source-key target-key])
-                  (loom.attr/add-attr [source-key target-key]
-                                      :label (str (labe-prefix-for-kind d-or-t) ": " (:key d-or-t)))))
-      "branch" (let [source-key (-> d-or-t :key keyword)
+                  (add-node source-key "box" source-key)
+                  (add-node target-key "box" target-key)
+                  (add-edge [source-key target-key] d-or-t)))
+      "branch" (let [source-key (uuid/uuid-string (uuid/make-random-uuid))
                      target-key (-> job :key keyword)]
                  (-> graph
-                     (loom.graph/add-nodes target-key)
-                     (loom.graph/add-nodes source-key)
-                     (loom.attr/add-attr target-key :label (str target-key))
-                     (loom.attr/add-attr target-key :shape "box")
-                     (loom.attr/add-attr source-key :id source-key)
-                     (loom.attr/add-attr source-key :label "[B]")
-                     (loom.attr/add-attr source-key :shape "circle")
-                     (loom.graph/add-edges [source-key target-key])
-                     (loom.attr/add-attr [source-key target-key]
-                                         :label (str (labe-prefix-for-kind d-or-t) ": " (:key d-or-t)))))
-      "cron" (let [source-key (-> d-or-t :key keyword)
-                     target-key (-> job :key keyword)]
-                 (-> graph
-                     (loom.graph/add-nodes target-key)
-                     (loom.graph/add-nodes source-key)
-                     (loom.attr/add-attr target-key :label (str target-key))
-                     (loom.attr/add-attr target-key :shape "box")
-                     (loom.attr/add-attr source-key :id source-key)
-                     (loom.attr/add-attr source-key :label "[C]")
-                     (loom.attr/add-attr source-key :shape "circle")
-                     (loom.graph/add-edges [source-key target-key])
-                     (loom.attr/add-attr [source-key target-key]
-                                         :label (str (labe-prefix-for-kind d-or-t) ": " (:key d-or-t)))))
-
-      graph)))
-
-(defn add-trigger [g job trigger]
-  g)
+                     (add-node source-key "point" source-key)
+                     (add-node target-key "box" target-key)
+                     (add-edge [source-key target-key] d-or-t)))
+      "cron" (let [source-key (uuid/uuid-string (uuid/make-random-uuid))
+                   target-key (-> job :key keyword)
+                   arc [source-key target-key]]
+               (-> graph
+                   (add-node source-key "point" source-key)
+                   (add-node target-key "box" target-key)
+                   (add-edge [source-key target-key] d-or-t))))))
 
 (defn add-job-to-graph [graph job]
-  ;(js/console.log (with-out-str (pprint ["ADD-JOB-TO-GRAPH" {:graph graph :job job}])))
   (as-> graph graph
     (reduce (fn [g d] (add-dependency-or-trigger g job (assoc d :kind "dependency")))
             graph
@@ -126,8 +115,10 @@
             graph
             (->> job :run_when (map (fn [[k t]] (assoc t :key k)))))))
 
+
+;;; graph ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (defn dependency-graph []
-  (js/console.log "DEPENDENCY-GRAPH")
   (let [jobs (->> (get @project-configurations* @tree-id* nil)
                   :jobs
                   (map (fn [[k j]] (assoc j :key k))))
@@ -142,17 +133,11 @@
      :gv-source-graph gv-source-graph
      :hiccup-graph hiccup-graph}))
 
-(defn setup-graph []
-  (let [gv-graph (->> "digraph { FOO -> BAR; }" viz/image)
-        hiccup-graph (->> gv-graph
-                          hickory/parse-fragment
-                          (map hickory/as-hiccup)
-                          normalize-hiccup-graph)]
-    (reset! dependency-and-trigger-graph* (dependency-graph))
-    ))
-
 
 ;;; setup page data ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn setup-graph []
+  (reset! dependency-and-trigger-graph* (dependency-graph)))
 
 (defn fetch-project-configuration []
   (let [id @tree-id*
@@ -167,7 +152,6 @@
             (setup-graph))))))
 
 (defn setup-page-data [_]
-  ;(when-not @project-configuration*
   (fetch-project-configuration))
 
 
