@@ -43,17 +43,19 @@
 ;;; hiccup graph ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn normalize-hiccup-graph [hiccup-svg]
-  (walk/postwalk (fn [node]
-                   (cond
-                     (keyword? node) (case node
-                                       :viewbox :viewBox
-                                       :xmlns:xlink :xmlnsXlink
-                                       node)
-                     (map? node) (if-let [id (:id node)]
-                                   (assoc node :key id)
-                                   node)
-                     :else node))
-                 hiccup-svg))
+  (-> hiccup-svg
+      first
+      (#(walk/postwalk (fn [node]
+                         (cond
+                           (keyword? node) (case node
+                                             :viewbox :viewBox
+                                             :xmlns:xlink :xmlnsXlink
+                                             node)
+                           (map? node) (if-let [id (:id node)]
+                                         (assoc node :key id)
+                                         node)
+                           :else node)) %))
+      (assoc-in [1 :style] {:width "100%" :height "100%"})))
 
 
 ;;; loom graph ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -89,8 +91,8 @@
       "job" (let [source-key (submodule-depenency-name-key d-or-t)
                   target-key (-> job :key keyword)]
               (-> graph
-                  (add-node source-key "box" source-key)
-                  (add-node target-key "box" target-key)
+                  (add-node source-key "box" (str source-key))
+                  (add-node target-key "box" (str target-key))
                   (add-edge [source-key target-key] d-or-t)))
       "branch" (let [source-key (uuid/uuid-string (uuid/make-random-uuid))
                      target-key (-> job :key keyword)]
@@ -202,10 +204,10 @@
       [shared/project-configuration-breadcrumb-component
        @tree-id* :active? true] ]]]
    [:h1 [:i.fa.fa-code] " Project-Configuration for "
-    [:span {:style {:font-family "monospaced"}}
+    [:span {:style {:font-family "monospace"}}
      (->> @tree-id* (take 6) clojure.string/join)]]
    [:p "Tree id: "
-    [:span {:style {:font-family "monospaced"}} @tree-id*]]
+    [:span {:style {:font-family "monospace"}} @tree-id*]]
    [visualization-component]
    [project-configuration-component]
    [debug-component]])

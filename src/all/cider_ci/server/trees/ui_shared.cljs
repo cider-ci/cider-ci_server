@@ -20,7 +20,7 @@
 
 
 (defn tree-id-compact-component [tree-id]
-  [:span {:style {:font-family "monospaced"}}
+  [:span {:style {:font-family "monospace"}}
    (->> tree-id (take 6) clojure.string/join)])
 
 (defn tree-objects-breadcrumb-component

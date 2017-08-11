@@ -94,6 +94,7 @@
       max-minutes-delay))
 
 ;(fire? "38 * * * *" 1)
+;(parse!-unmemoized "* * * * *")
 ;(.parse! parser "* * * * *")
 ;(describe "30 5 ? ? MON-FRI")
 ;(describe "30 5 21 ? MON-FRI")

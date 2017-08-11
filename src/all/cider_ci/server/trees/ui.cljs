@@ -50,7 +50,7 @@
    [:h1 [:i.fa.fa-tree ] " " "Tree-Objects for "
     [shared/tree-id-compact-component @tree-id*]]
    [:p "Tree id: "
-    [:span {:style {:font-family "monospaced"}}
+    [:span {:style {:font-family "monospace"}}
      @tree-id*]]
    [:h2 "Commits & Recursive Submodule Commits"]
    [:h2 "Jobs"]
