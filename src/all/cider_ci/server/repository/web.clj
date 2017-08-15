@@ -7,7 +7,6 @@
   (:require [cider-ci.utils.core :refer [keyword str]])
 
   (:require
-    [cider-ci.server.repository.tree-commits.web :as tree-commits]
     [cider-ci.server.repository.git.repositories :as git.repositories]
     [cider-ci.server.repository.roa.core :as roa]
     [cider-ci.server.repository.sql.repository :as sql.repository]
@@ -75,9 +74,7 @@
              (authorize/wrap-require! #'web.ls-tree/ls-tree {:service true}))
     (cpj/GET "/path-content/:id/*" _
              (authorize/wrap-require! #'get-path-content {:service true}))
-    (cpj/ANY "/projects/*" _ web.projects/routes)
-    (cpj/ANY "/tree-commits/*" _ #'tree-commits/routes)
-    ))
+    (cpj/ANY "/projects/*" _ web.projects/routes)))
 
 (defn wrap-accept [handler]
   (ring.middleware.accept/wrap-accept

@@ -18,6 +18,5 @@
 
 (def pre-component pre-component-pprint)
 
-
 (defn anti-forgery-token []
   (.get goog.net.cookies "cider-ci_anti-forgery-token"))

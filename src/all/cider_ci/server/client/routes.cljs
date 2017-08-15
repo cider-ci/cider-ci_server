@@ -13,10 +13,13 @@
 
 (secretary/defroute commits-path
   "/cider-ci/commits/" {:keys [query-params]}
-  (swap! state/client-state assoc-in [:commits-page :form-data] query-params)
-  (swap! state/page-state assoc :current-page
-         {:component "cider-ci.server.commits.ui/page"
-          :query-params query-params}))
+  (let [query-params  (->> query-params
+                           (map (fn [[k v]] [k (-> v js/JSON.parse js->clj)]))
+                           (into {}))]
+    (swap! state/client-state assoc-in [:commits-page :form-data] query-params)
+    (swap! state/page-state assoc :current-page
+           {:component "cider-ci.server.commits.ui/page"
+            :query-params query-params})))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

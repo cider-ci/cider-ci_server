@@ -2,17 +2,16 @@
 ; Licensed under the terms of the GNU Affero General Public License v3.
 ; See the "LICENSE.txt" file provided with this software.
 
-(ns cider-ci.server.repository.tree-commits.web
+(ns cider-ci.server.commits.web
   (:refer-clojure :exclude [str keyword])
-  (:require [cider-ci.utils.core :refer [keyword str]])
+  (:require [cider-ci.utils.core :refer [presence keyword str]])
   (:require
 
     [cider-ci.auth.authorize :as authorize]
 
     [cheshire.core]
     [compojure.core :as cpj]
-    [honeysql.core :as sql]
-    [honeysql.helpers :as sql2]
+    [cider-ci.utils.honeysql :as sql]
     [clojure.java.jdbc :as jdbc]
     [cider-ci.utils.rdbms :as rdbms]
     [clojure.data.json :as json]
@@ -24,13 +23,15 @@
     [logbug.thrown :as thrown]
     ))
 
+
 ;;; helper ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(def sql-format sql/format)
-
 (defn heads-only [query request]
-  (if (-> request :query-params :heads_only)
-    (sql/merge-join query :branches [:= :commits.id :branches.current_commit_id ])
+  (if (-> request :query-params :heads-only)
+    (-> query
+        (sql/merge-join :branches_commits [:= :branches_commits.commit_id :commits.id])
+        (sql/merge-join :branches [:= :branches.id :branches_commits.branch_id])
+        (sql/merge-where [:= :branches.current_commit_id :commits.id]))
     query))
 
 (defn orphans [query request]
@@ -42,6 +43,33 @@
                    (sql/from :branches_commits)
                    (sql/merge-where [:= :branches_commits.commit_id :commits.id]))])))
 
+(defn filter-by-project-name [query {{project-name :project-name
+                                         as-regex :project-name-as-regex}
+                                        :query-params}]
+  (if (presence project-name)
+    (-> query
+        (sql/merge-join :branches_commits [:= :branches_commits.commit_id :commits.id])
+        (sql/merge-join :branches [:= :branches.id :branches_commits.branch_id])
+        (sql/merge-join :repositories [:= :repositories.id :branches.repository_id])
+        ((fn [query]
+           (if as-regex
+             (sql/merge-where query ["~*" :repositories.name project-name])
+             (sql/merge-where query [:= :repositories.name project-name])))))
+    query))
+
+(defn filter-by-branch-name [query {{branch-name :branch-name
+                                     as-regex :branch-name-as-regex}
+                                    :query-params}]
+  (if (presence branch-name)
+    (-> query
+        (sql/merge-join :branches_commits [:= :branches_commits.commit_id :commits.id])
+        (sql/merge-join :branches [:= :branches.id :branches_commits.branch_id])
+        ((fn [query]
+           (if as-regex
+             (sql/merge-where query ["~*" :branches.name branch-name])
+             (sql/merge-where query [:= :branches.name branch-name])))))
+    query))
+
 
 ;;;       ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -51,15 +79,17 @@
       (sql/from [:commits :commits])
       (sql/offset 0)
       (sql/limit 5)
-      (sql2/group :commits.tree_id)
+      (sql/group :commits.tree_id)
       (sql/order-by [:date :desc]
                     [:tree_id :desc])))
 
 (defn trees [request]
   (->> (-> trees-base-query
+           (filter-by-project-name request)
+           (filter-by-branch-name request)
            (heads-only request)
            (orphans request)
-           sql-format)
+           sql/format)
        (jdbc/query (rdbms/get-ds))))
 
 (defn add-branches-to-remote [commit remote]
@@ -75,7 +105,7 @@
              (sql/merge-where [:= :branches_commits.commit_id (:id commit)])
              (sql/merge-join [:commits :current_commits]
                              [:= :current_commits.id :branches.current_commit_id])
-             sql-format)
+             sql/format)
          (jdbc/query (rdbms/get-ds)))))
 
 (defn add-projects [commit]
@@ -94,7 +124,7 @@
                   (sql/merge-join :repositories
                                   [:= :branches.repository_id :repositories.id])
                   (sql/order-by [:repositories.name :asc] [:repositories.id :asc])
-                  sql-format)
+                  sql/format)
               (jdbc/query (rdbms/get-ds))
               (map #(add-branches-to-remote commit %))
               )))
@@ -111,7 +141,7 @@
            (orphans request)
            (sql/order-by [:committer_date :desc]
                          [:tree_id :desc])
-           sql-format)
+           sql/format)
        (jdbc/query (rdbms/get-ds))
        (map add-projects)
        ))
@@ -121,11 +151,10 @@
          (assoc tree :commits (commits-for-tree tree request)))
        trees))
 
-(defn tree-commits [request]
+(defn commits [request]
   {:body (->> request
               trees
               (add-commits request))})
-
 
 ;(commits {:query-params {:heads_only true :orphans false}})
 
@@ -138,15 +167,33 @@
                 clojure.walk/keywordize-keys))
     request))
 
-(defn wrap-canonicalize-query-params [handler]
-  (fn [request]
-    (-> request canonicalize-query-params handler)))
+
+
+;;; project and branch-names ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn project-and-branchnames [request]
+  {:body
+   (->> (-> (sql/select [:repositories.name :project]
+                        (sql/raw "array_agg(branches.name) branches "))
+            (sql/from :repositories)
+            (sql/merge-join :branches [:= :repositories.id :branches.repository_id])
+            (sql/group :repositories.name)
+            sql/format)
+        (jdbc/query (rdbms/get-ds))
+        (map (fn [r] [(:project r)(:branches r)])))})
+
+
+;;; routes ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (def routes
   (wrap-canonicalize-query-params
     (cpj/routes
-      (cpj/GET  "/tree-commits/" _
-               #'tree-commits
+      (cpj/GET  "/commits/" _
+               #'commits
+               ;#'(authorize/wrap-require! #'commits {:user true})
+               )
+      (cpj/GET  "/commits/project-and-branchnames/" _
+               #'project-and-branchnames
                ;#'(authorize/wrap-require! #'commits {:user true})
                ))))
 
@@ -157,5 +204,4 @@
 ;#### debug ###################################################################
 ;(logging-config/set-logger! :level :debug)
 ;(logging-config/set-logger! :level :info)
-;(debug/debug-ns *ns*)
-
+(debug/debug-ns *ns*)
