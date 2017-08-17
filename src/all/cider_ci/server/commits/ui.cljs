@@ -13,6 +13,7 @@
     [cider-ci.utils.core :refer [keyword str presence]]
     [cider-ci.server.repository.ui.projects.shared :refer [humanize-datetime]]
 
+    [accountant.core :as accountant]
     [cider-ci.utils.sha1]
     [cljs-http.client :as http]
     [cljs.core.async :as async]
@@ -344,13 +345,30 @@
   (fetch-project-and-branchnames)
   (.tooltip (js/$ (reagent.core/dom-node component))))
 
+(defn set-canonic-query-params [_]
+  (let [current-query-paramerters @current-query-paramerters*
+        canonic-query-prameters  (as-> @current-query-paramerters* cqp
+                                   (dissoc cqp :Z)
+                                   (assoc cqp :heads-only
+                                          (cond (contains? cqp :heads-only) (-> cqp :heads-only boolean)
+                                                :else true)))
+        path (routes/commits-path {:query-params canonic-query-prameters})]
+
+
+    (js/console.log (pprint {:current-query-paramerters* @current-query-paramerters*
+                             :canonic-query-prameters canonic-query-prameters
+                             :path path }))
+    (accountant/navigate! path)))
+
 (defn page []
   ; TODO Filter ähnlich Workspace page
   ; API liefert commits mit tree-id usw; jobs werden in dedizierten requests geholt
   ; Notifications gemäss Filer (wie soll das funktionierten?)
   ; Auch Tree-id notifications
   (reagent/create-class
-    {:component-did-mount post-mount-setup
+    {:component-did-mount (fn [c]
+                            (set-canonic-query-params c)
+                            (post-mount-setup c))
      :reagent-render
      (fn []
        [:div.commits-page

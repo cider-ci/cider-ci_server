@@ -133,7 +133,7 @@
 ;;; trees ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn commits-for-tree [tree request]
-  (->> (-> (sql/select :*)
+  (->> (-> (sql/select :commits.*)
            (sql/modifiers :distinct)
            (sql/from :commits)
            (sql/merge-where [:= :tree_id (:tree_id tree)])
@@ -168,6 +168,9 @@
     request))
 
 
+(defn wrap-canonicalize-query-params [handler]
+  (fn [request]
+    (-> request canonicalize-query-params handler)))
 
 ;;; project and branch-names ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -204,4 +207,4 @@
 ;#### debug ###################################################################
 ;(logging-config/set-logger! :level :debug)
 ;(logging-config/set-logger! :level :info)
-(debug/debug-ns *ns*)
+;(debug/debug-ns *ns*)
