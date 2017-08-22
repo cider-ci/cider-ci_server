@@ -5,6 +5,7 @@
     [cljs.core.async.macros :refer [go]]
     )
   (:require
+    [cider-ci.constants :refer [GRID-COLS]]
     [cider-ci.server.client.request :as request]
     [cider-ci.server.client.routes :as routes]
     [cider-ci.server.client.state :as state]
@@ -26,7 +27,7 @@
     [secretary.core :as secretary :include-macros true]
     ))
 
-(declare page fetch-commits)
+(declare page fetch-commits tree-commits* tree-ids*)
 
 (def form-data* (reaction (-> @state/client-state :commits-page :form-data)))
 
@@ -64,7 +65,7 @@
   (let [url (str "/cider-ci/commits/project-and-branchnames/" )
         resp-chan (async/chan)]
     (request/send-off {:url url :method :get}
-                      {:modal true
+                      {:modal false
                        :title "Fetch Project- and Branch-Names"}
                       :chan resp-chan)
     (go (let [resp (<! resp-chan)]
@@ -72,7 +73,9 @@
             (reset! project-and-branch-names* (:body resp)))))))
 
 
-;;; fetch-commits ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; fetch-tree-commits ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(def tree-commits* (ratom/atom {}))
 
 (def fetch-commits-id* (ratom/atom nil))
 
@@ -81,17 +84,50 @@
         path (str "/cider-ci/commits/")
         resp-chan (async/chan)
         id (request/send-off {:url (str path search) :method :get}
-                             {:modal true ; TODO set to false and loop unconditionally
+                             {:modal false
                               :title "Fetch Commits"}
                              :chan resp-chan)]
     (reset! fetch-commits-id* id)
     (go (let [resp (<! resp-chan)]
-          ; TODO check if we are still on the commits page too
-          (when (and (= id @fetch-commits-id*)
-                     (= (:status resp) 200))
-            ;(js/setTimeout fetch-commits 10000)
-            (swap! state/client-state
-                   assoc-in [:commits-page :fetch-request :response] resp))))))
+          (when (= id @fetch-commits-id*)
+            (js/setTimeout fetch-commits 15000)
+            (when (= (:status resp) 200)
+              (reset! tree-commits* (:body resp))))))))
+
+
+;;; fetch-jobs-summaries ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(def jobs-summaries* (ratom/atom {}))
+
+(def fetch-jobs-summaries-id* (ratom/atom nil))
+
+(defn fetch-jobs-summaries [& _]
+  (let [path (str "/cider-ci/commits/jobs-summaries/")
+        resp-chan (async/chan)
+        id (request/send-off {:url path :method :get
+                              :query-params {:tree-ids (-> @tree-ids* clj->js js/JSON.stringify)}}
+                             {:modal false
+                              :title "Fetch Summaries of Jobs"}
+                             :chan resp-chan)]
+    (reset! fetch-jobs-summaries-id* id)
+    (go (let [resp (<! resp-chan)]
+          (when (= id @fetch-jobs-summaries-id*)
+            (js/setTimeout fetch-commits 15000)
+            (when (= (:status resp) 200)
+              (reset! jobs-summaries* (:body resp))))))))
+
+(def tree-ids* (reaction (->> @tree-commits* (map :tree_id) set)))
+
+(defn tree-ids-component []
+  (reagent/create-class
+    {:component-did-update fetch-jobs-summaries
+     :component-did-mount fetch-jobs-summaries
+     :reagent-render
+     (fn [c]
+       [:div {:style {:display :none}}
+        [:h2 "Tree IDs"]
+        (pre-component @tree-ids*)
+        ])}))
 
 
 ;;; form ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -149,14 +185,14 @@
      " case insensitive regex "]]])
 
 (defn reset-component []
-  [:div.col-xs-6
+  [:div.col-xs-12
    [:a.btn.btn-warning
-    {:href (routes/commits-path {:query-params {:Z (-> 0 clj->js js/JSON.stringify)}})}
+    {:href (routes/commits-path {:query-params {:heads-only true}})}
     [:i.fa.fa-remove]
     " Reset "]])
 
 (defn filter-component []
-  [:div.col-xs-6
+  [:div.col-xs-12
    [:a.pull-right.btn.btn-primary
     {:href (routes/commits-path
              {:query-params (->> @form-data*
@@ -178,7 +214,6 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(def tree-commits (reaction (-> @state/client-state :commits-page :fetch-request :response :body)))
 
 (defn project-link [project]
   [:a {:href (str "/cider-ci/repositories/projects/" (:id project))}
@@ -250,7 +285,7 @@
                {:key (str (:id project) "/" (:name branch))
                 :style {:font-weight (if (= 0 headdist)
                                        "strong" "normal")}}
-               " "
+               "\u2003"
                (if (= 0 headdist)
                  [:b (branch-comp headdist branch)]
                  [:span (branch-comp headdist branch)]) " "
@@ -304,24 +339,88 @@
   (humanize-datetime (:timestamp @state/client-state)
                      (-> commit :committer_date)))
 
-(defn tree-commit-component [tree-commit]
-  [:span
-   [:a.tree-id
-    {:href (routes/tree-path {:tree-id (:tree_id tree-commit)})}
-    [:i.fa.fa-tree.text-muted]
-    [:span " "]
-    [:span.git-ref.tree-id (->> tree-commit :tree_id (take 6) clojure.string/join)]]
-   [:span.commits
-    [:ul.commits.list-inline
-     (doall (for [commit (doall (:commits tree-commit))]
-              [:li.commit {:key (str :tree_id " " :id commit)}
-               [:ul.list-inline
-                [:li.commit-id (commit-id commit)]
-                [:li.commited-at (commited-at commit)]
-                [:li.author-committer (author-committer commit)]
-                [:li [:em (:subject commit)]]
-                [:li.projects (projects commit)]
-                ]]))]]])
+(defn projects-component [commit remaining-cols]
+  (let [project-cols 3
+        branches-cols (- remaining-cols project-cols)]
+    [:div
+     (doall
+       (for [project (:projects commit)]
+         (let [id (:id project)]
+           [:div.row.project {:key id :id id :style {:margin "0px"}}
+            [:div {:key (str "project-" id)
+                   :id (str "project-" id)
+                   :class (str "col-sm-" project-cols)}
+             (project-link project)
+             (project-filter project)]
+            [:div {:key (str "branches-" id)
+                   :id (str "branches-" id)
+                   :class (str "col-sm-" branches-cols)}
+             (project-branches project)]])))]))
+
+(defn commit-component [commit remaining-cols]
+  (let  [commit-cols 3
+         commited-cols 3
+         subject-cols 5
+         id (:key commit)]
+    [:div.row.commit
+     {:key id
+      :id id
+      :style {:margin "0px"}}
+     [:div.commit-id {:class (str "col-sm-" commit-cols)}
+      (doall (for [project (:projects commit)]
+               [project-remote-commit-link commit project]))
+      [:span {:style {:margin "0px"}} (commit-id commit)]]
+     [:div.commited-at
+      {:id (str "commited-at_" id)
+       :key (str "commited-at_" id)
+       :class (str "col-sm-" commited-cols)}
+      [:span.author-committer (author-committer commit)]
+      [:span " "]
+      [:span.commited-at (commited-at commit)]]
+     [:div.commit-subject
+      {:key (str "subject_" id)
+       :id (str "subject_" id)
+       :class (str "col-sm-" subject-cols)}
+      [:em (:subject commit)]]
+     [projects-component commit
+      (- remaining-cols commited-cols commited-cols subject-cols)]]))
+
+(defn commits-component [tree-commit remaining-cols]
+  (let [id (str "commits_" (:tree_id tree-commit))]
+    [:div {:key id
+           :id id
+           :class (str "col-sm-" remaining-cols)}
+     (doall
+       (for [commit  (->> (:commits tree-commit)
+                          (map #(assoc % :key (str "commit_" (:id %)))))]
+         [commit-component commit remaining-cols]))]))
+
+(def summary-job-states (->> cider-ci.constants/STATES :JOB (map keyword)))
+
+(defn tree-commit-component [tree-commit remaining-cols]
+  (let [tree-id-cols 3
+        id (:tree_id tree-commit)
+        jobs-summaries (get @jobs-summaries* (keyword id) {})]
+    [:div.row.tree-commit {:key id :id id :style {:margin-bottom "1em"}}
+     [:div {:key (str "tree-id-" id)
+            :id(str "tree-id-" id )
+            :class (str "col-sm-" tree-id-cols)}
+      [:span
+       [:a.tree-id
+        {:href (routes/tree-path {:tree-id (:tree_id tree-commit)})}
+        [:i.fa.fa-tree.text-muted]
+        [:span.git-ref.tree-id (->> tree-commit :tree_id (take 6) clojure.string/join)]
+        [:span "\u202f"]
+        (doall
+          (for [state summary-job-states]
+            (when-let [count (get jobs-summaries state nil)]
+              [:span [:span.label {:class (str "label-" state)} count] "\u202f"])))]]]
+     [commits-component tree-commit (- GRID-COLS tree-id-cols)]]))
+
+(defn trees-component []
+  [:div.tree-commits
+   (doall (for [tree-commit @tree-commits*]
+            (tree-commit-component tree-commit GRID-COLS)))])
 
 
 ;;; page ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -337,8 +436,15 @@
      [:div
       [:h3 "@project-and-branch-names*"]
       (pre-component @project-and-branch-names*)]
-     [:h4 "Tree-Commits"]
-     (pre-component @tree-commits)
+     [:div
+      [:h4 "@tree-ids"]
+      (pre-component @tree-ids*)]
+     [:div
+      [:h4 "@jobs-summaries*"]
+      (pre-component @jobs-summaries*)]
+     [:div
+      [:h4 "@tree-commits*"]
+      (pre-component @tree-commits*)]
      ]))
 
 (defn post-mount-setup [component]
@@ -360,6 +466,10 @@
                              :path path }))
     (accountant/navigate! path)))
 
+(defn page-will-unmount [& args]
+  (reset! fetch-commits-id* nil)
+  (reset! fetch-jobs-summaries-id* nil))
+
 (defn page []
   ; TODO Filter ähnlich Workspace page
   ; API liefert commits mit tree-id usw; jobs werden in dedizierten requests geholt
@@ -367,8 +477,9 @@
   ; Auch Tree-id notifications
   (reagent/create-class
     {:component-did-mount (fn [c]
-                            (set-canonic-query-params c)
+                            ;(set-canonic-query-params c)
                             (post-mount-setup c))
+     :component-will-unmount page-will-unmount
      :reagent-render
      (fn []
        [:div.commits-page
@@ -380,8 +491,7 @@
           [:span " page."]]]
         [:h1 "Commits"]
         [form-component]
+        [tree-ids-component]
         [current-query-params-component]
-        [:ul.tree-commits.list-unstyled
-         (doall (for [tree-commit @tree-commits]
-                  [:li {:key (:tree_id tree-commit)}(tree-commit-component tree-commit)]))]
+        [trees-component]
         [debug-component]])}))

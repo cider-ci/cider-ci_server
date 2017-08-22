@@ -52,8 +52,10 @@
    [:p "Tree id: "
     [:span {:style {:font-family "monospace"}}
      @tree-id*]]
-   [:h2 "Commits & Recursive Submodule Commits"]
-   [:h2 "Jobs"]
+   ;[:h2 "Commits & Recursive Submodule Commits"]
+   ;[:h2 "Jobs"]
+   [:div.alert.alert-warning
+    "TODO"]
    [debug-component]])
 
 

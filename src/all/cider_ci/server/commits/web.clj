@@ -83,8 +83,15 @@
       (sql/order-by [:date :desc]
                     [:tree_id :desc])))
 
+(defn set-limit [query request]
+  (let [limit (-> (-> request :query-params :per-page)
+                  (or 12)
+                  (min 100))]
+    (-> query (sql/limit limit))))
+
 (defn trees [request]
   (->> (-> trees-base-query
+           (set-limit request)
            (filter-by-project-name request)
            (filter-by-branch-name request)
            (heads-only request)
@@ -186,6 +193,29 @@
         (map (fn [r] [(:project r)(:branches r)])))})
 
 
+;;; jobs-summaries ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn jobs-summaries [request]
+  (let [tree-ids (-> request :query-params :tree-ids)]
+    (if (empty? tree-ids)
+      {:body {}}
+      (let [query  (-> (sql/select :jobs.tree_id :jobs.state :%count.state)
+                       (sql/from :jobs)
+                       (sql/merge-where [:in :tree_id tree-ids])
+                       (sql/group :tree_id :state)
+                       sql/format)
+            res (->> query
+                     (jdbc/query (rdbms/get-ds))
+                     (reduce (fn [agg x]
+                               (assoc-in agg [(:tree_id x) (:state x)] (:count x))) {}))]
+        ;(logging/warn tree-ids)
+        ;(logging/warn query)
+        ;(logging/warn (jdbc/query (rdbms/get-ds) query))
+        {:body res}))))
+
+;(debug/re-apply-last-argument #'jobs-summaries)
+
+
 ;;; routes ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (def routes
@@ -198,6 +228,10 @@
       (cpj/GET  "/commits/project-and-branchnames/" _
                #'project-and-branchnames
                ;#'(authorize/wrap-require! #'commits {:user true})
+               )
+      (cpj/GET  "/commits/jobs-summaries/" _
+               #'jobs-summaries
+               ;#'(authorize/wrap-require! #'commits {:user true})
                ))))
 
 ;(cheshire.core/parse-string "\"blha\"")
@@ -207,4 +241,4 @@
 ;#### debug ###################################################################
 ;(logging-config/set-logger! :level :debug)
 ;(logging-config/set-logger! :level :info)
-;(debug/debug-ns *ns*)
+(debug/debug-ns *ns*)

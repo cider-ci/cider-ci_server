@@ -13,3 +13,4 @@
              :FINISHED '("aborted" "defective" "failed" "passed" "skipped") ,
              :IN_PROGRESS '("aborting" "dispatching" "executing")})
 
+(def GRID-COLS 24)
