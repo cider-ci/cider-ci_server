@@ -79,13 +79,14 @@
 
 (defn authenticate [request handler]
   (if-let [cookie (session-cookie request)]
-    (catcher/snatch
-      {:level :debug
-       :return-fn (fn [e] (session-error-page e request))}
-      (handler
-        (assoc request
-               :authenticated-entity
-               (->> cookie (decrypt (session-secret)) authenticated-user))))
+    (let [auth-entity-or-error-response
+          (catcher/snatch
+            {:level :debug
+             :return-fn (fn [e] (session-error-page e request))}
+            (->> cookie (decrypt (session-secret)) authenticated-user))]
+      (if (= (:status auth-entity-or-error-response) 477)
+        auth-entity-or-error-response
+        (handler (assoc request :authenticated-entity auth-entity-or-error-response))))
     (handler request)))
 
 (defn wrap-authenticate [handler]

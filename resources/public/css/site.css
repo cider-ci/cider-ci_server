@@ -6454,6 +6454,9 @@ button.close {
   color: #8a6d3b;
   border-radius: 6px; }
 
+a.text {
+  color: #333333; }
+
 .breadcrumb.with-circle-separator > li + li:before {
   content: "○"; }
 

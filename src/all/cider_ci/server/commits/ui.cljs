@@ -5,7 +5,7 @@
     [cljs.core.async.macros :refer [go]]
     )
   (:require
-    [cider-ci.constants :refer [GRID-COLS]]
+    [cider-ci.constants :as constants :refer [GRID-COLS]]
     [cider-ci.server.client.request :as request]
     [cider-ci.server.client.routes :as routes]
     [cider-ci.server.client.state :as state]
@@ -31,12 +31,17 @@
 
 (def form-data* (reaction (-> @state/client-state :commits-page :form-data)))
 
+(def filter-button
+  [:span.fa-stack {:style {:font-size "100%"}}
+   [:i.fa.fa-square-o.fa-stack-2x]
+   [:i.fa.fa-filter.fa-stack-1x]])
+
 (defn gravatar-url [email]
   (->> email
        clojure.string/trim
        clojure.string/lower-case
        cider-ci.utils.sha1/md5-hex
-       (gstring/format "https://www.gravatar.com/avatar/%s?s=20&d=retro")))
+       (gstring/format "https://www.gravatar.com/avatar/%s?s=32&d=retro")))
 
 ;;; current query parameters ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; this is used to listen to actual updates of the query params and to fetch
@@ -112,7 +117,7 @@
     (reset! fetch-jobs-summaries-id* id)
     (go (let [resp (<! resp-chan)]
           (when (= id @fetch-jobs-summaries-id*)
-            (js/setTimeout fetch-commits 15000)
+            (js/setTimeout fetch-jobs-summaries 15000)
             (when (= (:status resp) 200)
               (reset! jobs-summaries* (:body resp))))))))
 
@@ -150,85 +155,135 @@
              :on-change #(update-form-data (fn [fd] (assoc fd :heads-only (-> fd :heads-only not))))}]
     "Heads only"]])
 
-(defn project-name-component []
-  [:div.form-group
-   [:label "Project Name" ]
-   [:div.input-group
-    [:input#project-name.form-control
-     {:placeholder "My-Project"
-      :on-change #(update-form-data-value :project-name (-> % .-target .-value presence))
-      :value (-> @form-data* :project-name)
-      }]
-    [:span.input-group-addon
-     [:input {:id :project-name-as-regex
-              :type :checkbox
-              :checked (-> @form-data* :project-name-as-regex boolean)
-              :on-change #(update-form-data (fn [fd] (assoc fd :project-name-as-regex
-                                                            (-> fd :project-name-as-regex boolean not))))}]
-     " case insensitive regex "]]])
+(defn text-input-component [form-data-key & {placeholder :placeholder}]
+  (let [as-regex-key (-> form-data-key (str "-as-regex") keyword)]
+    [:div.form-group {:key form-data-key}
+     [:div.input-group
+      [:a.text.input-group-addon
+       {:on-click (fn [e]
+                    (update-form-data-value form-data-key nil)
+                    (.preventDefault e))}
+       constants/utf8-erase-to-right]
+      [:input#branch-name.form-control
+       {:placeholder placeholder
+        :on-change #(update-form-data-value form-data-key (-> % .-target .-value presence))
+        :value (-> @form-data* form-data-key)
+        }]
+      [:span.input-group-addon
+       [:input {:id :branch-name-as-regex
+                :type :checkbox
+                :checked (-> @form-data* as-regex-key boolean)
+                :on-change #(update-form-data
+                              (fn [fd] (assoc fd as-regex-key
+                                              (-> fd as-regex-key boolean not))))}]
+       " as regex "]]]))
 
-(defn branch-name-component []
+(defn email-component []
   [:div.form-group
-   [:label "Branch Name" ]
    [:div.input-group
+    [:a.text.input-group-addon
+     {:href "#"
+      :on-click #(update-form-data-value :email nil)}
+     constants/utf8-erase-to-right]
     [:input#branch-name.form-control
-     {:placeholder "master"
-      :on-change #(update-form-data-value :branch-name (-> % .-target .-value presence))
-      :value (-> @form-data* :branch-name)
+     {:placeholder "Author or committer e-mail address"
+      :on-change #(update-form-data-value :email (-> % .-target .-value presence))
+      :value (-> @form-data* :email)
       }]
     [:span.input-group-addon
      [:input {:id :branch-name-as-regex
               :type :checkbox
-              :checked (-> @form-data* :branch-name-as-regex boolean)
-              :on-change #(update-form-data (fn [fd] (assoc fd :branch-name-as-regex
-                                                            (-> fd :branch-name-as-regex boolean not))))}]
-     " case insensitive regex "]]])
+              :checked (-> @form-data* :email-as-regex boolean)
+              :on-change #(update-form-data (fn [fd] (assoc fd :email-as-regex
+                                                            (-> fd :email-as-regex boolean not))))}]
+     " as regex "]]])
 
 (defn reset-component []
-  [:div.col-xs-12
    [:a.btn.btn-warning
-    {:href (routes/commits-path {:query-params {:heads-only true}})}
+    {:style {:width "100%" :margin-bottom "1em"}
+     :href (routes/commits-path {:query-params {:heads-only true}})}
     [:i.fa.fa-remove]
-    " Reset "]])
+    " Reset "])
 
 (defn filter-component []
-  [:div.col-xs-12
-   [:a.pull-right.btn.btn-primary
-    {:href (routes/commits-path
-             {:query-params (->> @form-data*
-                                 (map (fn [[k v]] [k (.stringify js/JSON (clj->js v))]))
-                                 (into {}))})}
-    [:i.fa.fa-filter]
-    " Filter "]])
+  [:a.btn.btn-primary
+   {:style {:width "100%" :margin-bottom "1em"}
+    :href (routes/commits-path
+            {:query-params (->> @form-data*
+                                (map (fn [[k v]] [k (.stringify js/JSON (clj->js v))]))
+                                (into {}))})}
+   [:i.fa.fa-filter]
+   " Filter "])
 
 (defn form-component []
-  [:div.form
-   [heads-only-component]
-   [project-name-component]
-   [branch-name-component]
-   [:div.form-group.row
-    [reset-component]
-    [filter-component]
-    ]])
+  [:div.well {:style {:padding "1em" :padding-bottom "0px"}}
+   [:div.form {:style {:margin-bottom "0px"}}
+    [:div.row
+     [:div {:class (str "col-sm-" (Math/floor (/ GRID-COLS 2)))}
+      [text-input-component :project-name :placeholder "Project name"]]
+     [:div {:class (str "col-sm-" (Math/floor (/ GRID-COLS 2)))}
+      [text-input-component :branch-name :placeholder "Branch name"]]]
+    [:div.row
+     [:div {:class (str "col-sm-" (Math/floor (/ GRID-COLS 2)))}
+      [text-input-component :email :placeholder "Author or committer e-mail address"]]
+     [:div {:class (str "col-sm-" (Math/floor (/ GRID-COLS 2)))}
+      [text-input-component :git-ref :placeholder "Git reference: commit or tree id"]]]
+    [:div.row
+     [:div {:class (str "col-sm-" (Math/floor (/ GRID-COLS 4)))} [heads-only-component]]
+     [:div {:class (str "col-sm-" (Math/floor (/ GRID-COLS 2)))} ]
+     [:div {:class (str "col-sm-" (Math/floor (/ GRID-COLS 8)))} [reset-component]]
+     [:div {:class (str "col-sm-" (Math/floor (/ GRID-COLS 8)))} [filter-component]]]]])
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; filter components ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(defn json-stringify-map-values [m]
+  (->> m
+       (map (fn [[k v]] [k (-> v clj->js js/JSON.stringify)]))
+       (into {})))
+
+(defn project-filter-component [project]
+  [:a {:href
+       (routes/commits-path
+         {:query-params
+          (json-stringify-map-values
+            (-> @form-data*
+                (assoc :project-name (-> project :name))
+                (assoc :project-name-as-regex false)
+                (dissoc :branch-name)
+                (dissoc :branch-name-as-regex)))})}
+   filter-button])
+
+(defn e-mail-filter-component [email]
+  [:a
+   {:href
+    (routes/commits-path
+      {:query-params
+       (json-stringify-map-values
+         (-> @form-data*
+             (assoc :email email)
+             (assoc :email-as-regex false)))})}
+   filter-button])
+
+(defn branch-filter-component [project branch]
+  [:a
+   {:href
+    (routes/commits-path
+      {:query-params
+       (json-stringify-map-values
+         (-> @form-data*
+             (assoc :project-name (-> project :name))
+             (assoc :project-name-as-regex false)
+             (assoc :branch-name (-> branch :name))
+             (assoc :branch-name-as-regex false)))})}
+   filter-button])
+
+
+;;; main components ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn project-link [project]
   [:a {:href (str "/cider-ci/repositories/projects/" (:id project))}
    [:b (:name project)] " "])
-
-(defn project-filter [project]
-  [:a.btn.btn-xs.btn-primary
-   {:href (routes/commits-path
-            {:query-params (-> @form-data*
-                               (merge
-                                 {:project-name (-> project :name clj->js js/JSON.stringify)
-                                  :project-name-as-regex "false"})
-                               (dissoc :branch-name)
-                               (dissoc :branch-name-as-regex))})}
-   [:i.fa.fa-filter] " "])
 
 (defn project-remote-commit-link [commit project]
   (when-let [http-url (re-matches #"http.*" (:git_url project))]
@@ -251,7 +306,7 @@
       [:span "/"]])
    [:span (:name branch)]
    ""
-   [:a.author.committer
+   [:a.depth
     {:href "#"
      :title (case dist-from-head
               0 (str "This commit is the head of the branch "
@@ -267,16 +322,6 @@
                   :font-size "8px"}
                  } dist-from-head]]])
 
-(defn branch-filter [project branch]
-  [:a.btn.btn-xs.btn-primary
-   {:href (routes/commits-path
-            {:query-params (merge @form-data*
-                                  {:project-name (-> project :name clj->js js/JSON.stringify)
-                                   :project-name-as-regex "false"
-                                   :branch-name (-> branch :name clj->js js/JSON.stringify)
-                                   :branch-name-as-regex "false"})})}
-   [:i.fa.fa-filter]])
-
 (defn project-branches [project]
   [:span
    (doall (for [branch (doall (:branches project))]
@@ -289,18 +334,8 @@
                (if (= 0 headdist)
                  [:b (branch-comp headdist branch)]
                  [:span (branch-comp headdist branch)]) " "
-               (branch-filter project branch)
+               (branch-filter-component project branch)
                ])))])
-
-(defn projects [commit]
-  [:ul.list-inline
-   (doall (for [project (doall (:projects commit))]
-     [:li {:key (:id project)}
-      (project-link project)
-      (project-filter project)
-      (project-remote-commit-link commit project)
-      " : "
-      (project-branches project)]))])
 
 (defn commit-id [commit]
   [:span (str "\u2009" (->> commit :id (take 6) clojure.string/join) "\u2009")])
@@ -308,14 +343,18 @@
 (defn author-committer [commit]
   (if (= (-> commit :committer_name)
          (-> commit :author_name))
-    [:a.author.committer
-     {:href "#"
-      :title (str " Authored and committed by "
-                  (-> commit :author_name) " "
-                  (humanize-datetime (:timestamp @state/client-state)
-                                     (-> commit :committer_date)))
-      :data-toggle "tooltip" :data-html "true"}
-     [:img {:src (-> commit :committer_email gravatar-url)}]]
+    [:span
+     [:a.author.committer
+      {:style {:font-size "141%"}
+       :href "#"
+       :title (str " Authored and committed by "
+                   (-> commit :author_name) " "
+                   (humanize-datetime (:timestamp @state/client-state)
+                                      (-> commit :committer_date)))
+       :data-toggle "tooltip" :data-html "true"}
+      [:img {:style {:margin-top "0.41ex"}
+             :src (-> commit :committer_email gravatar-url)}]]
+     [e-mail-filter-component (-> commit :committer_email)]]
     [:span
      [:a.author
       {:href "#"
@@ -325,6 +364,7 @@
                                       (-> commit :author_date)))
        :data-toggle "tooltip" :data-html "true"}
       [:img {:src (-> commit :author_email gravatar-url)}]]
+     [e-mail-filter-component (-> commit :author_email)]
      " / "
      [:a.committer
       {:href "#"
@@ -333,7 +373,8 @@
                    (humanize-datetime (:timestamp @state/client-state)
                                       (-> commit :committer_date)))
        :data-toggle "tooltip" :data-html "true"}
-      [:img {:src (-> commit :committer_email gravatar-url)}]]]))
+      [:img {:src (-> commit :committer_email gravatar-url)}]]
+     [e-mail-filter-component (-> commit :committer_email)]]))
 
 (defn commited-at [commit]
   (humanize-datetime (:timestamp @state/client-state)
@@ -351,7 +392,7 @@
                    :id (str "project-" id)
                    :class (str "col-sm-" project-cols)}
              (project-link project)
-             (project-filter project)]
+             (project-filter-component project)]
             [:div {:key (str "branches-" id)
                    :id (str "branches-" id)
                    :class (str "col-sm-" branches-cols)}
@@ -359,7 +400,7 @@
 
 (defn commit-component [commit remaining-cols]
   (let  [commit-cols 3
-         commited-cols 3
+         commited-cols 4
          subject-cols 5
          id (:key commit)]
     [:div.row.commit
@@ -401,20 +442,24 @@
   (let [tree-id-cols 3
         id (:tree_id tree-commit)
         jobs-summaries (get @jobs-summaries* (keyword id) {})]
-    [:div.row.tree-commit {:key id :id id :style {:margin-bottom "1em"}}
+    [:div.row.tree-commit
+     {:key id :id id
+      :style {:margin-bottom "1em"}}
      [:div {:key (str "tree-id-" id)
             :id(str "tree-id-" id )
             :class (str "col-sm-" tree-id-cols)}
       [:span
        [:a.tree-id
-        {:href (routes/tree-path {:tree-id (:tree_id tree-commit)})}
+        {:href ;(routes/tree-path {:tree-id (:tree_id tree-commit)})
+         (str "/cider-ci/ui/workspace/trees/" (:tree_id tree-commit))
+         }
         [:i.fa.fa-tree.text-muted]
         [:span.git-ref.tree-id (->> tree-commit :tree_id (take 6) clojure.string/join)]
-        [:span "\u202f"]
+        [:span "\u2008"]
         (doall
           (for [state summary-job-states]
             (when-let [count (get jobs-summaries state nil)]
-              [:span [:span.label {:class (str "label-" state)} count] "\u202f"])))]]]
+              [:span {:key state} [:span.label {:class (str "label-" state)} count] "\u2008"])))]]]
      [commits-component tree-commit (- GRID-COLS tree-id-cols)]]))
 
 (defn trees-component []
@@ -434,6 +479,9 @@
       [:h3 "@form-data"]
       (pre-component @form-data*)]
      [:div
+      [:h3 "@current-query-paramerters*"]
+      (pre-component @current-query-paramerters*)]
+     [:div
       [:h3 "@project-and-branch-names*"]
       (pre-component @project-and-branch-names*)]
      [:div
@@ -451,44 +499,17 @@
   (fetch-project-and-branchnames)
   (.tooltip (js/$ (reagent.core/dom-node component))))
 
-(defn set-canonic-query-params [_]
-  (let [current-query-paramerters @current-query-paramerters*
-        canonic-query-prameters  (as-> @current-query-paramerters* cqp
-                                   (dissoc cqp :Z)
-                                   (assoc cqp :heads-only
-                                          (cond (contains? cqp :heads-only) (-> cqp :heads-only boolean)
-                                                :else true)))
-        path (routes/commits-path {:query-params canonic-query-prameters})]
-
-
-    (js/console.log (pprint {:current-query-paramerters* @current-query-paramerters*
-                             :canonic-query-prameters canonic-query-prameters
-                             :path path }))
-    (accountant/navigate! path)))
-
 (defn page-will-unmount [& args]
   (reset! fetch-commits-id* nil)
   (reset! fetch-jobs-summaries-id* nil))
 
 (defn page []
-  ; TODO Filter ähnlich Workspace page
-  ; API liefert commits mit tree-id usw; jobs werden in dedizierten requests geholt
-  ; Notifications gemäss Filer (wie soll das funktionierten?)
-  ; Auch Tree-id notifications
   (reagent/create-class
-    {:component-did-mount (fn [c]
-                            ;(set-canonic-query-params c)
-                            (post-mount-setup c))
+    {:component-did-mount (fn [c] (post-mount-setup c))
      :component-will-unmount page-will-unmount
      :reagent-render
      (fn []
        [:div.commits-page
-        ;[:pre (-> @state/page-state :current-page :query-params str)]
-        [:div.alert.alert-warning
-         [:p "This page is a (partial functional) " [:b " prototype!"]]
-         [:p [:span "You are probably looking for the  "]
-          [:b [:a {:href "/cider-ci/ui/workspace" } "Workspace" ]]
-          [:span " page."]]]
         [:h1 "Commits"]
         [form-component]
         [tree-ids-component]

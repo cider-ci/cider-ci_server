@@ -7,21 +7,37 @@
     [secretary.core :as secretary :include-macros true]
     ))
 
+;;; initial admin ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (secretary/defroute create-admin-path "/cider-ci/create-initial-admin" []
   (swap! state/page-state assoc :current-page
          {:component "cider-ci.server.create-initial-admin.ui/page"}))
 
+
+;;; commits ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (secretary/defroute commits-path
   "/cider-ci/commits/" {:keys [query-params]}
-  (let [query-params  (->> query-params
-                           (map (fn [[k v]] [k (-> v js/JSON.parse js->clj)]))
-                           (into {}))]
-    (swap! state/client-state assoc-in [:commits-page :form-data] query-params)
+  (let [heads-only (if (contains? query-params :heads-only)
+                     (:heads-only query-params)
+                     "true")
+        parsed-query-params  (->> (assoc query-params :heads-only heads-only)
+                                  (map (fn [[k v]]
+                                         (try
+                                           [k (-> v js/JSON.parse js->clj)]
+                                           (catch js/Object _
+                                             (js/console.error
+                                               (str "Can not parse \"" v "\" as JSON, dropping \"" k ))
+                                             nil))))
+                                  (filter identity)
+                                  (into {}))]
+    (swap! state/client-state assoc-in [:commits-page :form-data] parsed-query-params)
     (swap! state/page-state assoc :current-page
            {:component "cider-ci.server.commits.ui/page"
-            :query-params query-params})))
+            :query-params parsed-query-params})))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;; executor ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (secretary/defroute executor-path
   "/cider-ci/executors/:executor-id"
@@ -81,7 +97,7 @@
           :tree-id tree-id}))
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; tokens ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (secretary/defroute user-api-token-path
   "/cider-ci/users/:user-id/api-tokens/:api-token-id"

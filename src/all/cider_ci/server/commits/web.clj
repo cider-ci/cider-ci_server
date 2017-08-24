@@ -27,12 +27,15 @@
 ;;; helper ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn heads-only [query request]
-  (if (-> request :query-params :heads-only)
-    (-> query
-        (sql/merge-join :branches_commits [:= :branches_commits.commit_id :commits.id])
-        (sql/merge-join :branches [:= :branches.id :branches_commits.branch_id])
-        (sql/merge-where [:= :branches.current_commit_id :commits.id]))
-    query))
+  (let [query-params (:query-params request)]
+    (if (if (contains? query-params :heads-only)
+          (:heads-only query-params)
+          true)
+      (-> query
+          (sql/merge-join :branches_commits [:= :branches_commits.commit_id :commits.id])
+          (sql/merge-join :branches [:= :branches.id :branches_commits.branch_id])
+          (sql/merge-where [:= :branches.current_commit_id :commits.id]))
+      query)))
 
 (defn orphans [query request]
   (if (-> request :query-params :orphans)
@@ -70,6 +73,31 @@
              (sql/merge-where query [:= :branches.name branch-name])))))
     query))
 
+(defn filter-by-email
+  [query {{email :email
+           as-regex :email-as-regex}
+          :query-params}]
+  (if (presence email)
+    (let [op (if as-regex "~*" :=)]
+      (sql/merge-where
+        query
+        [:or
+         [op :commits.author_email email]
+         [op :commits.committer_email email]]))
+    query))
+
+(defn filter-by-git-ref
+  [query {{git-ref :git-ref
+           as-regex :git-ref-as-regex}
+          :query-params}]
+  (if (presence git-ref)
+    (let [op (if as-regex "~*" :=)]
+      (sql/merge-where
+        query
+        [:or
+         [op :commits.id git-ref]
+         [op :commits.tree_id git-ref]]))
+    query))
 
 ;;;       ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -94,6 +122,8 @@
            (set-limit request)
            (filter-by-project-name request)
            (filter-by-branch-name request)
+           (filter-by-email request)
+           (filter-by-git-ref request)
            (heads-only request)
            (orphans request)
            sql/format)
@@ -222,16 +252,13 @@
   (wrap-canonicalize-query-params
     (cpj/routes
       (cpj/GET  "/commits/" _
-               #'commits
-               ;#'(authorize/wrap-require! #'commits {:user true})
+               (authorize/wrap-require! #'commits {:user true})
                )
       (cpj/GET  "/commits/project-and-branchnames/" _
-               #'project-and-branchnames
-               ;#'(authorize/wrap-require! #'commits {:user true})
+               (authorize/wrap-require! #'project-and-branchnames {:user true})
                )
       (cpj/GET  "/commits/jobs-summaries/" _
-               #'jobs-summaries
-               ;#'(authorize/wrap-require! #'commits {:user true})
+               (authorize/wrap-require! #'jobs-summaries {:user true})
                ))))
 
 ;(cheshire.core/parse-string "\"blha\"")

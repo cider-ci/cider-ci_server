@@ -14,3 +14,7 @@
              :IN_PROGRESS '("aborting" "dispatching" "executing")})
 
 (def GRID-COLS 24)
+
+(def utf8-times "\u00d7")
+
+(def utf8-erase-to-right "\u2326")
