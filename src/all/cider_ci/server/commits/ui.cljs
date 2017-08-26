@@ -36,12 +36,19 @@
    [:i.fa.fa-square-o.fa-stack-2x]
    [:i.fa.fa-filter.fa-stack-1x]])
 
+;;; some helpers ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (defn gravatar-url [email]
   (->> email
        clojure.string/trim
        clojure.string/lower-case
        cider-ci.utils.sha1/md5-hex
        (gstring/format "https://www.gravatar.com/avatar/%s?s=32&d=retro")))
+
+(defn json-stringify-map-values [m]
+  (->> m
+       (map (fn [[k v]] [k (-> v clj->js js/JSON.stringify)]))
+       (into {})))
 
 ;;; current query parameters ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; this is used to listen to actual updates of the query params and to fetch
@@ -59,6 +66,10 @@
               {:style {:display :none}}
               [:h3 "Current-Query-Parameters"]
               [pre-component @current-query-paramerters*]])}))
+
+;;; effective query parameters ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(def effective-query-paramerters* (ratom/atom {}))
 
 
 ;;; project-and-branch-names ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -85,10 +96,12 @@
 (def fetch-commits-id* (ratom/atom nil))
 
 (defn fetch-commits []
-  (let [search (-> js/window .-location .-search)
+  (let [current-query-paramerters @current-query-paramerters*
+        query-params (-> current-query-paramerters
+                         json-stringify-map-values)
         path (str "/cider-ci/commits/")
         resp-chan (async/chan)
-        id (request/send-off {:url (str path search) :method :get}
+        id (request/send-off {:url path :method :get :query-params query-params}
                              {:modal false
                               :title "Fetch Commits"}
                              :chan resp-chan)]
@@ -97,6 +110,7 @@
           (when (= id @fetch-commits-id*)
             (js/setTimeout fetch-commits 15000)
             (when (= (:status resp) 200)
+              (reset! effective-query-paramerters* current-query-paramerters)
               (reset! tree-commits* (:body resp))))))))
 
 
@@ -235,60 +249,67 @@
      " as regex "]]])
 
 (defn reset-component []
-   [:a.btn.btn-warning
-    {:style {:width "100%" :margin-bottom "1em"}
-     :href (routes/commits-path {:query-params {:heads-only true}})}
-    [:i.fa.fa-remove]
-    " Reset "])
+  (let [disabled (not= @current-query-paramerters* @effective-query-paramerters*)
+        waiting disabled]
+    [:a.btn.btn-warning
+     {:class (when disabled "disabled")
+      :style {:width "100%" :margin-bottom "1em"}
+      :href (routes/commits-path {:query-params {:heads-only true}})}
+     (if waiting
+       [:i.fa.fa-spinner.fa-pulse.fa-fw]
+       [:i.fa.fa-remove.fa-fw])
+     " Reset "]))
 
 (defn filter-component []
-  [:a.btn.btn-primary
-   {:style {:width "100%" :margin-bottom "1em"}
-    :href (routes/commits-path
-            {:query-params (->> @form-data*
-                                (map (fn [[k v]] [k (.stringify js/JSON (clj->js v))]))
-                                (into {}))})}
-   [:i.fa.fa-filter]
-   " Filter "])
+  (let [disabled (not= @current-query-paramerters* @effective-query-paramerters*)
+        waiting disabled]
+    [:a.btn.btn-primary
+     {:class (when disabled "disabled")
+      :style {:width "100%" :margin-bottom "1em"}
+      :href (routes/commits-path
+              {:query-params
+               (-> @form-data*
+                   (assoc :page 1)
+                   json-stringify-map-values)})}
+     (if waiting
+       [:i.fa.fa-spinner.fa-pulse.fa-fw]
+       [:i.fa.fa-filter.fa-fw])
+     " Filter "]))
 
 (defn form-component []
   [:div.well {:style {:padding "1em" :padding-bottom "0px"}}
    [:div.form {:style {:margin-bottom "0px"}}
     [:div.row
-     [:div {:class (str "col-sm-" (Math/floor (/ GRID-COLS 2)))}
+     [:div {:class (str "col-md-" (Math/floor (/ GRID-COLS 2)))}
       [text-input-component :project-name :placeholder "Project name"]]
-     [:div {:class (str "col-sm-" (Math/floor (/ GRID-COLS 2)))}
+     [:div {:class (str "col-md-" (Math/floor (/ GRID-COLS 2)))}
       [text-input-component :branch-name :placeholder "Branch name"]]]
     [:div.row
-     [:div {:class (str "col-sm-" (Math/floor (/ GRID-COLS 2)))}
+     [:div {:class (str "col-md-" (Math/floor (/ GRID-COLS 2)))}
       [text-input-component :email :placeholder "Author or committer e-mail address"]]
-     [:div {:class (str "col-sm-" (Math/floor (/ GRID-COLS 2)))}
+     [:div {:class (str "col-md-" (Math/floor (/ GRID-COLS 2)))}
       [text-input-component :git-ref :placeholder "Git reference: commit or tree id"]]]
     [:div.row
-     [:div {:class (str "col-sm-" (Math/floor (/ GRID-COLS 8)))} [heads-only-component]]
-     [:div {:class (str "col-sm-" (Math/floor (/ GRID-COLS 8)))} [my-commits-component]]
-     [:div {:class (str "col-sm-" (Math/floor (/ GRID-COLS 2)))} ]
-     [:div {:class (str "col-sm-" (Math/floor (/ GRID-COLS 8)))} [reset-component]]
-     [:div {:class (str "col-sm-" (Math/floor (/ GRID-COLS 8)))} [filter-component]]]]])
+     [:div {:class (str "col-md-" (Math/floor (/ GRID-COLS 8)))} [heads-only-component]]
+     [:div {:class (str "col-md-" (Math/floor (/ GRID-COLS 8)))} [my-commits-component]]
+     [:div {:class (str "col-md-" (Math/floor (/ GRID-COLS 2)))} ]
+     [:div {:class (str "col-md-" (Math/floor (/ GRID-COLS 8)))} [reset-component]]
+     [:div {:class (str "col-md-" (Math/floor (/ GRID-COLS 8)))} [filter-component]]]]])
 
 
 ;;; filter components ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defn json-stringify-map-values [m]
-  (->> m
-       (map (fn [[k v]] [k (-> v clj->js js/JSON.stringify)]))
-       (into {})))
 
 (defn project-filter-component [project]
   [:a {:href
        (routes/commits-path
          {:query-params
           (json-stringify-map-values
-            (-> @form-data*
+            (-> @current-query-paramerters*
                 (assoc :project-name (-> project :name))
                 (assoc :project-name-as-regex false)
                 (dissoc :branch-name)
-                (dissoc :branch-name-as-regex)))})}
+                (dissoc :branch-name-as-regex)
+                (assoc :page 1)))})}
    filter-button])
 
 (defn e-mail-filter-component [email]
@@ -297,9 +318,10 @@
     (routes/commits-path
       {:query-params
        (json-stringify-map-values
-         (-> @form-data*
+         (-> @current-query-paramerters*
              (assoc :email email)
-             (assoc :email-as-regex false)))})}
+             (assoc :email-as-regex false)
+             (assoc :page 1)))})}
    filter-button])
 
 (defn branch-filter-component [project branch]
@@ -308,11 +330,12 @@
     (routes/commits-path
       {:query-params
        (json-stringify-map-values
-         (-> @form-data*
+         (-> @current-query-paramerters*
              (assoc :project-name (-> project :name))
              (assoc :project-name-as-regex false)
              (assoc :branch-name (-> branch :name))
-             (assoc :branch-name-as-regex false)))})}
+             (assoc :branch-name-as-regex false)
+             (assoc :page 1)))})}
    filter-button])
 
 
@@ -505,6 +528,37 @@
             (tree-commit-component tree-commit GRID-COLS)))])
 
 
+;;; pagination ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn pagination-component []
+  (let [disabled (not= @current-query-paramerters* @effective-query-paramerters*)
+        waiting (not= @current-query-paramerters* @effective-query-paramerters*)]
+    [:div.clearfix
+     (when (< 1 (:page @current-query-paramerters*))
+       [:div.pull-left
+        [:a.btn.btn-info
+         {:class (when disabled "disabled")
+          :href (routes/commits-path
+                  {:query-params (-> @current-query-paramerters*
+                                     (assoc :page (- (:page @current-query-paramerters*) 1))
+                                     json-stringify-map-values)})}
+         (if waiting
+           [:i.fa.fa-spinner.fa-pulse.fa-fw]
+           [:i.fa.fa-arrow-circle-left.fa-fw])
+         " Previous page "
+         ]])
+     [:div.pull-right
+      [:a.btn.btn-info
+       {:class (when disabled "disabled")
+        :href (routes/commits-path
+                {:query-params (-> @current-query-paramerters*
+                                   (assoc :page (+ (:page @current-query-paramerters*) 1))
+                                   json-stringify-map-values)})}
+       " Next page "
+       (if waiting
+         [:i.fa.fa-spinner.fa-pulse.fa-fw]
+         [:i.fa.fa-arrow-circle-right.fa-fw])]]]))
+
 ;;; page ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn debug-component []
@@ -518,6 +572,9 @@
      [:div
       [:h3 "@current-query-paramerters*"]
       (pre-component @current-query-paramerters*)]
+     [:div
+      [:h3 "@effective-query-paramerters*"]
+      (pre-component @effective-query-paramerters*)]
      [:div
       [:h3 "@project-and-branch-names*"]
       (pre-component @project-and-branch-names*)]
@@ -552,4 +609,5 @@
         [tree-ids-component]
         [current-query-params-component]
         [trees-component]
+        [pagination-component]
         [debug-component]])}))

@@ -128,21 +128,30 @@
   (-> (sql/select [:commits.tree_id :tree_id]
                   (sql/raw "max(commits.committer_date) AS date"))
       (sql/from [:commits :commits])
-      (sql/offset 0)
-      (sql/limit 5)
       (sql/group :commits.tree_id)
       (sql/order-by [:date :desc]
                     [:tree_id :desc])))
 
-(defn set-limit [query request]
-  (let [limit (-> (-> request :query-params :per-page)
-                  (or 12)
-                  (min 100))]
-    (-> query (sql/limit limit))))
+(defn set-per-page-and-offset [query {{per-page :per-page page :page}:query-params}]
+  (when (or (-> per-page presence not)
+            (-> per-page integer? not)
+            (> per-page 100)
+            (< per-page 1))
+    (throw (ex-info "The query parameter per-page must be present and set to an integer between 1 and 100."
+                    {:status 422})))
+  (when (or (-> page presence not)
+            (-> page integer? not)
+            (< page 0))
+    (throw (ex-info "The query parameter page must be present and set to a positive integer."
+                    {:status 422})))
+  (-> query
+      (sql/limit per-page)
+      (sql/offset (* per-page (- page 1)))))
+
 
 (defn trees [request]
   (->> (-> trees-base-query
-           (set-limit request)
+           (set-per-page-and-offset request)
            (filter-by-project-name request)
            (filter-by-branch-name request)
            (filter-by-email request)
@@ -283,4 +292,4 @@
 ;#### debug ###################################################################
 ;(logging-config/set-logger! :level :debug)
 ;(logging-config/set-logger! :level :info)
-;(debug/debug-ns *ns*)
+(debug/debug-ns *ns*)

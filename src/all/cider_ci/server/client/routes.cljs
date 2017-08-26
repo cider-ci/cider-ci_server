@@ -1,6 +1,7 @@
 (ns cider-ci.server.client.routes
   (:require
     [cider-ci.server.client.state :as state]
+    [cider-ci.utils.core :refer [presence keyword str]]
 
     [accountant.core :as accountant]
     [cljs-uuid-utils.core :as uuid]
@@ -18,10 +19,7 @@
 
 (secretary/defroute commits-path
   "/cider-ci/commits/" {:keys [query-params]}
-  (let [heads-only (if (contains? query-params :heads-only)
-                     (:heads-only query-params)
-                     "true")
-        parsed-query-params  (->> (assoc query-params :heads-only heads-only)
+  (let [parsed-query-params  (->> query-params
                                   (map (fn [[k v]]
                                          (try
                                            [k (-> v js/JSON.parse js->clj)]
@@ -30,11 +28,20 @@
                                                (str "Can not parse \"" v "\" as JSON, dropping \"" k ))
                                              nil))))
                                   (filter identity)
-                                  (into {}))]
-    (swap! state/client-state assoc-in [:commits-page :form-data] parsed-query-params)
+                                  (into {}))
+        heads-only (if (contains? parsed-query-params :heads-only)
+                     (:heads-only parsed-query-params)
+                     true)
+        per-page (or (-> parsed-query-params :per-page presence) 12)
+        page (or (-> parsed-query-params :page presence) 1)
+        normalized-query-params (-> parsed-query-params
+                                    (assoc :heads-only heads-only)
+                                    (assoc :per-page per-page)
+                                    (assoc :page page))]
+    (swap! state/client-state assoc-in [:commits-page :form-data] normalized-query-params)
     (swap! state/page-state assoc :current-page
            {:component "cider-ci.server.commits.ui/page"
-            :query-params parsed-query-params})))
+            :query-params normalized-query-params})))
 
 
 ;;; executor ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
