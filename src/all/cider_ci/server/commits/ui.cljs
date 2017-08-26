@@ -153,7 +153,33 @@
              :type :checkbox
              :checked (-> @form-data* :heads-only)
              :on-change #(update-form-data (fn [fd] (assoc fd :heads-only (-> fd :heads-only not))))}]
-    "Heads only"]])
+    " Heads only "
+    [:sup
+     [:a.text
+      {:href "#"
+       :title (->> ["This option will only show those commits "
+                    " which are currently the head of a branch." ]
+                   clojure.string/join)
+       :data-toggle "tooltip" :data-html "true"}
+      [:i.fa.fa-question-circle]]]]])
+
+(defn my-commits-component []
+  (let [my-commits (-> @form-data* :my-commits presence boolean)]
+    [:div.checkbox
+     [:label
+      [:input {:id :heads-only
+               :type :checkbox
+               :checked my-commits
+               :on-change #(update-form-data (fn [fd] (assoc fd :my-commits (not my-commits))))}]
+      " My commits "
+      [:sup
+       [:a.text
+        {:href "#"
+         :title (->> ["This option will filter the commits by any e-mail address"
+                      " defined for the currently signed in user."]
+                     clojure.string/join)
+         :data-toggle "tooltip" :data-html "true"}
+        [:i.fa.fa-question-circle]]]]]))
 
 (defn text-input-component [form-data-key & {placeholder :placeholder}]
   (let [as-regex-key (-> form-data-key (str "-as-regex") keyword)]
@@ -170,13 +196,23 @@
         :value (-> @form-data* form-data-key)
         }]
       [:span.input-group-addon
-       [:input {:id :branch-name-as-regex
-                :type :checkbox
-                :checked (-> @form-data* as-regex-key boolean)
-                :on-change #(update-form-data
-                              (fn [fd] (assoc fd as-regex-key
-                                              (-> fd as-regex-key boolean not))))}]
-       " as regex "]]]))
+       [:label
+        [:input {:id :branch-name-as-regex
+                 :type :checkbox
+                 :checked (-> @form-data* as-regex-key boolean)
+                 :on-change #(update-form-data
+                               (fn [fd] (assoc fd as-regex-key
+                                               (-> fd as-regex-key boolean not))))}]
+        " as regex "
+        [:sup
+         [:a.text
+          {:href "#"
+           :title (->> ["This option will match the input as a case insensitive regular expression. "
+                        " The default is to match the input by string equality."]
+                       clojure.string/join)
+           :data-toggle "tooltip" :data-html "true"}
+          [:i.fa.fa-question-circle]]]
+        ]]]]))
 
 (defn email-component []
   [:div.form-group
@@ -229,7 +265,8 @@
      [:div {:class (str "col-sm-" (Math/floor (/ GRID-COLS 2)))}
       [text-input-component :git-ref :placeholder "Git reference: commit or tree id"]]]
     [:div.row
-     [:div {:class (str "col-sm-" (Math/floor (/ GRID-COLS 4)))} [heads-only-component]]
+     [:div {:class (str "col-sm-" (Math/floor (/ GRID-COLS 8)))} [heads-only-component]]
+     [:div {:class (str "col-sm-" (Math/floor (/ GRID-COLS 8)))} [my-commits-component]]
      [:div {:class (str "col-sm-" (Math/floor (/ GRID-COLS 2)))} ]
      [:div {:class (str "col-sm-" (Math/floor (/ GRID-COLS 8)))} [reset-component]]
      [:div {:class (str "col-sm-" (Math/floor (/ GRID-COLS 8)))} [filter-component]]]]])

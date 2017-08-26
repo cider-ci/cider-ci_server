@@ -86,6 +86,29 @@
          [op :commits.committer_email email]]))
     query))
 
+(defn email-addresses-subquery [user-id]
+  (-> (sql/select :%lower.email_address)
+      (sql/from :email_addresses)
+      (sql/merge-where [:= :email_addresses.user_id user-id])))
+
+;(sql/format (email-addresses-subquery "7fa010bc-2680-490e-8470-b85ccc46d502"))
+
+(defn filter-by-my-commits
+  [query {{my-commits :my-commits} :query-params
+          {type :type id :id}:authenticated-entity}]
+  (if (and (= type :user)
+           (-> my-commits presence boolean))
+    (sql/merge-where
+      query [:or
+             [:in :%lower.commits.author_email (email-addresses-subquery id)]
+             [:in :%lower.commits.committer_email (email-addresses-subquery id)]])
+    query))
+
+;(sql/format (filter-by-my-commits
+;  (sql/select :*)
+;  {:authenticated-entity {:type :user :id "7fa010bc-2680-490e-8470-b85ccc46d502"}
+;   :query-params {:my-commits true}}))
+
 (defn filter-by-git-ref
   [query {{git-ref :git-ref
            as-regex :git-ref-as-regex}
@@ -123,6 +146,7 @@
            (filter-by-project-name request)
            (filter-by-branch-name request)
            (filter-by-email request)
+           (filter-by-my-commits request)
            (filter-by-git-ref request)
            (heads-only request)
            (orphans request)
@@ -238,12 +262,7 @@
                      (jdbc/query (rdbms/get-ds))
                      (reduce (fn [agg x]
                                (assoc-in agg [(:tree_id x) (:state x)] (:count x))) {}))]
-        ;(logging/warn tree-ids)
-        ;(logging/warn query)
-        ;(logging/warn (jdbc/query (rdbms/get-ds) query))
         {:body res}))))
-
-;(debug/re-apply-last-argument #'jobs-summaries)
 
 
 ;;; routes ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -261,11 +280,7 @@
                (authorize/wrap-require! #'jobs-summaries {:user true})
                ))))
 
-;(cheshire.core/parse-string "\"blha\"")
-;(cheshire.core/parse-string "1")
-;(json/read-str "blah")
-
 ;#### debug ###################################################################
 ;(logging-config/set-logger! :level :debug)
 ;(logging-config/set-logger! :level :info)
-(debug/debug-ns *ns*)
+;(debug/debug-ns *ns*)
