@@ -108,7 +108,7 @@
     (reset! fetch-commits-id* id)
     (go (let [resp (<! resp-chan)]
           (when (= id @fetch-commits-id*)
-            (js/setTimeout fetch-commits 15000)
+            (js/setTimeout fetch-commits 5000)
             (when (= (:status resp) 200)
               (reset! effective-query-paramerters* current-query-paramerters)
               (reset! tree-commits* (:body resp))))))))
