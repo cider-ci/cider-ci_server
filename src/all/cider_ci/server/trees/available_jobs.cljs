@@ -14,9 +14,10 @@
     [cider-ci.utils.markdown :as markdown]
     [cider-ci.utils.sha1]
 
+    [accountant.core :as accountant]
     [cljs.core.async :as async]
-    [reagent.ratom :as ratom]
     [reagent.core :as reagent]
+    [reagent.ratom :as ratom]
     ))
 
 (def tree-id* (reaction (-> @state/page-state :current-page :tree-id)))
@@ -49,15 +50,22 @@
                        :modal true}
                       :chan resp-chan)
     (go (let [resp (<! resp-chan)]
-          (js/console.log (clj->js resp))))))
+          (js/console.log (clj->js resp))
+          (when (= (:status resp) 201)
+            (accountant/navigate!
+              (str "/cider-ci/ui/workspace/jobs/" (-> resp :body :id )))
+            (js/location.reload))))))
 
 (defn available-jobs-component []
   [:div
    (for [job (-> @available-jobs* (get @tree-id* []))]
      (let [runnable? (:runnable job)
-           panel-class (if runnable? "panel-info" "panel-warning")]
+           panel-class (if runnable? "panel-info" "panel-warning")
+           job-class (if runnable? "runnable-job" "unrunnalbe-job") ]
        [:div.panel {:key (:key job)
-                    :class panel-class}
+                    :data-name (:name job)
+                    :data-key (:key job)
+                    :class (str panel-class " " job-class)}
         [:div.panel-heading
          [:a.btn.btn-primary.btn-xs
           (merge {:href (str "#" (:key job))
