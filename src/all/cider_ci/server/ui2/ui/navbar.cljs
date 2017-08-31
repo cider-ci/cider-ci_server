@@ -84,7 +84,7 @@
        [:li [:a {:href "/cider-ci/docs/"}  [:i.fa.fa-file-text-o] " Documentation "]]
        (navbar.user/admin-actions user*)]])
    (when @user*
-     [:ul.nav.navbar-nav.navbar-right.user (navbar.user/li user* current-url*)])
+     [:ul#user-actions.nav.navbar-nav.navbar-right.user (navbar.user/li user* current-url*)])
    [:div.sign-ins
     (when-not @user*
       [sign-ins current-url* auth-providers])]])

@@ -35,7 +35,6 @@
                  [:span [:span.divider "-"] [:span.pre pre]])]]]]]
     [:div.navbar-left
      [:ul.navbar-nav.nav
-      [:li [:a {:href "/cider-ci/ui/workspace"} [:i.fa.fa-dashboard] " Workspace"]]
       [:li [:a {:href "/cider-ci/repositories/projects/"} [:i.fa.fa-git-square] " Projects "]]
       [:li [:a {:href "/cider-ci/api/api-browser/index.html#/cider-ci/api"} [:i.fa.fa-magic] " API Browser "]]
       [:li [:a {:href "/cider-ci/docs/"}  [:i.fa.fa-file-text-o] " Documentation "] ]
