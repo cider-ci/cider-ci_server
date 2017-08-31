@@ -52,7 +52,6 @@
      [:div.navbar-left
       [:ul.navbar-nav.nav
        [:li [:a {:href (routes/commits-path)} [:i.fa.fa-code-fork] " Commits "]]
-       [:li [:a {:href "/cider-ci/ui/workspace"} [:i.fa.fa-dashboard] " Workspace"]]
        [:li
         [:a.dropdown-toggle
          {:data-toggle "dropdown"

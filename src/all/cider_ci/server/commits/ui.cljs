@@ -29,6 +29,10 @@
 
 (declare page fetch-commits tree-commits* tree-ids*)
 
+(defn page-is-active? []
+  (= (-> @state/page-state :current-page :component)
+     "cider-ci.server.commits.ui/page"))
+
 (def form-data* (reaction (-> @state/client-state :commits-page :form-data)))
 
 (def filter-button
@@ -72,23 +76,6 @@
 (def effective-query-paramerters* (ratom/atom {}))
 
 
-;;; project-and-branch-names ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(def project-and-branch-names* (ratom/atom {}))
-
-; TODO implement reloading on proper conditions
-(defn fetch-project-and-branchnames []
-  (let [url (str "/cider-ci/commits/project-and-branchnames/" )
-        resp-chan (async/chan)]
-    (request/send-off {:url url :method :get}
-                      {:modal false
-                       :title "Fetch Project- and Branch-Names"}
-                      :chan resp-chan)
-    (go (let [resp (<! resp-chan)]
-          (when (= (:status resp) 200)
-            (reset! project-and-branch-names* (:body resp)))))))
-
-
 ;;; fetch-tree-commits ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (def tree-commits* (ratom/atom {}))
@@ -107,11 +94,14 @@
                              :chan resp-chan)]
     (reset! fetch-commits-id* id)
     (go (let [resp (<! resp-chan)]
-          (when (= id @fetch-commits-id*)
-            (js/setTimeout fetch-commits 5000)
-            (when (= (:status resp) 200)
-              (reset! effective-query-paramerters* current-query-paramerters)
-              (reset! tree-commits* (:body resp))))))))
+          (when (= (:status resp) 200)
+            (reset! effective-query-paramerters* current-query-paramerters)
+            (reset! tree-commits* (:body resp)))
+          (js/setTimeout
+            #(when (and (page-is-active?)
+                        (= id @fetch-commits-id*))
+               (fetch-commits))
+            5000)))))
 
 
 ;;; fetch-jobs-summaries ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -130,10 +120,13 @@
                              :chan resp-chan)]
     (reset! fetch-jobs-summaries-id* id)
     (go (let [resp (<! resp-chan)]
-          (when (= id @fetch-jobs-summaries-id*)
-            (js/setTimeout fetch-jobs-summaries 15000)
-            (when (= (:status resp) 200)
-              (reset! jobs-summaries* (:body resp))))))))
+          (when (= (:status resp) 200)
+            (reset! jobs-summaries* (:body resp)))
+          (js/setTimeout
+            #(when (and (page-is-active?)
+                        (= id @fetch-jobs-summaries-id*))
+               (fetch-jobs-summaries))
+            5000)))))
 
 (def tree-ids* (reaction (->> @tree-commits* (map :tree_id) set)))
 
@@ -510,9 +503,7 @@
             :class (str "col-sm-" tree-id-cols)}
       [:span
        [:a.tree-id
-        {:href ;(routes/tree-path {:tree-id (:tree_id tree-commit)})
-         (str "/cider-ci/ui/workspace/trees/" (:tree_id tree-commit))
-         }
+        {:href (routes/tree-path {:tree-id (:tree_id tree-commit)})}
         [:i.fa.fa-tree.text-muted]
         [:span.git-ref.tree-id (->> tree-commit :tree_id (take 6) clojure.string/join)]
         [:span "\u2008"]
@@ -576,9 +567,6 @@
       [:h3 "@effective-query-paramerters*"]
       (pre-component @effective-query-paramerters*)]
      [:div
-      [:h3 "@project-and-branch-names*"]
-      (pre-component @project-and-branch-names*)]
-     [:div
       [:h4 "@tree-ids"]
       (pre-component @tree-ids*)]
      [:div
@@ -590,7 +578,6 @@
      ]))
 
 (defn post-mount-setup [component]
-  (fetch-project-and-branchnames)
   (.tooltip (js/$ (reagent.core/dom-node component))))
 
 (defn page-will-unmount [& args]
