@@ -8,6 +8,7 @@
   (:require
 
     [cider-ci.auth.authorize :as authorize]
+    [cider-ci.utils.ring :refer [wrap-canonicalize-query-params]]
 
     [cheshire.core]
     [compojure.core :as cpj]
@@ -132,7 +133,8 @@
       (sql/order-by [:date :desc]
                     [:tree_id :desc])))
 
-(defn set-per-page-and-offset [query {{per-page :per-page page :page}:query-params}]
+(defn set-per-page-and-offset
+  [query {{per-page :per-page page :page} :query-params}]
   (when (or (-> per-page presence not)
             (-> per-page integer? not)
             (> per-page 100)
@@ -226,21 +228,6 @@
               trees
               (add-commits request))})
 
-;(commits {:query-params {:heads_only true :orphans false}})
-
-(defn canonicalize-query-params [request]
-  (if-let [query-params (:query-params request)]
-    (assoc request :query-params
-           (->> query-params
-                (map (fn [[k v]] [k (cheshire.core/parse-string v)]))
-                (into {})
-                clojure.walk/keywordize-keys))
-    request))
-
-
-(defn wrap-canonicalize-query-params [handler]
-  (fn [request]
-    (-> request canonicalize-query-params handler)))
 
 ;;; project and branch-names ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

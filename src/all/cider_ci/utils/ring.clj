@@ -38,3 +38,21 @@
 (defn delete-session-cookie [response]
   (assoc-in response [:cookies (str SESSION-COOKIE-KEY)]
             {:value "" :path "/" :max-age 0}))
+
+(defn canonicalize-query-params [request]
+  (if-let [query-params (:query-params request)]
+    (assoc request :query-params
+           (->> query-params
+                (map (fn [[k v]] [k (cheshire.core/parse-string v)]))
+                (into {})
+                clojure.walk/keywordize-keys))
+    request))
+
+
+(defn wrap-canonicalize-query-params [handler]
+  (fn [request]
+    (-> request canonicalize-query-params handler)))
+
+
+
+

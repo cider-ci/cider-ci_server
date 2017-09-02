@@ -46,7 +46,7 @@
   [:li {:class (when active? "active")}
    (let [internal [:span
                    [:i.fa.fa-futbol-o]
-                   " Available-Jobs "
+                   " Run job "
                    (when show-tree-id?
                      [tree-id-compact-component tree-id])]]
      (if-not active?

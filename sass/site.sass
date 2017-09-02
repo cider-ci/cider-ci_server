@@ -1,7 +1,41 @@
+// grid, must come before boostrap (?) //////////////////////////////////////////
+
 $grid-columns: 24
 $grid-gutter-width: 20px
 
+
+// boostrap /////////////////////////////////////////////////////////////////////
+
 @import "../vendor/bootstrap/assets/stylesheets/bootstrap"
+
+
+// colors  //////////////////////////////////////////////////////////////////////
+
+$ci-aborted: $brand-warning !default
+$ci-border-color: $table-border-color
+$ci-defective: $brand-warning !default
+$ci-executing: mix($brand-danger,$brand-success) !default
+$ci-dispatching: $ci-executing !default
+$ci-failed: $brand-danger !default
+$ci-passed: $brand-success !default
+$ci-pending: $badge-bg !default
+$ci-skipped: $brand-warning !default
+$ci-unavailable: $badge-bg !default
+
+$ci-aborted-bg: mix($ci-aborted,$body-bg,60%) !default
+$ci-defective-bg: mix($ci-defective,$body-bg,60%) !default
+$ci-dispatching-bg: mix($ci-executing,$body-bg,60%) !default
+$ci-executing-bg: mix($ci-executing,$body-bg,60%) !default
+$ci-failed-bg: mix($ci-failed,$body-bg,60%) !default
+$ci-passed-bg: mix($ci-passed,$body-bg,60%) !default
+$ci-pending-bg: mix($ci-pending,$body-bg,60%) !default
+$ci-skipped-bg: mix($ci-skipped,$body-bg,60%) !default
+$ci-unavailable-bg: mix($ci-unavailable,$body-bg,60%) !default
+
+$ci-states: 'aborted', 'defective', 'dispatching', 'executing', 'failed', 'passed', 'pending', 'skipped', 'unavailable'
+$ci-colors: $ci-aborted, $ci-defective, $ci-dispatching, $ci-executing, $ci-failed, $ci-passed, $ci-pending, $ci-skipped, $ci-unavailable
+$ci-colors-bg: $ci-aborted-bg, $ci-defective-bg, $ci-dispatching-bg, $ci-executing-bg, $ci-failed-bg, $ci-passed-bg, $ci-pending-bg, $ci-skipped-bg, $ci-unavailable-bg
+
 
 $state-executing-text: mix($state-danger-text,$state-success-text) !default
 $state-executing-bg: mix($state-danger-bg,$state-success-bg) !default
@@ -34,6 +68,12 @@ $label-defective-bg: $label-warning-bg !default
   @include label-variant($label-defective-bg)
 
 
+// icons //////////////////////////////////////////////////////////////////////
+
+.fa-spin
+  -webkit-filter: blur(0)
+
+// modals /////////////////////////////////////////////////////////////////////
 
 .modal-danger
   background-color: $alert-danger-bg
@@ -53,6 +93,34 @@ $label-defective-bg: $label-warning-bg !default
   color: $alert-warning-text
   border-radius: $border-radius-large
 
+
+// icons //////////////////////////////////////////////////////////////////////
+
+@mixin spin-counter-clockwise
+  display: inline-block
+  -webkit-animation: spin-cc 5s infinite linear
+  animation: spin-cc 5s infinite linear
+
+.icon-spin-cc
+  @include spin-counter-clockwise
+
+
+// stuff //////////////////////////////////////////////////////////////////////
+
+table.table.jobs-table
+  tr
+    td
+      border: none
+    td.job
+      font-size: 125%
+    &.job
+      @each $state in $ci-states
+        $clr: nth($ci-colors-bg, index($ci-states,$state))
+        &.#{$state}
+          border: none
+          border-top: 0.2em solid $clr
+          background-color: transparentize($clr, 0.8)
+          // @include gradient-vertical(transparentize($clr, 0.8), transparentize($clr, 0.6), 95%, 100%)
 
 a.text
   color: $text-color

@@ -6436,6 +6436,9 @@ button.close {
   .label-defective[href]:hover, .label-defective[href]:focus {
     background-color: #ec971f; }
 
+.fa-spin {
+  -webkit-filter: blur(0); }
+
 .modal-danger {
   background-color: #f2dede;
   border-color: #f2dede;
@@ -6453,6 +6456,52 @@ button.close {
   border-color: #fcf8e3;
   color: #8a6d3b;
   border-radius: 6px; }
+
+.icon-spin-cc {
+  display: inline-block;
+  -webkit-animation: spin-cc 5s infinite linear;
+  animation: spin-cc 5s infinite linear; }
+
+table.table.jobs-table tr td {
+  border: none; }
+table.table.jobs-table tr td.job {
+  font-size: 125%; }
+table.table.jobs-table tr.job.aborted {
+  border: none;
+  border-top: 0.2em solid #f6cd94;
+  background-color: rgba(246, 205, 148, 0.2); }
+table.table.jobs-table tr.job.defective {
+  border: none;
+  border-top: 0.2em solid #f6cd94;
+  background-color: rgba(246, 205, 148, 0.2); }
+table.table.jobs-table tr.job.dispatching {
+  border: none;
+  border-top: 0.2em solid #c2b599;
+  background-color: rgba(194, 181, 153, 0.2); }
+table.table.jobs-table tr.job.executing {
+  border: none;
+  border-top: 0.2em solid #c2b599;
+  background-color: rgba(194, 181, 153, 0.2); }
+table.table.jobs-table tr.job.failed {
+  border: none;
+  border-top: 0.2em solid #e89795;
+  background-color: rgba(232, 151, 149, 0.2); }
+table.table.jobs-table tr.job.passed {
+  border: none;
+  border-top: 0.2em solid #9dd49d;
+  background-color: rgba(157, 212, 157, 0.2); }
+table.table.jobs-table tr.job.pending {
+  border: none;
+  border-top: 0.2em solid #adadad;
+  background-color: rgba(173, 173, 173, 0.2); }
+table.table.jobs-table tr.job.skipped {
+  border: none;
+  border-top: 0.2em solid #f6cd94;
+  background-color: rgba(246, 205, 148, 0.2); }
+table.table.jobs-table tr.job.unavailable {
+  border: none;
+  border-top: 0.2em solid #adadad;
+  background-color: rgba(173, 173, 173, 0.2); }
 
 a.text {
   color: #333333; }

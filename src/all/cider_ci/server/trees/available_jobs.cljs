@@ -107,7 +107,8 @@
        @tree-id*]
       [shared/tree-objects-available-jobs-breadcrumb-component
        @tree-id* :active? true] ]]]
-   [:h1 [:i.fa.fa-futbol-o] " Available-Jobs for "
+   [:h1 " Run job for "
+    [:i.fa.fa-tree]
     [:span {:style {:font-family "monospace"}}
      (->> @tree-id* (take 6) clojure.string/join)]]
    [:p "Tree id: "
