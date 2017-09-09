@@ -5,7 +5,7 @@
     [cljs.core.async.macros :refer [go]]
     )
   (:require
-    [cider-ci.server.trees.ui.shared :as shared]
+    [cider-ci.server.trees.ui-shared :as shared]
     [cider-ci.server.client.request :as request]
     [cider-ci.server.client.routes :as routes]
     [cider-ci.server.client.state :as state]
@@ -50,7 +50,7 @@
                        :modal true}
                       :chan resp-chan)
     (go (let [resp (<! resp-chan)]
-          (js/console.log (clj->js resp))
+          ;(js/console.log (clj->js resp))
           (when (= (:status resp) 201)
             (accountant/navigate!
               (str "/cider-ci/ui/workspace/jobs/" (-> resp :body :id )))

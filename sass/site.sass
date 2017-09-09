@@ -107,6 +107,16 @@ $label-defective-bg: $label-warning-bg !default
 
 // stuff //////////////////////////////////////////////////////////////////////
 
+.page
+  .tree
+    .dependency-visualization
+      g.node
+        @each $state in $ci-states
+          $clr: nth($ci-colors-bg, index($ci-states,$state))
+          &.#{$state}
+            polygon
+              fill: $clr
+
 table.table.jobs-table
   tr
     td

@@ -1,4 +1,4 @@
-(ns cider-ci.server.trees.ui.shared
+(ns cider-ci.server.trees.ui-shared
   (:refer-clojure :exclude [str keyword])
   (:require-macros
     [reagent.ratom :as ratom :refer [reaction]]
@@ -14,14 +14,24 @@
     [cider-ci.utils.sha1]
 
     [cljs.core.async :as async]
-    [reagent.ratom :as ratom]
     [reagent.core :as reagent]
+    [reagent.ratom :as ratom]
     ))
 
 
-(defn tree-id-compact-component [tree-id]
-  [:span {:style {:font-family "monospace"}}
-   (->> tree-id (take 6) clojure.string/join)])
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn tree-id-compact-component
+  [tree-id & [opts]]
+  (let [full (:full opts)]
+    [:span
+     [:span
+      [:i.fa.fa-tree ]]
+     [:span {:style {:font-family "monospace"}}
+      (if full
+        (->> tree-id str (take 40) clojure.string/join)
+        (->> tree-id str (take 6) clojure.string/join))]]))
 
 (defn tree-objects-breadcrumb-component
   [tree-id & {:keys [active? show-tree-id?]
@@ -38,7 +48,6 @@
         internal]
        internal))])
 
-
 (defn tree-objects-available-jobs-breadcrumb-component
   [tree-id & {:keys [active? show-tree-id?]
               :or {:active? false
@@ -54,7 +63,6 @@
         internal]
        internal))])
 
-
 (defn project-configuration-breadcrumb-component
   [tree-id & {:keys [active? show-tree-id?]
               :or {:active? false
@@ -69,3 +77,6 @@
        [:a {:href (routes/project-configuration-path {:tree-id tree-id})}
         internal]
        internal))])
+
+
+

@@ -6462,6 +6462,25 @@ button.close {
   -webkit-animation: spin-cc 5s infinite linear;
   animation: spin-cc 5s infinite linear; }
 
+.page .tree .dependency-visualization g.node.aborted polygon {
+  fill: #f6cd94; }
+.page .tree .dependency-visualization g.node.defective polygon {
+  fill: #f6cd94; }
+.page .tree .dependency-visualization g.node.dispatching polygon {
+  fill: #c2b599; }
+.page .tree .dependency-visualization g.node.executing polygon {
+  fill: #c2b599; }
+.page .tree .dependency-visualization g.node.failed polygon {
+  fill: #e89795; }
+.page .tree .dependency-visualization g.node.passed polygon {
+  fill: #9dd49d; }
+.page .tree .dependency-visualization g.node.pending polygon {
+  fill: #adadad; }
+.page .tree .dependency-visualization g.node.skipped polygon {
+  fill: #f6cd94; }
+.page .tree .dependency-visualization g.node.unavailable polygon {
+  fill: #adadad; }
+
 table.table.jobs-table tr td {
   border: none; }
 table.table.jobs-table tr td.job {

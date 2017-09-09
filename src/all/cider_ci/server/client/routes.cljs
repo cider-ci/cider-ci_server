@@ -3,6 +3,7 @@
     [cider-ci.server.client.state :as state]
     [cider-ci.utils.core :refer [presence keyword str]]
 
+    [cljs.pprint :refer [pprint]]
     [accountant.core :as accountant]
     [cljs-uuid-utils.core :as uuid]
     [secretary.core :as secretary :include-macros true]
@@ -38,6 +39,7 @@
                                     (assoc :heads-only heads-only)
                                     (assoc :per-page per-page)
                                     (assoc :page page))]
+    ;(js/console.log (with-out-str (pprint ["commits-path" {:query-params query-params :parsed-query-params parsed-query-params}])))
     (swap! state/client-state assoc-in [:commits-page :form-data] normalized-query-params)
     (swap! state/page-state assoc :current-page
            {:component "cider-ci.server.commits.ui/page"
