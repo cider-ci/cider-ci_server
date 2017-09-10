@@ -114,7 +114,7 @@
                       :optimizations :advanced
                       :pretty-print  false}}
                :app
-               {:source-paths ["src/all" "src/dev"]
+               {:source-paths ["src/all" "src/dev" "vendor/accountant/src"]
                 :compiler
                 {:main "cider-ci.server.ui2.dev"
                  ;:asset-path "/cider-ci/ui2/js/out"
@@ -148,7 +148,7 @@
                              [pjstadig/humane-test-output "0.8.2"]]
               :plugins [[lein-figwheel "0.5.12"]
                         [lein-sassy "1.0.7"]]
-              :source-paths ["src/all" "src/dev"]
+              :source-paths ["src/all" "src/dev" "vendor/accountant/src"]
               :resource-paths ["target/cljsbuild"]
               :injections [(require 'pjstadig.humane-test-output)
                            (pjstadig.humane-test-output/activate!)]
