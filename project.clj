@@ -73,7 +73,11 @@
  [secretary "1.2.3"]
  [selmer "1.11.0"]
  [timothypratley/patchin "0.3.5"]
- [venantius/accountant "0.2.0" :exclusions [org.clojure/tools.reader]]
+
+ ; included as a submodule for now
+ ; can be removed after changes have been submitted and accepted;
+ ;[venantius/accountant "0.2.0" :exclusions [org.clojure/tools.reader]]
+
  [viz-cljc "0.1.2"]
  [yogthos/config "0.8"]
 
@@ -93,7 +97,7 @@
 
   :resource-paths ["../config" "./config" "./resources"]
 
-  :source-paths ["src/all" "vendor/loom/src" "vendor/cljs-priority-map/src/cljs"]
+  :source-paths ["src/all" "vendor/loom/src" "vendor/accountant/src" "vendor/cljs-priority-map/src/cljs"]
   :test-paths ["src/test"]
 
   :plugins [[lein-environ "1.0.2"]
