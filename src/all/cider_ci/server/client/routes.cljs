@@ -46,6 +46,19 @@
             :query-params normalized-query-params})))
 
 
+;;; connections ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(secretary/defroute connection-path
+  "/cider-ci/connection/" {}
+  (swap! state/page-state assoc :current-page
+         {:component "cider-ci.server.client.connection/page"}))
+
+(secretary/defroute requests-path
+  "/cider-ci/connection/requests/" {}
+  (swap! state/page-state assoc :current-page
+         {:component "cider-ci.server.client.connection.request/page"}))
+
+
 ;;; executor ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (secretary/defroute executor-path

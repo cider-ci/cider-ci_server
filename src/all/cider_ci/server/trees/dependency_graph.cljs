@@ -5,7 +5,7 @@
     [cljs.core.async.macros :refer [go]]
     )
   (:require
-    [cider-ci.server.client.request :as request]
+    [cider-ci.server.client.connection.request :as request]
     [cider-ci.server.client.routes :as routes]
     [cider-ci.server.client.state :as state]
     [cider-ci.server.ui2.shared :refer [pre-component]]
@@ -144,7 +144,7 @@
         url (str "/cider-ci/trees/" id "/project-configuration" )
         resp-chan (async/chan)]
     (request/send-off {:url url :method :get}
-                      {:modal true} :chan resp-chan)
+                      {} :chan resp-chan)
     (go (let [resp (<! resp-chan)]
           (when (= (:status resp) 200)
             (swap! project-configurations*

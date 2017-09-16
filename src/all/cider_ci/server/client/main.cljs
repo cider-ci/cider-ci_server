@@ -6,10 +6,11 @@
   (:require
     [cider-ci.utils.core :refer [keyword str presence]]
 
-    [cider-ci.server.client.request :as request]
+    [cider-ci.server.client.connection.request :as request]
     [cider-ci.server.client.routes :as routes]
     [cider-ci.server.client.state :as state]
     [cider-ci.server.client.ws :as ws]
+    [cider-ci.server.client.connection]
     [cider-ci.server.commits.ui]
     [cider-ci.server.repository.ui]
     [cider-ci.server.trees.ui]
@@ -46,15 +47,17 @@
 
 (def components
   {
+   "cider-ci.server.client.connection/page" cider-ci.server.client.connection/page
+   "cider-ci.server.client.connection.request/page" cider-ci.server.client.connection.request/page
    "cider-ci.server.commits.ui/page" cider-ci.server.commits.ui/page
    "cider-ci.server.create-initial-admin.ui/page" cider-ci.server.create-initial-admin.ui/page
    "cider-ci.server.executors.ui.create/page" cider-ci.server.executors.ui.create/page
    "cider-ci.server.executors.ui.edit/page" cider-ci.server.executors.ui.edit/page
    "cider-ci.server.executors.ui.index/page" cider-ci.server.executors.ui.index/page
    "cider-ci.server.executors.ui.show/page" cider-ci.server.executors.ui.show/page
-   "cider-ci.server.trees.ui/page" cider-ci.server.trees.ui/page
    "cider-ci.server.trees.ui.available-jobs/page" cider-ci.server.trees.ui.available-jobs/page
    "cider-ci.server.trees.ui.project-configuration/page" cider-ci.server.trees.ui.project-configuration/page
+   "cider-ci.server.trees.ui/page" cider-ci.server.trees.ui/page
    "cider-ci.server.users.api-tokens.ui.create/page" cider-ci.server.users.api-tokens.ui.create/page
    "cider-ci.server.users.api-tokens.ui.edit/page" cider-ci.server.users.api-tokens.ui.edit/page
    "cider-ci.server.users.api-tokens.ui.index/page" cider-ci.server.users.api-tokens.ui.index/page

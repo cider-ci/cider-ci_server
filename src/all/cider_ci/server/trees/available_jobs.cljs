@@ -6,7 +6,7 @@
     )
   (:require
     [cider-ci.server.trees.ui-shared :as shared]
-    [cider-ci.server.client.request :as request]
+    [cider-ci.server.client.connection.request :as request]
     [cider-ci.server.client.routes :as routes]
     [cider-ci.server.client.state :as state]
     [cider-ci.server.ui2.shared :refer [pre-component]]
@@ -29,7 +29,7 @@
         url (str "/cider-ci/trees/" id "/available-jobs/" )
         resp-chan (async/chan)]
     (request/send-off {:url url :method :get}
-                      {:modal true} :chan resp-chan)
+                      {} :chan resp-chan)
     (go (let [resp (<! resp-chan)]
           (swap! available-jobs*
                  assoc-in [@tree-id*] (->> resp :body (sort-by :key)))))))
@@ -46,8 +46,7 @@
         url (str "/cider-ci/trees/" id "/jobs/" job-key)
         resp-chan (async/chan)]
     (request/send-off {:url url :method :post}
-                      {:title (str "Create job `" job-key "`")
-                       :modal true}
+                      {:title (str "Create job `" job-key "`")}
                       :chan resp-chan)
     (go (let [resp (<! resp-chan)]
           ;(js/console.log (clj->js resp))

@@ -6,7 +6,7 @@
     )
   (:require
     [cider-ci.constants :as constants :refer [GRID-COLS]]
-    [cider-ci.server.client.request :as request]
+    [cider-ci.server.client.connection.request :as request]
     [cider-ci.server.client.routes :as routes]
     [cider-ci.server.client.state :as state]
     [cider-ci.server.client.utils :refer [humanize-datetime-component]]

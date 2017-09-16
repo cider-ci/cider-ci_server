@@ -6,7 +6,7 @@
     )
   (:require
     [cider-ci.constants :as constants :refer [GRID-COLS]]
-    [cider-ci.server.client.request :as request]
+    [cider-ci.server.client.connection.request :as request]
     [cider-ci.server.client.routes :as routes]
     [cider-ci.server.client.state :as state]
     [cider-ci.server.ui2.constants :refer [CONTEXT]]
@@ -78,9 +78,17 @@
 
 ;;; fetch-tree-commits ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(def tree-commits* (ratom/atom {}))
+(def tree-commits*
+  "Map of tree-commits keyed under the query-params they were fetched for."
+  (ratom/atom {}))
 
-(def fetch-commits-id* (ratom/atom nil))
+(def current-tree-commits*
+  "The tree-commits* for the @current-query-paramerters*"
+  (reaction (get @tree-commits* @current-query-paramerters* [])))
+
+(def fetch-commits-id*
+  "An id to keep track of the most recent and thus (maybe) not outdated request."
+  (ratom/atom nil))
 
 (defn fetch-commits []
   (let [current-query-paramerters @current-query-paramerters*
@@ -94,9 +102,11 @@
                              :chan resp-chan)]
     (reset! fetch-commits-id* id)
     (go (let [resp (<! resp-chan)]
-          (when (= (:status resp) 200)
+          (when (and (= (:status resp) 200) ;success
+                     (= id @fetch-commits-id*) ;still the most recent request
+                     (= current-query-paramerters @current-query-paramerters*)) ;query-params have not changed yet
             (reset! effective-query-paramerters* current-query-paramerters)
-            (reset! tree-commits* (:body resp)))
+            (swap! tree-commits* assoc-in [current-query-paramerters] (:body resp)))
           (js/setTimeout
             #(when (and (page-is-active?)
                         (= id @fetch-commits-id*))
@@ -121,14 +131,16 @@
     (reset! fetch-jobs-summaries-id* id)
     (go (let [resp (<! resp-chan)]
           (when (= (:status resp) 200)
-            (reset! jobs-summaries* (:body resp)))
+            (swap! jobs-summaries* merge (:body resp)))
           (js/setTimeout
             #(when (and (page-is-active?)
                         (= id @fetch-jobs-summaries-id*))
                (fetch-jobs-summaries))
             5000)))))
 
-(def tree-ids* (reaction (->> @tree-commits* (map :tree_id) set)))
+(def tree-ids* (reaction (->> (get @tree-commits* @current-query-paramerters* [])
+                              (map :tree_id)
+                              set)))
 
 (defn tree-ids-component []
   (reagent/create-class
@@ -515,7 +527,7 @@
 
 (defn trees-component []
   [:div.tree-commits
-   (doall (for [tree-commit @tree-commits*]
+   (doall (for [tree-commit (get @tree-commits* @current-query-paramerters* [])]
             (tree-commit-component tree-commit GRID-COLS)))])
 
 

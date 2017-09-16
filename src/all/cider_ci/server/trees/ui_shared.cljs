@@ -5,7 +5,7 @@
     [cljs.core.async.macros :refer [go]]
     )
   (:require
-    [cider-ci.server.client.request :as request]
+    [cider-ci.server.client.connection.request :as request]
     [cider-ci.server.client.routes :as routes]
     [cider-ci.server.client.state :as state]
     [cider-ci.server.ui2.shared :refer [pre-component]]

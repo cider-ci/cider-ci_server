@@ -111,12 +111,12 @@
       create-initial-admin/wrap
       authentication/wrap
       ring.middleware.params/wrap-params
-      (ring.middleware.json/wrap-json-body {:keywords? true})
       ring.middleware.json/wrap-json-response
       wrap-accept
       (ring.middleware.defaults/wrap-defaults {:static {:resources "public"}})
       status/wrap
       (routing/wrap-prefix "/cider-ci")
+      (ring.middleware.json/wrap-json-body {:keywords? true})
       routing/wrap-exception))
 
 ;#### debug ###################################################################

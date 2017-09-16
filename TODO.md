@@ -1,3 +1,1 @@
 
-* CSRF
-* authorization

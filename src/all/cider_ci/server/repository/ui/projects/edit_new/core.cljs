@@ -10,7 +10,7 @@
     [cider-ci.server.repository.ui.projects.edit-new.basics :as edit-new.basics]
     [cider-ci.server.repository.ui.projects.edit-new.permissions :as edit-new.permissions]
 
-    [cider-ci.server.client.request :as request]
+    [cider-ci.server.client.connection.request :as request]
 
     [accountant.core :as accountant]
     [secretary.core :as secretary :include-macros true]

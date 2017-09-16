@@ -1,27 +1,29 @@
-(ns cider-ci.server.client.request
+(ns cider-ci.server.client.connection.request
   (:refer-clojure :exclude [str keyword send-off])
   (:require-macros
     [reagent.ratom :as ratom :refer [reaction]]
     [cljs.core.async.macros :refer [go]]
     )
   (:require
-    [cider-ci.server.client.state :as state]
+    [cider-ci.server.client.connection.state :as state]
+    [cider-ci.server.client.state :as global-state]
     [cider-ci.env]
     [cider-ci.utils.core :refer [str keyword deep-merge presence]]
     [cider-ci.utils.url]
 
-    [cljs.core.async :as async]
     [cljs-http.client :as http]
     [cljs-uuid-utils.core :as uuid]
+    [cljs.core.async :as async]
     [cljs.core.async :refer [timeout]]
+    [clojure.pprint :refer [pprint]]
     [goog.string :as gstring]
     [goog.string.format]
     [reagent.core :as r]
     ))
 
-(defn csrf-token []
-  (-> @state/client-state :connection :csrf-token))
 
+(defn csrf-token []
+  (-> @state/requests* :connection :csrf-token))
 
 ;;; autoremove ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -30,22 +32,21 @@
 
 (defn autoremove [id meta]
   (go (<! (timeout (:autoremove-delay meta)))
-      (swap! state/client-state assoc-in
+      (swap! state/requests* assoc-in
              [:requests id :meta :modal] false )
       (<! (timeout 30000))
-      (swap! state/client-state update :requests
+      (swap! state/requests* update :requests
              (fn [rqs] (dissoc rqs id)))))
 
 ;;; request per se ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(def META-DEFAULTS {:modal true
-                    :autoremove-on-success true
+(def META-DEFAULTS {:autoremove-on-success true
                     :autoremove-delay 1000})
 
 (defn update-progress [id progress-chan]
   (go (let [progress (<! progress-chan)]
         ;(js/console.log (clj->js {:progress progress}))
-        (swap! state/client-state
+        (swap! state/requests*
                (fn [state id progress]
                  (if-not (-> state :requests (get id))
                    state
@@ -55,8 +56,8 @@
 (defn request [id req meta chan callback]
   (go (<! (timeout cider-ci.env/request-delay))
       (let [resp (<! (http/request req))]
-        (when (-> @state/client-state :requests (get id))
-          (swap! state/client-state assoc-in [:requests id :response] resp)
+        (when (-> @state/requests* :requests (get id))
+          (swap! state/requests* assoc-in [:requests id :response] resp)
           (when (and (response-success? resp)
                      (:autoremove-on-success meta))
             (autoremove id meta)))
@@ -73,18 +74,20 @@
                          :progress progress-chan}
                         req-opts)
         meta (deep-merge META-DEFAULTS meta-opts)]
-    (swap! state/client-state assoc-in [:requests id]
+    (swap! state/requests* assoc-in [:requests id]
            {:request req :meta meta})
     (update-progress id progress-chan)
     (request id req meta chan callback)
     id))
+
+(def query-string http-client/generate-query-string)
 
 
 ;;; ui modal ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (def modal-request
   (do (reaction
-        (let [[id r]  (->> @state/client-state :requests
+        (let [[id r]  (->> @state/requests* :requests
                            (filter (fn [[_ r]] (-> r :meta :modal)))
                            first)]
           (when r
@@ -141,8 +144,50 @@
            [:div.clearfix]
            [:button.btn
             {:class (str "btn-" bootstrap-status)
-             :on-click #(swap! state/client-state
+             :on-click #(swap! state/requests*
                                update-in [:requests]
                                (fn [rx] (dissoc rx (:id request))))}
             "Dismiss"]]]]]
        [:div.modal-backdrop {:style {:opacity "0.2"}}]])))
+
+
+;;; icon ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(def fetching?*
+  (reaction
+    (->> @state/requests*
+         :requests
+         (map (fn [[id r]] r))
+         (map :response)
+         (map map?)
+         (map not)
+         (filter identity)
+         first)))
+
+(defn icon-component []
+  (if @fetching?*
+    [:i.fa.fa-refresh.fa-spin]
+    [:i.fa.fa-refresh]))
+
+;;; ui page ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn debug-component []
+  (if-not (:debug @global-state/client-state)
+    [:div ]
+    [:div.requests.debug
+     [:hr]
+     [:h2 "Requests Debug"]
+     [:div.fetching?*
+      [:h3 "@fetching?*"]
+      [:pre (with-out-str (pprint @fetching?*))] ]
+     [:div.requests*
+      [:h3 "@requests*"]
+      [:pre (with-out-str (pprint @state/requests*))]]]))
+
+(defn page []
+  [:div.page.requests
+   [:h1 "Requests"]
+   [debug-component]
+   ])
+
+

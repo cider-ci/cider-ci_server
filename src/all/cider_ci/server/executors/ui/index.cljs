@@ -9,7 +9,7 @@
     )
   (:require
     [accountant.core :as accountant]
-    [cider-ci.server.client.request :as request]
+    [cider-ci.server.client.connection.request :as request]
     [cider-ci.server.client.routes :as routes]
     [cider-ci.server.client.state :as state]
     [cider-ci.server.client.utils :refer [humanize-datetime humanize-datetime-component]]

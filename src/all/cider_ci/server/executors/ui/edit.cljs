@@ -8,7 +8,7 @@
     [reagent.ratom :as ratom :refer [reaction]]
     )
   (:require
-    [cider-ci.server.client.request :as request]
+    [cider-ci.server.client.connection.request :as request]
     [cider-ci.server.client.routes :as routes]
     [cider-ci.server.client.state :as state]
 

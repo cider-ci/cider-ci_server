@@ -42,6 +42,7 @@
 (defonce client-state
   (reagent/atom {:debug false
                  :commits-page {:form-data {}}
+                 :window-width (.-innerWidth js/window)
                  }))
 
 (js/setInterval #(swap! client-state

@@ -1,5 +1,6 @@
 (ns cider-ci.server.ui2.ui.navbar
   (:require
+    [cider-ci.server.client.connection :as connection]
     [cider-ci.server.client.routes :as routes]
     [cider-ci.server.client.state :as state]
     [cider-ci.server.ui2.constants :refer [CONTEXT]]
@@ -83,7 +84,13 @@
        [:li [:a {:href "/cider-ci/docs/"}  [:i.fa.fa-file-text-o] " Documentation "]]
        (navbar.user/admin-actions user*)]])
    (when @user*
-     [:ul#user-actions.nav.navbar-nav.navbar-right.user (navbar.user/li user* current-url*)])
+     [:div.navbar-right
+      [:ul#user-actions.nav.navbar-nav.user
+       [:li
+        [:a {:href (routes/requests-path)}
+         [connection/requests-icon-component]
+         " Requests "]]
+       [navbar.user/li user* current-url*]]])
    [:div.sign-ins
     (when-not @user*
       [sign-ins current-url* auth-providers])]])
