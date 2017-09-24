@@ -9,8 +9,8 @@
     [cider-ci.server.client.connection.request :as request]
     [cider-ci.server.client.routes :as routes]
     [cider-ci.server.client.state :as state]
-    [cider-ci.server.ui2.constants :refer [CONTEXT]]
-    [cider-ci.server.ui2.shared :refer [pre-component]]
+    [cider-ci.server.client.constants :refer [CONTEXT]]
+    [cider-ci.server.client.shared :refer [pre-component]]
     [cider-ci.utils.core :refer [keyword str presence]]
     [cider-ci.server.repository.ui.projects.shared :refer [humanize-datetime]]
 

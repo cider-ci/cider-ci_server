@@ -10,7 +10,7 @@
     [cider-ci.server.client.state :as state]
     [cider-ci.server.trees.ui-shared :as shared :refer [tree-id*]]
     [cider-ci.server.trees.dependency-graph :as dependency-graph :refer [tree-id*]]
-    [cider-ci.server.ui2.shared :refer [pre-component pre-component-fipp pre-component-pprint]]
+    [cider-ci.server.client.shared :refer [pre-component pre-component-fipp pre-component-pprint]]
     [cider-ci.utils.core :refer [keyword str presence]]
     [cider-ci.utils.markdown :as markdown]
     [cider-ci.utils.sha1]

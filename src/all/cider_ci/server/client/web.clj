@@ -5,23 +5,68 @@
 (ns cider-ci.server.client.web
   (:refer-clojure :exclude [str keyword])
   (:require [cider-ci.utils.core :refer [keyword str]])
+
   (:require
-    [cider-ci.server.ui2.ui.navbar.release :as navbar.release]
+    [cider-ci.server.client.ui.navbar.release :as navbar.release]
+    [cider-ci.server.client.constants :refer [CONTEXT]]
+
+    [cider-ci.server.client.web.shared :as web.shared :refer [dynamic]]
+    [cider-ci.server.client.welcome-page.be :as welcome-page]
+    [cider-ci.server.client.root :as root]
+
+    [cider-ci.auth.anti-forgery :as anti-forgery]
+    [cider-ci.auth.authorize :as authorize]
     [cider-ci.utils.config :as config :refer [get-config]]
+    [cider-ci.utils.ring]
+    [cider-ci.utils.routing :as routing]
+    [cider-ci.utils.status :as status]
 
     [cider-ci.env]
     [hiccup.page :refer [include-js include-css html5]]
     [clojure.data.json :as json]
+    [clojure.walk :refer [keywordize-keys]]
+    [clj-time.core :as time]
+    [clojure.data :as data]
+    [compojure.core :as cpj]
+    [compojure.handler :as cpj.handler]
+    [ring.adapter.jetty :as jetty]
+    [ring.middleware.accept]
+    [ring.middleware.cookies :as cookies]
+    [ring.middleware.defaults]
+    [ring.middleware.json]
+    [ring.middleware.params]
+    [ring.util.response :refer [charset]]
+    [ring.util.response]
 
     [clj-logging-config.log4j :as logging-config]
     [clojure.tools.logging :as logging]
     [logbug.debug :as debug :refer [I> I>> identity-with-logging]]
     [logbug.ring :refer [wrap-handler-with-logging]]
     [logbug.thrown :as thrown]
-
     ))
 
-(def CONTEXT "/cider-ci")
+
+
+(def routes
+  (cpj/routes
+    (cpj/GET "/" [] #'dynamic)
+    (cpj/GET "/initial-admin" [] #'dynamic)
+    (cpj/GET "/debug" [] #'dynamic)
+    (cpj/GET "/*" [] #'dynamic)
+    ))
+
+(defn build-main-handler [context]
+  (I> wrap-handler-with-logging
+      routes
+      welcome-page/wrap
+      ; authentication and primitive authorization
+      cider-ci.utils.ring/wrap-keywordize-request
+      cookies/wrap-cookies
+      ring.middleware.params/wrap-params
+      (ring.middleware.defaults/wrap-defaults {:static {:resources "public"}})
+      status/wrap
+      (routing/wrap-prefix context)
+      routing/wrap-exception))
 
 (defn head []
   [:head
@@ -52,7 +97,7 @@
   [:div.navbar.navbar-default {:role :navigation}
    [:div.container-fluid
     [:div.navbar-header
-     [:a.navbar-brand {:href "/cider-ci/ui2/"}
+     [:a.navbar-brand {:href "/cider-ci/client/"}
       (navbar.release/navbar-release release)]]
     [:div#nav]]])
 
@@ -85,7 +130,7 @@
     (->> request :route-params :*
          (re-matches #"/server/ws.*")) (handler request)
     (->> request :route-params :*
-         (re-matches #"/ui2/session/oauth/\w+/sign-in")) (handler request)
+         (re-matches #"/session/oauth/\w+/sign-in")) (handler request)
     (and (= (-> request :request-method) :get)
          (= (-> request :accept :mime) :html)) {:status 200 :body (html request)}
     :else (handler request)))
@@ -95,5 +140,9 @@
     (dispatch request handler)))
 
 ;#### debug ###################################################################
-
-;(debug/debug-ns *ns*)
+;(logging-config/set-logger! :level :debug)
+;(logging-config/set-logger! :level :info)
+;(debug/debug-ns 'cider-ci.auth.anti-forgery)
+;(debug/debug-ns 'cider-ci.auth.session)
+;(debug/debug-ns 'cider-ci.auth.http-basic)
+(debug/debug-ns *ns*)

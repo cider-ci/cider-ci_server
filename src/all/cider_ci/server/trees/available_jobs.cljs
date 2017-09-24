@@ -9,7 +9,7 @@
     [cider-ci.server.client.connection.request :as request]
     [cider-ci.server.client.routes :as routes]
     [cider-ci.server.client.state :as state]
-    [cider-ci.server.ui2.shared :refer [pre-component]]
+    [cider-ci.server.client.shared :refer [pre-component]]
     [cider-ci.utils.core :refer [keyword str presence]]
     [cider-ci.utils.markdown :as markdown]
     [cider-ci.utils.sha1]
@@ -20,19 +20,32 @@
     [reagent.ratom :as ratom]
     ))
 
+(defn page-is-active? []
+  (= (-> @state/page-state :current-page :component)
+     "cider-ci.server.trees.ui.available-jobs/page"))
+
 (def tree-id* (reaction (-> @state/page-state :current-page :tree-id)))
 
 (def available-jobs* (ratom/atom {}))
+
+(def fetch-available-jobs-id* (ratom/atom nil))
 
 (defn fetch-available-jobs []
   (let [id @tree-id*
         url (str "/cider-ci/trees/" id "/available-jobs/" )
         resp-chan (async/chan)]
+    (reset! fetch-available-jobs-id* id)
     (request/send-off {:url url :method :get}
                       {} :chan resp-chan)
     (go (let [resp (<! resp-chan)]
-          (swap! available-jobs*
-                 assoc-in [@tree-id*] (->> resp :body (sort-by :key)))))))
+          (when (= (:status resp) 200)
+            (swap! available-jobs*
+                   assoc-in [@tree-id*] (->> resp :body (sort-by :key))))
+          (js/setTimeout
+            #(when (and (page-is-active?)
+                        (= id @fetch-available-jobs-id*))
+               (fetch-available-jobs))
+            5000)))))
 
 (defn setup-page-data [_]
   (fetch-available-jobs))
@@ -46,7 +59,8 @@
         url (str "/cider-ci/trees/" id "/jobs/" job-key)
         resp-chan (async/chan)]
     (request/send-off {:url url :method :post}
-                      {:title (str "Create job `" job-key "`")}
+                      {:title (str "Create job `" job-key "`")
+                       :retry #(submit-run-job job-key)}
                       :chan resp-chan)
     (go (let [resp (<! resp-chan)]
           ;(js/console.log (clj->js resp))
@@ -66,9 +80,8 @@
                     :data-key (:key job)
                     :class (str panel-class " " job-class)}
         [:div.panel-heading
-         [:a.btn.btn-primary.btn-xs
-          (merge {:href (str "#" (:key job))
-                  :on-click #(submit-run-job (:key job))}
+         [:button.btn.btn-primary.btn-xs
+          (merge {:on-click #(submit-run-job (:key job))}
                  (when-not runnable?
                    {:disabled true})) "Run"] " " (:name job) " "]
         (when-let [description (-> job :description presence)]

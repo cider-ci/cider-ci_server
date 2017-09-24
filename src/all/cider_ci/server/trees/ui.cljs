@@ -11,7 +11,7 @@
     [cider-ci.server.client.state :as state]
     [cider-ci.server.client.utils :refer [humanize-datetime-component]]
     [cider-ci.server.trees.ui-shared :as shared]
-    [cider-ci.server.ui2.shared :refer [pre-component]]
+    [cider-ci.server.client.shared :refer [pre-component]]
     [cider-ci.shared.icons :as icons]
     [cider-ci.utils.core :refer [keyword str presence]]
     [cider-ci.utils.markdown :as markdown]

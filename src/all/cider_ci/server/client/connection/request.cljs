@@ -11,10 +11,11 @@
     [cider-ci.utils.core :refer [str keyword deep-merge presence]]
     [cider-ci.utils.url]
 
-    [cljs-http.client :as http]
+    [cljs-http.client :as http-client]
     [cljs-uuid-utils.core :as uuid]
     [cljs.core.async :as async]
     [cljs.core.async :refer [timeout]]
+    [cljsjs.moment]
     [clojure.pprint :refer [pprint]]
     [goog.string :as gstring]
     [goog.string.format]
@@ -55,9 +56,14 @@
 
 (defn request [id req meta chan callback]
   (go (<! (timeout cider-ci.env/request-delay))
-      (let [resp (<! (http/request req))]
+      (let [resp (<! (http-client/request req))]
         (when (-> @state/requests* :requests (get id))
-          (swap! state/requests* assoc-in [:requests id :response] resp)
+          (swap! state/requests*
+                 update-in [:requests id]
+                 (fn [req resp]
+                   (merge req {:response resp
+                               :responted_at (js/moment)}))
+                 resp)
           (when (and (response-success? resp)
                      (:autoremove-on-success meta))
             (autoremove id meta)))
@@ -75,7 +81,12 @@
                         req-opts)
         meta (deep-merge META-DEFAULTS meta-opts)]
     (swap! state/requests* assoc-in [:requests id]
-           {:request req :meta meta})
+           {:request req
+            :meta meta
+            :id id
+            :key id
+            :requested_at (js/moment)
+            })
     (update-progress id progress-chan)
     (request id req meta chan callback)
     id))
@@ -85,10 +96,11 @@
 
 ;;; ui modal ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(def modal-request
+(def current-modal-request
   (do (reaction
         (let [[id r]  (->> @state/requests* :requests
-                           (filter (fn [[_ r]] (-> r :meta :modal)))
+                           (filter (fn [[_ r]] (or (not= :get (-> r :request :method))
+                                                   (-> r :meta :modal))))
                            first)]
           (when r
             (assoc r :id id))))))
@@ -108,7 +120,7 @@
        :style {:width (str (* progress-part 100) "%")}}]]))
 
 (defn modal-component []
-  (when-let [request @modal-request]
+  (when-let [request @current-modal-request]
     (let [status (cond (= nil (-> request :response)) :pending
                        (-> request :response :success) :success
                        :else :error)
@@ -147,7 +159,16 @@
              :on-click #(swap! state/requests*
                                update-in [:requests]
                                (fn [rx] (dissoc rx (:id request))))}
-            "Dismiss"]]]]]
+            [:i.fa.fa-remove] " Dismiss "]
+           (when-let [retry-fn (and (= status :error)
+                                    (-> request :meta :retry))]
+             [:button.btn.btn-primary
+              {:on-click  (fn [_]
+                            (swap! state/requests*
+                                   update-in [:requests]
+                                   (fn [rx] (dissoc rx (:id request))))
+                            (retry-fn))}
+              [:i.fa.fa-recycle] " Retry"])]]]]
        [:div.modal-backdrop {:style {:opacity "0.2"}}]])))
 
 
@@ -169,6 +190,7 @@
     [:i.fa.fa-refresh.fa-spin]
     [:i.fa.fa-refresh]))
 
+
 ;;; ui page ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn debug-component []
@@ -184,9 +206,29 @@
       [:h3 "@requests*"]
       [:pre (with-out-str (pprint @state/requests*))]]]))
 
+(defn request-component [request]
+  [:div.request.panel {:class "panel-default" :key (:key request)}
+   [:div.panel-heading
+    [:h3.panel-title (or (-> request :meta :title) (-> request :id))]]
+   [:div.panel-body
+    [:pre (with-out-str (pprint request))]
+    ]])
+
+(defn requests-component []
+  [:section.requests
+   (doall
+     (for [[_ request] (:requests @state/requests*)]
+       [request-component request]
+       ))])
+
 (defn page []
   [:div.page.requests
-   [:h1 "Requests"]
+   [:div.title
+    [:h1 "Requests"]
+    [:p "This page shows the status of the ongoing and recently finished HTTP requests. "
+     "It is useful for debugging connection problems."
+     ]]
+   [requests-component]
    [debug-component]
    ])
 

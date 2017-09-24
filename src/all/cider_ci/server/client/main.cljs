@@ -7,21 +7,21 @@
     [cider-ci.utils.core :refer [keyword str presence]]
 
     [cider-ci.server.client.connection.request :as request]
+    [cider-ci.server.client.connection.socket :as socket]
     [cider-ci.server.client.routes :as routes]
     [cider-ci.server.client.state :as state]
-    [cider-ci.server.client.ws :as ws]
-    [cider-ci.server.client.connection]
+    [cider-ci.server.client.connection :as connection]
     [cider-ci.server.commits.ui]
     [cider-ci.server.repository.ui]
     [cider-ci.server.trees.ui]
     [cider-ci.server.trees.ui.available-jobs]
     [cider-ci.server.trees.ui.project-configuration]
-    [cider-ci.server.ui2.constants :refer [CONTEXT]]
-    [cider-ci.server.ui2.session.password.ui]
-    [cider-ci.server.ui2.ui.debug :as debug]
-    [cider-ci.server.ui2.ui.navbar]
-    [cider-ci.server.ui2.ui.root]
-    [cider-ci.server.ui2.welcome-page.ui]
+    [cider-ci.server.client.constants :refer [CONTEXT]]
+    [cider-ci.server.session.password.ui]
+    [cider-ci.server.client.ui.debug :as debug]
+    [cider-ci.server.client.ui.navbar]
+    [cider-ci.server.client.ui.root]
+    [cider-ci.server.client.welcome-page.ui]
 
     [cider-ci.server.executors.ui.create]
     [cider-ci.server.executors.ui.edit]
@@ -49,6 +49,7 @@
   {
    "cider-ci.server.client.connection/page" cider-ci.server.client.connection/page
    "cider-ci.server.client.connection.request/page" cider-ci.server.client.connection.request/page
+   "cider-ci.server.client.connection.socket/page" cider-ci.server.client.connection.socket/page
    "cider-ci.server.commits.ui/page" cider-ci.server.commits.ui/page
    "cider-ci.server.create-initial-admin.ui/page" cider-ci.server.create-initial-admin.ui/page
    "cider-ci.server.executors.ui.create/page" cider-ci.server.executors.ui.create/page
@@ -122,7 +123,7 @@
   (when-let [app (.getElementById js/document "app")]
     (reagent/render [current-page] app))
   (when-let [nav-container (.getElementById js/document "nav")]
-    (reagent/render [cider-ci.server.ui2.ui.navbar/navbar
+    (reagent/render [cider-ci.server.client.ui.navbar/navbar
                      user* current-url* authentication-providers*]
                     nav-container)))
 
@@ -138,4 +139,4 @@
     (mount)
     (state/init)
     (when @user*
-      (ws/init))))
+      (connection/init))))

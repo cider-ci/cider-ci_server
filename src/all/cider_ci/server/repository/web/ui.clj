@@ -10,7 +10,7 @@
     [cider-ci.server.repository.constants :refer :all]
     [cider-ci.server.repository.web.shared :refer :all]
 
-    [cider-ci.server.ui2.web.shared]
+    [cider-ci.server.client.web.shared]
 
     [cider-ci.auth.authorize :as authorize]
 
@@ -26,8 +26,8 @@
     [logbug.thrown :as thrown]
     ))
 
-(def ui2-handler
-  (-> cider-ci.server.ui2.web.shared/dynamic
+(def client-handler
+  (-> cider-ci.server.client.web.shared/dynamic
       (authorize/wrap-require! {:user true})))
 
 (defn ui-filter [req]
@@ -35,8 +35,8 @@
   otherwise returns nil."
   (apply
     (cpj/routes
-      (cpj/GET "/projects/*" _ ui2-handler)
-      (cpj/GET "/ui*" _ ui2-handler)
+      (cpj/GET "/projects/*" _ client-handler)
+      (cpj/GET "/client*" _ client-handler)
       (cpj/ANY "*" _  (fn [request] (logging/warn "HTTP 444"  request)
                         {:status 444
                          :body "The repository-ui does not accept this request."}))

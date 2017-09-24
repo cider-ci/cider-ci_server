@@ -15,7 +15,6 @@
  [aleph "0.4.3"]
  [camel-snake-kebab "0.4.0"]
  [cheshire "5.7.1"]
- [cheshire "5.7.1"]
  [cider-ci/open-session "1.3.0"]
  [clj-http "3.6.1"]
  [clj-time "0.14.0"]
@@ -32,7 +31,6 @@
  [com.mchange/c3p0 "0.9.5.2"]
  [com.taoensso/sente "1.11.0"]
  [compojure "1.6.0"]
- [drtom/clj-uuid  "0.1.7"]
  [drtom/clj-uuid "0.1.7"]
  [drtom/honeysql "2.0.0-ALPHA+1"]
  [environ "1.1.0"]
@@ -41,9 +39,7 @@
  [hickory "0.7.1"]
  [io.forward/yaml "1.0.6"]
  [joda-time "2.9.9"]
- [joda-time "2.9.9"]
  [log4j/log4j "1.2.17" :exclusions [javax.mail/mail javax.jms/jms com.sun.jdmk/jmxtools com.sun.jmx/jmxri]]
- [logbug "4.2.2"]
  [logbug "4.2.2"]
  [markdown-clj "0.9.99"]
  [me.raynes/fs "1.4.6"]
@@ -116,8 +112,8 @@
                :app
                {:source-paths ["src/all" "src/dev" "vendor/accountant/src"]
                 :compiler
-                {:main "cider-ci.server.ui2.dev"
-                 ;:asset-path "/cider-ci/ui2/js/out"
+                {:main "cider-ci.server.client.dev"
+                 ;:asset-path "/cider-ci/client/js/out"
                  :asset-path "/cider-ci/js/out"
                  :output-to "target/cljsbuild/public/js/app.js"
                  :output-dir "target/cljsbuild/public/js/out"

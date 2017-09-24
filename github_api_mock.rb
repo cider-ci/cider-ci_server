@@ -59,7 +59,7 @@ USER = USERS[(ENV['GITHUB_MOCK_USER'].presence || 'adam')]
 
 CALLBACK_URL = 'http://localhost:' \
    << (ENV['SERVER_HTTP_PORT'].presence || '8881') \
-   << '/cider-ci/ui2/session/oauth/github/sign-in'
+   << '/cider-ci/session/oauth/github/sign-in'
 
 def find_user_by_access_token(access_token)
   USERS.find { |k, v| v['access_token'] == access_token }.try(:second)

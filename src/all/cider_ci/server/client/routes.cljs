@@ -58,6 +58,10 @@
   (swap! state/page-state assoc :current-page
          {:component "cider-ci.server.client.connection.request/page"}))
 
+(secretary/defroute socket-path
+  "/cider-ci/connection/socket/" {}
+  (swap! state/page-state assoc :current-page
+         {:component "cider-ci.server.client.connection.socket/page"}))
 
 ;;; executor ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

@@ -18,3 +18,5 @@
 (def utf8-times "\u00d7")
 
 (def utf8-erase-to-right "\u2326")
+
+(def utf8-narrow-no-break-space "\u202F")

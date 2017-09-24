@@ -12,6 +12,7 @@
     [cider-ci.server.api.web]
     [cider-ci.server.builder.web]
     [cider-ci.server.client.web]
+    [cider-ci.server.client.web]
     [cider-ci.server.commits.web]
     [cider-ci.server.create-initial-admin.web :as create-initial-admin]
     [cider-ci.server.dispatcher.web]
@@ -19,9 +20,9 @@
     [cider-ci.server.jobs.web]
     [cider-ci.server.push]
     [cider-ci.server.repository.web]
+    [cider-ci.server.session.web]
     [cider-ci.server.storage.web]
     [cider-ci.server.trees]
-    [cider-ci.server.ui2.web]
     [cider-ci.server.users.web]
     [cider-ci.server.web]
 
@@ -60,11 +61,11 @@
 (def storage-handler
   (cider-ci.server.storage.web/build-main-handler "/storage"))
 
-(def ui2-handler
-  (cider-ci.server.ui2.web/build-main-handler "/ui2" ))
+(def client-handler
+  (cider-ci.server.client.web/build-main-handler "/client" ))
 
-(def redirect-to-ui2
-  (ring.util.response/redirect "/cider-ci/ui2/"))
+(def redirect-to-client
+  (ring.util.response/redirect "/cider-ci/client/"))
 
 (def push-handler
   (I> wrap-handler-with-logging
@@ -83,13 +84,14 @@
     (cpj/ANY "/jobs/*" [] cider-ci.server.jobs.web/routes)
     (cpj/ANY "/repositories/*" [] repositories-handler)
     (cpj/ANY "/storage/*" [] storage-handler)
-    (cpj/ANY "/ui2/*" [] ui2-handler)
+    (cpj/ANY "/client/*" [] client-handler)
     (cpj/ANY "/users/*" [] cider-ci.server.users.web/routes)
     (cpj/ANY "/api" [] (ring.util.response/redirect "/cider-ci/api/"))
     (cpj/ANY "/storage" [] (ring.util.response/redirect "/cider-ci/storage/"))
+    (cpj/ANY "/session*" [] #'cider-ci.server.session.web/routes)
     (cpj/ANY "/server/ws*" [] cider-ci.server.push/routes)
     (cpj/ANY "/trees/*" []  cider-ci.server.trees/routes)
-    (cpj/GET "/" [] redirect-to-ui2)
+    (cpj/GET "/" [] redirect-to-client)
     (cpj/ANY "*" [] dead-end-handler)))
 
 ;;; default wrappers ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

@@ -7,8 +7,8 @@
   (:require
     [cider-ci.server.client.routes :as routes]
     [cider-ci.server.client.state :as state]
-    [cider-ci.server.ui2.constants :refer [CONTEXT]]
-    [cider-ci.server.ui2.session.password.ui :as session.password]
+    [cider-ci.server.client.constants :refer [CONTEXT]]
+    [cider-ci.server.session.password.ui :as session.password]
     [cider-ci.utils.core :refer [keyword str presence]]
     [cljs-http.client :as http]
     [fipp.edn :refer [pprint]]

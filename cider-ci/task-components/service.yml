@@ -16,7 +16,7 @@ scripts:
   service-is-running:
     timeout: 15 seconds
     environment_variables:
-      STATUS_URL: http://localhost:{{SERVER_HTTP_PORT}}/cider-ci/ui2/status
+      STATUS_URL: http://localhost:{{SERVER_HTTP_PORT}}/cider-ci/client/status
     body: |
       #!/usr/bin/env bash
       set -eux

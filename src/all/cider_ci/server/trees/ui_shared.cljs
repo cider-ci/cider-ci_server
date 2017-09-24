@@ -8,7 +8,7 @@
     [cider-ci.server.client.connection.request :as request]
     [cider-ci.server.client.routes :as routes]
     [cider-ci.server.client.state :as state]
-    [cider-ci.server.ui2.shared :refer [pre-component]]
+    [cider-ci.server.client.shared :refer [pre-component]]
     [cider-ci.utils.core :refer [keyword str presence]]
     [cider-ci.utils.markdown :as markdown]
     [cider-ci.utils.sha1]

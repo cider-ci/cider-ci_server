@@ -6,3 +6,4 @@
 
 (def requests* (reagent/atom {}))
 
+(def socket* (reagent/atom {}))

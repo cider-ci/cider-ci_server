@@ -2,7 +2,9 @@
   (:refer-clojure :exclude [str keyword])
   (:require
     [cider-ci.server.client.routes :as routes]
-    [cider-ci.server.client.connection.request :as request]))
+    [cider-ci.server.client.connection.request :as request]
+    [cider-ci.server.client.connection.socket :as socket]
+    ))
 
 (defn page []
   [:div.page.connection
@@ -24,3 +26,10 @@
     ]])
 
 (def requests-icon-component request/icon-component)
+
+(def socket-icon-component socket/icon-component)
+
+
+(defn init []
+  (socket/init)
+  )
