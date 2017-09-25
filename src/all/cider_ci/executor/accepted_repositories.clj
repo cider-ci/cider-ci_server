@@ -7,7 +7,6 @@
   (:require [cider-ci.utils.core :refer :all])
   (:require
     [cider-ci.executor.utils.tags :refer :all]
-    [cider-ci.utils.daemon :as daemon :refer [defdaemon]]
     [cider-ci.utils.fs :refer :all]
     [cider-ci.utils.config :as config :refer [get-config merge-into-conf]]
 

@@ -14,7 +14,7 @@
     [cider-ci.server.executors]
     [cider-ci.server.web :as web]
     [cider-ci.server.state]
-    [cider-ci.server.push]
+    [cider-ci.server.socket]
     [cider-ci.utils.app :as app]
 
     [clojure.pprint :refer [pprint]]
@@ -63,7 +63,7 @@
     (cider-ci.server.storage.main/initialize)
     (cider-ci.server.executors/initialize)
     (cider-ci.server.state/initialize)
-    (cider-ci.server.push/initialize)))
+    (cider-ci.server.socket/initialize)))
 
 (defn -main [& args]
   (let [{:keys [options arguments errors summary]}

@@ -12,7 +12,6 @@
     [cider-ci.server.migrations.schema-migrations :as schema-migrations]
     [cider-ci.server.migrations.433]
     [cider-ci.server.migrations.434]
-    [cider-ci.server.push]
     [cider-ci.server.repository.main]
     [cider-ci.server.state]
     [cider-ci.server.storage.main]

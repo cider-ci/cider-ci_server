@@ -18,7 +18,7 @@
     [cider-ci.server.dispatcher.web]
     [cider-ci.server.executors]
     [cider-ci.server.jobs.web]
-    [cider-ci.server.push]
+    [cider-ci.server.socket]
     [cider-ci.server.repository.web]
     [cider-ci.server.session.web]
     [cider-ci.server.storage.web]
@@ -69,7 +69,7 @@
 
 (def push-handler
   (I> wrap-handler-with-logging
-      cider-ci.server.push/routes
+      cider-ci.server.socket/routes
             (routing/wrap-prefix "/cider-ci/server")))
 
 ;;; routes ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -89,7 +89,7 @@
     (cpj/ANY "/api" [] (ring.util.response/redirect "/cider-ci/api/"))
     (cpj/ANY "/storage" [] (ring.util.response/redirect "/cider-ci/storage/"))
     (cpj/ANY "/session*" [] #'cider-ci.server.session.web/routes)
-    (cpj/ANY "/server/ws*" [] cider-ci.server.push/routes)
+    (cpj/ANY "/server/ws*" [] cider-ci.server.socket/routes)
     (cpj/ANY "/trees/*" []  cider-ci.server.trees/routes)
     (cpj/GET "/" [] redirect-to-client)
     (cpj/ANY "*" [] dead-end-handler)))

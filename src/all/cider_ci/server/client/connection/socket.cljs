@@ -11,9 +11,10 @@
     [cider-ci.utils.digest :refer [digest]]
     [cider-ci.server.client.shared :refer [pre-component-pprint]]
 
+    [cljs.pprint :refer [pprint]]
+    [reagent.core :as reagent]
     [taoensso.sente  :as sente :refer (cb-success?)]
     [timothypratley.patchin :refer [diff patch]]
-    [reagent.core :as reagent]
     ))
 
 (defonce push-pending? (atom false))
@@ -49,6 +50,7 @@
     ;(js/console.log (clj->js {:id id :message message}))
     (case id
       :chsk/recv (let [[event-id data] ?data]
+                   (swap! state/socket* assoc :msg_received_at (js/moment))
                    (when (and event-id data)
                      ;(js/console.log (clj->js {:event-id event-id :data data}))
                      (case event-id
@@ -56,24 +58,26 @@
                      ))
       :chsk/state (let [[_ new-state] ?data]
                     (swap! state/socket* assoc :connection
-                           (assoc new-state :updated_at (js/moment))
-                           ))
+                           (assoc new-state :updated_at (js/moment))))
       nil))
 
 (defn push-to-server []
   (if-not @push-pending?
     (js/setTimeout push-to-server 200)
     (do (reset! push-pending? false)
+        (swap! state/socket* assoc :msg_sent_at (js/moment))
         (chsk-send! [:client/state
                      {:full (select-keys @client-state
                                          client-state-push-to-server-keys)}]
                     1000
                     (fn [reply]
+                      ;(js/console.log (with-out-str (pprint ["push-to-server/reply" reply])))
                       (when-not (sente/cb-success? reply)
                         (reset! push-pending? true))
                       (js/setTimeout push-to-server 200))))))
 
 (defn init []
+
   (let [{:keys [chsk ch-recv send-fn state]}
         (sente/make-channel-socket! "/cider-ci/server/ws/chsk"
                                     {:type :auto})]
@@ -87,11 +91,9 @@
 
 ;;; icon ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(def fetching?*
-  (reaction false))
 
 (defn icon-component []
-  (if @fetching?*
+  (if @state/socket-active?*
     [:i.fa.fa-spinner.fa-pulse]
     [:i.fa.fa-spinner]))
 
@@ -106,6 +108,12 @@
      ]
     [:section.debug
      [:hr]
+     [:section.active
+      [:h3 "@state/socket-active?*"]
+      [pre-component-pprint @state/socket-active?*]]
+     [:section.push-pending
+      [:h3 "@push-pending?"]
+      [pre-component-pprint @push-pending?]]
      [:section.state-socket
       [:h3 "@state/socket*"]
       [pre-component-pprint @state/socket*]]]]

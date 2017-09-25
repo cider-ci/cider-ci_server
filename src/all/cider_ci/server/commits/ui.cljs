@@ -90,28 +90,30 @@
   "An id to keep track of the most recent and thus (maybe) not outdated request."
   (ratom/atom nil))
 
-(defn fetch-commits []
-  (let [current-query-paramerters @current-query-paramerters*
-        query-params (-> current-query-paramerters
-                         json-stringify-map-values)
-        path (str "/cider-ci/commits/")
-        resp-chan (async/chan)
-        id (request/send-off {:url path :method :get :query-params query-params}
-                             {:modal false
-                              :title "Fetch Commits"}
-                             :chan resp-chan)]
-    (reset! fetch-commits-id* id)
-    (go (let [resp (<! resp-chan)]
-          (when (and (= (:status resp) 200) ;success
-                     (= id @fetch-commits-id*) ;still the most recent request
-                     (= current-query-paramerters @current-query-paramerters*)) ;query-params have not changed yet
-            (reset! effective-query-paramerters* current-query-paramerters)
-            (swap! tree-commits* assoc-in [current-query-paramerters] (:body resp)))
-          (js/setTimeout
-            #(when (and (page-is-active?)
-                        (= id @fetch-commits-id*))
-               (fetch-commits))
-            5000)))))
+(defn fetch-commits
+  ([] (fetch-commits 1))
+  ([counter]
+   (let [current-query-paramerters @current-query-paramerters*
+         query-params (-> current-query-paramerters
+                          json-stringify-map-values)
+         path (str "/cider-ci/commits/")
+         resp-chan (async/chan)
+         id (request/send-off {:url path :method :get :query-params query-params}
+                              {:modal false
+                               :title "Fetch Commits"}
+                              :chan resp-chan)]
+     (reset! fetch-commits-id* id)
+     (go (let [resp (<! resp-chan)]
+           (when (and (= (:status resp) 200) ;success
+                      (= id @fetch-commits-id*) ;still the most recent request
+                      (= current-query-paramerters @current-query-paramerters*)) ;query-params have not changed yet
+             (reset! effective-query-paramerters* current-query-paramerters)
+             (swap! tree-commits* assoc-in [current-query-paramerters] (:body resp)))
+           (js/setTimeout
+             #(when (and (page-is-active?)
+                         (= id @fetch-commits-id*))
+                (fetch-commits (inc counter)))
+             (min 60000 (* counter counter 1000))))))))
 
 
 ;;; fetch-jobs-summaries ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

@@ -13,7 +13,6 @@
     [cider-ci.server.executors]
     [cider-ci.server.web :as web]
     [cider-ci.server.state]
-    [cider-ci.server.push]
     [cider-ci.utils.app :as app]
 
     [clojure.java.jdbc :as jdbc]
