@@ -9,6 +9,8 @@
   (:require
     [cider-ci.utils.core :refer [keyword str presence]]
 
+    [cljsjs.jquery]
+    [cljs.pprint :refer [pprint]]
     [cljsjs.moment]
     [goog.dom :as dom]
     [goog.dom.dataset :as dataset]
@@ -42,15 +44,36 @@
 (defonce client-state
   (reagent/atom {:debug false
                  :commits-page {:form-data {}}
-                 :window-width (.-innerWidth js/window)
                  }))
 
 (js/setInterval #(swap! client-state
                        (fn [s] (merge s {:timestamp (js/moment)}))) 1000)
 
-(defn clj->json
-  [ds]
-  (.stringify js/JSON (clj->js ds)))
+
+;;; listen on window resize ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+(defn windowresize-handler [event]
+  (swap! client-state
+         update-in [:window]
+         #(merge % {:inner-width (.-innerWidth js/window)
+                    :inner-height (.-innerHeight js/window)})))
+
+(.addEventListener js/window "resize"  windowresize-handler)
+
+(windowresize-handler nil)
+
+;(def screen-large?*
+;  (reaction (<= 1824 (-> @client-state :window :inner-width (or 768)))))
+
+(def screen-desktop?*
+  (reaction (<= 1200 (-> @client-state :window :inner-width (or 768)))))
+
+(def screen-tablet?*
+  (reaction (<= 900 (-> @client-state :window :inner-width (or 768)))))
+
+(def screen-phone?*
+  (reaction (<= 320 (-> @client-state :window :inner-width (or 768)))))
 
 
 ;;; init ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

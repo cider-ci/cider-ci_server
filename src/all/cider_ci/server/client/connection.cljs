@@ -29,7 +29,7 @@
 
 (def socket-icon-component socket/icon-component)
 
+(def socket-bg-color-class* socket/socket-bg-color-class*)
 
 (defn init []
-  (socket/init)
-  )
+  (socket/init))

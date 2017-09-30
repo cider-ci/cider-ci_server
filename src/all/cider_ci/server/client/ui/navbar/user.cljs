@@ -1,6 +1,7 @@
 (ns cider-ci.server.client.ui.navbar.user
   (:require
     [cider-ci.server.client.constants :refer [CONTEXT]]
+    [cider-ci.server.client.state :as state]
 
     [cider-ci.utils.core :refer [presence]]
     ))
@@ -58,7 +59,8 @@
       (if (:is_admin @user)
         [:i.fa.fa-user-md]
         [:i.fa.fa-user])
-      " " (:login @user) " "
+      (when @state/screen-desktop?*
+        (str " " (:login @user) " "))
       [:b.caret]]
      [:ul.dropdown-menu
       [:li (sign-out-form url)]

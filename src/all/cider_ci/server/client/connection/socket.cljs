@@ -91,11 +91,19 @@
 
 ;;; icon ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-
 (defn icon-component []
   (if @state/socket-active?*
     [:i.fa.fa-spinner.fa-pulse]
     [:i.fa.fa-spinner]))
+
+(def socket-bg-color-class*
+  (reaction
+    (if-let [conn (-> @state/socket* :connection)]
+      (cond
+        (-> conn :ever-opened? not) "warning-bg"
+        (-> conn :open?) "success-bg"
+        :else "error-bg")
+      "warning-bg")))
 
 ;;; ui ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -108,6 +116,9 @@
      ]
     [:section.debug
      [:hr]
+     [:section.jquery
+      [:h3 "jquery"]
+      [pre-component-pprint (.resize (js/$ "window"))]]
      [:section.active
       [:h3 "@state/socket-active?*"]
       [pre-component-pprint @state/socket-active?*]]

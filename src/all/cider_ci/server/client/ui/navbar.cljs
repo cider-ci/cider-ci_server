@@ -51,17 +51,23 @@
 (defn nav-li-commits []
   [:li.commits
    [:a {:href (routes/commits-path)}
-    [:i.fa.fa-fw.fa-code-fork] constants/utf8-narrow-no-break-space "Commits"]])
+    [:i.fa.fa-fw.fa-code-fork]
+    (when @state/screen-tablet?*
+      [:span constants/utf8-narrow-no-break-space "Commits"])]])
 
 (defn nav-li-executors []
   [:li.executors
    [:a {:href (routes/executors-path {})}
-    [:i.fa.fa-fw.fa-cog] constants/utf8-narrow-no-break-space "Executors" ]])
+    [:i.fa.fa-fw.fa-cog]
+    (when @state/screen-tablet?*
+      [:span constants/utf8-narrow-no-break-space "Executors"])]])
 
 (defn nav-li-projects []
   [:li.projects
    [:a {:href "/cider-ci/repositories/projects/"}
-    [:i.fa.fa-fw.fa-list-alt] constants/utf8-narrow-no-break-space "Projects"]])
+    [:i.fa.fa-fw.fa-list-alt]
+    (when @state/screen-tablet?*
+      [:span constants/utf8-narrow-no-break-space "Projects"])]])
 
 (defn nav-li-documentation []
   [:li.documentation
@@ -74,18 +80,17 @@
     [:i.fa.fw.fa-magic] constants/utf8-narrow-no-break-space "API-Browser"]])
 
 
-(defn more-nav-drodown [user*]
+(defn more-nav-dropdown [user*]
   [:li
    [:a.dropdown-toggle
     {:data-toggle "dropdown"
      :href "#"}
-    [:span [:i.fa.fa-bars] " More"
+    [:span [:i.fa.fa-bars]
+     (when @state/screen-tablet?*
+       [:span constants/utf8-narrow-no-break-space "More"])
      [:b.caret]]]
    [:ul.dropdown-menu
     [:li [:a {:href "/cider-ci/client/"} " Root "]]
-    [nav-li-commits]
-    [nav-li-executors]
-    [nav-li-projects]
     [nav-li-documentation]
     [nav-li-api-browser]
     [:li.divider]
@@ -120,21 +125,23 @@
       [nav-li-commits]
       [nav-li-executors]
       [nav-li-projects]
-      [more-nav-drodown user*]]]))
+      [more-nav-dropdown user*]]]))
 
 (defn user-nav [user* current-url*]
   (when @user*
     [:div.navbar-right
      [:ul#user-actions.nav.navbar-nav.user
       [navbar.user/li user* current-url*]
-      [:li
+      [:li {:class @connection/socket-bg-color-class*}
        [:a {:href (routes/socket-path)}
         [connection/socket-icon-component]
-        " Socket "]]
+        (when @state/screen-desktop?*
+          " Socket ")]]
       [:li
        [:a {:href (routes/requests-path)}
         [connection/requests-icon-component]
-        " Requests "]]]]))
+        (when @state/screen-desktop?*
+          " Requests ")]]]]))
 
 (defn navbar [user* current-url* auth-providers]
   [:div
