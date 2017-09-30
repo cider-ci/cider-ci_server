@@ -12,6 +12,7 @@
     [cider-ci.server.migrations.schema-migrations :as schema-migrations]
     [cider-ci.server.migrations.433]
     [cider-ci.server.migrations.434]
+    [cider-ci.server.migrations.435]
     [cider-ci.server.repository.main]
     [cider-ci.server.state]
     [cider-ci.server.storage.main]
@@ -28,7 +29,9 @@
 
 (def migrations
   {"433" {:up cider-ci.server.migrations.433/up}
-   "434" {:up cider-ci.server.migrations.434/up}})
+   "434" {:up cider-ci.server.migrations.434/up}
+   "435" {:up cider-ci.server.migrations.435/up
+          :down cider-ci.server.migrations.435/down}})
 
 
 ;;; migrate ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -153,8 +156,9 @@
 ;(main "-s" "-d" "jdbc:postgresql://thomas:thomas@localhost/cider-ci_v5")
 ;
 ; migrate
-;(main "-d" "jdbc:postgresql://thomas:thomas@localhost/cider-ci_v5")
+;(main "-d" "jdbc:postgresql://thomas:thomas@localhost/cider-ci_v4")
 ;
 ; rollback
 ;(main "-d" "jdbc:postgresql://thomas:thomas@localhost/cider-ci_v5" "-v" "0")
+
 
