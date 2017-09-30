@@ -36,7 +36,8 @@
     [cider-ci.server.create-initial-admin.ui]
 
     [clojure.string :as str]
-    [fipp.edn :refer [pprint]]
+    [clojure.pprint :refer [pprint]]
+
     [reagent.core :as reagent]
     [secretary.core :as secretary :include-macros true]
     [accountant.core :as accountant]
@@ -80,8 +81,8 @@
      [:h1 "Debug"]
      [:div.page-state
       [:h2 "Page State"]
-      ;[:pre (with-out-str (pprint @state/page-state))]
-      [:pre (.stringify js/JSON (clj->js @state/page-state) nil 2)]
+      [:pre (with-out-str (pprint @state/page-state))]
+      ;[:pre (.stringify js/JSON (clj->js @state/page-state) nil 2)]
       ]
      [:div.client-state
       [:h2 "Client State"]

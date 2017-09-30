@@ -6,7 +6,7 @@
     )
   (:require
     [cider-ci.utils.core :refer [keyword str presence]]
-    [cider-ci.server.client.state :refer [client-state server-state debug-db]]
+    [cider-ci.server.client.state :refer [client-state server-state debug-db page-state]]
     [cider-ci.server.client.connection.state :as state]
     [cider-ci.utils.digest :refer [digest]]
     [cider-ci.server.client.shared :refer [pre-component-pprint]]
@@ -46,16 +46,20 @@
                  :last-bad-server-state-sync-at (js/moment)
                  :last-bad-server-state-sync-data new-state)))))
 
+(defn dispatch-server-entity-event [event]
+  (when-let [page-receiver (:server-entity-event-receiver @page-state)]
+    (page-receiver event)))
+
 (defn event-msg-handler [{:as message :keys [id ?data event]}]
-    ;(js/console.log (clj->js {:id id :message message}))
+  ;(js/console.log (with-out-str (pprint {:id id :message message})))
     (case id
       :chsk/recv (let [[event-id data] ?data]
                    (swap! state/socket* assoc :msg_received_at (js/moment))
                    (when (and event-id data)
                      ;(js/console.log (clj->js {:event-id event-id :data data}))
                      (case event-id
-                       :cider-ci.server.repository/db (update-server-state data))
-                     ))
+                       :cider-ci/state-db (update-server-state data)
+                       :cider-ci/entity-event (dispatch-server-entity-event data))))
       :chsk/state (let [[_ new-state] ?data]
                     (swap! state/socket* assoc :connection
                            (assoc new-state :updated_at (js/moment))))
@@ -89,7 +93,8 @@
   (sente/start-chsk-router! ch-chsk event-msg-handler)
   (js/setTimeout push-to-server 100))
 
-;;; icon ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;; icon and bg-state ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn icon-component []
   (if @state/socket-active?*
@@ -104,6 +109,7 @@
         (-> conn :open?) "success-bg"
         :else "error-bg")
       "warning-bg")))
+
 
 ;;; ui ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

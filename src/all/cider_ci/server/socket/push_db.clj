@@ -74,7 +74,7 @@
      (logging/debug '@push-data* @push-data*)
      (when-let [push-data @push-data*]
        (chsk-send! user-client-id
-                   [(keyword "cider-ci.server.repository" "db")
+                   [(keyword "cider-ci" "state-db")
                     push-data])))))
 
 

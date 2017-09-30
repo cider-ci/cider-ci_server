@@ -115,7 +115,6 @@
                 (fetch-commits (inc counter)))
              (min 60000 (* counter counter 1000))))))))
 
-
 ;;; fetch-jobs-summaries ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (def jobs-summaries* (ratom/atom {}))
@@ -138,7 +137,7 @@
             #(when (and (page-is-active?)
                         (= id @fetch-jobs-summaries-id*))
                (fetch-jobs-summaries))
-            5000)))))
+            60000)))))
 
 (def tree-ids* (reaction (->> (get @tree-commits* @current-query-paramerters* [])
                               (map :tree_id)
@@ -564,6 +563,15 @@
          [:i.fa.fa-spinner.fa-pulse.fa-fw]
          [:i.fa.fa-arrow-circle-right.fa-fw])]]]))
 
+
+;;; server-entity-event-update-receiver ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn server-entity-event-receiver [event]
+  (case (:table_name event)
+    "branches" (fetch-commits)
+    "jobs" (fetch-jobs-summaries)))
+
+
 ;;; page ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn debug-component []
@@ -592,9 +600,12 @@
      ]))
 
 (defn post-mount-setup [component]
+  (swap! state/page-state assoc
+         :server-entity-event-receiver server-entity-event-receiver)
   (.tooltip (js/$ (reagent.core/dom-node component))))
 
 (defn page-will-unmount [& args]
+  (swap! state/page-state dissoc :server-entity-event-receiver)
   (reset! fetch-commits-id* nil)
   (reset! fetch-jobs-summaries-id* nil))
 
