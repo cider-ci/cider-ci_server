@@ -8,6 +8,7 @@
   (:require
     [cider-ci.server.socket.core :as core]
     [cider-ci.server.socket.push-db :as push-db]
+    [cider-ci.server.socket.push-table-events :as push-table-events]
 
     [cider-ci.server.state :as server.state]
     [cider-ci.server.repository.web.edn]
@@ -56,7 +57,8 @@
 
 (defn initialize []
   (core/initialize)
-  (push-db/initialize))
+  (push-db/initialize)
+  (push-table-events/initialize))
 
 ;#### debug ###################################################################
 ;(logging-config/set-logger! :level :debug)

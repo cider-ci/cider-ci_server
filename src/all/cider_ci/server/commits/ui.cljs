@@ -91,8 +91,7 @@
   (ratom/atom nil))
 
 (defn fetch-commits
-  ([] (fetch-commits 1))
-  ([counter]
+  ([]
    (let [current-query-paramerters @current-query-paramerters*
          query-params (-> current-query-paramerters
                           json-stringify-map-values)
@@ -112,8 +111,8 @@
            (js/setTimeout
              #(when (and (page-is-active?)
                          (= id @fetch-commits-id*))
-                (fetch-commits (inc counter)))
-             (min 60000 (* counter counter 1000))))))))
+                (fetch-commits))
+             (* 60 1000)))))))
 
 ;;; fetch-jobs-summaries ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
