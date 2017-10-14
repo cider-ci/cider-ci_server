@@ -46,7 +46,6 @@
     ))
 
 
-
 (def routes
   (cpj/routes
     (cpj/GET "/" [] #'dynamic)
@@ -97,7 +96,7 @@
   [:div.navbar.navbar-default {:role :navigation}
    [:div.container-fluid
     [:div.navbar-header
-     [:a.navbar-brand {:href "/cider-ci/client/"}
+     [:a.navbar-brand {:href "/cider-ci/"}
       (navbar.release/navbar-release release)]]
     [:div#nav]]])
 
@@ -120,6 +119,10 @@
                         "font-awesome/4.6.3/css/font-awesome.min.css"))
       (include-js (str CONTEXT "/js/app.js"))]]))
 
+(defn client-html-response-handler [request]
+  {:status 200
+   :headers {"Content-Type" "text/html"}
+   :body (html request)})
 
 (defn dispatch [request handler]
   (cond
@@ -132,7 +135,7 @@
     (->> request :route-params :*
          (re-matches #"/session/oauth/\w+/sign-in")) (handler request)
     (and (= (-> request :request-method) :get)
-         (= (-> request :accept :mime) :html)) {:status 200 :body (html request)}
+         (= (-> request :accept :mime) :html)) client-html-response-handler
     :else (handler request)))
 
 (defn wrap [handler]

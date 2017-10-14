@@ -122,6 +122,25 @@
          {:component "cider-ci.server.trees.ui.available-jobs/page"
           :tree-id tree-id}))
 
+(secretary/defroute tree-attachments-path
+  "/cider-ci/trees/:tree-id/tree-attachments/"
+  {tree-id :tree-id}
+  (swap! state/page-state
+         assoc :current-page
+         {:component "cider-ci.server.trees.attachments.ui/page"
+          :tree-id tree-id}))
+
+(secretary/defroute tree-attachment-path
+  "/cider-ci/trees/:tree-id/tree-attachments/:path"
+  {tree-id :tree-id
+   path :path}
+  (swap! state/page-state
+         assoc :current-page
+         {:component "cider-ci.server.trees.attachments.show/page"
+          :tree-id tree-id
+          :path (js/decodeURIComponent path)
+          }))
+
 
 ;;; tokens ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

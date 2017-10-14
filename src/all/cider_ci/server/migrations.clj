@@ -13,6 +13,7 @@
     [cider-ci.server.migrations.433]
     [cider-ci.server.migrations.434]
     [cider-ci.server.migrations.435]
+    [cider-ci.server.migrations.436]
     [cider-ci.server.repository.main]
     [cider-ci.server.state]
     [cider-ci.server.storage.main]
@@ -31,7 +32,9 @@
   {"433" {:up cider-ci.server.migrations.433/up}
    "434" {:up cider-ci.server.migrations.434/up}
    "435" {:up cider-ci.server.migrations.435/up
-          :down cider-ci.server.migrations.435/down}})
+          :down cider-ci.server.migrations.435/down}
+   "436" {:up cider-ci.server.migrations.436/up
+          :down cider-ci.server.migrations.436/down}})
 
 
 ;;; migrate ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

@@ -1,3 +1,7 @@
+; Copyright © 2013 - 2017 Dr. Thomas Schank <Thomas.Schank@AlgoCon.ch>
+; Licensed under the terms of the GNU Affero General Public License v3.
+; See the "LICENSE.txt" file provided with this software.
+
 (ns cider-ci.server.trees.ui
   (:refer-clojure :exclude [str keyword])
   (:require-macros
@@ -6,17 +10,18 @@
     )
   (:require
     [cider-ci.constants :as constants :refer [GRID-COLS]]
+    [cider-ci.server.client.breadcrumbs :as breadcrumbs]
     [cider-ci.server.client.connection.request :as request]
     [cider-ci.server.client.routes :as routes]
+    [cider-ci.server.client.shared :refer [pre-component]]
     [cider-ci.server.client.state :as state]
     [cider-ci.server.client.utils :refer [humanize-datetime-component]]
-    [cider-ci.server.trees.ui-shared :as shared]
-    [cider-ci.server.client.shared :refer [pre-component]]
+    [cider-ci.server.trees.dependency-graph :as dependency-graph]
+    [cider-ci.server.trees.ui-shared :as shared :refer [tree-id*]]
     [cider-ci.shared.icons :as icons]
     [cider-ci.utils.core :refer [keyword str presence]]
     [cider-ci.utils.markdown :as markdown]
     [cider-ci.utils.sha1]
-    [cider-ci.server.trees.dependency-graph :as dependency-graph :refer [tree-id*]]
 
     [cljs.pprint :refer [pprint]]
     [cljs.core.async :as async]
@@ -127,29 +132,21 @@
   (reagent/create-class
     {:component-will-mount dependency-graph/setup-data
      :reagent-render (fn [_]
-[:div.dependencies
-    [:h2 "Jobs - Dependency and Trigger Visualization"]
-    (if-let [dependency-and-trigger-graph  @dependency-and-trigger-graph*]
-      [:div.dependency-visualization dependency-and-trigger-graph]
-      [:div
-       [:alter.alert-info
-        "The dependency visualization is not available."]])]
-
-                       )}))
+                       [:div.dependencies
+                        [:h2 "Jobs - Dependency and Trigger Visualization"]
+                        (if-let [dependency-and-trigger-graph  @dependency-and-trigger-graph*]
+                          [:div.dependency-visualization dependency-and-trigger-graph]
+                          [:div
+                           [:alter.alert-info
+                            "The dependency visualization is not available."]])])}))
 
 (defn breadcrumbs-component []
-  [:div.row
-   [:div
-    {:class (str "col-md-" (Math/floor (/ GRID-COLS 2)))}
-    [:ol.breadcrumb
-     [shared/tree-objects-breadcrumb-component @tree-id*
-      :active? true]]]
-   [:div
-    {:class (str "col-md-" (Math/floor (/ GRID-COLS 2)))}
-    [:ol.breadcrumb.with-circle-separator
-     [shared/tree-objects-available-jobs-breadcrumb-component @tree-id*]
-     [shared/project-configuration-breadcrumb-component @tree-id*]
-     ]]])
+  (breadcrumbs/breadcrumb-component
+    [(breadcrumbs/home-li-component)
+     (shared/tree-objects-breadcrumb-component @tree-id* :active? true)]
+    [(shared/tree-objects-attachments-breadcrumb-component @tree-id*)
+     (shared/project-configuration-breadcrumb-component @tree-id*)
+     (shared/tree-objects-available-jobs-breadcrumb-component @tree-id*)]))
 
 (defn title-component []
   [:div.title
@@ -161,8 +158,8 @@
   [:div.tree
    [breadcrumbs-component]
    [title-component]
-   [graph-component]
    [jobs-component]
+   [graph-component]
    [debug-component]
    ])
 

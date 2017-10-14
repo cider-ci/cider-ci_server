@@ -7,8 +7,9 @@
   (:require
     [cider-ci.server.client.connection.request :as request]
     [cider-ci.server.client.routes :as routes]
-    [cider-ci.server.client.state :as state]
     [cider-ci.server.client.shared :refer [pre-component]]
+    [cider-ci.server.client.state :as state]
+    [cider-ci.server.trees.ui-shared :refer [tree-id*]]
     [cider-ci.utils.core :refer [keyword str presence]]
     [cider-ci.utils.markdown :as markdown]
     [cider-ci.utils.sha1]
@@ -23,11 +24,6 @@
     ))
 
 (declare dependency-graph)
-
-
-;;; data ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(def tree-id* (reaction (-> @state/page-state :current-page :tree-id)))
 
 (def project-configurations* (ratom/atom {}))
 

@@ -34,3 +34,4 @@ windows:
       mkdir -p ../executor
       lein run -- executor -c ../executor/config.yml write-default-config -f
       lein do run -- executor -c ../executor/config.yml run --nrepl-enabled yes -t TestExecutor1234
+

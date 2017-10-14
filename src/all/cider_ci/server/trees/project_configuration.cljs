@@ -5,15 +5,14 @@
     [cljs.core.async.macros :refer [go]]
     )
   (:require
+    [cider-ci.server.client.breadcrumbs :as breadcrumbs]
     [cider-ci.server.client.connection.request :as request]
     [cider-ci.server.client.routes :as routes]
-    [cider-ci.server.client.state :as state]
-    [cider-ci.server.trees.ui-shared :as shared :refer [tree-id*]]
-    [cider-ci.server.trees.dependency-graph :as dependency-graph :refer [tree-id*]]
     [cider-ci.server.client.shared :refer [pre-component pre-component-fipp pre-component-pprint]]
+    [cider-ci.server.client.state :as state]
+    [cider-ci.server.trees.dependency-graph :as dependency-graph]
+    [cider-ci.server.trees.ui-shared :as shared :refer [tree-id*]]
     [cider-ci.utils.core :refer [keyword str presence]]
-    [cider-ci.utils.markdown :as markdown]
-    [cider-ci.utils.sha1]
 
     [cljs.pprint :refer [pprint]]
     [fipp.edn :refer [pprint] :rename {pprint fipp}]
@@ -58,13 +57,11 @@
        "Check the requests and possibly reload the page manually. "]])])
 
 (defn breadcrumb-component []
-  [:div.row
-   [:div.col-md-6
-    [:ol.breadcrumb
-     [shared/tree-objects-breadcrumb-component
-      @tree-id*]
-     [shared/project-configuration-breadcrumb-component
-      @tree-id* :active? true]]]])
+  (breadcrumbs/breadcrumb-component
+    [(breadcrumbs/home-li-component)
+     (shared/tree-objects-breadcrumb-component @tree-id*)
+     (shared/project-configuration-breadcrumb-component @tree-id* :active? true)]
+    []))
 
 (defn title-component []
   [:div.title

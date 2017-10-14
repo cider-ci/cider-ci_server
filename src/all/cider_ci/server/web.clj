@@ -10,6 +10,7 @@
     [cider-ci.auth.authentication :as authentication]
     [cider-ci.auth.authorize :as authorize]
     [cider-ci.server.api.web]
+    [cider-ci.server.trees.attachments.web]
     [cider-ci.server.builder.web]
     [cider-ci.server.client.web]
     [cider-ci.server.client.web]
@@ -18,9 +19,9 @@
     [cider-ci.server.dispatcher.web]
     [cider-ci.server.executors]
     [cider-ci.server.jobs.web]
-    [cider-ci.server.socket]
     [cider-ci.server.repository.web]
     [cider-ci.server.session.web]
+    [cider-ci.server.socket]
     [cider-ci.server.storage.web]
     [cider-ci.server.trees]
     [cider-ci.server.users.web]
@@ -39,6 +40,7 @@
     [logbug.debug :as debug :refer [I> I>> identity-with-logging]]
     [logbug.ring :refer [wrap-handler-with-logging]]
     [logbug.thrown :as thrown]
+    ;[ring.mock.request :as ring-mock]
     ))
 
 
@@ -65,7 +67,7 @@
   (cider-ci.server.client.web/build-main-handler "/client" ))
 
 (def redirect-to-client
-  (ring.util.response/redirect "/cider-ci/client/"))
+  (ring.util.response/redirect "/cider-ci/"))
 
 (def push-handler
   (I> wrap-handler-with-logging
@@ -88,6 +90,8 @@
     (cpj/ANY "/users/*" [] cider-ci.server.users.web/routes)
     (cpj/ANY "/api" [] (ring.util.response/redirect "/cider-ci/api/"))
     (cpj/ANY "/storage" [] (ring.util.response/redirect "/cider-ci/storage/"))
+    (cpj/ANY "/tree-attachments/*" [] cider-ci.server.trees.attachments.web/routes)
+    ;(cpj/ANY "/trial-attachments/*" [] cider-ci.server.attachments.web/routes)
     (cpj/ANY "/session*" [] #'cider-ci.server.session.web/routes)
     (cpj/ANY "/server/ws*" [] cider-ci.server.socket/routes)
     (cpj/ANY "/trees/*" []  cider-ci.server.trees/routes)
@@ -95,6 +99,7 @@
     (cpj/ANY "*" [] dead-end-handler)))
 
 ;;; default wrappers ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 
 (defn wrap-accept [handler]
   (ring.middleware.accept/wrap-accept
@@ -120,6 +125,7 @@
       (routing/wrap-prefix "/cider-ci")
       (ring.middleware.json/wrap-json-body {:keywords? true})
       routing/wrap-exception))
+
 
 ;#### debug ###################################################################
 ;(logging-config/set-logger! :level :debug)

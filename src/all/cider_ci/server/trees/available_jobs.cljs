@@ -5,11 +5,12 @@
     [cljs.core.async.macros :refer [go]]
     )
   (:require
-    [cider-ci.server.trees.ui-shared :as shared]
+    [cider-ci.server.client.breadcrumbs :as breadcrumbs]
     [cider-ci.server.client.connection.request :as request]
     [cider-ci.server.client.routes :as routes]
-    [cider-ci.server.client.state :as state]
     [cider-ci.server.client.shared :refer [pre-component]]
+    [cider-ci.server.client.state :as state]
+    [cider-ci.server.trees.ui-shared :as shared]
     [cider-ci.utils.core :refer [keyword str presence]]
     [cider-ci.utils.markdown :as markdown]
     [cider-ci.utils.sha1]
@@ -110,15 +111,16 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(defn breadcrumb-component []
+  (breadcrumbs/breadcrumb-component
+    [(breadcrumbs/home-li-component)
+     (shared/tree-objects-breadcrumb-component @tree-id*)
+     (shared/tree-objects-available-jobs-breadcrumb-component @tree-id* :active? true)]
+    []))
+
 (defn page-component []
   [:div.available-jobs
-   [:div.row
-    [:div.col-md-6
-     [:ol.breadcrumb
-      [shared/tree-objects-breadcrumb-component
-       @tree-id*]
-      [shared/tree-objects-available-jobs-breadcrumb-component
-       @tree-id* :active? true] ]]]
+   [breadcrumb-component]
    [:h1 " Run job for "
     [:i.fa.fa-tree]
     [:span {:style {:font-family "monospace"}}

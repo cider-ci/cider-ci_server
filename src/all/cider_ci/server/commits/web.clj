@@ -15,7 +15,6 @@
     [cider-ci.utils.honeysql :as sql]
     [clojure.java.jdbc :as jdbc]
     [cider-ci.utils.rdbms :as rdbms]
-    [clojure.data.json :as json]
 
     [clj-logging-config.log4j :as logging-config]
     [clojure.tools.logging :as logging]
@@ -264,17 +263,12 @@
 ;;; routes ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (def routes
-  (wrap-canonicalize-query-params
-    (cpj/routes
-      (cpj/GET  "/commits/" _
-               (authorize/wrap-require! #'commits {:user true})
-               )
-      (cpj/GET  "/commits/project-and-branchnames/" _
-               (authorize/wrap-require! #'project-and-branchnames {:user true})
-               )
-      (cpj/GET  "/commits/jobs-summaries/" _
-               (authorize/wrap-require! #'jobs-summaries {:user true})
-               ))))
+  (-> (cpj/routes
+        (cpj/GET  "/commits/" _ #'commits)
+        (cpj/GET  "/commits/project-and-branchnames/" _ #'project-and-branchnames)
+        (cpj/GET  "/commits/jobs-summaries/" _ #'jobs-summaries))
+      wrap-canonicalize-query-params
+      (authorize/wrap-require! {:user true})))
 
 ;#### debug ###################################################################
 ;(logging-config/set-logger! :level :debug)

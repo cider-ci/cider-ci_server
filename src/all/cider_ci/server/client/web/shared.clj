@@ -57,7 +57,7 @@
   [:div.navbar.navbar-default {:role :navigation}
    [:div.container-fluid
     [:div.navbar-header
-     [:a.navbar-brand {:href "/cider-ci/client/"}
+     [:a.navbar-brand {:href "/cider-ci/"}
       (navbar.release/navbar-release release)]]
     [:div#nav]]])
 

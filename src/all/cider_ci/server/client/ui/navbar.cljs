@@ -79,7 +79,6 @@
    [:a {:href "/cider-ci/api/api-browser/index.html#/cider-ci/api"}
     [:i.fa.fw.fa-magic] constants/utf8-narrow-no-break-space "API-Browser"]])
 
-
 (defn more-nav-dropdown [user*]
   [:li
    [:a.dropdown-toggle
@@ -90,7 +89,7 @@
        [:span constants/utf8-narrow-no-break-space "More"])
      [:b.caret]]]
    [:ul.dropdown-menu
-    [:li [:a {:href "/cider-ci/client/"} " Root "]]
+    [:li [:a {:href "/cider-ci/"} " Root "]]
     [nav-li-documentation]
     [nav-li-api-browser]
     [:li.divider]

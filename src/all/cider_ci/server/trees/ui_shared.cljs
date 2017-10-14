@@ -18,6 +18,9 @@
     [reagent.ratom :as ratom]
     ))
 
+;;; data ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(def tree-id* (reaction (-> @state/page-state :current-page :tree-id)))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -37,7 +40,8 @@
   [tree-id & {:keys [active? show-tree-id?]
               :or {:active? false
                    :show-tree-id false}}]
-  [:li {:class (when active? "active")}
+  [:li {:key :tree-objects
+        :class (when active? "active")}
    (let [internal [:span
                    [:i.fa.fa-tree]
                    " Tree-Objects "
@@ -52,7 +56,8 @@
   [tree-id & {:keys [active? show-tree-id?]
               :or {:active? false
                    :show-tree-id false}}]
-  [:li {:class (when active? "active")}
+  [:li {:key :jobs
+        :class (when active? "active")}
    (let [internal [:span
                    [:i.fa.fa-futbol-o]
                    " Run job "
@@ -63,11 +68,39 @@
         internal]
        internal))])
 
+(defn tree-objects-attachments-breadcrumb-component
+  [tree-id & {:keys [active?]
+              :or {:active? false
+                   :show-tree-id false}}]
+  [:li {:key :attachments
+        :class (when active? "active")}
+   (let [internal [:span
+                   [:i.fa.fa-paperclip]
+                   " Attachments " ]]
+     (if-not active?
+       [:a {:href (routes/tree-attachments-path {:tree-id tree-id})}
+        internal]
+       internal))])
+
+(defn tree-objects-attachment-breadcrumb-component
+  [tree-id path & {:keys [active?]
+                   :or {:active? false}}]
+  [:li {:key :attachment
+        :class (when active? "active")}
+   (let [internal [:span
+                   [:i.fa.fa-paperclip]
+                   " Attachment " ]]
+     (if-not active?
+       [:a {:href (routes/tree-attachment-path {:tree-id tree-id :path path})}
+        internal]
+       internal))])
+
 (defn project-configuration-breadcrumb-component
   [tree-id & {:keys [active? show-tree-id?]
               :or {:active? false
                    :show-tree-id false}}]
-  [:li {:class (when active? "active")}
+  [:li {:key :project-configuration
+        :class (when active? "active")}
    (let [internal [:span
                    [:i.fa.fa-code]
                    " Project-Configuration "
@@ -77,6 +110,4 @@
        [:a {:href (routes/project-configuration-path {:tree-id tree-id})}
         internal]
        internal))])
-
-
 

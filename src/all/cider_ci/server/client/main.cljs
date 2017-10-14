@@ -6,22 +6,24 @@
   (:require
     [cider-ci.utils.core :refer [keyword str presence]]
 
+    [cider-ci.server.client.connection :as connection]
     [cider-ci.server.client.connection.request :as request]
     [cider-ci.server.client.connection.socket :as socket]
+    [cider-ci.server.client.constants :refer [CONTEXT]]
     [cider-ci.server.client.routes :as routes]
     [cider-ci.server.client.state :as state]
-    [cider-ci.server.client.connection :as connection]
-    [cider-ci.server.commits.ui]
-    [cider-ci.server.repository.ui]
-    [cider-ci.server.trees.ui]
-    [cider-ci.server.trees.ui.available-jobs]
-    [cider-ci.server.trees.ui.project-configuration]
-    [cider-ci.server.client.constants :refer [CONTEXT]]
-    [cider-ci.server.session.password.ui]
     [cider-ci.server.client.ui.debug :as debug]
     [cider-ci.server.client.ui.navbar]
     [cider-ci.server.client.ui.root]
     [cider-ci.server.client.welcome-page.ui]
+    [cider-ci.server.commits.ui]
+    [cider-ci.server.repository.ui]
+    [cider-ci.server.session.password.ui]
+    [cider-ci.server.trees.attachments.show]
+    [cider-ci.server.trees.attachments.ui]
+    [cider-ci.server.trees.ui.available-jobs]
+    [cider-ci.server.trees.ui.project-configuration]
+    [cider-ci.server.trees.ui]
 
     [cider-ci.server.executors.ui.create]
     [cider-ci.server.executors.ui.edit]
@@ -47,16 +49,17 @@
     ))
 
 (def components
-  {
-   "cider-ci.server.client.connection/page" cider-ci.server.client.connection/page
-   "cider-ci.server.client.connection.request/page" cider-ci.server.client.connection.request/page
+  {"cider-ci.server.client.connection.request/page" cider-ci.server.client.connection.request/page
    "cider-ci.server.client.connection.socket/page" cider-ci.server.client.connection.socket/page
+   "cider-ci.server.client.connection/page" cider-ci.server.client.connection/page
    "cider-ci.server.commits.ui/page" cider-ci.server.commits.ui/page
    "cider-ci.server.create-initial-admin.ui/page" cider-ci.server.create-initial-admin.ui/page
    "cider-ci.server.executors.ui.create/page" cider-ci.server.executors.ui.create/page
    "cider-ci.server.executors.ui.edit/page" cider-ci.server.executors.ui.edit/page
    "cider-ci.server.executors.ui.index/page" cider-ci.server.executors.ui.index/page
    "cider-ci.server.executors.ui.show/page" cider-ci.server.executors.ui.show/page
+   "cider-ci.server.trees.attachments.show/page" cider-ci.server.trees.attachments.show/page
+   "cider-ci.server.trees.attachments.ui/page" cider-ci.server.trees.attachments.ui/page
    "cider-ci.server.trees.ui.available-jobs/page" cider-ci.server.trees.ui.available-jobs/page
    "cider-ci.server.trees.ui.project-configuration/page" cider-ci.server.trees.ui.project-configuration/page
    "cider-ci.server.trees.ui/page" cider-ci.server.trees.ui/page
