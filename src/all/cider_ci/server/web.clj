@@ -32,8 +32,13 @@
     [cider-ci.utils.status :as status]
 
     [compojure.core :as cpj]
+    [ring.middleware.content-type :refer [wrap-content-type]]
+    [ring.middleware.default-charset :refer [wrap-default-charset]]
     [ring.middleware.defaults :refer [site-defaults wrap-defaults]]
+    [ring.middleware.not-modified :refer [wrap-not-modified]]
+    [ring.middleware.resource :refer [wrap-resource]]
     [ring.util.response]
+
 
     [clj-logging-config.log4j :as logging-config]
     [clojure.tools.logging :as logging]
@@ -98,8 +103,8 @@
     (cpj/GET "/" [] redirect-to-client)
     (cpj/ANY "*" [] dead-end-handler)))
 
-;;; default wrappers ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;;; default wrappers ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn wrap-accept [handler]
   (ring.middleware.accept/wrap-accept
@@ -120,7 +125,11 @@
       ring.middleware.params/wrap-params
       ring.middleware.json/wrap-json-response
       wrap-accept
-      (ring.middleware.defaults/wrap-defaults {:static {:resources "public"}})
+      (ring.middleware.defaults/wrap-defaults {:proxy true})
+      (wrap-resource "public" {:allow-symlinks? true})
+      wrap-content-type
+      (wrap-default-charset "UTF-8")
+      wrap-not-modified
       status/wrap
       (routing/wrap-prefix "/cider-ci")
       (ring.middleware.json/wrap-json-body {:keywords? true})

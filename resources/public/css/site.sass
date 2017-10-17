@@ -1,13 +1,22 @@
-// grid, must come before boostrap (?) //////////////////////////////////////////
+
+// font awesome /////////////////////////////////////////////////////////////////
+
+$fa-font-path: "./../font-awesome/fonts"
+@import "./../font-awesome/scss/font-awesome"
+
+
+// START boostrap ///////////////////////////////////////////////////////////////
+// customize grid, must come before boostrap import /////////////////////////////
 
 $grid-columns: 24
 $grid-gutter-width: 20px
-
 $grid-float-breakpoint: 0px
 
-// boostrap /////////////////////////////////////////////////////////////////////
+$icon-font-path: "./../bootstrap/assets/fonts/bootstrap/"
+@import "./../bootstrap/assets/stylesheets/bootstrap"
 
-@import "../vendor/bootstrap/assets/stylesheets/bootstrap"
+// END boostrap /////////////////////////////////////////////////////////////////////
+
 
 .error-bg
   background-color: $state-danger-bg

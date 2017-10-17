@@ -115,8 +115,6 @@
      [:div.container-fluid
       (navbar (-> (cider-ci.utils.self/release) atom))
       (mount-target)
-      (include-css (str "https://maxcdn.bootstrapcdn.com/"
-                        "font-awesome/4.6.3/css/font-awesome.min.css"))
       (include-js (str CONTEXT "/js/app.js"))]]))
 
 (defn client-html-response-handler [request]

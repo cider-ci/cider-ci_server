@@ -125,7 +125,7 @@
                   {"resources/public/css/site.min.css"
                    "resources/public/css/site.css"}}
 
-  :sass {:src "sass"
+  :sass {:src "resources/public/css"
          :dst "resources/public/css"}
 
   :figwheel {:http-server-root "public"
