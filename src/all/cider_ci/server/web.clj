@@ -27,6 +27,7 @@
     [cider-ci.server.users.web]
     [cider-ci.server.web]
 
+    [cider-ci.utils.http-resources-cache-buster :refer [wrap-resource]]
     [cider-ci.utils.routing :as routing]
     [cider-ci.utils.shutdown :as shutdown]
     [cider-ci.utils.status :as status]
@@ -36,9 +37,7 @@
     [ring.middleware.default-charset :refer [wrap-default-charset]]
     [ring.middleware.defaults :refer [site-defaults wrap-defaults]]
     [ring.middleware.not-modified :refer [wrap-not-modified]]
-    [ring.middleware.resource :refer [wrap-resource]]
     [ring.util.response]
-
 
     [clj-logging-config.log4j :as logging-config]
     [clojure.tools.logging :as logging]
@@ -104,6 +103,8 @@
     (cpj/ANY "*" [] dead-end-handler)))
 
 
+;;; http-static files caching ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 ;;; default wrappers ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn wrap-accept [handler]
@@ -126,7 +127,10 @@
       ring.middleware.json/wrap-json-response
       wrap-accept
       (ring.middleware.defaults/wrap-defaults {:proxy true})
-      (wrap-resource "public" {:allow-symlinks? true})
+      (wrap-resource "public" {:allow-symlinks? true
+                               :cached-paths ["/css/site.css"
+                                              "/css/site.min.css"
+                                              "/js/app.js"]})
       wrap-content-type
       (wrap-default-charset "UTF-8")
       wrap-not-modified

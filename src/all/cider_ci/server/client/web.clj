@@ -17,6 +17,7 @@
     [cider-ci.auth.anti-forgery :as anti-forgery]
     [cider-ci.auth.authorize :as authorize]
     [cider-ci.utils.config :as config :refer [get-config]]
+    [cider-ci.utils.http-resources-cache-buster :as cache-buster]
     [cider-ci.utils.ring]
     [cider-ci.utils.routing :as routing]
     [cider-ci.utils.status :as status]
@@ -73,10 +74,10 @@
    [:meta {:name "viewport"
            :content "width=device-width, initial-scale=1"}]
    (include-css (str CONTEXT
-                     (if (= cider-ci.env/env :dev)
-                       "/css/site.css"
-                       "/css/site.min.css")))])
-
+                     (cache-buster/cache-busted-path
+                       (if (= cider-ci.env/env :dev)
+                         "/css/site.css"
+                         "/css/site.min.css"))))])
 
 (defn mount-target []
   [:div#app
@@ -89,8 +90,7 @@
       [:div.alert.alert-warning
        [:h3 "JavaScript seems to be disabled or missing!"]
        [:p (str "Due to the dynamic nature of Cider-CI "
-                "most pages will not work as expected without JavaScript!")]])
-    ]])
+                "most pages will not work as expected without JavaScript!")]])]])
 
 (defn navbar [release]
   [:div.navbar.navbar-default {:role :navigation}
@@ -115,7 +115,7 @@
      [:div.container-fluid
       (navbar (-> (cider-ci.utils.self/release) atom))
       (mount-target)
-      (include-js (str CONTEXT "/js/app.js"))]]))
+      (include-js (str CONTEXT (cache-buster/cache-busted-path "/js/app.js")))]]))
 
 (defn client-html-response-handler [request]
   {:status 200
