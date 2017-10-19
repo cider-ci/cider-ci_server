@@ -27,7 +27,7 @@
   or the path itself"
   (get @original-path->cache-buster-path path path))
 
-(defn to-be-cached? [path xp]
+(defn path-matches? [path xp]
   (boolean
     (some (fn [p]
             (if (string? p)
@@ -48,33 +48,61 @@
     (swap! original-path->cache-buster-path assoc path cache-buster-path)
     cache-buster-path))
 
+(defn add-never-expires-header [response]
+  (-> response
+      (assoc-in [:headers "Cache-Control"] "public, max-age=31536000")
+      (update-in [:headers] dissoc "Last-Modified")))
+
+(defn cache-bust-response [original-path root-path options request]
+  (logging/debug {:original-path original-path})
+  (add-never-expires-header
+    (resource/resource-request
+      (assoc request :path-info (codec/url-encode original-path))
+      root-path (dissoc options :cache-bust-paths :never-expire-paths))))
+
+(defn resource-response-with-optionally-never-expires-header
+  [path options uncached-response]
+  (if (path-matches? path (:never-expire-paths options))
+    (add-never-expires-header uncached-response)
+    uncached-response))
+
+(defn cache-and-redirect-or-resource-response-or-pass-on
+  [path handler root-path options request]
+  (if-let [uncached-response
+           (resource/resource-request
+             request root-path (dissoc options :cache-bust-paths :never-expire-paths))]
+    (if (and (:body uncached-response)
+             (path-matches? path (:cache-bust-paths options)))
+      (ring.util.response/redirect
+        (str (:context request) (cache-bust-path! path (:body uncached-response))))
+      (resource-response-with-optionally-never-expires-header
+        path options uncached-response))
+    (handler request)))
+
 (defn resource [handler root-path options request]
   (let [path (codec/url-decode (request/path-info request))]
-    (logging/debug {:path path})
     (if-let [original-path (get @cache-buster-path->original-path path nil)]
-      (do
-        (logging/debug {:original-path original-path})
-        (assoc-in
-          (resource/resource-request
-            (assoc request :path-info (codec/url-encode original-path))
-            root-path (dissoc options :cached-paths))
-          [:headers "Cache-Control"] "public, max-age=31536000"))
-      (if-let [uncached-response (resource/resource-request
-                                   request root-path (dissoc options :cached-paths))]
-        (if (and (:body uncached-response)
-                 (to-be-cached? path (:cached-paths options)))
-          (let [new-path (cache-bust-path! path (:body uncached-response))]
-            (ring.util.response/redirect (str (:context request) new-path)))
-          uncached-response)
-        (handler request)))))
+      (cache-bust-response
+        original-path root-path options request)
+      (cache-and-redirect-or-resource-response-or-pass-on
+        path handler root-path options request))))
 
 (defn wrap-resource
-  "Replacement for ring.middleware.resource/wrap-resource.  Takes an
-  additional option :cached-paths where the value is a collection. Each value
-  is either a string or a regex.  Caching is lazy and will be effective only
-  with the second get request to the resource."
+  "Replacement for ring.middleware.resource/wrap-resource.
+
+  Accepts the following additional options:
+
+  :cache-bust-paths - collection, each value is either a string or a regex,
+      resources with matching paths will be cache-busted and a redirect
+      response to the cache-busted path is send; subsequent calls to
+      cache-busted-path will return the cache-busted path.
+
+  :never-expire-paths - collection, each value is either a string or a regex,
+      resources with matching paths will be set to never expire"
+
   ([handler root-path]
-   (wrap-resource handler root-path {:cached-paths []}))
+   (wrap-resource handler root-path {:cache-bust-paths []
+                                     :never-expire-paths []}))
   ([handler root-path options]
    (fn [request]
      (resource handler root-path options request))))

@@ -127,10 +127,12 @@
       ring.middleware.json/wrap-json-response
       wrap-accept
       (ring.middleware.defaults/wrap-defaults {:proxy true})
-      (wrap-resource "public" {:allow-symlinks? true
-                               :cached-paths ["/css/site.css"
-                                              "/css/site.min.css"
-                                              "/js/app.js"]})
+      (wrap-resource
+        "public" {:allow-symlinks? true
+                  :cache-bust-paths ["/css/site.css"
+                                     "/css/site.min.css"
+                                     "/js/app.js"]
+                  :never-expire-paths [#".*font-awesome-\d\.\d\.\d\/.*"]})
       wrap-content-type
       (wrap-default-charset "UTF-8")
       wrap-not-modified
