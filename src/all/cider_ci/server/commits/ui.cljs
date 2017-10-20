@@ -572,7 +572,8 @@
 (defn server-entity-event-receiver [event]
   (case (:table_name event)
     "branches" (fetch-commits)
-    "jobs" (fetch-jobs-summaries)))
+    "jobs" (fetch-jobs-summaries)
+    nil))
 
 
 ;;; page ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

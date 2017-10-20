@@ -106,14 +106,13 @@
           ]]])]))
 
 (defn debug-component []
-  [:div.page-debug
-   [:h2 "Page-Debug"]
-   [:div
-    [:h3 "@attachments*"]
-    [:pre
-     (with-out-str (pprint @attachments*))
-     ]
-    ]])
+  (when (:debug @state/client-state)
+    [:div.page-debug
+     [:h2 "Page-Debug"]
+     [:div
+      [:h3 "@attachments*"]
+      [:pre
+       (with-out-str (pprint @attachments*))]]]))
 
 (defn breadcrumb-component []
   (breadcrumbs/breadcrumb-component
@@ -135,10 +134,13 @@
          :server-entity-event-receiver server-entity-event-receiver)
   (fetch))
 
+(defn page-will-unmount [& args]
+  (swap! state/page-state dissoc :server-entity-event-receiver)
+  (reset! fetch-id* nil))
+
 (defn page []
   (reagent/create-class
     {:reagent-render page-component
      :component-did-mount post-mount-setup
-     }))
-
+     :component-will-unmount page-will-unmount}))
 
