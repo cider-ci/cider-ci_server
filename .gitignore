@@ -17,7 +17,6 @@ config/config.yml
 default-executor-config.yml
 pom.xml
 pom.xml.asc
-resources/public/
 resources/public/css/site.min.css
 server.iml
 src/cider_ci/self.clj
