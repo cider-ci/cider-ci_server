@@ -12,9 +12,9 @@
 
    [aleph "0.4.3"]
    [camel-snake-kebab "0.4.0"]
-   [cheshire "5.7.1"]
+   [cheshire "5.8.0"]
    [cider-ci/open-session "1.3.0"]
-   [clj-http "3.6.1"]
+   [clj-http "3.7.0"]
    [clj-time "0.14.0"]
    [cljs-http "0.1.43"]
    [cljsjs/bootstrap "3.3.6-1"]
@@ -32,48 +32,48 @@
    [drtom/clj-uuid "0.1.7"]
    [drtom/honeysql "2.0.0-ALPHA+1"]
    [environ "1.1.0"]
-   [fipp "0.6.9"]
+   [fipp "0.6.10"]
    [hiccup "1.0.5"]
    [hickory "0.7.1"]
    [io.forward/yaml "1.0.6"]
    [joda-time "2.9.9"]
    [log4j/log4j "1.2.17" :exclusions [javax.mail/mail javax.jms/jms com.sun.jdmk/jmxtools com.sun.jmx/jmxri]]
    [logbug "4.2.2"]
-   [markdown-clj "0.9.99"]
+   [markdown-clj "1.0.1"]
    [me.raynes/fs "1.4.6"]
    [org.apache.commons/commons-io "1.3.2"]
    [org.apache.commons/commons-lang3 "3.6"]
    [org.clojars.hozumi/clj-commons-exec "1.2.0"]
    [org.clojure/algo.generic "0.1.2"]
    [org.clojure/clojure "1.8.0"]
-   [org.clojure/clojurescript "1.9.854" :scope "provided"]  ; see guava below; also check `lein tree` and sync
+   [org.clojure/clojurescript "1.9.908" :scope "provided"]  ; see guava below; also check `lein tree` and sync
    [org.clojure/core.incubator "0.1.4"]
    [org.clojure/core.memoize "0.5.9"]
    [org.clojure/data.json "0.2.6"]
-   [org.clojure/java.jdbc "0.7.0"]
+   [org.clojure/java.jdbc "0.7.3"]
    [org.clojure/tools.cli "0.3.5"]
    [org.clojure/tools.nrepl "0.2.13"]
    [org.slf4j/slf4j-log4j12 "1.7.25"]
    [pg-types "2.3.0"]
-   [prismatic/schema "1.1.6"]
+   [prismatic/schema "1.1.7"]
    [reagent "0.7.0"]
    [reagent-utils "0.2.1"]
    [ring "1.6.2"]
    [ring-middleware-accept "2.0.3"]
-   [ring-server "0.4.0"]
+   [ring-server "0.5.0"]
    [ring/ring-core "1.6.2"]
    [ring/ring-defaults "0.3.1"]
    [ring/ring-json "0.4.0"]
    [secretary "1.2.3"]
-   [selmer "1.11.0"]
+   [selmer "1.11.1"]
    [timothypratley/patchin "0.3.5"]
 
    ; included as a submodule for now
    ; can be removed after changes have been submitted and accepted;
    ;[venantius/accountant "0.2.0" :exclusions [org.clojure/tools.reader]]
 
-   [viz-cljc "0.1.2"]
-   [yogthos/config "0.8"]
+   [viz-cljc "0.1.3"]
+   [yogthos/config "0.9"]
 
    ; loom depdencies, for source are included via submodule,
    ; can be removed after changes have been submitted and accepted;
@@ -106,7 +106,10 @@
                      {:output-to "target/cljsbuild/public/js/app.js"
                       :output-dir "target/uberjar"
                       :optimizations :advanced
-                      :pretty-print  false}}
+                      :pretty-print  false
+                      :install-deps true
+                      :npm-deps {:js-yaml "3.10.0"}
+                      }}
                :app
                {:source-paths ["src/all" "src/dev" "vendor/accountant/src"]
                 :compiler
@@ -117,7 +120,10 @@
                  :output-dir "target/cljsbuild/public/js/out"
                  :source-map true
                  :optimizations :none
-                 :pretty-print  true}}}}
+                 :pretty-print  true
+                 :install-deps true
+                 :npm-deps {:js-yaml "3.10.0"}
+                 }}}}
 
   :minify-assets {:assets
                   {"resources/public/css/site.min.css"
@@ -136,11 +142,11 @@
              {:dependencies [[ring/ring-mock "0.3.1"]
                              [ring/ring-devel "1.6.2"]
                              [prone "1.1.4"]
-                             [figwheel-sidecar "0.5.12"]
+                             [figwheel-sidecar "0.5.14"]
                              [org.clojure/tools.nrepl "0.2.13"]
                              [com.cemerick/piggieback "0.2.2"]
-                             [pjstadig/humane-test-output "0.8.2"]]
-              :plugins [[lein-figwheel "0.5.12"]
+                             [pjstadig/humane-test-output "0.8.3"]]
+              :plugins [[lein-figwheel "0.5.14"]
                         [lein-sassy "1.0.7"]]
               :source-paths ["src/all" "src/dev" "vendor/accountant/src"]
               :resource-paths ["target/cljsbuild"]

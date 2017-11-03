@@ -21,3 +21,5 @@ resources/public/
 resources/public/css/site.min.css
 server.iml
 src/cider_ci/self.clj
+/node_modules
+package.json
