@@ -19,6 +19,7 @@
    [cljs-http "0.1.43"]
    [cljsjs/bootstrap "3.3.6-1"]
    [cljsjs/jquery "2.2.4-0"]
+   [cljsjs/js-yaml "3.3.1-0"]
    [cljsjs/moment "2.17.1-1"]
    [clojure-humanize "0.2.2"]
    [clojure-ini "0.0.2"]

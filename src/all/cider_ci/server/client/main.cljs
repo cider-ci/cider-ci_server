@@ -6,6 +6,8 @@
   (:require
     [cider-ci.utils.core :refer [keyword str presence]]
 
+    [cljsjs.js-yaml]
+
     [cider-ci.server.client.connection :as connection]
     [cider-ci.server.client.connection.request :as request]
     [cider-ci.server.client.connection.socket :as socket]
@@ -119,6 +121,7 @@
                                        component)
                                      not-found-page)]
           [resolved-component]))]
+     [:h3 (js/jsyaml.load "5")]
      [general-debug-section]]))
 
 ;--- Initialize
