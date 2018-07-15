@@ -156,7 +156,7 @@
                              [ring/ring-devel "1.6.3"]
                              [ring/ring-mock "0.3.2"]]
               :plugins [[lein-figwheel "0.5.15"]]
-              :source-paths ["src/all" "src/dev" "vendor/accountant/src"]
+              :source-paths ["src/all" "src/dev"]
               :resource-paths ["resources/all" "resources/dev" "target/cljsbuild"]
               :injections [(require 'pjstadig.humane-test-output)
                            (pjstadig.humane-test-output/activate!)]
