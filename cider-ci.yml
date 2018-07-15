@@ -45,7 +45,8 @@ jobs:
           RUBY_VERSION: 2.3.3
           RUBY: '{{RUBY_ENGINE}}-{{RUBY_VERSION}}'
           RAILS_ENV: test
-        traits: {}
+        traits: 
+          - ci-g2016-08
         max_trials: 5
         eager_trials: 2
         git_options:
