@@ -29,8 +29,8 @@
         :else (throw (IllegalArgumentException. (str "Parsing " path " is not supported.")))))))
 
 (defn- get-path-content_unmemoized [git-ref-id path]
-  (let [url (str (:server_base_url (get-config))
-                 "/cider-ci/repositories"
+  (let [url (str (-> (get-config) :base-url :url)
+                 "/repositories"
                  "/path-content/" git-ref-id "/" path)
         res (http/get url {})
         body (:body res)]

@@ -4,7 +4,7 @@
 
 (ns cider-ci.server.client.web
   (:refer-clojure :exclude [str keyword])
-  (:require [cider-ci.utils.core :refer [keyword str]])
+  (:require [cider-ci.utils.core :refer [keyword str presence]])
 
   (:require
     [cider-ci.server.client.ui.navbar.release :as navbar.release]
@@ -13,7 +13,6 @@
     [cider-ci.server.client.web.shared :as web.shared :refer [dynamic]]
     [cider-ci.server.client.welcome-page.be :as welcome-page]
     [cider-ci.server.client.root :as root]
-
     [cider-ci.auth.anti-forgery :as anti-forgery]
     [cider-ci.auth.authorize :as authorize]
     [cider-ci.utils.config :as config :refer [get-config]]
@@ -21,15 +20,17 @@
     [cider-ci.utils.ring]
     [cider-ci.utils.routing :as routing]
     [cider-ci.utils.status :as status]
+    [cider-ci.utils.markdown :refer [md2html]]
 
     [cider-ci.env]
-    [hiccup.page :refer [include-js include-css html5]]
-    [clojure.data.json :as json]
-    [clojure.walk :refer [keywordize-keys]]
+
     [clj-time.core :as time]
     [clojure.data :as data]
+    [clojure.data.json :as json]
+    [clojure.walk :refer [keywordize-keys]]
     [compojure.core :as cpj]
     [compojure.handler :as cpj.handler]
+    [hiccup.page :refer [include-js include-css html5]]
     [ring.adapter.jetty :as jetty]
     [ring.middleware.accept]
     [ring.middleware.cookies :as cookies]
@@ -38,6 +39,7 @@
     [ring.middleware.params]
     [ring.util.response :refer [charset]]
     [ring.util.response]
+    [yaml.core :as yaml]
 
     [clj-logging-config.log4j :as logging-config]
     [clojure.tools.logging :as logging]
@@ -79,9 +81,54 @@
                          "/css/site.css"
                          "/css/site.min.css"))))])
 
+(def default-welcome-message
+"
+# Welcome to Cider-CI
+
+This is the default welcome-message.
+
+It can be customized via `More` → `Settings` → `Welcome-Page`!
+")
+
+(def about-pre-message
+  (->> [" # About Cider-CI                                                    "
+        " Cider-CI is an application and service stack                        "
+        " for highly **parallelized and resilient testing**, and              "
+        " **continuous delivery**.                                            "
+        "                                                                     "
+        " Read more about Cider-CI at [cider-ci.info](http://cider-ci.info/). "]
+       (clojure.string/join  \newline)
+       md2html))
+
+(def release-info
+  (try 
+    (-> "releases.yml"
+        clojure.java.io/resource
+        slurp yaml/parse-string
+        :releases first)
+    (catch Exception _
+      {:version_major 5
+       :version_minor 0
+       :version_patch 0
+       :version_pre "development"
+       :name "Ortles"
+       :version_build nil 
+       :edition nil
+       :about-name ""})))
+
+(def release-notes
+  [:div.release-notes
+   [:div.about-name (-> release-info :about-name md2html)]
+   [:div.description (-> release-info :description md2html)]])
+
+(defn welcome-message []
+  (md2html
+    (or (-> (get-config) :welcome_page :message presence)
+        default-welcome-message)))
+
 (defn mount-target []
   [:div#app
-   [:div.container-fluid
+   [:div
     (if (= cider-ci.env/env :dev)
       [:div.alert.alert-warning
        [:h3 "ClojureScript has not been compiled!"]
@@ -90,7 +137,19 @@
       [:div.alert.alert-warning
        [:h3 "JavaScript seems to be disabled or missing!"]
        [:p (str "Due to the dynamic nature of Cider-CI "
-                "most pages will not work as expected without JavaScript!")]])]])
+                "most pages will not work as expected without JavaScript!")]])
+
+    [:div#welcome-message.text-center
+     (welcome-message)]
+    [:hr]
+    [:div#about-message.text-center about-pre-message]
+    [:hr]
+    [:div#about-release
+     [:h1 "Release Notes"]
+     [:div.version-info
+      [:h2 (navbar.release/navbar-release (atom release-info))]]
+     [:div#release-info
+      release-notes]]]])
 
 (defn navbar [release]
   [:div.navbar.navbar-default {:role :navigation}

@@ -5,7 +5,6 @@
 (ns cider-ci.server.dispatcher.sync.update-executor
   (:refer-clojure :exclude [update])
   (:require
-    [cider-ci.server.dispatcher.executor :as executor-entity]
     [cider-ci.server.executors :as executors]
 
     [cider-ci.utils.self :as self]

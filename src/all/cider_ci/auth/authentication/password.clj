@@ -12,7 +12,6 @@
     [cider-ci.utils.core :refer [keyword str presence]]
     [cider-ci.utils.rdbms :as rdbms]
 
-    [clojure.data.codec.base64 :as base64]
     [clojure.java.jdbc :as jdbc]
     [clojure.string :refer [lower-case]]
     [crypto.random]
@@ -66,13 +65,9 @@
    :scope_admin_write true})
 
 (defn password-matches? [username password]
-  (or (when-let [settings-basic-auth-password
-                 (-> (get-config) :basic_auth :password presence)]
-        (or (= password settings-basic-auth-password)
-            (= password (sha1-hmac username settings-basic-auth-password))))
-      (when-let [settings-master-secret (-> (get-config) :secret presence)]
-        (or (= password settings-master-secret)
-            (= password (sha1-hmac username settings-master-secret))))))
+  (boolean (when-let [secret (-> (get-config) :secret presence)]
+             (or (= password secret)
+                 (= password (sha1-hmac username secret))))))
 
 (defn find-authenticated-service [username password]
   (when (password-matches? username password)

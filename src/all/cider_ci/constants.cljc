@@ -4,7 +4,12 @@
 
 (ns cider-ci.constants)
 
-(def SESSION-COOKIE-KEY :cider-ci_services-session)
+(def SESSION-COOKIE-KEY :cider-ci_session)
+
+(def ANTI_CRSF_TOKEN_COOKIE_NAME "cider-ci-anti-csrf-token")
+
+(def HTTP_UNSAVE_METHODS #{:delete :patch :post :put})
+(def HTTP_SAVE_METHODS #{:get :head :options :trace})
 
 (def STATES {:JOB '("passed" "executing" "pending" "aborting" "aborted" "defective" "failed"),
              :TASK '("aborted" "aborting" "defective" "executing" "failed" "passed" "pending"),
@@ -20,3 +25,9 @@
 (def utf8-erase-to-right "\u2326")
 
 (def utf8-narrow-no-break-space "\u202F")
+
+(def WORKING-DIR 
+  #?(:clj (System/getProperty "user.dir")
+     :default nil))
+
+

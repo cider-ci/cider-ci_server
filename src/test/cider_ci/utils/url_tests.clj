@@ -24,6 +24,18 @@
       (is (= (:path dissected-url) "/cider-ci/cider-ci_builder.git"))
       ))
 
+  (testing "jdbc url"
+    (let [dissected-url (dissect "jdbc:postgresql://cider-ci:cider-ci@localhost:5432/cider-ci_v4?max-pool-size=50")]
+      (is (= {:database "cider-ci_v4"
+              :host "localhost"
+              :password "cider-ci"
+              :port 5432
+              :protocol "jdbc"
+              :max-pool-size 50
+              :sub-protocol "postgresql"
+              :username "cider-ci"}
+             dissected-url))))
+
   (testing "ssh url"
     (let [dissected-url (dissect "ssh://user@server.example.com/project-namespace/project-name.git")]
       (is (= (:project_namespace dissected-url) "project-namespace"))
@@ -39,6 +51,4 @@
       (is (= (:protocol dissected-url) "ssh"))
       (is (= (:host dissected-url) "github.com"))
       (is (= (:username dissected-url) "git"))
-      (is (= (:path dissected-url) "project-namespace/project-name.git"))
-      ))
-  )
+      (is (= (:path dissected-url) "project-namespace/project-name.git")))))

@@ -21,7 +21,6 @@
     [cider-ci.executor.trials.templates :refer [render-templates render-string-template]]
     [cider-ci.utils.core :refer :all]
     [cider-ci.utils.daemon :as daemon]
-    [cider-ci.utils.http :refer [build-server-url]]
     [cider-ci.utils.system :as system]
 
     [clj-time.core :as time]

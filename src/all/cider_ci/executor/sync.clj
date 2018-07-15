@@ -17,7 +17,7 @@
 
     [cider-ci.utils.config :refer [get-config parse-config-duration-to-seconds]]
     [cider-ci.utils.daemon :refer [defdaemon]]
-    [cider-ci.utils.http :as http :refer [build-service-url]]
+    [cider-ci.utils.http :as http]
     [cider-ci.utils.core :refer :all]
     [cider-ci.utils.runtime :as runtime]
 
@@ -68,7 +68,7 @@
   (catcher/snatch
     {}
     (let [config (get-config)
-          url (build-service-url :dispatcher "/sync")
+          url (str (-> (get-config) :server-base-url :url) "/dispatcher/sync")
           traits (into [] (traits/get-traits))
           max-load (or (:max_load config)
                        (.availableProcessors(Runtime/getRuntime)))

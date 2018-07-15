@@ -10,70 +10,75 @@
   :dependencies
   [
 
-   [aleph "0.4.3"]
+   [aleph "0.4.4"]
+   [bidi "2.1.3"]
    [camel-snake-kebab "0.4.0"]
-   [cheshire "5.7.1"]
-   [cider-ci/open-session "1.3.0"]
-   [clj-http "3.6.1"]
-   [clj-time "0.14.0"]
-   [cljs-http "0.1.43"]
-   [cljsjs/bootstrap "3.3.6-1"]
-   [cljsjs/jquery "2.2.4-0"]
+   [cheshire "5.8.0"]
+   [cider-ci/open-session "2.0.0-beta.1"]
+   [clj-http "3.8.0"]
+   [clj-time "0.14.2"]
+   [cljs-http "0.1.44"]
+   [cljsjs/jquery "3.2.1-0"]
    [cljsjs/moment "2.17.1-1"]
    [clojure-humanize "0.2.2"]
    [clojure-ini "0.0.2"]
-   ; TODO upgrade com.cronutils/cron-utils >= "6.0.0"
-   [com.cronutils/cron-utils "5.0.5"]
+   [com.cronutils/cron-utils "5.0.5"] ; upgrade to 6 or even more so 7 will brake things
    [com.github.mfornos/humanize-slim "1.2.2"]
    [com.lucasbradstreet/cljs-uuid-utils "1.0.2"]
    [com.mchange/c3p0 "0.9.5.2"]
-   [com.taoensso/sente "1.11.0"]
+   [com.taoensso/sente "1.12.0"]
+   [commons-io/commons-io "2.6"]
    [compojure "1.6.0"]
    [drtom/clj-uuid "0.1.7"]
    [drtom/honeysql "2.0.0-ALPHA+1"]
    [environ "1.1.0"]
-   [fipp "0.6.9"]
+   [fipp "0.6.12"]
    [hiccup "1.0.5"]
    [hickory "0.7.1"]
-   [io.forward/yaml "1.0.6"]
+   [honeysql "0.9.2"]
+   [io.forward/yaml "1.0.7"]
    [joda-time "2.9.9"]
    [log4j/log4j "1.2.17" :exclusions [javax.mail/mail javax.jms/jms com.sun.jdmk/jmxtools com.sun.jmx/jmxri]]
    [logbug "4.2.2"]
-   [markdown-clj "0.9.99"]
+   [markdown-clj "1.0.2"]
    [me.raynes/fs "1.4.6"]
+   [mvxcvi/clj-pgp "0.9.0"]
    [org.apache.commons/commons-io "1.3.2"]
-   [org.apache.commons/commons-lang3 "3.6"]
+   [org.apache.commons/commons-lang3 "3.7"]
+   [org.bouncycastle/bcpg-jdk15on "1.59"]
+   [org.bouncycastle/bcpkix-jdk15on "1.59"]
+   [org.bouncycastle/bcprov-jdk15on "1.59"]
    [org.clojars.hozumi/clj-commons-exec "1.2.0"]
    [org.clojure/algo.generic "0.1.2"]
-   [org.clojure/clojure "1.8.0"]
-   [org.clojure/clojurescript "1.9.854" :scope "provided"]  ; see guava below; also check `lein tree` and sync
+   [org.clojure/clojure "1.9.0"]
+   [org.clojure/clojurescript "1.10.217" :scope "provided"]  ; see guava below; also check `lein tree` and sync
    [org.clojure/core.incubator "0.1.4"]
-   [org.clojure/core.memoize "0.5.9"]
+   [org.clojure/core.memoize "0.7.1"]
    [org.clojure/data.json "0.2.6"]
-   [org.clojure/java.jdbc "0.7.0"]
+   [org.clojure/java.jdbc "0.7.5"]
    [org.clojure/tools.cli "0.3.5"]
+   [org.clojure/tools.logging "0.4.0"]
    [org.clojure/tools.nrepl "0.2.13"]
    [org.slf4j/slf4j-log4j12 "1.7.25"]
    [pg-types "2.3.0"]
-   [prismatic/schema "1.1.6"]
+   [prismatic/schema "1.1.7"]
    [reagent "0.7.0"]
-   [reagent-utils "0.2.1"]
-   [ring "1.6.2"]
+   [reagent-utils "0.3.1"]
+   [ring "1.6.3"]
    [ring-middleware-accept "2.0.3"]
-   [ring-server "0.4.0"]
-   [ring/ring-core "1.6.2"]
+   [ring-server "0.5.0"]
+   [ring/ring-core "1.6.3"]
    [ring/ring-defaults "0.3.1"]
    [ring/ring-json "0.4.0"]
    [secretary "1.2.3"]
-   [selmer "1.11.0"]
+   [selmer "1.11.7"]
    [timothypratley/patchin "0.3.5"]
+   [venantius/accountant "0.2.4"]
 
-   ; included as a submodule for now
-   ; can be removed after changes have been submitted and accepted;
-   ;[venantius/accountant "0.2.0" :exclusions [org.clojure/tools.reader]]
+   [org.eclipse.jgit/org.eclipse.jgit "4.11.0.201803080745-r"]
 
-   [viz-cljc "0.1.2"]
-   [yogthos/config "0.8"]
+   [viz-cljc "0.1.3"]
+   [yogthos/config "1.1.1"]
 
    ; loom depdencies, for source are included via submodule,
    ; can be removed after changes have been submitted and accepted;
@@ -84,19 +89,30 @@
 
    ; explicit transient deps to force conflict resolution
    [com.google.guava/guava "23.0"]
-   [org.clojure/tools.nrepl "0.2.13"]
+   ;[org.clojure/tools.nrepl "0.2.13"]
 
    ]
 
+  ; jdk 9 needs ["--add-modules" "java.xml.bind"]
+  :jvm-opts #=(eval (if (re-matches #"^9\..*" (System/getProperty "java.version"))
+                      ["--add-modules" "java.xml.bind"]
+                      []))
 
-  :resource-paths ["../config" "./config" "./resources"]
+  :javac-options ["-target" "1.8" "-source" "1.8" "-Xlint:-options"]
 
-  :source-paths ["src/all" "vendor/loom/src" "vendor/accountant/src" "vendor/cljs-priority-map/src/cljs"]
+  :source-paths ["src/all" "vendor/loom/src" "vendor/cljs-priority-map/src/cljs"]
+
+  :resource-paths ["resources/all"]
+
   :test-paths ["src/test"]
 
-  :plugins [[lein-environ "1.0.2"]
-            [lein-cljsbuild "1.1.1"]
-            [lein-asset-minifier "0.2.7"
+  :aot [cider-ci.WebstackException cider-ci.ValidationException]
+
+  :main cider-ci.main
+
+  :plugins [[lein-environ "1.1.0"]
+            [lein-cljsbuild "1.1.7"]
+            [lein-asset-minifier "0.4.4"
              :exclusions [org.clojure/clojure]]]
 
   :cljsbuild {:builds
@@ -105,14 +121,13 @@
                      :compiler
                      {:output-to "target/cljsbuild/public/js/app.js"
                       :output-dir "target/uberjar"
-                      :optimizations :advanced
+                      :optimizations :simple
                       :pretty-print  false}}
                :app
-               {:source-paths ["src/all" "src/dev" "vendor/accountant/src"]
+               {:source-paths ["src/all" "src/dev"]
                 :compiler
-                {:main "cider-ci.server.client.dev"
-                 ;:asset-path "/cider-ci/client/js/out"
-                 :asset-path "/cider-ci/js/out"
+                {:main "cider-ci.server.front.init"
+                 :asset-path "/js/out"
                  :output-to "target/cljsbuild/public/js/app.js"
                  :output-dir "target/cljsbuild/public/js/out"
                  :source-map true
@@ -133,30 +148,26 @@
              :css-dirs ["resources/public/css"]}
 
   :profiles {:dev
-             {:dependencies [[ring/ring-mock "0.3.1"]
-                             [ring/ring-devel "1.6.2"]
-                             [prone "1.1.4"]
-                             [figwheel-sidecar "0.5.12"]
+             {:dependencies [[com.cemerick/piggieback "0.2.2"]
+                             [figwheel-sidecar "0.5.15"]
                              [org.clojure/tools.nrepl "0.2.13"]
-                             [com.cemerick/piggieback "0.2.2"]
-                             [pjstadig/humane-test-output "0.8.2"]]
-              :plugins [[lein-figwheel "0.5.12"]
-                        [lein-sassy "1.0.7"]]
+                             [pjstadig/humane-test-output "0.8.3"]
+                             [prone "1.5.0"]
+                             [ring/ring-devel "1.6.3"]
+                             [ring/ring-mock "0.3.2"]]
+              :plugins [[lein-figwheel "0.5.15"]]
               :source-paths ["src/all" "src/dev" "vendor/accountant/src"]
-              :resource-paths ["target/cljsbuild"]
+              :resource-paths ["resources/all" "resources/dev" "target/cljsbuild"]
               :injections [(require 'pjstadig.humane-test-output)
                            (pjstadig.humane-test-output/activate!)]
               :env {:dev true}}
-             :uberjar {:hooks [minify-assets.plugin/hooks]
+              :uberjar {:hooks [minify-assets.plugin/hooks]
                        :source-paths ["src/all" "src/prod"]
                        :prep-tasks ["compile" ["cljsbuild" "once" "min"]]
                        :resource-paths ["target/cljsbuild"]
                        :aot [cider-ci.WebstackException cider-ci.ValidationException #"cider-ci.*"]
-                       :uberjar-name "cider-ci.jar"
-                       }
-             :test {:resource-paths ["resources_test"]
-                    }}
-  :aot [cider-ci.WebstackException cider-ci.ValidationException]
-  :main cider-ci.main
+                       :uberjar-name "cider-ci.jar"}
+             :test {:resource-paths ["resources/all" "resources/test" "target/cljsbuild"]}}
+
   :repl-options {:timeout  120000}
-  )
+)

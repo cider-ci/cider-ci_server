@@ -21,7 +21,7 @@
     (.close server)
     (reset! _server nil)))
 
-(defn start [conf main-handler ]
+(defn start [conf main-handler]
   "Starts (or stops and then starts) the webserver"
   (let [server-conf (conj {:ssl? false
                            :join? false}

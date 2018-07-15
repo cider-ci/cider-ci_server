@@ -8,10 +8,10 @@
   (:require
     [cider-ci.executor.utils.include-exclude :as in-ex]
     [cider-ci.executor.trials.helper :refer :all]
-    [cider-ci.utils.http :refer [build-server-url]]
     [cider-ci.utils.core :refer :all]
     [cider-ci.utils.map :as map :refer [convert-to-array]]
     [cider-ci.utils.http :as http]
+    [cider-ci.utils.config :as config :refer [get-config]]
 
     [logbug.debug :as debug]
     [logbug.catcher :as catcher]
@@ -63,13 +63,17 @@
 (defn- kind-property [kind postfix params]
   ((keyword (str kind postfix)) params))
 
+; TODO  the base-url is for sure broken
+; a GET URL looks like the following below ; from the routes def a PUT URL should be the same
+;https://ci.zhdk.ch/cider-ci/storage/tree-attachments/4ef03438ea30e8c4ba63e9bff49ead9c6b1e862d/madek.tar.gz
+
 (defn find-and-upload [trial]
   (let [params (-> trial get-params-atom deref)
         working-dir (get-working-dir trial)
         token (:token params)]
     (doseq [kind ["tree" "trial"]]
-      (let [base-url (build-server-url
-                       (kind-property kind "_attachments_path" params))]
+      (let [base-url (str (-> (get-config) :server-base-url :url)
+                          "/storage/" kind "-attachments")]
         (when-let [matchers (kind-property kind "_attachments" params)]
           (doseq [matcher (convert-to-array matchers)]
             (let [content-type (:content_type matcher)]

@@ -37,3 +37,7 @@
                                            (date-time-to-string date-time))))
 
 ;(cheshire.core/generate-string {:t (time/now)})
+
+
+(defn to-json [d]
+  (cheshire.core/generate-string d))

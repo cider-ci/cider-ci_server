@@ -32,4 +32,3 @@
                     {:status 500
                      :body (thrown/stringify e)})}
       (handler request))))
-

@@ -17,6 +17,8 @@
     [cider-ci.utils.duration :as duration]
     [cider-ci.utils.rdbms :as rdbms]
 
+    [cheshire.core :as json]
+
     [clj-time.core :as time]
     [clj-time.format :as time-format]
     [clojure.java.jdbc :as jdbc]
@@ -75,15 +77,13 @@
 (defn session-cookie [request]
   (-> request :cookies keywordize-keys SESSION-COOKIE-KEY :value))
 
-(defn session-secret [] (-> (get-config) :session :secret))
-
 (defn authenticate [request handler]
   (if-let [cookie (session-cookie request)]
     (let [auth-entity-or-error-response
           (catcher/snatch
             {:level :debug
              :return-fn (fn [e] (session-error-page e request))}
-            (->> cookie (decrypt (session-secret)) authenticated-user))]
+            (->> cookie (decrypt (-> (get-config) :secret)) authenticated-user))]
       (if (= (:status auth-entity-or-error-response) 477)
         auth-entity-or-error-response
         (handler (assoc request :authenticated-entity auth-entity-or-error-response))))

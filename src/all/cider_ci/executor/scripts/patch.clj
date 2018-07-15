@@ -3,7 +3,8 @@
   (:require [cider-ci.utils.core :refer :all])
   (:require
     [cider-ci.executor.reporter :as reporter]
-    [cider-ci.utils.http :refer [build-server-url]]
+    [cider-ci.utils.config :as config :refer [get-config]]
+
     [clojure.data.json :as json]
 
     [clj-logging-config.log4j :as logging-config]
@@ -15,7 +16,7 @@
 (defonce ^:private patch-agents-atom (atom {}))
 
 (defn- patch-url [trial-params script-params]
-  (str (build-server-url (:patch_path trial-params))
+  (str (-> (get-config) :server-base-url :url) (:patch_path trial-params)
        "/scripts/" (clj-http.util/url-encode (:key script-params))))
 
 (defn create-patch-agent [script-params trial-params]

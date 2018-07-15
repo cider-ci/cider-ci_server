@@ -5,15 +5,16 @@
     [cljs.core.async.macros :refer [go]]
     )
   (:require
-    [cider-ci.server.client.connection.request :as request]
-    [cider-ci.server.client.routes :as routes]
-    [cider-ci.server.client.shared :refer [pre-component]]
-    [cider-ci.server.client.state :as state]
-    [cider-ci.server.trees.ui-shared :refer [tree-id*]]
+    [cider-ci.server.front.requests.core :as requests]
+    [cider-ci.server.paths :as paths :refer [path]]
+    [cider-ci.server.trees.front-shared :refer [tree-id*]]
     [cider-ci.utils.core :refer [keyword str presence]]
     [cider-ci.utils.markdown :as markdown]
     [cider-ci.utils.sha1]
 
+    [loom.attr]
+    [loom.graph]
+    [loom.io]
     [viz.core :as viz]
     [hickory.core :as hickory]
     [cljs-uuid-utils.core :as uuid]
@@ -136,11 +137,12 @@
 ;;; setup page data ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn fetch-project-configuration []
-  (let [id @tree-id*
-        url (str "/cider-ci/trees/" id "/project-configuration" )
+  (let [url (path :tree-project-configuration {:tree-id @tree-id*})
         resp-chan (async/chan)]
-    (request/send-off {:url url :method :get}
-                      {} :chan resp-chan)
+    (requests/send-off {:url url :method :get}
+                      {:title "Fetch Project Configuraion"
+                       :retry-fn fetch-project-configuration
+                       } :chan resp-chan)
     (go (let [resp (<! resp-chan)]
           (when (= (:status resp) 200)
             (swap! project-configurations*

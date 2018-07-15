@@ -96,6 +96,7 @@
     [:li [:a {:href (str CONTEXT "/create-admin")} "Create Admin"]]
     [:li [:a {:href "/cider-ci/session/password/sign-in"} "Sign in"]]
     [:li [:a {:href "/cider-ci/client/welcome-page/edit"} "Edit Welcome Page"]]
+    [:li [:a {:href (routes/settings-path {})} "Settings" ]]
     [:li.divider]
     [:li
      [:a {:href "/cider-ci/ui/admin/users"}

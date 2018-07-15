@@ -3,7 +3,18 @@
 ; See the "LICENSE.txt" file provided with this software.
 
 (ns cider-ci.utils.url.shared
-  )
+  (:require
+    #?(:clj [ring.util.codec])
+    ))
+
+
+(def decode
+  #?(:cljs js/decodeURIComponent
+     :clj ring.util.codec/url-decode))
+
+(def encode
+  #?(:cljs js/encodeURIComponent
+     :clj ring.util.codec/url-encode))
 
 (defn host-port-dissect [host-port]
   (if-not (string? host-port)

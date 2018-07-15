@@ -114,7 +114,7 @@
 ;;; ui ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn page []
-  [:div.page.requests
+  [:div.page.socket
    [:div.title
     [:h1 "Socket"]
     [:p "This page shows the status of the WebSocket connection. "

@@ -10,9 +10,6 @@
     [cider-ci.server.client.state :as state]
     [cider-ci.server.repository.ui.projects.shared :refer [humanize-datetime]]
 
-    [cljsjs.jquery]
-    [cljsjs.bootstrap]
-
     [cider-ci.utils.digest :refer [digest]]
 
     [goog.string :as gstring]

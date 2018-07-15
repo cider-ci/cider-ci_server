@@ -4,3 +4,6 @@
 [submodule "vendor"]
 	path = vendor
 	url = https://github.com/cider-ci/cider-ci_clj-utils_vendor.git
+[submodule "demo-project"]
+	path = demo-project
+	url = https://github.com/cider-ci/cider-ci_demo-project-bash.git

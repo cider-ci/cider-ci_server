@@ -34,7 +34,7 @@
 (defn autoremove [id meta]
   (go (<! (timeout (:autoremove-delay meta)))
       (swap! state/requests* assoc-in
-             [:requests id :meta :modal] false )
+             [:requests id :meta :modal] false)
       (<! (timeout 30000))
       (swap! state/requests* update :requests
              (fn [rqs] (dissoc rqs id)))))
@@ -79,7 +79,11 @@
                                    "X-CSRF-Token" (csrf-token)}
                          :progress progress-chan}
                         req-opts)
-        meta (deep-merge META-DEFAULTS meta-opts)]
+        meta (deep-merge META-DEFAULTS
+                         {:modal (case (:method req)
+                                   (:get :head) false
+                                   true)}
+                         meta-opts)]
     (swap! state/requests* assoc-in [:requests id]
            {:request req
             :meta meta
@@ -99,8 +103,7 @@
 (def current-modal-request
   (do (reaction
         (let [[id r]  (->> @state/requests* :requests
-                           (filter (fn [[_ r]] (or (not= :get (-> r :request :method))
-                                                   (-> r :meta :modal))))
+                           (filter (fn [[_ r]] (-> r :meta :modal)))
                            first)]
           (when r
             (assoc r :id id))))))
@@ -150,8 +153,10 @@
           [:div.modal-body
            (when (= status :pending)
              [progress-bar-component status bootstrap-status request])
-           (if-let [body (-> :response :body presence)]
-             [:p body])]
+           (when-let [body (-> request :response :body presence)]
+             [:p body])
+           (when (:debug @global-state/client-state)
+             [:pre (with-out-str (pprint request))])]
           [:div.modal-footer
            [:div.clearfix]
            [:button.btn

@@ -4,7 +4,6 @@
   (:require
     [cider-ci.utils.rdbms :as rdbms :refer [get-ds]]
 
-    [clojure.data.codec.base64 :as base64]
     [clojure.java.jdbc :as jdbc]
     [compojure.core :as cpj]
     [pandect.algo.sha256 :as algo.sha256]
@@ -19,6 +18,7 @@
     [logbug.thrown :as thrown]
     )
   (:import
+    [java.util Base64]
     [com.google.common.io BaseEncoding]
     [java.time OffsetDateTime]
     [org.joda.time DateTime]
@@ -68,7 +68,7 @@
 (defn hash-string [s]
   (->> s
        algo.sha256/sha256-bytes
-       base64/encode
+       (.encodeToString (Base64/getEncoder))
        (map char)
        (apply str)))
 

@@ -3,9 +3,10 @@
   (:require [cider-ci.utils.core :refer [keyword str]])
   (:gen-class)
   (:require
-    [cider-ci.server :as server]
+    [cider-ci.server.main :as server-main]
     [cider-ci.executor :as executor]
 
+    [logbug.thrown]
 
     [clojure.pprint :refer [pprint]]
     [clojure.tools.cli :refer [parse-opts]]
@@ -13,6 +14,7 @@
     [logbug.catcher :as catcher]
     ))
 
+(logbug.thrown/reset-ns-filter-regex #".*cider[-_]ci.*")
 
 (def cli-options
   [["-v" "--version"]
@@ -48,7 +50,7 @@
       (:release-info options) (println "Cider-CI" (cider-ci.utils.self/version) "\n"
                                        (:description (cider-ci.utils.self/release)))
       :else (case (-> arguments first keyword)
-              :server (apply server/-main (rest arguments))
+              :server (apply server-main/-main (rest arguments))
               :executor (apply executor/-main (rest arguments))
               (println (usage summary {:options options}))))))
 

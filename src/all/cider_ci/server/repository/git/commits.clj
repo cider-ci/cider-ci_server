@@ -8,6 +8,7 @@
   (:require [cider-ci.utils.core :refer [keyword str]])
   (:require
     [cider-ci.utils.system :as system]
+    [cider-ci.utils.git-gpg :as git-gpg]
 
     [clj-commons-exec :as commons-exec]
     [clj-time.coerce :as time-coerce]
@@ -24,14 +25,25 @@
 
 ;##############################################################################
 
+(defn git-signature-parts [id repository-path]
+  (let [res (system/exec!
+              ["git" "cat-file" "-p"  id]
+              {:dir repository-path})
+        cat-file-commit (:out res)
+        signature (git-gpg/extract-ascii-commit-signature cat-file-commit)
+        signed_message (git-gpg/cat-file-commit-wo-signature cat-file-commit)]
+    {:signature signature
+     :signed_message signed_message}))
+
+;##############################################################################
+
 (defn- trim-line [lines n]
   (clojure.string/trim (nth lines n)))
 
 (defn- parse-time [ts]
   (time-coerce/to-sql-time (time-format/parse (time-format/formatters :rfc822) ts)))
 
-(defn get [id repository-path]
-  (logging/debug "get-info " id repository-path)
+(defn git-log-parts [id repository-path]
   (let [res (system/exec!
               ["git" "log" "-n" "1" "--pretty=%T %n%an %n%ae %n%aD %n%cn %n%ce %n%cD %n%s %n%b" id]
               {:dir repository-path})
@@ -49,6 +61,12 @@
      :subject (clojure.string/trim (nth lines 7))
      :body (clojure.string/join "\n" (drop 8 lines))
      }))
+
+(defn get [id repository-path]
+  (logging/debug "get-info " id repository-path)
+  (merge
+    (git-log-parts id repository-path)
+    (git-signature-parts id repository-path)))
 
 ;##############################################################################
 

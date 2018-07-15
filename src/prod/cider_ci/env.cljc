@@ -1,5 +1,4 @@
-(ns cider-ci.env
-  )
+(ns cider-ci.env)
 
 (def env :prod)
 

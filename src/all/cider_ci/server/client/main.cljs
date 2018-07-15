@@ -17,8 +17,8 @@
     [cider-ci.server.client.ui.root]
     [cider-ci.server.client.welcome-page.ui]
     [cider-ci.server.commits.ui]
-    [cider-ci.server.repository.ui]
     [cider-ci.server.session.password.ui]
+    [cider-ci.server.settings.ui]
     [cider-ci.server.trees.attachments.show]
     [cider-ci.server.trees.attachments.ui]
     [cider-ci.server.trees.ui.available-jobs]
@@ -43,9 +43,6 @@
     [reagent.core :as reagent]
     [secretary.core :as secretary :include-macros true]
     [accountant.core :as accountant]
-
-    [cljsjs.jquery]
-    [cljsjs.bootstrap]
     ))
 
 (def components
@@ -58,6 +55,7 @@
    "cider-ci.server.executors.ui.edit/page" cider-ci.server.executors.ui.edit/page
    "cider-ci.server.executors.ui.index/page" cider-ci.server.executors.ui.index/page
    "cider-ci.server.executors.ui.show/page" cider-ci.server.executors.ui.show/page
+   "cider-ci.server.settings.ui/page" cider-ci.server.settings.ui/page
    "cider-ci.server.trees.attachments.show/page" cider-ci.server.trees.attachments.show/page
    "cider-ci.server.trees.attachments.ui/page" cider-ci.server.trees.attachments.ui/page
    "cider-ci.server.trees.ui.available-jobs/page" cider-ci.server.trees.ui.available-jobs/page
@@ -131,7 +129,17 @@
                      user* current-url* authentication-providers*]
                     nav-container)))
 
+
+(defn html-el [id]
+  (.-outerHTML
+    (.getElementById js/document id)))
+
 (defn init! []
+  (swap! state/page-state assoc :root-page
+         {:welcome-message (html-el "welcome-message")
+          :about-message (html-el "about-message")
+          :about-release (html-el "about-release")})
+
   (when-let [app (.getElementById js/document "app")]
     (accountant/configure-navigation!
       {:nav-handler (fn [path]

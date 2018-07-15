@@ -1,0 +1,24 @@
+tree 493b78934f9283b25214858489bed914c3c46fcf
+parent 80dfb1c531b705d664ce5a383684f497a898043b
+author Thomas Schank <DrTom@schank.ch> 1520701484 +0100
+committer Thomas Schank <DrTom@schank.ch> 1520701484 +0100
+gpgsig -----BEGIN PGP SIGNATURE-----
+ Comment: GPGTools - http://gpgtools.org
+ 
+ iQJEBAABCAAuFiEE0YC+ieafY5lxHRWQ4pNFnLELBEIFAlqkECwQHGRydG9tQHNj
+ aGFuay5jaAAKCRDik0WcsQsEQuAID/9yC/l6sv8Iq8GjxYkZATpo798QmN0mzmDF
+ CRN49YFp8hhAvQ5JyDeV5GNIj/5cpez49o9fbu5hWPUe5kJTZ5z2vrc/tvCednMa
+ JZGdC3vaWJJ5KzEiqgSnpdZm7wpchbLlZwxxqtMGEMfW6nRoUJVQ0TCsFeY8gyop
+ uMnqUjIWO0itSZ3HDV8SjiM/UdBWWjRMtV2ZCR4lDse4AHB0aRxqR3JNP8SB4ydE
+ XfPKZK1DtOuS/5Qp9O5AJcTzFVmu/5K6gVttmneB/zsESNT/dU5nc/UeRpHlVUEz
+ BOwpv5cgHFpGjZ/PaYzMw5OeJSgkHXEBlP8QAtmzIiAl7N0moG3DKt9sfDtu336I
+ 0E7ZwhJHVsiZVnwkvpib18waDZGKo3l3HAE65+RAL/tK5GyZ6lq9PitBBzUnmVAn
+ E+8EDkwJCcQTNzL9NxzgxfiWnmZ8CZYI2xaxrAQybkyHHLdHYJjgy8qyhtwkvelK
+ yoBxQDnfcc9y+aH0ta263le2SzM99e6QUDvdW/JHS2gVdKZI0G7cuzWK55XHQLHm
+ nROImby/EpGpAosZ56+KtDfD6P/X7oJ0/+ucQu/Y5Zc80PTIgig/C8MnouAg7nlz
+ xE/pbeI0PuepmxbDbg9nFLN5dndybiHbwBVZ4RBBhjtjgGWl34y1HLmuM5p+6yEI
+ 4htXbbAyhw==
+ =sHhf
+ -----END PGP SIGNATURE-----
+
+Testing commit-signatures

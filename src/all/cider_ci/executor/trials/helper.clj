@@ -7,7 +7,7 @@
   (:require [cider-ci.utils.core :refer :all])
   (:require
     [cider-ci.executor.reporter :as reporter]
-    [cider-ci.utils.http :refer [build-server-url]]
+    [cider-ci.utils.config :as config :refer [get-config]]
 
     [clojure.data.json :as json]
 
@@ -64,7 +64,7 @@
                 :content-type "application/json"
                 :headers {:trial-token (:token trial-params)}
                 }
-        url (build-server-url (trial-params :patch_path))
+        url (str (-> (get-config) :server-base-url :url) (trial-params :patch_path))
         fun (fn [agent-state]
               (try
                 (catcher/with-logging {}

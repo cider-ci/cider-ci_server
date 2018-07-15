@@ -19,8 +19,7 @@
     [logbug.thrown :as thrown]))
 
 (defn repositories-fs-base-path []
-  (let [path (-> (get-config) :services
-                 :server :repositories :path)]
+  (let [path (:repositories-path  (get-config))]
     (assert (not (blank? path)))
     path))
 

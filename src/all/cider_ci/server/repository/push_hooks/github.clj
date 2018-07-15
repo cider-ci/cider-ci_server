@@ -4,7 +4,7 @@
 
 (ns cider-ci.server.repository.push-hooks.github
   (:refer-clojure :exclude [str keyword])
-  (:require [cider-ci.utils.core :refer [keyword str]])
+  (:require [cider-ci.utils.core :refer [keyword str presence]])
   (:require
     [cider-ci.server.repository.constants :refer [CONTEXT]]
     [cider-ci.server.repository.remote :as remote]
@@ -44,8 +44,8 @@
     (-> resp :body)))
 
 (defn notification-url [repository]
-  (str (-> (get-config) :server_base_url)
-       CONTEXT "/update-notification/"
+  (str (-> (get-config) :base-url :url)
+       "/update-notification/"
        (:update_notification_token repository)))
 
 (defn push-hook [repository]

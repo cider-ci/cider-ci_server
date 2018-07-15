@@ -6,7 +6,7 @@
   (:require
     [cider-ci.server.api.resources :as resources]
     [cider-ci.auth.authorize :as authorize]
-    [cider-ci.open-session.cors :as cors]
+    [cider-ci.utils.cors :as cors]
     [cider-ci.utils.config :refer [get-config]]
     [cider-ci.utils.http-server :as http-server]
     [cider-ci.utils.status :as status]
@@ -72,6 +72,5 @@
 ;(logging-config/set-logger! :level :debug)
 ;(logging-config/set-logger! :level :info)
 ;(debug/debug-ns 'ring.middleware.resource)
-;(debug/debug-ns 'cider-ci.auth.core)
 ;(debug/debug-ns 'cider-ci.open-session.encryptor)
 ;(debug/debug-ns *ns*)

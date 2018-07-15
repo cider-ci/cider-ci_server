@@ -1,12 +1,10 @@
-; Copyright © 2017 - 2017 Dr. Thomas Schank <Thomas.Schank@AlgoCon.ch>
+; Copyright © 2017 - 2018 Dr. Thomas Schank <Thomas.Schank@AlgoCon.ch>
 ; Licensed under the terms of the GNU Affero General Public License v3.
 ; See the "LICENSE.txt" file provided with this software.
 
 (ns cider-ci.utils.http-resources-cache-buster
   (:require
-
-    [cider-ci.utils.sha1 :as sha1]
-
+    [pandect.algo.sha1 :as sha1]
     [ring.middleware.resource :as resource]
     [ring.util.codec :as codec]
     [ring.util.request :as request]
@@ -62,7 +60,8 @@
 
 (defn resource-response-with-optionally-never-expires-header
   [path options uncached-response]
-  (if (path-matches? path (:never-expire-paths options))
+  (if (and (:enabled? options)
+           (path-matches? path (:never-expire-paths options)))
     (add-never-expires-header uncached-response)
     uncached-response))
 
@@ -70,8 +69,10 @@
   [path handler root-path options request]
   (if-let [uncached-response
            (resource/resource-request
-             request root-path (dissoc options :cache-bust-paths :never-expire-paths))]
-    (if (and (:body uncached-response)
+             request root-path (dissoc options :cache-bust-paths
+                                       :never-expire-paths :enabled?))]
+    (if (and (:enabled? options)
+             (:body uncached-response)
              (path-matches? path (:cache-bust-paths options)))
       (ring.util.response/redirect
         (str (:context request) (cache-bust-path! path (:body uncached-response))))
@@ -87,6 +88,11 @@
       (cache-and-redirect-or-resource-response-or-pass-on
         path handler root-path options request))))
 
+(def default-options
+  {:enabled? true
+   :cache-bust-paths []
+   :never-expire-paths []})
+
 (defn wrap-resource
   "Replacement for ring.middleware.resource/wrap-resource.
 
@@ -98,14 +104,16 @@
       cache-busted-path will return the cache-busted path.
 
   :never-expire-paths - collection, each value is either a string or a regex,
-      resources with matching paths will be set to never expire"
+      resources with matching paths will be set to never expire
+
+  :enabled? - boolean, defaults to true; false recommended for dev environment."
 
   ([handler root-path]
-   (wrap-resource handler root-path {:cache-bust-paths []
-                                     :never-expire-paths []}))
+   (wrap-resource handler root-path default-options))
   ([handler root-path options]
    (fn [request]
-     (resource handler root-path options request))))
+     (resource handler root-path (merge default-options options)
+               request))))
 
 
 ;#### debug ###################################################################

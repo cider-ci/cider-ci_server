@@ -44,7 +44,8 @@
       "See the section Push-Hook below." ])
    (when (-> @state/server-state :user :is_admin)
      (when-let [update-token (:update_notification_token project)]
-       (let [url (str (-> @state/server-state :config :server_base_url) CONTEXT
+       (let [url (str
+                   (-> @state/server-state :config :server_base_url) CONTEXT
                       "/update-notification/" update-token)]
          [:p "The URL to post notifications to is "
           [:a {:href url :method "POST"}

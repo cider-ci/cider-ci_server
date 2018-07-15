@@ -11,7 +11,6 @@
 
     [honeysql.core :as sql]
     [pandect.algo.sha256 :as algo.sha256]
-    [clojure.data.codec.base64 :as codec.base64]
     [clojure.java.jdbc :as jdbc]
 
     [clj-logging-config.log4j :as logging-config]

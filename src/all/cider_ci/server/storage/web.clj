@@ -9,7 +9,7 @@
     [cider-ci.server.storage.shared :refer :all]
 
     [cider-ci.auth.authorize :as authorize]
-    [cider-ci.open-session.cors :as cors]
+    [cider-ci.utils.cors :as cors]
     [cider-ci.utils.config :as config :refer [get-config]]
     [cider-ci.utils.http :as http]
     [cider-ci.utils.http-server :as http-server]

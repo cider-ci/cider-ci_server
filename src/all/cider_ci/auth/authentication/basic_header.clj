@@ -5,17 +5,19 @@
 (ns cider-ci.auth.authentication.basic-header
 
   (:require
-    [clojure.data.codec.base64 :as base64]
-
     [clojure.tools.logging :as logging]
     [clj-logging-config.log4j :as logging-config]
     [logbug.catcher :as catcher]
     [logbug.debug :as debug]
+    )
+  (:import
+    [java.util Base64]
+    [com.google.common.io BaseEncoding]
     ))
 
 (defn- decode-base64
   [^String string]
-  (apply str (map char (base64/decode (.getBytes string)))))
+  (apply str (map char (.decode (Base64/getDecoder) (.getBytes string)))))
 
 (defn add-basic-auth-properties [request]
   (or (when-let [auth-header (-> request :headers :authorization)]

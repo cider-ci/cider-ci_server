@@ -21,6 +21,7 @@
     [cider-ci.server.jobs.web]
     [cider-ci.server.repository.web]
     [cider-ci.server.session.web]
+    [cider-ci.server.settings.web]
     [cider-ci.server.socket]
     [cider-ci.server.storage.web]
     [cider-ci.server.trees]
@@ -94,12 +95,13 @@
     (cpj/ANY "/users/*" [] cider-ci.server.users.web/routes)
     (cpj/ANY "/api" [] (ring.util.response/redirect "/cider-ci/api/"))
     (cpj/ANY "/storage" [] (ring.util.response/redirect "/cider-ci/storage/"))
+    (cpj/ANY "/settings/*" [] cider-ci.server.settings.web/routes)
     (cpj/ANY "/tree-attachments/*" [] cider-ci.server.trees.attachments.web/routes)
     ;(cpj/ANY "/trial-attachments/*" [] cider-ci.server.attachments.web/routes)
     (cpj/ANY "/session*" [] #'cider-ci.server.session.web/routes)
     (cpj/ANY "/server/ws*" [] cider-ci.server.socket/routes)
     (cpj/ANY "/trees/*" []  cider-ci.server.trees/routes)
-    (cpj/GET "/" [] redirect-to-client)
+    ;(cpj/GET "/" [] redirect-to-client)
     (cpj/ANY "*" [] dead-end-handler)))
 
 
@@ -116,7 +118,7 @@
       "text/html" :qs 1 :as :html
       ]}))
 
-(defn build-main-handler [_]
+(defn build-main-handler [context]
   (I> wrap-handler-with-logging
       routes
       cider-ci.server.client.web/wrap
@@ -132,12 +134,14 @@
                   :cache-bust-paths ["/css/site.css"
                                      "/css/site.min.css"
                                      "/js/app.js"]
-                  :never-expire-paths [#".*font-awesome-\d\.\d\.\d\/.*"]})
+                  :never-expire-paths [#".*font-awesome-\d\.\d\.\d\/.*"
+                                       #".+_[0-9a-f]{40}\..+"
+                                       ]})
       wrap-content-type
       (wrap-default-charset "UTF-8")
       wrap-not-modified
       status/wrap
-      (routing/wrap-prefix "/cider-ci")
+      (routing/wrap-prefix context)
       (ring.middleware.json/wrap-json-body {:keywords? true})
       routing/wrap-exception))
 

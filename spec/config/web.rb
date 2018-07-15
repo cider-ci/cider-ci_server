@@ -1,19 +1,15 @@
+require 'pry'
 require 'capybara/rspec'
-require 'capybara/poltergeist'
 require 'selenium-webdriver'
-require 'json_roa/client'
-
-def port
-  @port ||= Integer(ENV['SERVER_HTTP_PORT'].presence || 8881)
-end
+require 'faraday'
+require 'faraday_middleware'
 
 def base_url
-  @base_url ||= "http://localhost:#{port}"
+  @base_url ||= ENV['CIDER_CI_HTTP_BASE_URL'].presence || 'http://localhost:8881'
 end
 
-def json_roa_client(&block)
-  JSON_ROA::Client.connect \
-    base_url, raise_error: false, &block
+def port
+  @port ||= Addressable::URI.parse(base_url).port
 end
 
 def plain_faraday_json_client
@@ -45,12 +41,8 @@ RSpec.configure do |config|
   Capybara.current_driver = :selenium
   set_capybara_values
 
-  if ENV['FIREFOX_ESR_PATH'].present?
-    Selenium::WebDriver::Firefox.path = ENV['FIREFOX_ESR_PATH']
-  end
-
-  Capybara.register_driver :poltergeist do |app|
-    Capybara::Poltergeist::Driver.new(app, js_errors: false)
+  if ENV['FIREFOX_ESR_45_PATH'].present?
+    Selenium::WebDriver::Firefox.path = ENV['FIREFOX_ESR_45_PATH']
   end
 
   config.before :all do
@@ -61,4 +53,14 @@ RSpec.configure do |config|
     set_capybara_values
     set_browser example
   end
+end
+
+
+def plain_faraday_client
+  Faraday.new(
+    url: base_url,
+    headers: { accept: 'application/json' }) do |conn|
+      conn.adapter Faraday.default_adapter
+      conn.response :json, content_type: /\bjson$/
+    end
 end

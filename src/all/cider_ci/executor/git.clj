@@ -12,7 +12,6 @@
     [cider-ci.executor.git.repository :as repository]
     [cider-ci.executor.git.submodules :as submodules]
     [cider-ci.utils.config :as config :refer [get-config]]
-    [cider-ci.utils.http :refer [build-server-url]]
 
     [clj-time.core :as time]
     [clj-uuid]
@@ -30,7 +29,8 @@
 (defn- prepare-git-proxies [git-proxies]
   (->> git-proxies
        (map (fn [[commit-id path]]
-              [(name commit-id) (build-server-url path)]))
+              [(name commit-id) (str (-> (get-config) :basic-url :url)
+                                     path)]))
        (into {})))
 
 

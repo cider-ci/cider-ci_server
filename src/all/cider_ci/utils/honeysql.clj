@@ -10,14 +10,18 @@
     [honeysql.types :as types]
     [honeysql.util :as util :refer [defalias]]
 
-
     [logbug.debug :as debug]
     [clj-logging-config.log4j :as logging-config]
     [clojure.tools.logging :as logging]
     ))
 
+; regex
 (defmethod format/fn-handler "~*" [_ field value]
   (str (format/to-sql field) " ~* " (format/to-sql value)))
+
+; ilike
+(defmethod format/fn-handler "~~*" [_ field value]
+  (str (format/to-sql field) " ~~* " (format/to-sql value)))
 
 (defn dedup-join [honeymap]
   (assoc honeymap :join
@@ -47,9 +51,9 @@
 (defalias modifiers helpers/modifiers)
 (defalias offset helpers/offset)
 (defalias order-by helpers/order-by)
-(defalias returning helpers/returning)
+;(defalias returning helpers/returning)
 (defalias select helpers/select)
-(defalias using helpers/using)
+;(defalias using helpers/using)
 (defalias where helpers/where)
 
 
@@ -57,3 +61,4 @@
 ;(logging-config/set-logger! :level :debug)
 ;(logging-config/set-logger! :level :info)
 ;(debug/debug-ns *ns*)
+

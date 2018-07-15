@@ -56,7 +56,6 @@
                                     "********")))
              (rest to-be-hidden-non-admin-properties)))))
 
-;(hide-non-admin-properties {:update_notification_token "secret"})
 
 ;##############################################################################
 

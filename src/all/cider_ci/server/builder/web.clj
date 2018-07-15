@@ -103,6 +103,5 @@
 ;(logging-config/set-logger! :level :debug)
 ;(logging-config/set-logger! :level :info)
 ;(debug/debug-ns 'ring.middleware.resource)
-;(debug/debug-ns 'cider-ci.auth.core)
 ;(debug/wrap-with-log-debug #'create-job)
 ;(debug/debug-ns *ns*)

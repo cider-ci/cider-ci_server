@@ -1,10 +1,19 @@
 (ns cider-ci.utils.rdbms
+  (:refer-clojure :exclude [str keyword])
+  (:require [cider-ci.utils.core :refer [keyword str presence]])
   (:require
     [logbug.catcher :as catcher]
     [clojure.java.jdbc :as jdbc]
     [clojure.tools.logging :as logging]
     [ring.util.codec]
     [pg-types.all]
+
+    [clj-logging-config.log4j :as logging-config]
+    [clojure.tools.logging :as logging]
+    [logbug.catcher :as catcher]
+    [logbug.debug :as debug :refer [I> I>> identity-with-logging]]
+    [logbug.ring :refer [wrap-handler-with-logging]]
+    [logbug.thrown :as thrown]
     )
   (:import
     [java.net.URI]
@@ -12,8 +21,28 @@
     ))
 
 
-(defonce ^:private ds (atom nil))
+(defonce ds (atom nil))
 (defn get-ds [] @ds)
+
+
+(defn wrap-tx [handler]
+  (fn [request]
+    (jdbc/with-db-transaction [tx @ds]
+      (try 
+        (let [resp (handler (assoc request :tx tx))]
+          (when-let [status (:status resp)]
+            (when (>= status 400 )
+              (logging/warn "Rolling back transaction because error status " status)
+              (jdbc/db-set-rollback-only! tx)))
+          resp)
+        (catch Throwable th
+          (logging/warn "Rolling back transaction because of " th)
+          (jdbc/db-set-rollback-only! tx)
+          (throw th)))
+      ;TODO insert important request properties, tx id, and user id to
+      ; `requests` for mutating requests
+      )))
+
 
 (defn check-connection []
   (if-not @ds
@@ -101,3 +130,39 @@
                                (reset)))))
 
 ;(initialize {:subprotocol "sqlite" :subname ":memory:"})
+
+(defn initialize2 [params]
+  (when @ds
+    (do
+      (logging/info "Closing db pool ...")
+      (-> @ds :datasource .close)
+      (reset! ds nil)
+      (logging/info "Closing db pool done.")))
+  (logging/info "Initializing db pool " params " ..." )
+  (let [url (str "jdbc:postgresql://"
+                 (:host params)
+                 (when-let [port (-> params :port presence)] (str ":" port))
+                 "/" (:database params))]
+    (logging/info {:url url})
+    (reset!
+      ds
+      {:datasource
+       (doto (ComboPooledDataSource.)
+         (.setJdbcUrl url)
+         (#(when-let [user (:username params)] (.setUser % user)))
+         (#(when-let [password (:password params)] (.setPassword % password)))
+         (.setMaxPoolSize (or (:max-pool-ѕize params) 50))
+         (.setMinPoolSize 3)
+         (.setMaxConnectionAge (* 3 60 60))
+         (.setMaxIdleTimeExcessConnections (* 10 60)))}))
+  (logging/info "Initializing db pool done.")
+  @ds)
+
+
+
+;(initialize2 "jdbc:postgresql://cider-ci:cider-ci@localhost:/cider-ci_v4" {})
+
+;### Debug ####################################################################
+;(debug/debug-ns *ns*)
+;(logging-config/set-logger! :level :debug)
+(logging-config/set-logger! :level :info)

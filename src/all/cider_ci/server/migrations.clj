@@ -14,27 +14,53 @@
     [cider-ci.server.migrations.434]
     [cider-ci.server.migrations.435]
     [cider-ci.server.migrations.436]
+    [cider-ci.server.migrations.438]
     [cider-ci.server.repository.main]
-    [cider-ci.server.state]
-    [cider-ci.server.storage.main]
-    [cider-ci.server.web :as web]
-    [cider-ci.utils.app :as app]
 
-    [clojure.set :refer [difference intersection]]
+    [cider-ci.utils.honeysql :as sql]
+    [cider-ci.utils.url.jdbc]
+
     [clojure.java.jdbc :as jdbc]
     [clojure.pprint :refer [pprint]]
+    [clojure.set :refer [difference intersection]]
     [clojure.tools.cli :refer [parse-opts]]
+    [yaml.core :as yaml]
 
+
+    [clojure.tools.logging :as logging]
     [logbug.catcher :as catcher]
+    [logbug.debug :as debug]
+    [logbug.thrown]
     ))
 
 (def migrations
-  {"433" {:up cider-ci.server.migrations.433/up}
-   "434" {:up cider-ci.server.migrations.434/up}
-   "435" {:up cider-ci.server.migrations.435/up
-          :down cider-ci.server.migrations.435/down}
-   "436" {:up cider-ci.server.migrations.436/up
-          :down cider-ci.server.migrations.436/down}})
+  {"000" {:up (fn [tx]
+                (jdbc/execute!
+                  tx (slurp (clojure.java.io/resource "migrations/000_setup.sql"))))}
+   "001" {:up (fn [tx]
+                (jdbc/execute!
+                  tx (slurp (clojure.java.io/resource "migrations/001_events.sql"))))}
+   "002" {:up (fn [tx]
+                (jdbc/execute!
+                  tx (slurp (clojure.java.io/resource "migrations/002_settings.sql"))))}
+   "003" {:up (fn [tx]
+                (jdbc/execute!
+                  tx (slurp (clojure.java.io/resource "migrations/003_users.sql"))))}
+   "004" {:up (fn [tx]
+                (jdbc/execute!
+                  tx (slurp (clojure.java.io/resource "migrations/004_projects.sql"))))}
+   
+   "005" {:up (fn [tx]
+                (jdbc/execute!
+                  tx (slurp (clojure.java.io/resource "migrations/005_jobs.sql"))))}
+   })
+
+   ; "433" {:up cider-ci.server.migrations.433/up}
+   ;"434" {:up cider-ci.server.migrations.434/up}
+   ;"435" {:up cider-ci.server.migrations.435/up
+   ;       :down cider-ci.server.migrations.435/down}
+   ;"438" {:up cider-ci.server.migrations.438/up
+   ;       :down cider-ci.server.migrations.438/down}})
 
 
 ;;; migrate ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -54,6 +80,7 @@
     (jdbc/with-db-transaction [tx ds]
       (if-let [down-migration (:down (get migrations version))]
         (do (cond
+              (fn? down-migration) (down-migration tx)
               (string? down-migration) (jdbc/execute! tx down-migration))
             (jdbc/delete! tx :schema_migrations ["version = ?" version])
             (println (str "Successfully applied down-migration " version )))
@@ -99,13 +126,47 @@
 ;(migrate "jdbc:postgresql://thomas:thomas@localhost/cider-ci_v5" "0")
 
 
+;;; recreate ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn recreate [options]
+  (let [ds (cider-ci.utils.url.jdbc/dissect (:database-url options))
+        conn-ds (assoc ds :subname 
+                       (cider-ci.utils.url.jdbc/subname 
+                         (assoc ds :database "template1")))
+        disconnect-query (-> (sql/select :%pg_terminate_backend.pid
+                                         :pid
+                                         :usename
+                                         :datname
+                                         :state)
+                             (sql/from :pg_stat_activity)
+                             (sql/merge-where [:= :pg_stat_activity.datname 
+                                               (:database ds)])
+                             sql/format)]
+    (logging/debug {:ds ds :conn-ds conn-ds})
+    (logging/debug {:disconnect-query disconnect-query})
+    (catcher/snatch
+      {}
+      (logging/info
+        {:disconnect
+         (jdbc/query conn-ds disconnect-query)}))
+    (logging/info
+      (:create_database 
+        (jdbc/db-do-commands
+          conn-ds false [(str "DROP DATABASE IF EXISTS \"" (:database ds) "\"")
+                         (str "CREATE DATABASE \"" (:database ds) "\"")])))))
+;(-main "-r" "true")
+
 ;;; cli, main ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (def cli-options
   [["-h" "--help"]
    ["-d" "--database-url URL" "Database URL for the JDBC-connection"
-    :default nil
+    :default "jdbc:postgresql://cider-ci:cider-ci@localhost:5432/cider-ci_v5"
     :parse-fn identity]
+   ["-r" "--recreate" "Drops and then recreates the database from scratch."
+    :default false
+    :parse-fn #(yaml/parse-string (str %))
+    ]
    ["-s" "--show" "Ѕhow status and to be applied migrations"]
    ["-v" "--version VERSION" "Migrate to the specified version"
     :default (-> migrations keys sort reverse first)
@@ -140,23 +201,26 @@
         ]
        flatten (clojure.string/join \newline)))
 
-(defn main [& args]
+(defn -main [& args]
   (catcher/snatch
     {:level :fatal
      :throwable Throwable
-     :return-fn (fn [_] (System/exit -1))}
+     ; :return-fn (fn [_] (System/exit -1))
+     }
     (let [{:keys [options arguments errors summary]} (parse-opts args cli-options :in-order true)
           {ds :database-url version :version} options]
       (cond
         (:help options) (println (usage summary {:args args :options options}))
         (:show options) (println (show (compute ds version)))
-        :else (migrate ds version)))))
+        :else (do
+                (when (:recreate options) (recreate options))
+                (migrate ds version))))))
 
 ; help
-;(main "-h")
+;(-main "-h")
 ;
 ; show
-;(main "-s" "-d" "jdbc:postgresql://thomas:thomas@localhost/cider-ci_v5")
+;(-main "-s" "-d" "jdbc:postgresql://thomas:thomas@localhost/cider-ci_v5")
 ;
 ; migrate
 ;(main "-d" "jdbc:postgresql://thomas:thomas@localhost/cider-ci_v4")
@@ -165,3 +229,9 @@
 ;(main "-d" "jdbc:postgresql://thomas:thomas@localhost/cider-ci_v5" "-v" "0")
 
 
+;### Debug ####################################################################
+;(debug/debug-ns *ns*)
+;(debug/debug-ns 'clojure.tools.cli)
+;(debug/debug-ns 'cider-ci.utils.config)
+;(logging-config/set-logger! :level :debug)
+;(logging-config/set-logger! :level :info)

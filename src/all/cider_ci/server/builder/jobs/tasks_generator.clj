@@ -4,7 +4,7 @@
 
 (ns cider-ci.server.builder.jobs.tasks-generator
   (:refer-clojure :exclude [get str keyword])
-  (:require [cider-ci.utils.core :refer [keyword str]])
+  (:require [cider-ci.utils.core :refer [keyword str presence]])
   (:require
     [cider-ci.server.builder.util :refer [json-write-str]]
     [cider-ci.utils.config :refer [get-config]]
@@ -25,7 +25,9 @@
               {:CIDER_CI_TASK_FILE file-name}}])
 
 (defn- get-file-list_unmemoized [git-ref generate-spec]
-  (let [url (str (:server_base_url (get-config))
+  (let [url (str (-> (get-config) :base-url :url)
+                 (when-let [context (-> (get-config) :base-url :context presence)]
+                   (str "/" context))
                  "/cider-ci/repositories" "/ls-tree" "?"
                  (http-client/generate-query-string
                    (->> generate-spec

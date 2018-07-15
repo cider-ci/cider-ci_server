@@ -8,7 +8,6 @@
 
   (:require
     [cider-ci.utils.http-server :as http-server]
-    [cider-ci.utils.config :as config :refer [get-config merge-into-conf]]
     [cider-ci.utils.shutdown :as shutdown]
     [cider-ci.utils.routing :as routing]
 
@@ -29,11 +28,12 @@
    :body "pong"})
 
 
-(def routes
-  (cpj/routes
-    (cpj/POST "/shutdown" _ shutdown)
-    (cpj/GET "/ping" _ pong)
-    (cpj/ANY "*" _ {:status 404})))
+(defn routes [config]
+  (-> (cpj/routes
+        (cpj/POST "/shutdown" _ shutdown)
+        (cpj/GET "/ping" _ pong)
+        (cpj/ANY "*" _ {:status 404}))
+      (routing/wrap-prefix (-> config :context presence))))
 
 (def main-handler
   (-> routes
@@ -43,4 +43,5 @@
       routing/wrap-exception))
 
 (defn initialize [http-config]
-  (http-server/start http-config routes))
+  (http-server/start http-config
+                     (routes http-config)))

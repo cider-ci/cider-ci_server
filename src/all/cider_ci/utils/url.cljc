@@ -5,7 +5,10 @@
 (ns cider-ci.utils.url
   (:require
     [cider-ci.utils.url.http :as url.http]
+    [cider-ci.utils.url.jdbc :as url.jdbc]
+    ;[cider-ci.utils.url.nrepl :as url.nrepl]
     [cider-ci.utils.url.ssh :as url.ssh]
+    [cider-ci.utils.url.shared :as shared]
     [cider-ci.utils.url.ssh-scp :as url.ssh-scp]
 
     ; [clj-logging-config.log4j :as logging-config]
@@ -16,21 +19,24 @@
     ))
 
 
-
-
 ;### general ##################################################################
 
 (defn dissect-unmemoized [url]
   (cond
     (re-matches url.http/pattern url) (url.http/dissect url)
     (re-matches url.ssh/pattern url) (url.ssh/dissect url)
+    (url.jdbc/jdbc-url? url) (url.jdbc/dissect url)
+    ;(url.nrepl/nrepl-url? url) (url.nrepl/dissect url)
     ; dissecting file urls file:// etc is not implemented (yet)
     ; the ssh-scp pattern is not very specific, it should come after the previous ones
     (re-matches url.ssh-scp/pattern url) (url.ssh-scp/dissect url)
     ))
 
-
 (def dissect (memoize dissect-unmemoized))
+
+
+(def encode shared/encode)
+(def decode shared/decode)
 
 
 ;### Debug #####################################################################

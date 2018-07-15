@@ -29,13 +29,14 @@
       delete-session-cookie))
 
 (defn session-secret []
-  (-> (get-config) :session :secret))
+  (:secret (get-config)))
 
 (defn sign-in-cookie-value [user]
   {:user_id (:id user)
    :issued_at (time/now)
    :signature (signature/create
-                (session-secret) (or (:password_digest user) ""))})
+                (session-secret)
+                (or (:password_digest user) ""))})
 
 (defn encrypted-sign-in-cookie-value [user]
   (encryptor/encrypt (session-secret) (sign-in-cookie-value user)))

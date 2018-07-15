@@ -4,8 +4,6 @@
   (:require
     [crypto.random]
     [pandect.algo.sha256 :as algo.sha256]
-    [clojure.data.codec.base64 :as base64]
-
 
     [clj-logging-config.log4j :as logging-config]
     [clojure.tools.logging :as logging]
@@ -15,6 +13,7 @@
     )
 
   (:import
+    [java.util Base64]
     [com.google.common.io BaseEncoding]
     ))
 
@@ -34,7 +33,7 @@
 (defn hash [s]
   (->> s
        algo.sha256/sha256-bytes
-       base64/encode
+       (.encodeToString (Base64/getEncoder))
        (map char)
        (apply str)))
 

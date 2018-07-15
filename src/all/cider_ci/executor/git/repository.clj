@@ -11,7 +11,6 @@
   (:require
     [cider-ci.utils.config :as config :refer [get-config]]
     [cider-ci.utils.fs :as ci-fs]
-    [cider-ci.utils.http :refer [build-server-url]]
     [cider-ci.utils.system :as system]
 
     [clj-time.core :as time]

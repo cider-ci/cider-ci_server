@@ -6,10 +6,10 @@
   (:refer-clojure :exclude [str keyword])
   (:require [cider-ci.utils.core :refer [keyword str]])
   (:require
-    [cider-ci.server.socket.core :as core]
-    [cider-ci.server.socket.push-db :as push-db]
+    [cider-ci.server.socket.back :as socket.back]
+    ;[cider-ci.server.socket.push-db :as push-db]
     [cider-ci.server.socket.push-table-events :as push-table-events]
-
+    [cider-ci.server.paths :refer [path]]
     [cider-ci.server.state :as server.state]
     [cider-ci.server.repository.web.edn]
 
@@ -45,19 +45,16 @@
 
 
 (def routes
-  (-> (cpj/routes
-        (cpj/GET  "/server/ws/chsk" req (core/ring-ajax-get-or-ws-handshake req))
-        (cpj/POST "/server/ws/chsk" req (core/ring-ajax-post req)))
-      (wrap-defaults site-defaults)
-      (ring.middleware.cookies/wrap-cookies)
-      (authorize/wrap-require! {:user true})))
+  (cpj/routes
+    (cpj/GET  (path :websockets) [] #'socket.back/ring-ajax-get-or-ws-handshake)
+    (cpj/POST (path :websockets) [] #'socket.back/ring-ajax-post)))
 
 
 ;##############################################################################
 
 (defn initialize []
-  (core/initialize)
-  (push-db/initialize)
+  (socket.back/initialize)
+  ;(push-db/initialize)
   (push-table-events/initialize))
 
 ;#### debug ###################################################################
@@ -70,4 +67,4 @@
 ;(debug/wrap-with-log-debug #'db-state-set-user)
 ;(logging-config/set-logger! :level :info)
 ;(debug/debug-ns 'cider-ci.auth.authorize)
-;(debug/debug-ns *ns*)
+(debug/debug-ns *ns*)

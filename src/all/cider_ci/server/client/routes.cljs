@@ -46,6 +46,20 @@
             :query-params normalized-query-params})))
 
 
+;;; settings ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(secretary/defroute settings-path
+  "/cider-ci/settings/" {}
+  (swap! state/page-state assoc :current-page
+         {:component "cider-ci.server.settings.ui/page" }))
+
+(secretary/defroute settings-section-path
+  "/cider-ci/settings/:section" {section :section}
+  (swap! state/page-state assoc :current-page
+         {:component (str "cider-ci.server.settings.ui/page")
+          :section (keyword section)}))
+
+
 ;;; connections ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (secretary/defroute connection-path

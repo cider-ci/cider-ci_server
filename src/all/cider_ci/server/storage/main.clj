@@ -12,12 +12,15 @@
     [cider-ci.utils.app]
     [cider-ci.utils.config :as config :refer [get-config get-db-spec]]
 
+    [camel-snake-kebab.core :refer [->snake_case]]
     [me.raynes.fs :as fsutils]
 
     [logbug.catcher :as catcher]
     [logbug.thrown]
     [clojure.tools.logging :as logging]
-    ))
+    )
+  (:import
+    [java.io File]))
 
 (defn create-dirs [stores]
   (doseq [store stores]
@@ -26,10 +29,14 @@
         (logging/debug "mkdirs " directory-path)
         (fsutils/mkdirs directory-path)))))
 
-
 (defn initialize []
-  (create-dirs (-> (get-config) :services :server :stores))
-  (sweeper/initialize (-> (get-config) :services :server :stores)))
+  (let [stores (->> ["trial-attachments", "tree-attachments"]
+                    (map (fn [name]
+                           {:url_path_prefix (str "/" name)
+                            :file_path (str (:attachments-path (get-config)) File/separator name)
+                            :db_table (->snake_case name)})))]
+    (create-dirs stores)
+    (sweeper/initialize stores)))
 
 (defn -main [& args]
   (catcher/snatch

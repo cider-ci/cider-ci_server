@@ -9,11 +9,9 @@
   (:require
     [cider-ci.server.dispatcher.result]
     [cider-ci.server.dispatcher.abort :as abort]
-    [cider-ci.server.dispatcher.dispatch :as dispatch]
-    [cider-ci.server.dispatcher.dispatch.timeout-sweeper]
     [cider-ci.server.dispatcher.task :as task]
     [cider-ci.server.dispatcher.web :as web]
-    [cider-ci.server.dispatcher.dispatch.timeout-sweeper :as timeout-sweeper]
+    [cider-ci.server.dispatcher.dispatch.timeout-abort :as timeout-abort]
 
     [cider-ci.utils.app]
     [cider-ci.utils.config :refer [get-config]]
@@ -28,7 +26,7 @@
   (task/initialize)
   (abort/initialize)
   (cider-ci.server.dispatcher.result/initialize)
-  (timeout-sweeper/initialize))
+  (timeout-abort/initialize))
 
 (defn -main [& args]
   (catcher/snatch

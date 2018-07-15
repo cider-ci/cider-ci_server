@@ -19,11 +19,22 @@
     (let [dissected-url (dissect "http://user:pass@foo.com:8080/unicode_(✪)_in_parens?q=s#a")]
       (is (= (:path dissected-url) "/unicode_(✪)_in_parens"))))
 
+  (testing "simple '/' path"
+    (let [dissected-url (dissect "http://foo.bar/")]
+      (is (= (:host dissected-url) "foo.bar"))
+      (is (= (:path dissected-url) "/"))))
+
+  (testing "without path"
+    (let [dissected-url (dissect "http://user:pass@foo.com:8080")]
+      (is (= (:host dissected-url) "foo.com"))
+      (is (= (:port dissected-url) "8080"))
+      (is (= (:path dissected-url) nil))))
+
   (testing "downcasing the protocol"
     (let [dissected-url (dissect "HttpS://github.com/Me/some-project.git")]
       (is (= (:protocol dissected-url) "https"))))
 
-  (testing "stadard github url"
+  (testing "standard github url"
     (let [dissected-url (dissect "https://github.com/Me/some-project.git")]
       (is (= (:path dissected-url) "/Me/some-project.git"))
       (is (= (:project_name dissected-url) "some-project"))))

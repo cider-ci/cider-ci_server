@@ -15,7 +15,7 @@
 
 (defn- update-config []
   (let [config (-> (get-config)
-                   (select-keys [:server_base_url
+                   (select-keys [:base-url
                                  :repository_service_advanced_api_edit_fields]))]
     (swap! db/db assoc-in [:config] config)))
 

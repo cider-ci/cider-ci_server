@@ -1,19 +1,23 @@
-; Copyright © 2013 - 2016 Dr. Thomas Schank <Thomas.Schank@AlgoCon.ch>
+; Copyright © 2013 - 2017 Dr. Thomas Schank <Thomas.Schank@AlgoCon.ch>
 ; Licensed under the terms of the GNU Affero General Public License v3.
 ; See the "LICENSE.txt" file provided with this software.
 
 (ns cider-ci.utils.config
+  (:refer-clojure :exclude [str keyword])
   (:require
+    [cider-ci.utils.config.db  :as db]
+
     [cider-ci.utils.daemon :as daemon :refer [defdaemon]]
     [cider-ci.utils.duration :refer [parse-string-to-seconds]]
     [cider-ci.utils.fs :refer :all]
-    [cider-ci.utils.core :refer [deep-merge]]
+    [cider-ci.utils.core :refer [str keyword deep-merge presence]]
     [cider-ci.utils.rdbms :as rdbms]
 
-    [yaml.core :as yaml]
     [clojure.java.io :as io]
+    [clojure.java.jdbc :as jdbc]
     [clojure.set :refer [difference]]
     [me.raynes.fs :as clj-fs]
+    [yaml.core :as yaml]
 
     [clj-logging-config.log4j :as logging-config]
     [clojure.tools.logging :as logging]
@@ -28,13 +32,14 @@
 
 (defonce default-opts  {:defaults {}
                         :overrides {}
+                        :db-tables {}
                         :resource-names ["config_default.yml"]
                         :filenames [(system-path "." "config" "config.yml")
                                     (system-path ".." "config" "config.yml")]})
 
-(defonce opts (atom {}))
+(defonce opts* (atom {}))
 
-(defn get-opts [] @opts)
+(defn get-opts [] @opts*)
 
 ;##############################################################################
 
@@ -62,45 +67,62 @@
             (if-let [io-resource (io/resource resource-name)]
               (snatch {} (slurp-and-merge config io-resource))
               config))
-          config (:resource-names @opts)))
+          config (:resource-names @opts*)))
 
 (defn read-and-merge-filename-configs [config]
   (reduce (fn [config filename]
             (if (.exists (io/as-file filename))
               (snatch {} (slurp-and-merge config filename))
               config))
-          config (:filenames @opts)))
+          config (:filenames @opts*)))
+
+;### read and merge ###########################################################
 
 (defn read-configs-and-merge-into-conf []
-  (-> (:defaults @opts)
+  (-> (:defaults @opts*)
       (deep-merge (get-config))
       read-and-merge-resource-name-configs
       read-and-merge-filename-configs
-      (deep-merge (:overrides @opts))
+      (db/read-and-merge (:db-tables @opts*))
+      (deep-merge (:overrides @opts*))
       merge-into-conf))
 
+(defdaemon "reload-config" 60 (read-configs-and-merge-into-conf))
 
-(defdaemon "reload-config" 1 (read-configs-and-merge-into-conf))
 
 ;### Initialize ###############################################################
 
-(defn initialize [options]
+(defn initialize
+  "Initialize the configuration state and refreshing.
+
+
+  The following keys for options are supported:
+
+  :defaults
+  :overrides
+  :resource-names
+  :filenames
+
+  See also default-opts in the same namespace.
+  "
+  [options]
   (snatch {:throwable Throwable
            :level :fatal
            :return-fn (fn [_] (exit!))}
-    (let [default-opt-keys (-> default-opts keys set)]
-      (assert
-        (empty?
-          (difference (-> options keys set)
-                      default-opt-keys))
-        (str "Opts must only contain the following keys: " default-opt-keys))
-      (stop-reload-config)
-      (Thread/sleep 1000)
-      (reset! conf {})
-      (let [new-opts (deep-merge default-opts options)]
-        (reset! opts new-opts)
-        (read-configs-and-merge-into-conf)
-        (start-reload-config)))))
+          (let [default-opt-keys (-> default-opts keys set)]
+            (assert
+              (empty?
+                (difference (-> options keys set)
+                            default-opt-keys))
+              (str "Opts must only contain the following keys: " default-opt-keys))
+            (stop-reload-config)
+            (Thread/sleep 1000)
+            (reset! conf {})
+            (let [new-opts (deep-merge default-opts options)]
+              (reset! opts* new-opts)
+              (read-configs-and-merge-into-conf)
+              (start-reload-config)
+              (db/initialize @opts* read-configs-and-merge-into-conf)))))
 
 
 ;### DB #######################################################################

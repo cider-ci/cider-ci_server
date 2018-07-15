@@ -33,13 +33,10 @@
 ;### POST Status ##############################################################
 
 (defn build-target-url [params]
-  (let [config (get-config)
-        ui-http-config (-> config :services :ui :http)]
-    (str (:server_base_url config)
-         (:context ui-http-config)
-         (:sub_context ui-http-config)
-         "/workspace/jobs/"
-         (:job_id params))))
+  (str
+    (-> (get-config) :base-url :url)
+    "/jobs/"
+    (:job_id params)))
 
 (defn build-url [params]
   (str (remote/api-endpoint params)

@@ -5,8 +5,7 @@
 (ns cider-ci.server.builder.project-configuration
   (:require
     [cider-ci.server.builder.jobs.validator.project-configuration :as project-configuration-validator]
-
-    [cider-ci.server.repository]
+    [cider-ci.server.projects.repositories.project-configuration]
 
     [cider-ci.utils.http :as http]
     [cider-ci.utils.config :refer [get-config]]
@@ -20,7 +19,7 @@
 
 (defn get-project-configuration [tree-id]
   (-> tree-id
-      cider-ci.server.repository/project-configuration
+      cider-ci.server.projects.repositories.project-configuration/project-configuration
       project-configuration-validator/validate!
       ))
 

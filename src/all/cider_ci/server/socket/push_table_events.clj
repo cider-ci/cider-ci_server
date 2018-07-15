@@ -21,13 +21,16 @@
 
 (defn push-to-client
   ([user-client-id event]
-   (let [push-data* (atom nil)]
-     (chsk-send! user-client-id
-                 [:cider-ci/entity-event event]))))
+   (chsk-send! user-client-id
+               [:cider-ci/entity-event event])))
 
 (defn push-to-clients [event]
   (doseq [[user-client-id _] @user-clients*]
-    (push-to-client user-client-id event)))
+    (push-to-client
+      user-client-id
+      (case (:table_name event)
+        "settings" (dissoc event :data_old :data_new)
+        event))))
 
 (def ^:private last-processed-event (atom nil))
 
