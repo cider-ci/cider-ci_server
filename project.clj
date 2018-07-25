@@ -134,13 +134,6 @@
                  :optimizations :none
                  :pretty-print  true}}}}
 
-  :minify-assets {:assets
-                  {"resources/public/css/site.min.css"
-                   "resources/public/css/site.css"}}
-
-  :sass {:src "resources/public/css"
-         :dst "resources/public/css"}
-
   :figwheel {:http-server-root "public"
              :server-port 3449
              :nrepl-port 7002

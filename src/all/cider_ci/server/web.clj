@@ -26,7 +26,6 @@
     [cider-ci.server.storage.web]
     [cider-ci.server.trees]
     [cider-ci.server.users.web]
-    [cider-ci.server.web]
 
     [cider-ci.utils.http-resources-cache-buster :refer [wrap-resource]]
     [cider-ci.utils.routing :as routing]
