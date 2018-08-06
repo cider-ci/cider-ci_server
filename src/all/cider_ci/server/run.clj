@@ -1,4 +1,4 @@
-; Copyright © 2013 - 2016 Dr. Thomas Schank <Thomas.Schank@AlgoCon.ch>
+; Copyright © 2013 - 2018 Dr. Thomas Schank <Thomas.Schank@AlgoCon.ch>
 ; Licensed under the terms of the GNU Affero General Public License v3.
 ; See the "LICENSE.txt" file provided with this software.
 
@@ -21,6 +21,7 @@
     [cider-ci.server.routes :as routes]
     [cider-ci.server.socket]
     [cider-ci.server.state]
+    [cider-ci.server.status.back :as status] 
     [cider-ci.server.storage.main]
     [cider-ci.utils.app :as app]
     [cider-ci.utils.config :as config :refer [get-config get-db-spec]]
@@ -52,7 +53,6 @@
 
 ;;; config ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;;; TODO we need a db based external-base-url!, change code to use it
 
 (def config-defaults
   {:dispatcher {:timeout "30 Minutes",
@@ -80,19 +80,6 @@
                (routes/init (:secret options)))
      :context context}))
 
-;;; db ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-
-(defn parse-db-url [url]
-  (logbug.catcher/snatch
-    {:level :warn
-     :return-fn (fn [e] (throw (ex-info "Error when parsing JDBC-URL" {:url url} e)))}
-    (cider-ci.utils.url.jdbc/dissect url)))
-
-(defn initialize-db-pool [options]
-  (let [db-params (:database-url options)]
-    (cider-ci.utils.rdbms/initialize2 db-params)))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn run [options]
@@ -100,7 +87,6 @@
     {:level :fatal
      :throwable Throwable
      :return-fn (fn [e] (System/exit -1))}
-    (initialize-db-pool options)
     (config/initialize
       {:defaults config-defaults
        :resource-names []
@@ -109,6 +95,7 @@
                               :dispatching [:dispatching]}}
        :overrides (select-keys options [:attachments-path :secret :repositories-path :base-url])
        })
+    (ds/init (:database-url options) (:health-check-registry status))
     (start-http options)
     (cider-ci.server.projects/init)
     ; TODO (re-)enable

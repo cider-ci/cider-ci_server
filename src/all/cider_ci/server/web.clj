@@ -30,7 +30,6 @@
     [cider-ci.utils.http-resources-cache-buster :refer [wrap-resource]]
     [cider-ci.utils.routing :as routing]
     [cider-ci.utils.shutdown :as shutdown]
-    [cider-ci.utils.status :as status]
 
     [compojure.core :as cpj]
     [ring.middleware.content-type :refer [wrap-content-type]]
@@ -139,7 +138,6 @@
       wrap-content-type
       (wrap-default-charset "UTF-8")
       wrap-not-modified
-      status/wrap
       (routing/wrap-prefix context)
       (ring.middleware.json/wrap-json-body {:keywords? true})
       routing/wrap-exception))

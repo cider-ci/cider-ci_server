@@ -94,7 +94,7 @@
    ]
 
   ; jdk 9 needs ["--add-modules" "java.xml.bind"]
-  :jvm-opts #=(eval (if (re-matches #"^9\..*" (System/getProperty "java.version"))
+  :jvm-opts #=(eval (if (re-matches #"^(9|10)\..*" (System/getProperty "java.version"))
                       ["--add-modules" "java.xml.bind"]
                       []))
 

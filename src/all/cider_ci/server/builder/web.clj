@@ -9,7 +9,6 @@
     [cider-ci.server.builder.util :as util]
     [cider-ci.utils.config :refer [get-config]]
     [cider-ci.utils.http-server :as http-server]
-    [cider-ci.utils.status :as status]
     [cider-ci.utils.routing :as routing]
 
     [clojure.data.json :as json]
@@ -86,7 +85,6 @@
   (I> wrap-handler-with-logging
       top-handler
       wrap-jobs
-      status/wrap
       (routing/wrap-prefix context)
       (authorize/wrap-require! {:service true})))
 

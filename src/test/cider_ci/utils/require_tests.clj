@@ -23,7 +23,6 @@
     [cider-ci.utils.row-events]
     [cider-ci.utils.runtime]
     [cider-ci.utils.self]
-    [cider-ci.utils.status]
     [cider-ci.utils.system]
     [cider-ci.utils.ubiquitous]
     [cider-ci.utils.url]

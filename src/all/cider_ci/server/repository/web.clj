@@ -23,8 +23,6 @@
     [cider-ci.utils.config :as config :refer [get-config]]
     [cider-ci.utils.routing :as routing]
 
-    [cider-ci.utils.status :as status]
-
     [clj-time.core :as time]
     [clojure.data :as data]
     [clojure.data.json :as json]
@@ -96,7 +94,6 @@
       cookies/wrap-cookies
       (ring.middleware.defaults/wrap-defaults {:static {:resources "public"}})
       push-notifications/wrap
-      status/wrap
       (routing/wrap-prefix context)
       routing/wrap-exception))
 

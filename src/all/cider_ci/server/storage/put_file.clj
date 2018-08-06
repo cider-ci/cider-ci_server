@@ -13,7 +13,6 @@
     [cider-ci.utils.http-server :as http-server]
     [cider-ci.utils.rdbms :as rdbms :refer [get-ds]]
     [cider-ci.utils.routing :as routing]
-    [cider-ci.utils.status :as status]
 
     [clojure.data.json :as json]
     [clojure.java.io :as io]

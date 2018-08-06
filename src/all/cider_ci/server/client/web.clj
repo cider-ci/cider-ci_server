@@ -19,7 +19,6 @@
     [cider-ci.utils.http-resources-cache-buster :as cache-buster]
     [cider-ci.utils.ring]
     [cider-ci.utils.routing :as routing]
-    [cider-ci.utils.status :as status]
     [cider-ci.utils.markdown :refer [md2html]]
 
     [cider-ci.env]
@@ -66,7 +65,6 @@
       cookies/wrap-cookies
       ring.middleware.params/wrap-params
       (ring.middleware.defaults/wrap-defaults {:static {:resources "public"}})
-      status/wrap
       (routing/wrap-prefix context)
       routing/wrap-exception))
 

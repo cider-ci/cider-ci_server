@@ -14,7 +14,6 @@
     [cider-ci.utils.http-server :as http-server]
     [cider-ci.utils.routing :as routing]
     [cider-ci.utils.ring :as ci-utils-ring]
-    [cider-ci.utils.status :as status]
 
     [clojure.data :as data]
     [clojure.data.json :as json]
@@ -103,7 +102,6 @@
 (defn build-main-handler [context]
   (I> wrap-handler-with-logging
       (cpj.handler/api routes)
-      status/wrap
       (authorize/wrap-require! {:service true})
       web.executor/wrap-dispatch-executor-routes
       (routing/wrap-prefix context)

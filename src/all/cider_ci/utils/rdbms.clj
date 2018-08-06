@@ -3,7 +3,7 @@
   (:require [cider-ci.utils.core :refer [keyword str presence]])
   (:require
     [clojure.java.jdbc :as jdbc]
-    [clojure.tools.logging :as logging]
+    [hikari-cp.core :as hikari]
     [pg-types.all]
     [ring.util.codec]
 

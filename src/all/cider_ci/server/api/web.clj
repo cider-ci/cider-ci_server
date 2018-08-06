@@ -9,7 +9,6 @@
     [cider-ci.utils.cors :as cors]
     [cider-ci.utils.config :refer [get-config]]
     [cider-ci.utils.http-server :as http-server]
-    [cider-ci.utils.status :as status]
     [cider-ci.utils.routing :as routing]
 
 
@@ -58,7 +57,6 @@
       (resources/build-routes-handler)
       ;ring.middleware.json/wrap-json-params
       ;(ring.middleware.params/wrap-params)
-      status/wrap
       (authorize/wrap-require! {:user true :service true})
       wrap-static-resources-dispatch
       content-type/wrap-content-type
