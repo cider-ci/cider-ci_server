@@ -9,12 +9,17 @@
 
 
 (def decode
-  #?(:cljs js/decodeURIComponent
+  #?(
+     :cljs js/decodeURIComponent
      :clj ring.util.codec/url-decode))
 
 (def encode
-  #?(:cljs js/encodeURIComponent
+  #?(
+     :cljs js/encodeURIComponent
      :clj ring.util.codec/url-encode))
+
+(defn parse-int [si]
+  ( #?(:clj Integer/parseInt :cljs js/parseInt) si))
 
 (defn host-port-dissect [host-port]
   (if-not (string? host-port)

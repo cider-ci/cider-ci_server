@@ -10,7 +10,7 @@
     [cider-ci.server.client.constants :refer [CONTEXT]]
     [cider-ci.server.client.web :as web]
 
-    [cider-ci.utils.app :as app]
+    ;[cider-ci.utils.app :as app]
     [cider-ci.utils.config :refer [get-config]]
 
     [logbug.catcher :as catcher]
@@ -23,5 +23,5 @@
     {:level :fatal
      :throwable Throwable
      :return-fn (fn [e] (System/exit -1))}
-    (cider-ci.utils.app/init :client web/build-main-handler)
+    ;(cider-ci.utils.app/init :client web/build-main-handler)
     ))

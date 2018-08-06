@@ -4,7 +4,7 @@
 
 (ns cider-ci.utils.url.jdbc
   (:require
-    [cider-ci.utils.url.shared :refer [host-port-dissect path-dissect auth-dissect]]
+    [cider-ci.utils.url.shared :refer [host-port-dissect path-dissect auth-dissect parse-int]]
     #?(:clj [ring.util.codec])
     [clojure.walk]
     ))
@@ -26,8 +26,8 @@
   (->> params
        (map (fn [[k v]]
               (cond
-                (and (= k :port) v) [k (Integer/parseInt v)]
-                (= k :max-pool-size) [k (Integer/parseInt v)]
+                (and (= k :port) v) [k (parse-int v)]
+                (= k :max-pool-size) [k (parse-int v)]
                 :else [k v])))
        (into {})))
 
@@ -49,17 +49,13 @@
   (let [matches (re-matches pattern url)
         auth (nth matches 3)
         host-port (nth matches 4)
-        query-string (-> matches (nth 6) (replace-str #"^\?" ""))
-        database (-> matches (nth 5) (clojure.string/replace #"^/" ""))
-        ]
+        query-string (-> matches (nth 6) (replace-str #"^\?" ""))]
     (-> {:protocol (-> matches (nth 1) clojure.string/lower-case)
-         :subprotocol (-> matches (nth 2) (clojure.string/replace #":$" ""))
-         :database database}
+         :sub-protocol (-> matches (nth 2) (clojure.string/replace #":$" ""))
+         :database (-> matches (nth 5) (clojure.string/replace #"^/" ""))}
         (merge (auth-dissect auth))
         (merge (host-port-dissect host-port))
         (merge (query-params query-string))
-        ((fn [params] (assoc params :subname 
-                             (subname params))))
         canonicalize-dissected)))
 
 

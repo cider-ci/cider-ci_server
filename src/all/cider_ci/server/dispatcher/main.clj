@@ -13,7 +13,7 @@
     [cider-ci.server.dispatcher.web :as web]
     [cider-ci.server.dispatcher.dispatch.timeout-abort :as timeout-abort]
 
-    [cider-ci.utils.app]
+    ;[cider-ci.utils.app]
     [cider-ci.utils.config :refer [get-config]]
 
     [clojure.tools.logging :as logging]
@@ -33,6 +33,6 @@
     {:level :fatal
      :throwable Throwable
      :return-fn (fn [_] (System/exit -1))}
-    (cider-ci.utils.app/init web/build-main-handler)
+    ;(cider-ci.utils.app/init web/build-main-handler)
     (initialize)))
 

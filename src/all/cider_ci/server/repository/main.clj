@@ -18,7 +18,7 @@
     [cider-ci.server.repository.web :as web]
     [cider-ci.server.repository.web.push]
 
-    [cider-ci.utils.app]
+    ;[cider-ci.utils.app]
     [cider-ci.utils.config :refer [get-config]]
 
     [logbug.catcher :as catcher]
@@ -40,5 +40,5 @@
     {:level :fatal
      :throwable Throwable
      :return-fn (fn [e] (System/exit -1))}
-    (cider-ci.utils.app/init web/build-main-handler)
+    ;(cider-ci.utils.app/init web/build-main-handler)
     (initialize)))

@@ -28,9 +28,9 @@
     [cider-ci.utils.fs :refer [system-path]]
     [cider-ci.utils.http-server]
     [cider-ci.utils.nrepl]
-    [cider-ci.utils.rdbms]
+    [cider-ci.utils.rdbms :as ds]
     [cider-ci.utils.url.http :refer [parse-base-url]]
-    [cider-ci.utils.url.jdbc]
+    [cider-ci.utils.url.jdbc :as jdbc-url]
     [cider-ci.utils.url.nrepl]
 
     [clojure.pprint :refer [pprint]]
@@ -52,6 +52,14 @@
 ;(cheshire.core/generate-string {})
 
 ;;; config ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(def defaults
+  {:CIDER_CI_HTTP_BASE_URL "http://localhost:8011"
+   :CIDER_CI_SECRET (when (= cider-ci.env/env :dev) "secret")
+   :CIDER_CI_DATABASE_URL (if (= cider-ci.env/env :dev) 
+                            "jdbc:postgresql://cider-ci:cider-ci@localhost:5432/cider-ci_v5?max-pool-size=5"
+                            "jdbc:postgresql://cider-ci:cider-ci@localhost:5432/cider-ci_v5?max-pool-size=50")
+   })
 
 
 (def config-defaults
@@ -87,27 +95,28 @@
     {:level :fatal
      :throwable Throwable
      :return-fn (fn [e] (System/exit -1))}
-    (config/initialize
-      {:defaults config-defaults
-       :resource-names []
-       :filenames []
-       :db-tables {:settings {:global []
-                              :dispatching [:dispatching]}}
-       :overrides (select-keys options [:attachments-path :secret :repositories-path :base-url])
-       })
-    (ds/init (:database-url options) (:health-check-registry status))
-    (start-http options)
-    (cider-ci.server.projects/init)
-    ; TODO (re-)enable
-    ;(when-let [params (:nrepl-url options)] (cider-ci.utils.nrepl/initialize params))
-    ;(cider-ci.server.repository.main/initialize)
-    ;(cider-ci.server.builder.main/initialize)
-    ;(cider-ci.server.dispatcher.main/initialize)
-    ;(cider-ci.server.storage.main/initialize)
-    ;(cider-ci.server.executors/initialize)
-    ;(cider-ci.server.state/initialize)
-    (cider-ci.server.socket/initialize)
-    ))
+    (let [status (status/init)]
+      (config/initialize
+        {:defaults config-defaults
+         :resource-names []
+         :filenames []
+         :db-tables {:settings {:global []
+                                :dispatching [:dispatching]}}
+         :overrides (select-keys options [:attachments-path :secret :repositories-path :base-url])
+         })
+      (ds/init (:database-url options) (:health-check-registry status))
+      (start-http options)
+      (cider-ci.server.projects/init)
+      ; TODO (re-)enable
+      ;(when-let [params (:nrepl-url options)] (cider-ci.utils.nrepl/initialize params))
+      ;(cider-ci.server.repository.main/initialize)
+      ;(cider-ci.server.builder.main/initialize)
+      ;(cider-ci.server.dispatcher.main/initialize)
+      ;(cider-ci.server.storage.main/initialize)
+      ;(cider-ci.server.executors/initialize)
+      ;(cider-ci.server.state/initialize)
+      (cider-ci.server.socket/initialize)
+      )))
 
 ;(cider-ci.utils.url/dissect "jdbc:postgresql://cider-ci:cider-ci@localhost:/cider-ci_v4")
 
@@ -120,7 +129,19 @@
 
 ;; cli, main ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(defn env-or-default [kw]
+  (or (-> (System/getenv) (get (str kw) nil) presence)
+      (get defaults kw nil)))
 
+
+(defn extend-pg-params [params]
+  (assoc params
+         :password (or (:password params)
+                       (System/getenv "PGPASSWORD"))
+         :username (or (:username params)
+                       (System/getenv "PGUSER"))
+         :port (or (:port params)
+                   (System/getenv "PGPORT"))))
 
 (def cli-options
   [["-a" "--attachments-path ATTACHMENTS_PATH"
@@ -133,9 +154,11 @@
     :validate [[#(or (= (:context %) nil)
                      (re-matches #"\/.*[^/]" %)) "The context must be nil or be a not empty path starting with a `/`"]
                [#(= (:protocol "http")) "Only the http protocol is supported"]]]
-   ["-d" "--database-url DATABASE_URL"
-    :default "jdbc:postgresql://cider-ci:cider-ci@localhost/cider-ci_v5?max-pool-size=50"
-    :parse-fn parse-db-url]
+   ["-d" "--database-url LEIHS_DATABASE_URL"
+    (str "default: " (:CIDER_CI_DATABASE_URL defaults))
+    :default (-> (env-or-default :CIDER_CI_DATABASE_URL)
+                 jdbc-url/dissect extend-pg-params)
+    :parse-fn #(-> % jdbc-url/dissect extend-pg-params)]
    ["-n" "--nrepl-url NREPL_URL"
     :default (-> (System/getenv) (get "NREPL_URL" "nrepl://localhost:7881?enabled=false"))
     :parse-fn parse-nrepl-url
@@ -176,7 +199,6 @@
               (cond
                 (and (= k :base-url) (string? v)) [k (parse-base-url v)]
                 (and (= k :nrepl-url) (string? v)) [k (parse-nrepl-url v)]
-                (and (= k :database-url) (string? v)) [k (parse-db-url v)]
                 :else [k v])))
        (into {})))
 

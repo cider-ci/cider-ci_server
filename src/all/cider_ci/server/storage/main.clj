@@ -9,7 +9,7 @@
     [cider-ci.server.storage.shared :as shared]
     [cider-ci.server.storage.sweeper :as sweeper]
     [cider-ci.server.storage.web :as web]
-    [cider-ci.utils.app]
+    ;[cider-ci.utils.app]
     [cider-ci.utils.config :as config :refer [get-config get-db-spec]]
 
     [camel-snake-kebab.core :refer [->snake_case]]
@@ -43,7 +43,7 @@
     {:level :fatal
      :throwable Throwable
      :return-fn #(System/exit -1)}
-    (cider-ci.utils.app/init web/build-main-handler)
+    ;(cider-ci.utils.app/init web/build-main-handler)
     (initialize)))
 
 ;### Debug ####################################################################

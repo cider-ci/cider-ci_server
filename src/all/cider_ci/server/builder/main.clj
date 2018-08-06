@@ -35,7 +35,7 @@
     {:level :fatal
      :throwable Throwable
      :return-fn #(System/exit -1)}
-    (cider-ci.utils.app/init web/build-main-handler)
+    ;(cider-ci.utils.app/init web/build-main-handler)
     (initialize)))
 
 ;### Debug ####################################################################

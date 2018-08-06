@@ -5,7 +5,7 @@
 (ns cider-ci.server.api.main
   (:gen-class)
   (:require
-    [cider-ci.utils.app]
+    ;[cider-ci.utils.app]
     [cider-ci.server.api.web :as web]
 
     [logbug.catcher :as catcher]
@@ -18,7 +18,8 @@
     {:level :fatal
      :throwable Throwable
      :return-fn (fn [_] (System/exit -1))}
-    (cider-ci.utils.app/init web/build-main-handler)))
+    ;(cider-ci.utils.app/init web/build-main-handler)
+    ))
 
 
 ;### Debug ####################################################################
