@@ -27,6 +27,7 @@
        (map (fn [[k v]]
               (cond
                 (and (= k :port) v) [k (parse-int v)]
+                (= k :min-pool-size) [k (parse-int v)]
                 (= k :max-pool-size) [k (parse-int v)]
                 :else [k v])))
        (into {})))

@@ -26,10 +26,10 @@
     [cider-ci.utils.app :as app]
     [cider-ci.utils.config :as config :refer [get-config get-db-spec]]
     [cider-ci.utils.fs :refer [system-path]]
-    [cider-ci.utils.http-server]
+    [cider-ci.utils.http-server :as http-server]
     [cider-ci.utils.nrepl]
     [cider-ci.utils.rdbms :as ds]
-    [cider-ci.utils.url.http :refer [parse-base-url]]
+    [cider-ci.utils.url.http :as http-url :refer [parse-base-url]]
     [cider-ci.utils.url.jdbc :as jdbc-url]
     [cider-ci.utils.url.nrepl]
 
@@ -54,11 +54,11 @@
 ;;; config ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (def defaults
-  {:CIDER_CI_HTTP_BASE_URL "http://localhost:8011"
+  {:CIDER_CI_HTTP_BASE_URL "http://localhost:8881/cider-ci"
    :CIDER_CI_SECRET (when (= cider-ci.env/env :dev) "secret")
    :CIDER_CI_DATABASE_URL (if (= cider-ci.env/env :dev) 
-                            "jdbc:postgresql://cider-ci:cider-ci@localhost:5432/cider-ci_v5?max-pool-size=5"
-                            "jdbc:postgresql://cider-ci:cider-ci@localhost:5432/cider-ci_v5?max-pool-size=50")
+                            "jdbc:postgresql://cider-ci:cider-ci@localhost:5432/cider-ci_v5?min-pool-size=1&max-pool-size=4"
+                            "jdbc:postgresql://cider-ci:cider-ci@localhost:5432/cider-ci_v5?max-pool-size=4&max-pool-size=32")
    })
 
 
@@ -95,7 +95,9 @@
     {:level :fatal
      :throwable Throwable
      :return-fn (fn [e] (System/exit -1))}
-    (let [status (status/init)]
+    (let [secret (:secret options)
+          status (status/init)
+          app-handler (routes/init secret)]
       (config/initialize
         {:defaults config-defaults
          :resource-names []
@@ -105,8 +107,8 @@
          :overrides (select-keys options [:attachments-path :secret :repositories-path :base-url])
          })
       (ds/init (:database-url options) (:health-check-registry status))
-      (start-http options)
       (cider-ci.server.projects/init)
+      (http-server/start (:http-base-url options) app-handler)
       ; TODO (re-)enable
       ;(when-let [params (:nrepl-url options)] (cider-ci.utils.nrepl/initialize params))
       ;(cider-ci.server.repository.main/initialize)
@@ -148,12 +150,10 @@
     :default (-> (System/getenv) (get "ATTACHMENTS_PATH"
                                       (clojure.string/join File/separator [WORKING-DIR "data" "attachments"])))]
    ["-h" "--help"]
-   ["-b" "--base-url BASE_URL"
-    :default "http://localhost:8881/cider-ci"
-    :parse-fn parse-base-url
-    :validate [[#(or (= (:context %) nil)
-                     (re-matches #"\/.*[^/]" %)) "The context must be nil or be a not empty path starting with a `/`"]
-               [#(= (:protocol "http")) "Only the http protocol is supported"]]]
+   ["-b" "--http-base-url CIDER_CI_HTTP_BASE_URL"
+    (str "default: " (:CIDER_CI_HTTP_BASE_URL defaults))
+    :default (http-url/parse-base-url (env-or-default :CIDER_CI_HTTP_BASE_URL))
+    :parse-fn http-url/parse-base-url]
    ["-d" "--database-url LEIHS_DATABASE_URL"
     (str "default: " (:CIDER_CI_DATABASE_URL defaults))
     :default (-> (env-or-default :CIDER_CI_DATABASE_URL)

@@ -104,6 +104,7 @@
                   (leaf "/initial-admin" :initial-admin)
                   admin-users-paths)
           projects-paths
+          (leaf "status" :status)
           (leaf "ws/chsk" :websockets)))
 
 ;(bidi/match-pair paths {:remainder "/projects/test.git/info/refs" :route paths})

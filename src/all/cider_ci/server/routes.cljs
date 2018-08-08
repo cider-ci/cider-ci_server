@@ -22,6 +22,7 @@
     [cider-ci.server.resources.home.front :as home]
     [cider-ci.server.resources.initial-admin.front :as initial-admin]
     [cider-ci.server.resources.projects.front :as projects]
+    [cider-ci.server.resources.status.front :as status]
     [cider-ci.server.resources.user.front :as user]
     [cider-ci.server.resources.users.front :as users]
     [cider-ci.server.trees.front :as trees]
@@ -59,12 +60,13 @@
    :project-edit projects/edit-page
    :projects projects/index-page
    :projects-add projects/add-page
+   :status status/info-page
+   :tree trees/page
    :user user/show-page
    :user-delete user/delete-page
    :user-edit user/edit-page
    :user-new user/new-page
    :users users/page
-   :tree trees/page
    })
 
 (defn resolve-page [k]

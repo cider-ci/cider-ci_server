@@ -79,10 +79,10 @@
         :read-only          false
         :connection-timeout 30000
         :validation-timeout 5000
-        :idle-timeout       600000
-        :max-lifetime       (* 3 60 60 1000)
-        :minimum-idle       10
-        :maximum-pool-size  (-> params :max-pool-size presence (or 5))
+        :idle-timeout       (* 1 60 1000) ; 1 minute
+        :max-lifetime       (* 1 60 60 1000) ; 1 hour 
+        :minimum-idle       (-> params :min-pool-size presence (or 3))
+        :maximum-pool-size  (-> params :max-pool-size presence (or 16))
         :pool-name          "db-pool"
         :adapter            "postgresql"
         :username           (:username params)

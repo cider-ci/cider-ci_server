@@ -24,6 +24,7 @@
     [cider-ci.server.resources.user.back :as user]
     [cider-ci.server.resources.users.back :as users]
     [cider-ci.server.socket :as socket]
+    [cider-ci.server.status.back :as status]
     [cider-ci.server.trees.back :as trees]
     [cider-ci.utils.http-resources-cache-buster :as cache-buster :refer [wrap-resource]]
     [cider-ci.utils.json-protocol]
@@ -217,8 +218,6 @@
       dispatch-to-handler
       (auth/wrap-authorize skip-authorization-handler-keys)
       wrap-dispatch-content-type
-      ring.middleware.json/wrap-json-response
-      (ring.middleware.json/wrap-json-body {:keywords? true})
       anti-csrf/wrap
       auth/wrap-authenticate
       ring.middleware.cookies/wrap-cookies
@@ -226,6 +225,10 @@
       (wrap-secret-byte-array secret)
       initial-admin/wrap
       settings/wrap
+      ds/wrap-tx
+      status/wrap
+      ring.middleware.json/wrap-json-response
+      (ring.middleware.json/wrap-json-body {:keywords? true})
       wrap-accept
       wrap-resolve-handler
       wrap-canonicalize-params-maps
@@ -239,7 +242,6 @@
                                        #".+_[0-9a-f]{40}\..+"]
                   :enabled? (= env/env :prod)})
       wrap-content-type
-      ds/wrap-tx
       ring-exception/wrap))
 
 ;#### debug ###################################################################

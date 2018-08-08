@@ -1,24 +1,23 @@
-(ns leihs.admin.resources.status.front
+(ns cider-ci.server.resources.status.front
   (:refer-clojure :exclude [str keyword])
   (:require-macros
     [reagent.ratom :as ratom :refer [reaction]]
     [cljs.core.async.macros :refer [go]])
   (:require
-    [leihs.admin.anti-csrf.core :as anti-csrf]
-    [leihs.admin.front.breadcrumbs :as breadcrumbs]
-    [leihs.admin.front.components :as components]
-    [leihs.admin.front.icons :as icons]
-    [leihs.admin.front.requests.core :as requests]
-    [leihs.admin.front.shared :refer [humanize-datetime-component short-id gravatar-url]]
-    [leihs.admin.front.state :as state]
-    [leihs.admin.paths :as paths :refer [path]]
-    [leihs.admin.utils.core :refer [keyword str presence]]
+    [cider-ci.server.anti-csrf.core :as anti-csrf]
+    [cider-ci.server.front.breadcrumbs :as breadcrumbs]
+    [cider-ci.server.front.components :as components]
+    [cider-ci.server.front.icons :as icons]
+    [cider-ci.server.front.requests.core :as requests]
+    [cider-ci.server.front.shared :refer [humanize-datetime-component short-id gravatar-url]]
+    [cider-ci.server.front.state :as state]
+    [cider-ci.server.paths :as paths :refer [path]]
+    [cider-ci.utils.core :refer [keyword str presence]]
 
     [accountant.core :as accountant]
     [cljs.core.async :as async]
     [cljs.core.async :refer [timeout]]
     [cljs.pprint :refer [pprint]]
-    [cljsjs.jimp]
     [clojure.contrib.inflect :refer [pluralize-noun]]
     [reagent.core :as reagent]
     ))
@@ -57,8 +56,7 @@
      (fn [_]
        [:div.session
         (breadcrumbs/nav-component
-          [(breadcrumbs/leihs-li)
-           (breadcrumbs/admin-li)
+          [(breadcrumbs/home-li)
            (breadcrumbs/li :status "Status-Info")]
           [])
         [:h1 "Server-Status Info"]

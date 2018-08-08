@@ -94,11 +94,14 @@
         "Error 404 - Page does not exist"]
        [:p "The current path can not be resolved!"]])]
    [state/debug-component]
-   [:nav.navbar.navbar-expand-lg.navbar-dark.bg-secondary.col
+   [:nav.footer.navbar.navbar-expand-lg.navbar-dark.bg-secondary.col
     {:style {:margin-top "3em"}}
     [:div.col
      [:a.navbar-brand {:href (path :home)} "Cider-CI"]
      [:span.navbar-text "Version 5.0.0 Alpha"]]
+    [:div.col
+     [:a.navbar-text 
+      {:href (path :status)} "Status"]]
     [state/debug-toggle-navbar-component]
     [:form.form-inline {:style {:margin-left "0.5em"
                                 :margin-right "0.5em"}}
