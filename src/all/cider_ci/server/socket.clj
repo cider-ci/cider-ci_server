@@ -67,4 +67,4 @@
 ;(debug/wrap-with-log-debug #'db-state-set-user)
 ;(logging-config/set-logger! :level :info)
 ;(debug/debug-ns 'cider-ci.auth.authorize)
-(debug/debug-ns *ns*)
+;(debug/debug-ns *ns*)

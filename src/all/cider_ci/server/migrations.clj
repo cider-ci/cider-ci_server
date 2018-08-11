@@ -4,20 +4,23 @@
 
 (ns cider-ci.server.migrations
   (:refer-clojure :exclude [str keyword])
-  (:require [cider-ci.utils.core :refer [keyword str]])
+  (:require [cider-ci.utils.core :refer [keyword str presence]])
   (:require
+    [cider-ci.constants :refer [RUN-DEFAULTS]]
     [cider-ci.server.builder.main]
     [cider-ci.server.dispatcher.main]
     [cider-ci.server.executors]
-    [cider-ci.server.migrations.schema-migrations :as schema-migrations]
     [cider-ci.server.migrations.433]
     [cider-ci.server.migrations.434]
     [cider-ci.server.migrations.435]
     [cider-ci.server.migrations.436]
     [cider-ci.server.migrations.438]
+    [cider-ci.server.migrations.schema-migrations :as schema-migrations]
     [cider-ci.server.repository.main]
+    [cider-ci.utils.url.jdbc :as jdbc-url]
 
     [cider-ci.utils.honeysql :as sql]
+    [cider-ci.utils.rdbms :as ds :refer [extend-pg-params]]
     [cider-ci.utils.url.jdbc]
 
     [clojure.java.jdbc :as jdbc]
@@ -113,14 +116,17 @@
 ;(apply sorted-set ["x" "y"])
 
 
-(defn migrate [ds version]
+(defn migrate [version options]
   (catcher/with-logging {}
-    (let [computed (compute ds version)
-          down-migrations (:down-migrations computed)
-          up-migrations (:up-migrations computed) ]
-      (down ds down-migrations)
-      (up ds up-migrations)
-      )))
+    (let [ds (ds/create-ds (assoc (:database-url options)
+                                  :min-pool-size 1
+                                  :max-pool-size 1))]
+      (try (let [computed (compute ds version)
+                 down-migrations (:down-migrations computed)
+                 up-migrations (:up-migrations computed) ]
+             (down ds down-migrations)
+             (up ds up-migrations))
+           (finally (ds/close-ds ds))))))
 
 ;(migrate "jdbc:postgresql://cider-ci:secret@localhost/cider-ci_v4" "430")
 ;(migrate "jdbc:postgresql://thomas:thomas@localhost/cider-ci_v5" "0")
@@ -129,45 +135,48 @@
 ;;; recreate ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn recreate [options]
-  (let [ds (cider-ci.utils.url.jdbc/dissect (:database-url options))
-        conn-ds (assoc ds :subname 
-                       (cider-ci.utils.url.jdbc/subname 
-                         (assoc ds :database "template1")))
+  (let [conn-ds (ds/create-ds (assoc (:database-url options)
+                                     :database "template1"
+                                     :min-pool-size 1
+                                     :max-pool-size 1))
+        database-name (-> options :database-url :database)
         disconnect-query (-> (sql/select :%pg_terminate_backend.pid
                                          :pid
                                          :usename
                                          :datname
                                          :state)
                              (sql/from :pg_stat_activity)
-                             (sql/merge-where [:= :pg_stat_activity.datname 
-                                               (:database ds)])
+                             (sql/merge-where [:= :pg_stat_activity.datname database-name])
                              sql/format)]
-    (logging/debug {:ds ds :conn-ds conn-ds})
-    (logging/debug {:disconnect-query disconnect-query})
-    (catcher/snatch
-      {}
-      (logging/info
-        {:disconnect
-         (jdbc/query conn-ds disconnect-query)}))
-    (logging/info
-      (:create_database 
-        (jdbc/db-do-commands
-          conn-ds false [(str "DROP DATABASE IF EXISTS \"" (:database ds) "\"")
-                         (str "CREATE DATABASE \"" (:database ds) "\"")])))))
+    (try 
+      (logging/debug {:conn-ds conn-ds})
+      (logging/debug {:disconnect-query disconnect-query})
+      (logging/info {:disconnect (jdbc/query conn-ds disconnect-query)})
+      (logging/info (:create_database 
+                      (jdbc/db-do-commands
+                        conn-ds false [(str "DROP DATABASE IF EXISTS \"" database-name "\"")
+                                       (str "CREATE DATABASE \"" database-name "\"")])))
+      (finally (ds/close-ds conn-ds)))))
+
 ;(-main "-r" "true")
 
 ;;; cli, main ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(defn env-or-default [kw]
+  (or (-> (System/getenv) (get (str kw) nil) presence)
+      (get RUN-DEFAULTS kw nil)))
+
 (def cli-options
   [["-h" "--help"]
-   ["-d" "--database-url URL" "Database URL for the JDBC-connection"
-    :default "jdbc:postgresql://cider-ci:cider-ci@localhost:5432/cider-ci_v5"
-    :parse-fn identity]
+   ["-d" "--database-url LEIHS_DATABASE_URL"
+    (str "default: " (:CIDER_CI_DATABASE_URL RUN-DEFAULTS))
+    :default (-> (env-or-default :CIDER_CI_DATABASE_URL)
+                 jdbc-url/dissect extend-pg-params)
+    :parse-fn #(-> % jdbc-url/dissect extend-pg-params)]
    ["-r" "--recreate" "Drops and then recreates the database from scratch."
     :default false
     :parse-fn #(yaml/parse-string (str %))
     ]
-   ["-s" "--show" "Ѕhow status and to be applied migrations"]
    ["-v" "--version VERSION" "Migrate to the specified version"
     :default (-> migrations keys sort reverse first)
     :parse-fn identity
@@ -208,13 +217,12 @@
      ; :return-fn (fn [_] (System/exit -1))
      }
     (let [{:keys [options arguments errors summary]} (parse-opts args cli-options :in-order true)
-          {ds :database-url version :version} options]
+          {version :version} options]
       (cond
         (:help options) (println (usage summary {:args args :options options}))
-        (:show options) (println (show (compute ds version)))
         :else (do
                 (when (:recreate options) (recreate options))
-                (migrate ds version))))))
+                (migrate version options))))))
 
 ; help
 ;(-main "-h")
@@ -230,7 +238,7 @@
 
 
 ;### Debug ####################################################################
-;(debug/debug-ns *ns*)
+(debug/debug-ns *ns*)
 ;(debug/debug-ns 'clojure.tools.cli)
 ;(debug/debug-ns 'cider-ci.utils.config)
 ;(logging-config/set-logger! :level :debug)

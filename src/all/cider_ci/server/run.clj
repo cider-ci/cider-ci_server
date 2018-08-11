@@ -8,7 +8,7 @@
   (:require [cider-ci.utils.core :refer [keyword str presence]])
   (:require
 
-    [cider-ci.constants :refer [WORKING-DIR]]
+    [cider-ci.constants :refer [WORKING-DIR RUN-DEFAULTS]]
     [cider-ci.env]
 
     [cider-ci.server.projects]
@@ -28,7 +28,7 @@
     [cider-ci.utils.fs :refer [system-path]]
     [cider-ci.utils.http-server :as http-server]
     [cider-ci.utils.nrepl]
-    [cider-ci.utils.rdbms :as ds]
+    [cider-ci.utils.rdbms :as ds :refer [extend-pg-params]]
     [cider-ci.utils.url.http :as http-url :refer [parse-base-url]]
     [cider-ci.utils.url.jdbc :as jdbc-url]
     [cider-ci.utils.url.nrepl]
@@ -53,13 +53,7 @@
 
 ;;; config ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(def defaults
-  {:CIDER_CI_HTTP_BASE_URL "http://localhost:8881/cider-ci"
-   :CIDER_CI_SECRET (when (= cider-ci.env/env :dev) "secret")
-   :CIDER_CI_DATABASE_URL (if (= cider-ci.env/env :dev) 
-                            "jdbc:postgresql://cider-ci:cider-ci@localhost:5432/cider-ci_v5?min-pool-size=1&max-pool-size=4"
-                            "jdbc:postgresql://cider-ci:cider-ci@localhost:5432/cider-ci_v5?max-pool-size=4&max-pool-size=32")
-   })
+
 
 
 (def config-defaults
@@ -120,12 +114,6 @@
       (cider-ci.server.socket/initialize)
       )))
 
-;(cider-ci.utils.url/dissect "jdbc:postgresql://cider-ci:cider-ci@localhost:/cider-ci_v4")
-
-;(cemerick.url/url "jdbc:postgresql://cider-ci:cider-ci@localhost:/cider-ci_v4")
-
-;(java.net.URL. "jdbc:postgresql://cider-ci:cider-ci@localhost:/cider-ci_v4")
-
 
 (def parse-nrepl-url cider-ci.utils.url.nrepl/dissect)
 
@@ -133,17 +121,7 @@
 
 (defn env-or-default [kw]
   (or (-> (System/getenv) (get (str kw) nil) presence)
-      (get defaults kw nil)))
-
-
-(defn extend-pg-params [params]
-  (assoc params
-         :password (or (:password params)
-                       (System/getenv "PGPASSWORD"))
-         :username (or (:username params)
-                       (System/getenv "PGUSER"))
-         :port (or (:port params)
-                   (System/getenv "PGPORT"))))
+      (get RUN-DEFAULTS kw nil)))
 
 (def cli-options
   [["-a" "--attachments-path ATTACHMENTS_PATH"
@@ -151,11 +129,11 @@
                                       (clojure.string/join File/separator [WORKING-DIR "data" "attachments"])))]
    ["-h" "--help"]
    ["-b" "--http-base-url CIDER_CI_HTTP_BASE_URL"
-    (str "default: " (:CIDER_CI_HTTP_BASE_URL defaults))
+    (str "default: " (:CIDER_CI_HTTP_BASE_URL RUN-DEFAULTS))
     :default (http-url/parse-base-url (env-or-default :CIDER_CI_HTTP_BASE_URL))
     :parse-fn http-url/parse-base-url]
    ["-d" "--database-url LEIHS_DATABASE_URL"
-    (str "default: " (:CIDER_CI_DATABASE_URL defaults))
+    (str "default: " (:CIDER_CI_DATABASE_URL RUN-DEFAULTS))
     :default (-> (env-or-default :CIDER_CI_DATABASE_URL)
                  jdbc-url/dissect extend-pg-params)
     :parse-fn #(-> % jdbc-url/dissect extend-pg-params)]

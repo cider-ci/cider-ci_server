@@ -5,6 +5,7 @@ CREATE TABLE projects (
   public_view_permission boolean DEFAULT false,
   created_at timestamp with time zone DEFAULT now() NOT NULL,
   updated_at timestamp with time zone DEFAULT now() NOT NULL,
+  last_push_at timestamp with time zone,
   branch_trigger_enabled boolean DEFAULT false,
   cron_trigger_enabled boolean DEFAULT false,
   CONSTRAINT id_simple CHECK ((id ~ '^[a-z][a-z0-9\-_]+$'::text))
@@ -17,6 +18,10 @@ CREATE TRIGGER update_updated_at_column_of_projects
   EXECUTE PROCEDURE update_updated_at_column();
 
 ALTER TABLE ONLY projects ADD CONSTRAINT projects_pkey PRIMARY KEY (id);
+
+CREATE TRIGGER create_event_on_projects_operation
+  AFTER INSERT OR UPDATE OR DELETE ON projects
+  FOR EACH ROW EXECUTE PROCEDURE create_event();
 
 
 -- branches --------------------------------------------------------------------

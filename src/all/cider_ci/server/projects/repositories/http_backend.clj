@@ -7,6 +7,7 @@
   (:require [cider-ci.utils.core :refer [keyword str presence]])
   (:require
     [cider-ci.server.projects.repositories.shared :refer [path]]
+    [cider-ci.utils.honeysql :as sql]
 
     [clojure.java.jdbc :as jdbc]
     [compojure.core :as cpj]
@@ -35,11 +36,20 @@
                  (assoc-in response [:headers k] v))
                (.readLine pout))))))
 
+(defn project [project-id tx]
+  (->> (-> (sql/select :*)
+           (sql/from :projects)
+           (sql/merge-where [:= :id project-id])
+           sql/format)
+       (jdbc/query tx)
+       first))
+
 (defn http-handler [{request-method :request-method
                      remote-addr :remote-addr
                      {project-id :project-id
                       repository-path :repository-path} :route-params
                      query-string :query-string
+                     tx :tx
                      :as request}]
   (let [env {"GIT_PROJECT_ROOT" (.toString (path {:project-id project-id}))
              "PATH_INFO" repository-path
@@ -60,8 +70,19 @@
             (let [os (.getOutputStream process)]
               (future (try (.transferTo is os)
                            (finally (.close is) (.close os))))))
-        response (build-response process)]
+        project (project project-id tx)
+        response (if project 
+                   (build-response process)
+                   {:status 404
+                    :body "no such project"})]
+    ;TODO somehow log last modifying "thing" in the project tabel and consequently in the event log
+    ; e.g. last_git_push_at
     (logging/debug process-environment)
     (logging/debug response)
     response))
 
+;#### debug ###################################################################
+;(logging-config/set-logger! :level :debug)
+;(logging-config/set-logger! :level :info)
+;(debug/debug-ns 'cider-ci.utils.shutdown)
+(debug/debug-ns *ns*)

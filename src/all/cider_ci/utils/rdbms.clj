@@ -40,6 +40,15 @@
                 (map (fn [[n t]] [n (Timer->map t)]))
                 (into {}))})
 
+(defn extend-pg-params [params]
+  (assoc params
+         :password (or (:password params)
+                       (System/getenv "PGPASSWORD"))
+         :username (or (:username params)
+                       (System/getenv "PGUSER"))
+         :port (or (:port params)
+                   (System/getenv "PGPORT"))))
+
 (defonce ds (atom nil))
 (defn get-ds [] @ds)
 
@@ -61,41 +70,46 @@
       ; `requests` for mutating requests
       )))
 
+(defn create-ds [params]
+  {:datasource
+   (hikari/make-datasource
+     {:auto-commit        true
+      :read-only          false
+      :connection-timeout 30000
+      :validation-timeout 5000
+      :idle-timeout       (* 1 60 1000) ; 1 minute
+      :max-lifetime       (* 1 60 60 1000) ; 1 hour 
+      :minimum-idle       (-> params :min-pool-size presence (or 3))
+      :maximum-pool-size  (-> params :max-pool-size presence (or 16))
+      :pool-name          "db-pool"
+      :adapter            "postgresql"
+      :username           (:username params)
+      :password           (:password params)
+      :database-name      (:database params)
+      :server-name        (:host params)
+      :port-number        (:port params)
+      :register-mbeans    false
+      :metric-registry (:metric-registry params)
+      :health-check-registry (:health-check-registry params)})})
+
+(defn close-ds [ds]
+  (-> ds :datasource hikari/close-datasource))
+
 
 (defn init [params health-check-registry]
   (reset! metric-registry* (MetricRegistry.))
   (when @ds
     (do
       (logging/info "Closing db pool ...")
-      (-> @ds :datasource hikari/close-datasource)
+      (close-ds @ds)
       (reset! ds nil)
       (logging/info "Closing db pool done.")))
   (logging/info "Initializing db pool " params " ..." )
-  (reset!
-    ds
-    {:datasource
-     (hikari/make-datasource
-       {:auto-commit        true
-        :read-only          false
-        :connection-timeout 30000
-        :validation-timeout 5000
-        :idle-timeout       (* 1 60 1000) ; 1 minute
-        :max-lifetime       (* 1 60 60 1000) ; 1 hour 
-        :minimum-idle       (-> params :min-pool-size presence (or 3))
-        :maximum-pool-size  (-> params :max-pool-size presence (or 16))
-        :pool-name          "db-pool"
-        :adapter            "postgresql"
-        :username           (:username params)
-        :password           (:password params)
-        :database-name      (:database params)
-        :server-name        (:host params)
-        :port-number        (:port params)
-        :register-mbeans    false
-        :metric-registry @metric-registry*
-        :health-check-registry health-check-registry})})
+  (reset! ds (create-ds (assoc params
+                               :metric-registry @metric-registry*
+                               :health-check-registry health-check-registry)))
   (logging/info "Initializing db pool done.")
   @ds)
-
 
 ;### Debug ####################################################################
 ;(debug/debug-ns *ns*)

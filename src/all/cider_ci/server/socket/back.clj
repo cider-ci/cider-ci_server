@@ -110,5 +110,4 @@
 
 ;#### debug ###################################################################
 ;(logging-config/set-logger! :level :debug)
-(debug/debug-ns *ns*)
-
+;(debug/debug-ns *ns*)
