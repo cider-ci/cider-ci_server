@@ -3,7 +3,7 @@
 ; See the "LICENSE.txt" file provided with this software.
 
 (ns cider-ci.utils.honeysql
-  (:refer-clojure :exclude [format])
+  (:refer-clojure :exclude [format update])
   (:require
     [honeysql.format :as format]
     [honeysql.helpers :as helpers :refer [build-clause]]
@@ -53,6 +53,8 @@
 (defalias order-by helpers/order-by)
 ;(defalias returning helpers/returning)
 (defalias select helpers/select)
+(defalias sset helpers/sset)
+(defalias update helpers/update)
 ;(defalias using helpers/using)
 (defalias where helpers/where)
 

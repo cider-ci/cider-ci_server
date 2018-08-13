@@ -75,8 +75,12 @@
                    (build-response process)
                    {:status 404
                     :body "no such project"})]
-    ;TODO somehow log last modifying "thing" in the project tabel and consequently in the event log
-    ; e.g. last_git_push_at
+    (when (#{:post :delete :put :patch} request-method)
+      (->> (-> (sql/update :projects)
+               (sql/sset {:repository_updated_at (sql/raw "now()")})
+               (sql/merge-where [:= :id project-id])
+               sql/format)
+           (jdbc/execute! tx)))
     (logging/debug process-environment)
     (logging/debug response)
     response))

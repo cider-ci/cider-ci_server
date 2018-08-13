@@ -5,7 +5,7 @@ CREATE TABLE projects (
   public_view_permission boolean DEFAULT false,
   created_at timestamp with time zone DEFAULT now() NOT NULL,
   updated_at timestamp with time zone DEFAULT now() NOT NULL,
-  last_push_at timestamp with time zone,
+  repository_updated_at timestamp with time zone,
   branch_trigger_enabled boolean DEFAULT false,
   cron_trigger_enabled boolean DEFAULT false,
   CONSTRAINT id_simple CHECK ((id ~ '^[a-z][a-z0-9\-_]+$'::text))
