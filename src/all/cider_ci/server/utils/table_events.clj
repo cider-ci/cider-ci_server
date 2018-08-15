@@ -4,6 +4,7 @@
     [cider-ci.utils.core :refer [str keyword presence]]
     [cider-ci.utils.honeysql :as sql]
     [cider-ci.utils.rdbms :as ds]
+    [cider-ci.utils.daemon :refer [defdaemon]]
 
     [clj-time.core :as time]
     [clojure.core.async :as async]
@@ -34,7 +35,7 @@
 
 ;;;
 
-(def last-event-row* (atom nil))
+(defonce last-event-row* (atom nil))
 
 (def base-query
   (-> (sql/select :*)
@@ -64,21 +65,25 @@
                last-event-row))))
 
 ;(publish-new-rows!)
-
-(defn init []
-  (swap! last-event-row*
-         (fn [last-event-row]
-           (->> (-> base-query  
-                    (sql/format))
-                (jdbc/query @ds/ds)
-                first))))
-
 ; testing
 (def sub-chan (async/chan (async/sliding-buffer 10)))
 (subscribe sub-chan "projects")
 (async/go-loop [] (let [msg (async/<! sub-chan)] (println msg) (logging/debug msg) (recur)))
 
 
+(defn init []
+  (swap! last-event-row*
+         (fn [last-event-row]
+           (or last-event-row
+               (->> (-> base-query  
+                        (sql/format))
+                    (jdbc/query @ds/ds)
+                    first))))
+  (defdaemon "publish-new-rows" 0.25 (publish-new-rows!))
+  (start-publish-new-rows))
+
+(defn de-init []
+  (stop-publish-new-rows))
 
 ;#### debug ###################################################################
 (debug/debug-ns *ns*)
