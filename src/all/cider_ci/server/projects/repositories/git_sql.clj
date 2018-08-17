@@ -8,11 +8,10 @@
   (:require
     [cider-ci.server.paths :refer [path]]
     [cider-ci.server.projects.repositories :as repositories]
-    [cider-ci.utils.rdbms :as ds]
-
     [cider-ci.utils.git-gpg :as git-gpg]
     [cider-ci.utils.honeysql :as sql]
     [cider-ci.utils.jdbc :as utils.jdbc]
+    [cider-ci.utils.rdbms :as ds]
 
     [clj-time.coerce]
     [clojure.java.jdbc :as jdbc]
@@ -267,6 +266,10 @@
                                 Git. .branchList .call seq
                                 (filter #(re-matches #"^refs\/heads\/.*" (.getName %))))]
           (import-branch branch repository project tx))))))
+
+
+
+
 
 
 ;#### debug ###################################################################

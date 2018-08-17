@@ -48,14 +48,15 @@
 
 
 (defn patch [{body :body tx :tx
-                      {project-id :project-id} :route-params}]
+              {project-id :project-id} :route-params}]
   (let [update-params (-> body (select-keys allowed-keys) 
                           (dissoc :id))
         where-clause ["id = ?" project-id]]
     (logging/debug update-params where-clause)
-    (if (= 1 (first (jdbc/update! 
-                      tx :projects 
-                      update-params where-clause)))
+    (if (and (not (empty? update-params))
+             (= 1 (first (jdbc/update! 
+                           tx :projects 
+                           update-params where-clause))))
       {:status 204}
       (throw (ex-info "Project has not been updated!" {})))))
 

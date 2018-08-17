@@ -17,25 +17,29 @@
     ))
 
 (def ^:private pub-chan (async/chan))
-(def ^:private pub (async/pub pub-chan :table-name))
+(def ^:private pub (async/pub pub-chan :table_name))
 
 (defn- publish [row]
-  (async/>!! pub-chan {:table-name (:table_name row)
-                       :data row})
+  (logging/info 'publish row)
+  (async/>!! pub-chan row)
   row)
 
+;(publish {:table_name "projects" :foo :baz})
+;(async/>!! pub-chan {:table_name :test})
 
 ;(dotimes [i 20] (async/>!! pub-chan {:table-name :test :event {:message "blah" :i i :time (time/now)}}))
 
 (defn subscribe [chan table-name]
   ;TODO the following fails with sliding-buffer, but it should not 
   ;(assert (async/unblocking-buffer? chan))
-  (async/sub pub table-name chan))
+  (async/sub pub table-name chan)
+  chan)
 
 
-;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defonce last-event-row* (atom nil))
+;(reset! last-event-row* nil)
 
 (def base-query
   (-> (sql/select :*)
@@ -43,12 +47,27 @@
       (sql/order-by [:created_at :asc]
                     [:id :asc])))
 
+(defn set-last-event-row []
+  (swap! last-event-row*
+         (fn [last-event-row]
+           (or last-event-row
+               (->> (-> base-query  
+                        (sql/order-by [:created_at :desc])
+                        (sql/limit 1)
+                        (sql/format))
+                    (jdbc/query @ds/ds)
+                    first)))))
+
 (defn extend-query [query last-event-row]
   (if-not last-event-row
     query
     (-> query
-        (sql/merge-where [:>= :created_at (:created_at last-event-row)])
-        (sql/merge-where [:<> :id (:id last-event-row)]))))
+        (sql/merge-where [:> :created_at 
+                          (-> (sql/select :created_at)
+                              (sql/from :events)
+                              (sql/merge-where [:= :id (:id last-event-row)]))]))))
+                                             
+                                             
 
 (defn build-publish-new-rows-query [last-event-row]
   (-> base-query  
@@ -61,29 +80,36 @@
            (or (->> (build-publish-new-rows-query last-event-row)
                     (jdbc/query @ds/ds)
                     (map publish)
+                    doall
                     last)
                last-event-row))))
 
+
+
 ;(publish-new-rows!)
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 ; testing
 (def sub-chan (async/chan (async/sliding-buffer 10)))
 (subscribe sub-chan "projects")
-(async/go-loop [] (let [msg (async/<! sub-chan)] (println msg) (logging/debug msg) (recur)))
+(async/go-loop [] (let [msg (async/<! sub-chan)] (println msg) (logging/info msg) (recur)))
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
 (defn init []
-  (swap! last-event-row*
-         (fn [last-event-row]
-           (or last-event-row
-               (->> (-> base-query  
-                        (sql/format))
-                    (jdbc/query @ds/ds)
-                    first))))
-  (defdaemon "publish-new-rows" 0.25 (publish-new-rows!))
+  (logging/info 'init "table-events")
+  (set-last-event-row)
+  (defdaemon "publish-new-rows" 0.1 (publish-new-rows!))
   (start-publish-new-rows))
 
 (defn de-init []
   (stop-publish-new-rows))
 
 ;#### debug ###################################################################
-(debug/debug-ns *ns*)
+;(debug/debug-ns *ns*)
+(logging-config/set-logger! :level :debug)

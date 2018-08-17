@@ -11,6 +11,7 @@
     [cider-ci.constants :refer [WORKING-DIR RUN-DEFAULTS]]
     [cider-ci.env]
 
+    [cider-ci.server.utils.table-events :as table-events]
     [cider-ci.server.projects]
 
     [cider-ci.server.builder.main]
@@ -112,6 +113,7 @@
       ;(cider-ci.server.executors/initialize)
       ;(cider-ci.server.state/initialize)
       (cider-ci.server.socket/initialize)
+      (table-events/init)
       )))
 
 

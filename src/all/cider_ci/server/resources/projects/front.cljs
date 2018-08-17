@@ -292,7 +292,7 @@
   (let [resp-chan (async/chan)
         id (requests/send-off {:url (path :project {:project-id @project-id*})
                                :method :patch
-                               :json-params (select-keys @project-data* [:description])}
+                               :json-params @project-data*}
                               {:modal true
                                :title "Update project"
                                :retry-fn patch}
@@ -391,5 +391,4 @@
     [:h1 " Projects "]
     [index-table-component]
     [index-debug-component]
-    
     ]])

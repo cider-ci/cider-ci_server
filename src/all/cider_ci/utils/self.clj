@@ -16,7 +16,8 @@
 
 (defn group-name []
   (snatch
-    {:return-fn (fn [_]
+    {:level :debug
+     :return-fn (fn [_]
                   (-> "project.clj" slurp read-string
                       second  str (clojure.string/split #"\/") first))}
     (-> "project-info.clj" io/resource
@@ -24,7 +25,8 @@
 
 (defn project-name []
   (snatch
-    {:return-fn (fn [_]
+    {:level :debug
+     :return-fn (fn [_]
                   (-> "project.clj" slurp read-string
                       second  str (clojure.string/split #"\/") second))}
     (-> "project-info.clj" io/resource
@@ -32,7 +34,8 @@
 
 (defn release []
   (snatch
-    {:return-fn (fn [e]
+    {:level :debug
+     :return-fn (fn [e]
                   {:version_major 4
                    :version_minor 0
                    :version_patch 0
@@ -61,7 +64,8 @@
 
 (defn deploy-info []
   (snatch
-    {:return-fn (fn [e]
+    {:level :debug
+     :return-fn (fn [e]
                   {:tree_id "TEST"
                    :commit_id "TEST"
                    :time (current-time) })}
