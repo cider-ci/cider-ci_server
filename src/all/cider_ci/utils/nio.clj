@@ -3,15 +3,16 @@
 ; See the "LICENSE.txt" file provided with this software.
 
 (ns cider-ci.utils.nio
-
   (:import
     [java.nio.file
      LinkOption
      Files
      FileSystem
      FileSystems
-     Path])
-  )
+     FileVisitOption
+     Path]
+    [java.util
+     Comparator]))
 
 ; ideas from
 ; https://github.com/potetm/nio2/blob/master/src/nio2/core.clj
@@ -36,6 +37,7 @@
 (defmacro copy-opts [args] `(varargs-array CopyOption ~args))
 (defmacro file-attrs [args] `(varargs-array FileAttribute ~args))
 (defmacro link-opts [args] `(varargs-array LinkOption ~args))
+(defmacro file-visit-opts [args] `(varargs-array FileVisitOption ~args))
 (defmacro open-opts [args] `(varargs-array OpenOption ~args))
 
 
@@ -89,3 +91,11 @@
 
 (defn dir? ^Boolean [^Path path & link-options]
   (Files/isDirectory path (link-opts link-options)))
+
+(defn rmdir-recursive [^Path path & file-visit-options]
+  (-> path
+      (Files/walk (file-visit-opts file-visit-options))
+      (.sorted (Comparator/reverseOrder))
+      (.map #(.toFile %))
+      (.forEach #(.delete %))))
+

@@ -37,15 +37,14 @@
      {:body project})))
 
 (defn delete [{body :body tx :tx
-                       {project-id :project-id} :route-params}]
-  (let [update-params (-> body (select-keys allowed-keys) 
-                          (dissoc :id))
-        where-clause ["id = ?" project-id]]
-    (logging/debug update-params where-clause)
-    (if (= 1 (first (jdbc/delete! tx :projects where-clause))) 
-      {:status 204}
-      (throw (ex-info "Project has not been updated!" {})))))
-
+               {project-id :project-id} :route-params}]
+  (if-let [project (->> ["SELECT * FROM projects WHERE id = ?" project-id]
+                        (jdbc/query tx)
+                        first)]
+    (do (projects/de-init project)
+        (jdbc/delete! tx :projects ["id = ?" project-id])
+        {:status 204}
+        {:status 404})))
 
 (defn patch [{body :body tx :tx
               {project-id :project-id} :route-params}]

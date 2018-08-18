@@ -34,3 +34,5 @@
   (nio/path repositories-dir-path project-id))
 
 ;(path {:project-id "test"})
+
+;(nio/rmdir-recursive (path {:project-id "test"}))

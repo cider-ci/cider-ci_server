@@ -38,6 +38,11 @@
       (assert (.getRef repository "HEAD"))
       repository)))
 
+(defn de-init [project]
+  (let [path (path project)]
+    (when (nio/dir? path)
+      (nio/rmdir-recursive path))))
+
 (def http-handler http-backend/http-handler)
 
 ;#### debug ###################################################################

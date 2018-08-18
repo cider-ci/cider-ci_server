@@ -30,7 +30,7 @@
     [java.io File]))
 
 
-(def projects* core/projects*)
+(defonce projects* core/projects*)
 
 (defn process-project-update [event]
   (logging/info 'process-project-update event))
@@ -46,9 +46,17 @@
         listener-chan (project-listener-chan project)]
     (swap! projects* assoc 
            (:id project)
-           (assoc project 
-                  :repository repository
-                  :listener-chan listener-chan))))
+           (atom (assoc project 
+                        :repository repository
+                        :listener-chan listener-chan)))))
+
+(defn de-init-project [project-bare]
+  (when-let [project (some-> @projects* 
+                             (get (:id project-bare))
+                             deref)]
+    (async/close! (:listener-chan project))
+    (repositories/de-init project)
+    (swap! projects* dissoc (:id project))))
 
 
 ;;;;;;;;;;
@@ -56,7 +64,12 @@
 (def projects-chan* (atom nil))
 
 (defn handle-project-event [event]
-  (logging/info 'handle-project-event event))
+  (logging/info 'handle-project-event event)
+  (case (:operation event)
+    "INSERT" (init-project (:data_new event))
+    "DELETE" nil ;(de-init-project (:data_old event)
+    ))
+
 
 (defn- init-subscribe-projects []
   (-> projects-chan*
@@ -89,3 +102,9 @@
     (reset! projects-chan* nil)))
 
 ;(catcher/with-logging {} (some-> @projects* (get "test") git-sql/import-branches))
+
+;#### debug ###################################################################
+;(logging-config/set-logger! :level :debug)
+;(logging-config/set-logger! :level :info)
+;(debug/debug-ns 'clojure.tools.cli)
+(debug/debug-ns *ns*)

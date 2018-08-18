@@ -92,9 +92,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ; testing
-(def sub-chan (async/chan (async/sliding-buffer 10)))
-(subscribe sub-chan "projects")
-(async/go-loop [] (let [msg (async/<! sub-chan)] (println msg) (logging/info msg) (recur)))
+;(def sub-chan (async/chan (async/sliding-buffer 10)))
+;(subscribe sub-chan "projects")
+;(async/go-loop [] (let [msg (async/<! sub-chan)] (println msg) (logging/info msg) (recur)))
 
 
 
