@@ -92,17 +92,18 @@
      :return-fn (fn [e] (System/exit -1))}
     (let [secret (:secret options)
           status (status/init)
-          app-handler (routes/init secret)]
-      (config/initialize
-        {:defaults config-defaults
-         :resource-names []
-         :filenames []
-         :db-tables {:settings {:global []
-                                :dispatching [:dispatching]}}
-         :overrides (select-keys options [:attachments-path :secret :repositories-path :base-url])
-         })
-      (ds/init (:database-url options) (:health-check-registry status))
-      (cider-ci.server.projects/init)
+          app-handler (routes/init secret)
+          ds (ds/init (:database-url options) (:health-check-registry status))]
+      ;(config/initialize
+      ;  {:defaults config-defaults
+      ;   :resource-names []
+      ;   :filenames []
+      ;   :db-tables {:settings {:global []
+      ;                          :dispatching [:dispatching]}}
+      ;   :overrides (select-keys options [:attachments-path :secret :repositories-path :base-url])
+      ;   })
+      
+      (cider-ci.server.projects/init ds)
       (table-events/init)
       (http-server/start (:http-base-url options) app-handler)
       ; TODO (re-)enable

@@ -71,19 +71,17 @@
 
 ;;;;;;;;;;
 
-(defn init 
-  ([] (init {}))
-  ([{tx :tx :or {tx @ds/ds}}]
-   (init-subscribe-projects)
-   (let [db-projects (->> (-> (sql/select :projects.*)
-                              (sql/from :projects)
-                              sql/format)
-                          (jdbc/query tx)
-                          (map #(assoc % :project-id (:id %))))]
-     (doseq [project db-projects]
-       (init-project project)))
-   (doseq [[_ project] @projects*]
-     (git-sql/import-branches project))))
+(defn init [ds]
+  (let [db-projects (->> (-> (sql/select :projects.*)
+                             (sql/from :projects)
+                             sql/format)
+                         (jdbc/query ds)
+                         (map #(assoc % :project-id (:id %))))]
+    (doseq [project db-projects]
+      (init-project project)))
+  (doseq [[_ project] @projects*]
+    (git-sql/import-branches @project))
+  (init-subscribe-projects))
 
 (defn de-init []
   (when-let [c @projects-chan*]
