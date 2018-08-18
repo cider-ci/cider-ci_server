@@ -43,7 +43,6 @@
   (when-let [project (some-> @projects* 
                              (get (:id project-bare))
                              deref)]
-    (async/close! (:listener-chan project))
     (repositories/de-init project)
     (swap! projects* dissoc (:id project))))
 
