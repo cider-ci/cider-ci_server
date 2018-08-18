@@ -32,23 +32,12 @@
 
 (defonce projects* core/projects*)
 
-(defn process-project-update [event]
-  (logging/info 'process-project-update event))
-
-(defn project-listener-chan [project]
-  (let [c (async/chan (async/sliding-buffer 1))]
-    (table-events/subscribe c "projects")
-    (async/go (while true (process-project-update (-> (async/<! c)))))
-    c))
-
 (defn init-project [project]
-  (let [repository (repositories/init project)
-        listener-chan (project-listener-chan project)]
+  (let [repository (repositories/init project)]
     (swap! projects* assoc 
            (:id project)
            (atom (assoc project 
-                        :repository repository
-                        :listener-chan listener-chan)))))
+                        :repository repository)))))
 
 (defn de-init-project [project-bare]
   (when-let [project (some-> @projects* 
@@ -66,7 +55,7 @@
 (defn handle-project-event [event]
   (logging/info 'handle-project-event event)
   (case (:operation event)
-    "INSERT" (init-project (:data_new event))
+    "INSERT" nil ;(init-project (:data_new event))
     "DELETE" nil ;(de-init-project (:data_old event)
     ))
 

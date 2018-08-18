@@ -41,7 +41,7 @@
   (if-let [project (->> ["SELECT * FROM projects WHERE id = ?" project-id]
                         (jdbc/query tx)
                         first)]
-    (do (projects/de-init project)
+    (do (projects/de-init-project project)
         (jdbc/delete! tx :projects ["id = ?" project-id])
         {:status 204}
         {:status 404})))

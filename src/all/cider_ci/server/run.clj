@@ -102,8 +102,8 @@
          :overrides (select-keys options [:attachments-path :secret :repositories-path :base-url])
          })
       (ds/init (:database-url options) (:health-check-registry status))
-      (table-events/init)
       (cider-ci.server.projects/init)
+      (table-events/init)
       (http-server/start (:http-base-url options) app-handler)
       ; TODO (re-)enable
       ;(when-let [params (:nrepl-url options)] (cider-ci.utils.nrepl/initialize params))
