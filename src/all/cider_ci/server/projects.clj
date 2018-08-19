@@ -52,11 +52,13 @@
 (def projects-chan* (atom nil))
 
 (defn handle-project-event [event]
-  (logging/info 'handle-project-event event)
-  (case (:operation event)
-    "INSERT" nil ;(init-project (:data_new event))
-    "DELETE" nil ;(de-init-project (:data_old event)
-    ))
+  (catcher/with-logging {}
+    (logging/info 'handle-project-event event)
+    (case (:operation event)
+      "INSERT" nil ;(init-project (:data_new event))
+      "DELETE" nil ;(de-init-project (:data_old event)
+      "UPDATE" nil 
+      )))
 
 ;(async/<!! @projects-chan*)
 
