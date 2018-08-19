@@ -58,7 +58,7 @@
 
 
 (defn import-submodule-refs [j-tree-id ^Repository repository]
-  (logging/warn 'import-submodule-refs j-tree-id repository)
+  (logging/debug 'import-submodule-refs j-tree-id repository)
 
   ; SubmoduleWalk seems not to help at all
   ; try to do something like in native `git rev-list -r`
@@ -67,11 +67,11 @@
   ; j-tree-id seems to be some other class, see if this works 
   (let [submodule-walk (doto (SubmoduleWalk. repository)
                          (.setTree j-tree-id))]
-    (logging/warn 'submodule-walk submodule-walk)
-    (logging/warn 'path (.getPath submodule-walk))
-    ;(logging/warn 'modules-path (.getModulesPath submodule-walk))
-    (logging/warn 'ObjecetId (.getObjectId submodule-walk))
-    (logging/warn 'Resolved (.resolve repository (.getName (.getObjectId submodule-walk))))
+    (logging/debug 'submodule-walk submodule-walk)
+    (logging/debug 'path (.getPath submodule-walk))
+    ;(logging/debug 'modules-path (.getModulesPath submodule-walk))
+    (logging/debug 'ObjecetId (.getObjectId submodule-walk))
+    (logging/debug 'Resolved (.resolve repository (.getName (.getObjectId submodule-walk))))
     )
 
   ; might have to iterate over the whole tree and inspect the paths
@@ -92,7 +92,7 @@
     (.setRecursive tree-walk true)
     (while (.next tree-walk)
       (when (= (.getFileMode tree-walk 0) FileMode/GITLINK)
-        (logging/warn "SUBMODULE: " (.getPathString tree-walk) (.getName (.getObjectId tree-walk 0)))
+        (logging/debug "SUBMODULE: " (.getPathString tree-walk) (.getName (.getObjectId tree-walk 0)))
         (let [commit-id (-> commit .getId .getName)
               path (.getPathString tree-walk)
               submodule-commit-id (.getName (.getObjectId tree-walk 0))]

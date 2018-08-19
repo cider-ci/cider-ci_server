@@ -93,6 +93,7 @@
   (Files/isDirectory path (link-opts link-options)))
 
 (defn rmdir-recursive [^Path path & file-visit-options]
+  "dosen't work yet"
   (-> path
       (Files/walk (file-visit-opts file-visit-options))
       (.sorted (Comparator/reverseOrder))

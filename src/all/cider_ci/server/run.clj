@@ -103,8 +103,8 @@
       ;   :overrides (select-keys options [:attachments-path :secret :repositories-path :base-url])
       ;   })
       
-      (cider-ci.server.projects/init ds)
       (table-events/init)
+      (cider-ci.server.projects/init ds)
       (http-server/start (:http-base-url options) app-handler)
       ; TODO (re-)enable
       ;(when-let [params (:nrepl-url options)] (cider-ci.utils.nrepl/initialize params))

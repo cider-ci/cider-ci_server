@@ -58,7 +58,7 @@
       (try 
         (let [resp (handler (assoc request :tx tx))]
           (when-let [status (:status resp)]
-            (when (>= status 400 )
+            (when (>= status 405 )
               (logging/warn "Rolling back transaction because error status " status)
               (jdbc/db-set-rollback-only! tx)))
           resp)

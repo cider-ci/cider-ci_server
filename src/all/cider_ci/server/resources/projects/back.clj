@@ -43,8 +43,8 @@
                         first)]
     (do (projects/de-init-project project)
         (jdbc/delete! tx :projects ["id = ?" project-id])
-        {:status 204}
-        {:status 404})))
+        {:status 204})
+    {:status 404}))
 
 (defn patch [{body :body tx :tx
               {project-id :project-id} :route-params}]

@@ -58,6 +58,7 @@
     "DELETE" nil ;(de-init-project (:data_old event)
     ))
 
+;(async/<!! @projects-chan*)
 
 (defn- init-subscribe-projects []
   (-> projects-chan*
