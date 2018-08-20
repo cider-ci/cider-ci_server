@@ -18,6 +18,7 @@
     [logbug.catcher :as catcher]
     [logbug.debug :as debug])
   (:import 
+    [org.eclipse.jgit.storage.file FileRepositoryBuilder]
     [java.nio.file Files FileSystems]
     [java.io File]
     ))
@@ -29,10 +30,24 @@
     "data"
     "repositories"))
 
-(defn path [{project-id :project-id}]
-  (assert (presence project-id))
-  (nio/path repositories-dir-path project-id))
+(defn path [project-params]
+  (let [project-id (or (:project-id project-params)
+                       (:id project-params))]
+    (assert (presence project-id))
+    (nio/path repositories-dir-path project-id)))
+
+(defn file-repository [path]
+  (.build (doto (new FileRepositoryBuilder)
+            (.setGitDir (.toFile path))
+            (.setBare))))
 
 ;(path {:project-id "test"})
 
 ;(nio/rmdir-recursive (path {:project-id "test"}))
+
+
+;#### debug ###################################################################
+;(logging-config/set-logger! :level :debug)
+;(logging-config/set-logger! :level :info)
+;(debug/debug-ns 'clojure.tools.cli)
+;(debug/debug-ns *ns*)

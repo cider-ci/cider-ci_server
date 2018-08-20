@@ -8,12 +8,14 @@
   (:require
     [cider-ci.server.paths :refer [path]]
     [cider-ci.server.projects.repositories :as repositories]
+    [cider-ci.server.projects.repositories.shared :as repositories-shared]
     [cider-ci.utils.git-gpg :as git-gpg]
     [cider-ci.utils.honeysql :as sql]
     [cider-ci.utils.jdbc :as utils.jdbc]
     [cider-ci.utils.rdbms :as ds]
 
     [clj-time.coerce]
+    [clojure.core.async :as async]
     [clojure.java.jdbc :as jdbc]
     [compojure.core :as cpj]
 
@@ -255,18 +257,22 @@
          :current_commit_id commit-id}))))
 
 
-; TODO update branch doesn't work yet 
+; TODO will not delete removed branches!
 ; TODO change to import-or-update-branches 
 ; see also related code update_branches_commits in the old code
 (defn import-branches [project]
-  (catcher/with-logging {}
-    (let [repository (:repository project)]
-      (assert (instance? Repository repository))
-      (jdbc/with-db-transaction [tx @ds/ds]
-        (doseq [branch (some->> repository
-                                Git. .branchList .call seq
-                                (filter #(re-matches #"^refs\/heads\/.*" (.getName %))))]
-          (import-branch branch repository project tx))))))
+  ; jgit sometimes misses newly pushed branches when we do not sleep for a while 
+  (async/go 
+    (async/<! (async/timeout 1000))
+    (catcher/with-logging {}
+      (let [repository (:repository project)]
+        (assert (instance? Repository repository))
+        (jdbc/with-db-transaction [tx @ds/ds]
+          (.scanForRepoChanges repository)
+          (doseq [branch (some->> repository
+                                  Git. .branchList .call seq
+                                  (filter #(re-matches #"^refs\/heads\/.*" (.getName %))))]
+            (import-branch branch repository project tx)))))))
 
 
 

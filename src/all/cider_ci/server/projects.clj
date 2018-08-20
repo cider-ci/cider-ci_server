@@ -55,8 +55,8 @@
   (catcher/with-logging {}
     (logging/info 'handle-project-event event)
     (case (:operation event)
-      "INSERT" nil ;(init-project (:data_new event))
-      "DELETE" nil ;(de-init-project (:data_old event)
+      "INSERT" (init-project (:data_new event))
+      "DELETE" (de-init-project (:data_old event))
       "UPDATE" (cond (-> event 
                          :data_diff 
                          :repository_updated_at) (some-> 
@@ -102,4 +102,4 @@
 ;(logging-config/set-logger! :level :debug)
 ;(logging-config/set-logger! :level :info)
 ;(debug/debug-ns 'clojure.tools.cli)
-(debug/debug-ns *ns*)
+;(debug/debug-ns *ns*)

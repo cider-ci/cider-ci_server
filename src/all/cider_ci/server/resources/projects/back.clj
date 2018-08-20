@@ -33,7 +33,7 @@
                 tx))
   ([data tx]
    (let [project (first (jdbc/insert! tx :projects data))]
-     (projects/init-project (assoc project :project-id (:id project)))
+     ;(projects/init-project (assoc project :project-id (:id project)))
      {:body project})))
 
 (defn delete [{body :body tx :tx
@@ -41,7 +41,7 @@
   (if-let [project (->> ["SELECT * FROM projects WHERE id = ?" project-id]
                         (jdbc/query tx)
                         first)]
-    (do (projects/de-init-project project)
+    (do ;(projects/de-init-project project)
         (jdbc/delete! tx :projects ["id = ?" project-id])
         {:status 204})
     {:status 404}))

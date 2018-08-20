@@ -20,7 +20,6 @@
     [logbug.debug :as debug])
   (:import 
     [java.nio.file Files FileSystems]
-    [org.eclipse.jgit.storage.file FileRepositoryBuilder]
     [java.io File InputStreamReader DataInputStream]
     [java.lang Process ProcessBuilder]
     ))
@@ -28,13 +27,13 @@
 
 (def path shared/path)
 
+(def file-repository shared/file-repository)
+
 (defn init [project]
   (let [path (path project)]
     (when-not (nio/dir? path)
       (system/exec! ["git" "init" "--bare" (.toString path)]))
-    (let [repository (.build (doto (new FileRepositoryBuilder)
-                               (.setGitDir (.toFile path))
-                               (.setBare)))]
+    (let [repository (file-repository path)]
       (assert (.getRef repository "HEAD"))
       repository)))
 

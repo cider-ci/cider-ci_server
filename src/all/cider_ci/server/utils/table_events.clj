@@ -38,51 +38,46 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defonce last-event-row* (atom nil))
-;(reset! last-event-row* nil)
+
+(defonce timestamp* (atom nil))
 
 (def base-query
-  (-> (sql/select :*)
+  (-> (sql/select :*, [(sql/raw "created_at::TEXT") :timestamp])
       (sql/from :events)
       (sql/order-by [:created_at :asc]
                     [:id :asc])))
 
-(defn set-last-event-row []
-  (swap! last-event-row*
-         (fn [last-event-row]
-           (or last-event-row
+(defn set-timestamp []
+  (swap! timestamp* 
+         (fn [ts]
+           (or ts 
                (->> (-> base-query  
                         (sql/order-by [:created_at :desc])
                         (sql/limit 1)
                         (sql/format))
                     (jdbc/query @ds/ds)
-                    first)))))
+                    first :timestamp)))))
 
-(defn extend-query [query last-event-row]
-  (if-not last-event-row
+(defn extend-query [query timestamp]
+  (if-not timestamp 
     query
     (-> query
-        (sql/merge-where [:> :created_at 
-                          (-> (sql/select :created_at)
-                              (sql/from :events)
-                              (sql/merge-where [:= :id (:id last-event-row)]))]))))
+        (sql/merge-where [:> :created_at (sql/raw (str "'"timestamp "'::timestamp"))]))))
                                              
                                              
 
-(defn build-publish-new-rows-query [last-event-row]
+(defn build-publish-new-rows-query [timestamp]
   (-> base-query  
-      (extend-query last-event-row)
+      (extend-query timestamp)
       (sql/format))) 
 
 (defn publish-new-rows! []
-  (swap! last-event-row*
-         (fn [last-event-row]
-           (or (->> (build-publish-new-rows-query last-event-row)
-                    (jdbc/query @ds/ds)
-                    (map publish)
-                    doall
-                    last)
-               last-event-row))))
+  (swap! timestamp* 
+         (fn [timestamp]
+           (or (some->> (build-publish-new-rows-query timestamp)
+                        (jdbc/query @ds/ds)
+                        (map publish) doall last :timestamp)
+               timestamp))))
 
 
 
@@ -103,7 +98,7 @@
 
 (defn init []
   (logging/info 'init "table-events")
-  (set-last-event-row)
+  (set-timestamp)
   (defdaemon "publish-new-rows" 0.1 (publish-new-rows!))
   (start-publish-new-rows))
 
@@ -112,4 +107,4 @@
 
 ;#### debug ###################################################################
 ;(debug/debug-ns *ns*)
-(logging-config/set-logger! :level :debug)
+;(logging-config/set-logger! :level :debug)
