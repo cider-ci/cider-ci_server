@@ -57,8 +57,14 @@
     (case (:operation event)
       "INSERT" nil ;(init-project (:data_new event))
       "DELETE" nil ;(de-init-project (:data_old event)
-      "UPDATE" nil 
-      )))
+      "UPDATE" (cond (-> event 
+                         :data_diff 
+                         :repository_updated_at) (some-> 
+                                                   @projects* 
+                                                   (get (-> event :data_new :id))
+                                                   deref 
+                                                   git-sql/import-branches)
+                     :else nil))))
 
 ;(async/<!! @projects-chan*)
 

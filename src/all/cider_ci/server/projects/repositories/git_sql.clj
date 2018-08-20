@@ -277,4 +277,4 @@
 ;(debug/wrap-with-log-debug #'import-submodule-refs)
 ;(logging-config/set-logger! :level :info)
 ;(debug/debug-ns 'cider-ci.utils.shutdown)
-;(debug/debug-ns *ns*)
+(debug/debug-ns *ns*)
