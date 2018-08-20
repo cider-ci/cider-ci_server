@@ -255,6 +255,7 @@
          :current_commit_id commit-id}))))
 
 
+; TODO update branch doesn't work yet 
 ; TODO change to import-or-update-branches 
 ; see also related code update_branches_commits in the old code
 (defn import-branches [project]
