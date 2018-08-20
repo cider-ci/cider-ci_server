@@ -81,8 +81,8 @@
                (sql/merge-where [:= :id project-id])
                sql/format)
            (jdbc/execute! tx)))
-    (logging/debug process-environment)
-    (logging/debug response)
+    ;(logging/debug process-environment)
+    ;(logging/debug response)
     response))
 
 ;#### debug ###################################################################

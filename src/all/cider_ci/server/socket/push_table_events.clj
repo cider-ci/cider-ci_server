@@ -8,15 +8,18 @@
 
   (:require
     [cider-ci.server.socket.shared :refer [user-clients* chsk-send!]]
+    [cider-ci.server.utils.table-events :as table-events]
 
-    [cider-ci.utils.daemon :as daemon :refer [defdaemon]]
-    [cider-ci.utils.row-events :as row-events]
+    [clojure.core.async :as async]
 
     [clj-logging-config.log4j :as logging-config]
     [clojure.tools.logging :as logging]
     [logbug.debug :as debug]
     [logbug.thrown :as thrown]
     ))
+
+
+(def subscribed-tables ["branches" "projects"])
 
 
 (defn push-to-client
@@ -29,21 +32,25 @@
     (push-to-client
       user-client-id
       (case (:table_name event)
-        "settings" (dissoc event :data_old :data_new)
-        event))))
+        "branches" event
+        (dissoc event :data_old :data_new :data_diff)))))
 
-(def ^:private last-processed-event (atom nil))
 
-(defn process-event-rows []
-  (row-events/process
-    "events" last-processed-event
-    push-to-clients))
+(defonce chan* (atom nil))
 
-(defdaemon "process-event-rows" 0.25
-  (process-event-rows))
+(defn de-init []
+  (when-let [c @chan*]
+    (doseq [table-name subscribed-tables]
+      (async/unsub table-events/pub table-name c))))
 
-(defn initialize []
-  (start-process-event-rows))
+(defn init []
+  (let [c (reset! chan* (async/chan (async/sliding-buffer 10000)))]
+    (doseq [table-name subscribed-tables]
+      (table-events/subscribe c table-name))
+    (async/go-loop []
+                   (when-let [event (async/<! c)]
+                     (push-to-clients event)
+                     (recur)))))
 
 ;#### debug ###################################################################
-;(debug/debug-ns *ns*)
+(debug/debug-ns *ns*)

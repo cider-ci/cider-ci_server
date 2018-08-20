@@ -55,7 +55,7 @@
 (defn initialize []
   (socket.back/initialize)
   ;(push-db/initialize)
-  (push-table-events/initialize))
+  (push-table-events/init))
 
 ;#### debug ###################################################################
 ;(logging-config/set-logger! :level :debug)

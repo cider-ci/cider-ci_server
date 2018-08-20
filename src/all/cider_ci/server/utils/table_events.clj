@@ -16,8 +16,8 @@
     [logbug.thrown :as thrown]
     ))
 
-(def ^:private pub-chan (async/chan))
-(def ^:private pub (async/pub pub-chan :table_name))
+(defonce ^:private pub-chan (async/chan))
+(defonce pub (async/pub pub-chan :table_name))
 
 (defn- publish [row]
   (logging/info 'publish row)
