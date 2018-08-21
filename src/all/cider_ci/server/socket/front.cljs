@@ -5,7 +5,8 @@
     [reagent.ratom :as ratom :refer [reaction]]
     )
   (:require
-    [cider-ci.server.client.connection.state :as state]
+    [cider-ci.server.front.state :as state]
+    [cljs.core.async :as async :refer [<!]]
     [cider-ci.server.client.shared :refer [pre-component-pprint]]
     [cider-ci.server.client.state :refer [client-state server-state debug-db page-state]]
     [cider-ci.server.paths :refer [path]]
@@ -81,17 +82,52 @@
                         (reset! push-pending? true))
                       (js/setTimeout push-to-server 200))))))
 
+
+;;; routing state ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defonce push-routing-state-pending-chan (async/chan (async/dropping-buffer 1)))
+
+(defn set-push-routing-state-pending []
+  (go (async/>! push-routing-state-pending-chan 1))) 
+
+(defn push-routing-state-to-server! []
+  (if (-> @state/socket* :connection :open?)
+    (chsk-send! [:front/routing-state @state/routing-state*]
+                1000
+                (fn [reply]
+                  (js/console.log (with-out-str (pprint ["push-routing-state-to-server!/reply" reply])))
+                  (when-not (sente/cb-success? reply)
+                    (set-push-routing-state-pending))))
+    (set-push-routing-state-pending)))
+
+(defn start-push-routing-state-to-server []
+  (go-loop []
+           (let [_ (<! push-routing-state-pending-chan)]
+             (push-routing-state-to-server!)
+             (recur))))
+
+(add-watch
+  state/routing-state* :set-push-pending
+  (fn [_ _ _ _]
+    (set-push-routing-state-pending)))
+
+
+;;; init ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (defn init []
   (let [{:keys [chsk ch-recv send-fn state]}
         (sente/make-channel-socket! (path :websockets)
                                     {:type :auto})]
-    (swap! state/socket* assoc :ws-connection state)
+    (swap! state/socket* assoc :connection state)
     (def chsk chsk)
     (def ch-chsk ch-recv)
     (def chsk-send! send-fn)
     (def chsk-state state))
   (sente/start-chsk-router! ch-chsk event-msg-handler)
-  (js/setTimeout push-to-server 100))
+  ; doesn't work here because socket is not open yet
+  (start-push-routing-state-to-server)
+  ;(js/setTimeout push-to-server 100)
+  )
 
 
 ;;; icon and bg-state ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
