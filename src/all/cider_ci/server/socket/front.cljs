@@ -92,7 +92,7 @@
 
 (defn push-routing-state-to-server! []
   (if (-> @state/socket* :connection :open?)
-    (chsk-send! [:front/routing-state @state/routing-state*]
+    (chsk-send! [:front/routing-state (dissoc @state/routing-state* :page)]
                 1000
                 (fn [reply]
                   (js/console.log (with-out-str (pprint ["push-routing-state-to-server!/reply" reply])))

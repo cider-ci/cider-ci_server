@@ -78,6 +78,8 @@
                              [client-id :client-state] (:full data))
                       ;(future (push-db/push-to-client client-id))
                       )
+    :front/routing-state (swap! user-clients* assoc-in 
+                                [client-id :routing-state] data)
     :chsk/uidport-open nil
     :chsk/uidport-close nil
     :chsk/ws-ping nil)
