@@ -19,16 +19,6 @@
     [timothypratley.patchin :refer [diff patch]]
     ))
 
-(defonce push-pending? (atom false))
-
-(def client-state-push-to-server-keys [:current-page])
-
-(add-watch
-  client-state :set-push-pending
-  (fn [_ _ old-state new-state]
-    (when (not= (select-keys old-state client-state-push-to-server-keys)
-                (select-keys new-state client-state-push-to-server-keys))
-      (reset! push-pending? true))))
 
 (declare chsk ch-chsk chsk-send! chsk-state)
 
@@ -67,21 +57,6 @@
                            (assoc new-state :updated_at (js/moment))))
       nil))
 
-(defn push-to-server []
-  (if-not @push-pending?
-    (js/setTimeout push-to-server 200)
-    (do (reset! push-pending? false)
-        (swap! state/socket* assoc :msg_sent_at (js/moment))
-        (chsk-send! [:client/state
-                     {:full (select-keys @client-state
-                                         client-state-push-to-server-keys)}]
-                    1000
-                    (fn [reply]
-                      ;(js/console.log (with-out-str (pprint ["push-to-server/reply" reply])))
-                      (when-not (sente/cb-success? reply)
-                        (reset! push-pending? true))
-                      (js/setTimeout push-to-server 200))))))
-
 
 ;;; routing state ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -95,7 +70,7 @@
     (chsk-send! [:front/routing-state (dissoc @state/routing-state* :page)]
                 1000
                 (fn [reply]
-                  (js/console.log (with-out-str (pprint ["push-routing-state-to-server!/reply" reply])))
+                  ;(js/console.log (with-out-str (pprint ["push-routing-state-to-server!/reply" reply])))
                   (when-not (sente/cb-success? reply)
                     (set-push-routing-state-pending))))
     (set-push-routing-state-pending)))
@@ -126,7 +101,6 @@
   (sente/start-chsk-router! ch-chsk event-msg-handler)
   ; doesn't work here because socket is not open yet
   (start-push-routing-state-to-server)
-  ;(js/setTimeout push-to-server 100)
   )
 
 
@@ -164,9 +138,6 @@
      [:section.active
       [:h3 "@state/socket-active?*"]
       [pre-component-pprint @state/socket-active?*]]
-     [:section.push-pending
-      [:h3 "@push-pending?"]
-      [pre-component-pprint @push-pending?]]
      [:section.state-socket
       [:h3 "@state/socket*"]
       [pre-component-pprint @state/socket*]]]]
