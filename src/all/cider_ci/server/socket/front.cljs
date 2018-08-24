@@ -22,40 +22,26 @@
 
 (declare chsk ch-chsk chsk-send! chsk-state)
 
-(defn update-server-state [data]
-  (let [new-state (if-let [full (:full data)]
-                    (reset! server-state full)
-                    (if-let [p (:patch data)]
-                      (swap! server-state (fn [db p] (patch db p)) p)
-                      (throw (ex-info "Either :full or :patch must be supplied" {}))))
-        _ (swap! state/socket* assoc :server_state_updated_at (js/moment))
-        new-state-digest (digest new-state)
-        supposed-digest (:digest data)]
-    (if (= new-state-digest supposed-digest)
-      (swap! state/socket* assoc :server-state-is-in-sync true)
-      (do (swap! state/socket* assoc :server-state-is-in-sync false)
-          (swap! debug-db  assoc
-                 :last-bad-server-state-sync-at (js/moment)
-                 :last-bad-server-state-sync-data new-state)))))
-
 (defn dispatch-server-entity-event [event]
-  (when-let [page-receiver (:server-entity-event-receiver @page-state)]
-    (page-receiver event)))
+  (let [routing-state @state/routing-state*
+        handler (-> routing-state :event-handler :handler)
+        table-names (-> routing-state :event-handler :table-names)]
+    (when handler
+      (handler event))))
 
 (defn event-msg-handler [{:as message :keys [id ?data event]}]
   ;(js/console.log (with-out-str (pprint {:id id :message message})))
-    (case id
-      :chsk/recv (let [[event-id data] ?data]
-                   (swap! state/socket* assoc :msg_received_at (js/moment))
-                   (when (and event-id data)
-                     ;(js/console.log (clj->js {:event-id event-id :data data}))
-                     (case event-id
-                       :cider-ci/state-db (update-server-state data)
-                       :cider-ci/entity-event (dispatch-server-entity-event data))))
-      :chsk/state (let [[_ new-state] ?data]
-                    (swap! state/socket* assoc :connection
-                           (assoc new-state :updated_at (js/moment))))
-      nil))
+  (case id
+    :chsk/recv (let [[event-id data] ?data]
+                 (swap! state/socket* assoc :msg_received_at (js/moment))
+                 (when (and event-id data)
+                   ;(js/console.log (clj->js {:event-id event-id :data data}))
+                   (case event-id
+                     :cider-ci/entity-event (dispatch-server-entity-event data))))
+    :chsk/state (let [[_ new-state] ?data]
+                  (swap! state/socket* assoc :connection
+                         (assoc new-state :updated_at (js/moment))))
+    nil))
 
 
 ;;; routing state ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

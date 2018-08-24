@@ -36,7 +36,7 @@
     [reagent.core :as reagent]
     ))
 
-(def resolve-table
+(def page-resolve-table
   {:admin admin/page
    :api-token api-token/show-page
    :api-token-delete api-token/delete-page
@@ -46,7 +46,7 @@
    :auth-password-sign-in auth/password-sign-in-page
    :auth-sign-in auth/sign-in-page
    :auth-info auth/info-page
-   :commits commits/page
+   :commits #'commits/page
    :email-addresses email-addresses/index-page
    :email-addresses-add email-addresses/add-page
    :gpg-key gpg-keys/show-page
@@ -69,8 +69,17 @@
    :users users/page
    })
 
+(def event-handler-resolve-table 
+  {:commits {:table-names #{"projects" "branches"}
+             :handler #'commits/event-handler 
+             }})
+
 (defn resolve-page [k]
-  (get resolve-table k nil))
+  (get page-resolve-table k nil))
+
+(defn resolve-event-handler [k]
+  (get event-handler-resolve-table k nil))
+
 
 (defn match-path [path]
   (bidi/match-route paths path))
@@ -86,13 +95,14 @@
                              :route-params route-params
                              :handler-key handler-key
                              :page (resolve-page handler-key)
+                             :event-handler (resolve-event-handler handler-key)
                              :url location-href
                              :path (.getPath location-url)
                              :query-params (-> location-url .getQuery decode-query-params))
-                      (js/console.log (with-out-str (pprint [handler-key route-params])))
+                      ;(js/console.log (with-out-str (pprint [handler-key route-params])))
                       ))
      :path-exists? (fn [path]
-                     (js/console.log (with-out-str (pprint (match-path path))))
+                     ;(js/console.log (with-out-str (pprint (match-path path))))
                      (boolean (match-path path)))}))
 
 (defn init []

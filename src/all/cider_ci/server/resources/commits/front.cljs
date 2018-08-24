@@ -423,3 +423,7 @@
    ; [pagination-component]
    [debug-component]
    ])
+
+(defn event-handler [event]
+  (js/console.log (with-out-str (pprint event))))
+

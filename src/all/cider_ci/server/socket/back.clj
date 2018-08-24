@@ -7,7 +7,6 @@
   (:require [cider-ci.utils.core :refer [keyword str]])
 
   (:require
-    [cider-ci.server.state :as server.state]
     [cider-ci.server.repository.web.edn]
     [cider-ci.server.socket.shared :refer [user-clients*]]
     ;[cider-ci.server.socket.push-db :as push-db]
