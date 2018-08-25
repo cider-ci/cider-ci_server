@@ -21,6 +21,13 @@
      (humanize-datetime (:timestamp @state/global-state*) dt)]
     [:span "NULL"]))
 
+(defn name->key [n]
+  (some-> n 
+      clojure.string/lower-case 
+      (clojure.string/replace #"[^a-z0-9_-]" " ")
+      clojure.string/trim 
+      (clojure.string/replace #"\s+" "-")))
+
 (defn short-id [uuid]
   [:span {:style {:font-family :monospace}}
    (->> uuid (take 8) clojure.string/join)])

@@ -21,7 +21,7 @@
   "handlers is a map of keys to functions where the keys :will-mount,
   :did-mount, :did-update correspond to the react lifcycle methods.
   The custom :did-change will only fire when the routing state has changed,
-  where as :did-update can fire when other reactive monitored state changes."
+  whereas :did-update can fire when other reactive monitored state changes."
   (let [old-state* (reagent/atom nil)]
     (reagent/create-class
       {:component-will-mount (fn [& args] (when-let [handler (:will-mount handlers)]

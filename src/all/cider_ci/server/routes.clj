@@ -12,6 +12,7 @@
     [cider-ci.server.html :as html]
     [cider-ci.server.jobs.back :as jobs]
     [cider-ci.server.paths :refer [path paths]]
+    [cider-ci.server.executors.back :as executors]
     [cider-ci.server.resources.api-token.back :as api-token]
     [cider-ci.server.resources.api-tokens.back :as api-tokens]
     [cider-ci.server.resources.auth.back :as auth]
@@ -72,28 +73,28 @@
    :api-tokens api-tokens/routes
    :auth auth/routes
    :auth-info auth/routes
-   :auth-sign-in auth/routes
    :auth-password-sign-in auth/routes
+   :auth-sign-in auth/routes
    :auth-sign-out auth/routes
    :commits commits/routes
    :email-address email-addresses/routes
    :email-addresses email-addresses/routes
    :email-addresses-add email-addresses/routes
-   :project projects/routes
-   :project-repository projects/routes
-   :projects projects/routes
+   :executor executors/routes
    :gpg-key gpg-keys/routes
    :gpg-keys gpg-keys/routes
    :gpg-keys-add gpg-keys/routes
    :initial-admin initial-admin/routes
    :jobs jobs/routes
+   :project projects/routes
+   :project-repository projects/routes
+   :projects projects/routes
    :projects-add projects/routes
    :tree-jobs trees/routes
    :tree-project-configuration trees/routes
    :user user/routes
    :users users/routes
-   :websockets socket/routes
-   })
+   :websockets socket/routes})
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

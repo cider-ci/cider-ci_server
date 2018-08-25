@@ -5,13 +5,13 @@
     )
   (:require
 
+    [cider-ci.server.executors.front :as executors]
     [cider-ci.server.front.pages.debug]
     [cider-ci.server.front.pages.root]
     [cider-ci.server.front.requests.pages.request]
     [cider-ci.server.front.requests.pages.requests]
     [cider-ci.server.front.state :refer [routing-state*]]
     [cider-ci.server.paths :refer [path paths]]
-
     [cider-ci.server.resources.admin.front :as admin]
     [cider-ci.server.resources.api-token.front :as api-token]
     [cider-ci.server.resources.api-tokens.front :as api-tokens]
@@ -37,37 +37,39 @@
     ))
 
 (def page-resolve-table
-  {:admin admin/page
-   :api-token api-token/show-page
-   :api-token-delete api-token/delete-page
-   :api-token-edit api-token/edit-page
-   :api-token-new api-token/new-page
-   :api-tokens api-tokens/page
-   :auth-password-sign-in auth/password-sign-in-page
-   :auth-sign-in auth/sign-in-page
-   :auth-info auth/info-page
-   :commits #'commits/page
-   :email-addresses email-addresses/index-page
-   :email-addresses-add email-addresses/add-page
-   :gpg-key gpg-keys/show-page
-   :gpg-key-edit gpg-keys/edit-page
-   :gpg-keys gpg-keys/index-page
-   :gpg-keys-add gpg-keys/add-page
-   :home home/page
-   :initial-admin initial-admin/page
-   :project projects/show-page
-   :project-delete projects/delete-page
-   :project-edit projects/edit-page
-   :projects projects/index-page
-   :projects-add projects/add-page
-   :status status/info-page
-   :tree trees/page
-   :user user/show-page
-   :user-delete user/delete-page
-   :user-edit user/edit-page
-   :user-new user/new-page
-   :users users/page
-   })
+  (merge 
+    executors/routes-resolve-table
+    {:admin admin/page
+     :api-token api-token/show-page
+     :api-token-delete api-token/delete-page
+     :api-token-edit api-token/edit-page
+     :api-token-new api-token/new-page
+     :api-tokens api-tokens/page
+     :auth-password-sign-in auth/password-sign-in-page
+     :auth-sign-in auth/sign-in-page
+     :auth-info auth/info-page
+     :commits #'commits/page
+     :email-addresses email-addresses/index-page
+     :email-addresses-add email-addresses/add-page
+     :gpg-key gpg-keys/show-page
+     :gpg-key-edit gpg-keys/edit-page
+     :gpg-keys gpg-keys/index-page
+     :gpg-keys-add gpg-keys/add-page
+     :home home/page
+     :initial-admin initial-admin/page
+     :project projects/show-page
+     :project-delete projects/delete-page
+     :project-edit projects/edit-page
+     :projects projects/index-page
+     :projects-add projects/add-page
+     :status status/info-page
+     :tree trees/page
+     :user user/show-page
+     :user-delete user/delete-page
+     :user-edit user/edit-page
+     :user-new user/new-page
+     :users users/page
+     }))
 
 (def event-handler-resolve-table 
   {:commits {:table-names #{"projects" "branches"}

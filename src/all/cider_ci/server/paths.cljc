@@ -1,12 +1,14 @@
 ; Copyright © 2013 - 2018 Dr. Thomas Schank <Thomas.Schank@AlgoCon.ch>
 ; Licensed under the terms of the GNU Affero General Public License v3.
 ; See the "LICENSE.txt" file provided with this software.  
+
 (ns cider-ci.server.paths
   (:refer-clojure :exclude [str keyword])
   (:require
     [cider-ci.utils.core :refer [keyword str]]
     [bidi.verbose :refer [branch param leaf]]
     [bidi.bidi :as bidi :refer [path-for match-route]]
+    [cider-ci.server.executors.paths :as executors]
     [cider-ci.utils.url.query-params :refer [encode-query-params]]
 
     #?@(:clj
@@ -99,6 +101,8 @@
           (leaf "commits/" :commits)
           trees
           jobs
+          (branch "executors" executors/paths)
+
           (branch "admin"
                   (leaf "/" :admin)
                   (leaf "/initial-admin" :initial-admin)
@@ -123,4 +127,4 @@
         (encode-query-params query-params))))
 
 
-;(path :websockets)
+;(path :executors)

@@ -14,7 +14,7 @@
     [cider-ci.server.front.state :as state :refer [routing-state*]]
     [cider-ci.server.paths :as paths :refer [path]]
     [cider-ci.server.resources.auth.front :as auth]
-    [cider-ci.server.front.shared :as shared :refer [humanize-datetime-component]]
+    [cider-ci.server.front.shared :as shared :refer [humanize-datetime-component name->key]]
     [cider-ci.server.resources.projects.shared :refer [default-project-params]]
 
     [cider-ci.utils.core :refer [keyword str presence]]
@@ -120,12 +120,7 @@
      project-data* [:branch_trigger_enabled]]
     " Branch trigger enabled "]])
 
-(defn name->key [n]
-  (-> n 
-      clojure.string/lower-case 
-      (clojure.string/replace #"[^a-z0-9_-]" " ")
-      clojure.string/trim 
-      (clojure.string/replace #"\s+" "_")))
+
 
 (defn form-name-component []
   [:div.form-group

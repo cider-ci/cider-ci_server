@@ -10,6 +10,9 @@
     [honeysql.types :as types]
     [honeysql.util :as util :refer [defalias]]
 
+    [honeysql-postgres.helpers :as pg-helpers]
+    [honeysql-postgres.format :as pg-format]
+
     [logbug.debug :as debug]
     [clj-logging-config.log4j :as logging-config]
     [clojure.tools.logging :as logging]
@@ -44,6 +47,7 @@
 (defalias delete-from helpers/delete-from)
 (defalias from helpers/from)
 (defalias group helpers/group)
+(defalias insert-into helpers/insert-into)
 (defalias join helpers/join)
 (defalias limit helpers/limit)
 (defalias merge-join helpers/merge-join)
@@ -51,12 +55,20 @@
 (defalias modifiers helpers/modifiers)
 (defalias offset helpers/offset)
 (defalias order-by helpers/order-by)
-;(defalias returning helpers/returning)
 (defalias select helpers/select)
 (defalias sset helpers/sset)
 (defalias update helpers/update)
-;(defalias using helpers/using)
+(defalias values helpers/values)
 (defalias where helpers/where)
+(defalias returning helpers/returning)
+;(defalias using helpers/using)
+
+(defalias do-nothing pg-helpers/do-nothing)
+(defalias do-update-set pg-helpers/do-update-set)
+(defalias do-update-set! pg-helpers/do-update-set!)
+(defalias on-conflict pg-helpers/on-conflict)
+(defalias returning pg-helpers/returning)
+(defalias upsert pg-helpers/upsert)
 
 
 ;#### debug ###################################################################

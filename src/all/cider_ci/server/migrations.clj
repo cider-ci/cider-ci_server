@@ -52,11 +52,12 @@
    "004" {:up (fn [tx]
                 (jdbc/execute!
                   tx (slurp (clojure.java.io/resource "migrations/004_projects.sql"))))}
-
    "005" {:up (fn [tx]
                 (jdbc/execute!
                   tx (slurp (clojure.java.io/resource "migrations/005_jobs.sql"))))}
-   })
+   "006" {:up (fn [tx]
+                (jdbc/execute!
+                  tx (slurp (clojure.java.io/resource "migrations/006_executors.sql"))))}}) 
 
    ; "433" {:up cider-ci.server.migrations.433/up}
    ;"434" {:up cider-ci.server.migrations.434/up}

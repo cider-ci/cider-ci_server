@@ -8,6 +8,7 @@
     [cider-ci.server.resources.auth.front :as auth]
     [cider-ci.server.front.breadcrumbs :as breadcrumbs]
     [cider-ci.server.paths :as paths]
+    [cider-ci.server.executors.front.breadcrumbs :as executors-breadcrumbs]
 
     [cider-ci.utils.core :refer [keyword str presence]]
     ))
@@ -20,7 +21,9 @@
        [(breadcrumbs/home-li)]
        [(breadcrumbs/admin-li)
         (breadcrumbs/commits-li)
-        (breadcrumbs/projects-li)]))
+        (executors-breadcrumbs/executors-li)
+        (breadcrumbs/projects-li)
+        ]))
 
    [:div [:h1 "Cider-CI"]]
 
