@@ -27,6 +27,12 @@ module DemoProject
         end
       end
     end
+
+    def push_commit id, api_token_secret
+      exec! <<-CMD.strip_heredoc
+        git push --force http://#{api_token_secret}@localhost:#{port}/projects/demo-project.git #{id}:master
+      CMD
+    end
   end
 end
 
@@ -49,10 +55,7 @@ shared_context :demo_project do
     end
     visit '/'
     click_on_first 'Commits'
-    DemoProject::exec! <<-CMD.strip_heredoc
-      git push http://#{@api_token_secret}@localhost:#{port}/projects/demo-project.git HEAD:master
-    CMD
-    binding.pry
+    DemoProject.push_commit 'HEAD', @api_token_secret
   end
 end
 

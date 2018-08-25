@@ -91,7 +91,7 @@
 (defn create-job [job-spec]
   (locking (-> job-spec :tree_id str)
     (jdbc/with-db-transaction [tx (rdbms/get-ds)]
-      (whon (-> job-spec :run_when_trigger :rerun)
+      (when (-> job-spec :run_when_trigger :rerun)
         (jdbc/execute! tx (delete-query job-spec)))
       (when (and (jobs.dependencies/fulfilled? job-spec)
                  (job-does-not-exists-yet? job-spec tx))
