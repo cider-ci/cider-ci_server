@@ -1,4 +1,4 @@
-(ns cider-ci.server.executors.shared
+(ns cider-ci.server.executors-old.shared
   )
 
 (def allowed-keys [

@@ -17,7 +17,7 @@
     [cider-ci.server.commits.web]
     [cider-ci.server.create-initial-admin.web :as create-initial-admin]
     [cider-ci.server.dispatcher.web]
-    [cider-ci.server.executors]
+    [cider-ci.server.executors-old]
     [cider-ci.server.jobs.web]
     [cider-ci.server.repository.web]
     [cider-ci.server.session.web]
@@ -85,7 +85,7 @@
     (cpj/ANY "/builder/*" [] builder-handler)
     (cpj/ANY "/commits/*" [] cider-ci.server.commits.web/routes)
     (cpj/ANY "/dispatcher/*" [] dispatcher-handler)
-    (cpj/ANY "/executors/*" [] cider-ci.server.executors/routes)
+    (cpj/ANY "/executors/*" [] cider-ci.server.executors-old/routes)
     (cpj/ANY "/jobs/*" [] cider-ci.server.jobs.web/routes)
     (cpj/ANY "/repositories/*" [] repositories-handler)
     (cpj/ANY "/storage/*" [] storage-handler)

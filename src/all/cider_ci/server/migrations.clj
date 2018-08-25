@@ -9,7 +9,7 @@
     [cider-ci.constants :refer [RUN-DEFAULTS]]
     [cider-ci.server.builder.main]
     [cider-ci.server.dispatcher.main]
-    [cider-ci.server.executors]
+    [cider-ci.server.executors-old]
     [cider-ci.server.migrations.433]
     [cider-ci.server.migrations.434]
     [cider-ci.server.migrations.435]
@@ -52,7 +52,7 @@
    "004" {:up (fn [tx]
                 (jdbc/execute!
                   tx (slurp (clojure.java.io/resource "migrations/004_projects.sql"))))}
-   
+
    "005" {:up (fn [tx]
                 (jdbc/execute!
                   tx (slurp (clojure.java.io/resource "migrations/005_jobs.sql"))))}
@@ -148,11 +148,11 @@
                              (sql/from :pg_stat_activity)
                              (sql/merge-where [:= :pg_stat_activity.datname database-name])
                              sql/format)]
-    (try 
+    (try
       (logging/debug {:conn-ds conn-ds})
       (logging/debug {:disconnect-query disconnect-query})
       (logging/info {:disconnect (jdbc/query conn-ds disconnect-query)})
-      (logging/info (:create_database 
+      (logging/info (:create_database
                       (jdbc/db-do-commands
                         conn-ds false [(str "DROP DATABASE IF EXISTS \"" database-name "\"")
                                        (str "CREATE DATABASE \"" database-name "\"")])))

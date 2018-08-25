@@ -1,4 +1,4 @@
-(ns cider-ci.server.executors.state
+(ns cider-ci.server.executors-old.state
   (:refer-clojure :exclude [str keyword])
   (:require [cider-ci.utils.core :refer [keyword str]])
   (:require

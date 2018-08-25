@@ -1,4 +1,4 @@
-(ns cider-ci.server.executors.token
+(ns cider-ci.server.executors-old.token
   (:refer-clojure :exclude [str keyword hash])
   (:require [cider-ci.utils.core :refer [keyword str presence]])
   (:require

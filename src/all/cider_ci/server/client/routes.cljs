@@ -84,7 +84,7 @@
   {executor-id :executor-id}
   (swap! state/page-state
          assoc :current-page
-         {:component "cider-ci.server.executors.ui.show/page"
+         {:component "cider-ci.server.executors-old.ui.show/page"
           :executor-id executor-id}))
 
 (secretary/defroute executor-edit-path
@@ -92,21 +92,21 @@
   {executor-id :executor-id}
   (swap! state/page-state
          assoc :current-page
-         {:component "cider-ci.server.executors.ui.edit/page"
+         {:component "cider-ci.server.executors-old.ui.edit/page"
           :executor-id executor-id}))
 
 (secretary/defroute executors-path
   "/cider-ci/executors/" {}
   (swap! state/page-state
          assoc :current-page
-         {:component "cider-ci.server.executors.ui.index/page"}))
+         {:component "cider-ci.server.executors-old.ui.index/page"}))
 
 (secretary/defroute executors-create-path
   "/cider-ci/executors/:executor-id/create"
   {executor-id :executor-id}
   (swap! state/page-state
          assoc :current-page
-         {:component "cider-ci.server.executors.ui.create/page"
+         {:component "cider-ci.server.executors-old.ui.create/page"
           :executor-id executor-id }))
 
 

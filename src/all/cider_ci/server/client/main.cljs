@@ -25,10 +25,10 @@
     [cider-ci.server.trees.ui.project-configuration]
     [cider-ci.server.trees.ui]
 
-    [cider-ci.server.executors.ui.create]
-    [cider-ci.server.executors.ui.edit]
-    [cider-ci.server.executors.ui.index]
-    [cider-ci.server.executors.ui.show]
+    [cider-ci.server.executors-old.ui.create]
+    [cider-ci.server.executors-old.ui.edit]
+    [cider-ci.server.executors-old.ui.index]
+    [cider-ci.server.executors-old.ui.show]
 
     [cider-ci.server.users.api-tokens.ui.create]
     [cider-ci.server.users.api-tokens.ui.edit]
@@ -51,10 +51,10 @@
    "cider-ci.server.client.connection/page" cider-ci.server.client.connection/page
    "cider-ci.server.commits.ui/page" cider-ci.server.commits.ui/page
    "cider-ci.server.create-initial-admin.ui/page" cider-ci.server.create-initial-admin.ui/page
-   "cider-ci.server.executors.ui.create/page" cider-ci.server.executors.ui.create/page
-   "cider-ci.server.executors.ui.edit/page" cider-ci.server.executors.ui.edit/page
-   "cider-ci.server.executors.ui.index/page" cider-ci.server.executors.ui.index/page
-   "cider-ci.server.executors.ui.show/page" cider-ci.server.executors.ui.show/page
+   "cider-ci.server.executors-old.ui.create/page" cider-ci.server.executors-old.ui.create/page
+   "cider-ci.server.executors-old.ui.edit/page" cider-ci.server.executors-old.ui.edit/page
+   "cider-ci.server.executors-old.ui.index/page" cider-ci.server.executors-old.ui.index/page
+   "cider-ci.server.executors-old.ui.show/page" cider-ci.server.executors-old.ui.show/page
    "cider-ci.server.settings.ui/page" cider-ci.server.settings.ui/page
    "cider-ci.server.trees.attachments.show/page" cider-ci.server.trees.attachments.show/page
    "cider-ci.server.trees.attachments.ui/page" cider-ci.server.trees.attachments.ui/page

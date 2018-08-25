@@ -16,13 +16,13 @@
 
     [cider-ci.server.builder.main]
     [cider-ci.server.dispatcher.main]
-    [cider-ci.server.executors]
+    [cider-ci.server.executors-old]
     [cider-ci.server.migrations :as migrations]
     [cider-ci.server.repository.main]
     [cider-ci.server.routes :as routes]
     [cider-ci.server.socket]
     [cider-ci.server.state]
-    [cider-ci.server.status.back :as status] 
+    [cider-ci.server.status.back :as status]
     [cider-ci.server.storage.main]
     [cider-ci.utils.app :as app]
     [cider-ci.utils.config :as config :refer [get-config get-db-spec]]
@@ -102,7 +102,7 @@
       ;                          :dispatching [:dispatching]}}
       ;   :overrides (select-keys options [:attachments-path :secret :repositories-path :base-url])
       ;   })
-      
+
       (table-events/init)
       (cider-ci.server.projects/init ds)
       (http-server/start (:http-base-url options) app-handler)
@@ -112,7 +112,7 @@
       ;(cider-ci.server.builder.main/initialize)
       ;(cider-ci.server.dispatcher.main/initialize)
       ;(cider-ci.server.storage.main/initialize)
-      ;(cider-ci.server.executors/initialize)
+      ;(cider-ci.server.executors-old/initialize)
       ;(cider-ci.server.state/initialize)
       (cider-ci.server.socket/initialize)
       )))

@@ -10,7 +10,7 @@
     [cider-ci.server.dispatcher.main]
     [cider-ci.server.repository.main]
     [cider-ci.server.storage.main]
-    [cider-ci.server.executors]
+    [cider-ci.server.executors-old]
     [cider-ci.server.web :as web]
     [cider-ci.server.state]
     [cider-ci.utils.app :as app]

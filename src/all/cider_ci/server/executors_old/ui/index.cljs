@@ -2,7 +2,7 @@
 ; Licensed under the terms of the GNU Affero General Public License v3.
 ; See the "LICENSE.txt" file provided with this software.
 
-(ns cider-ci.server.executors.ui.index
+(ns cider-ci.server.executors-old.ui.index
   (:refer-clojure :exclude [str keyword])
   (:require-macros
     [reagent.ratom :as ratom :refer [reaction]]
@@ -13,7 +13,7 @@
     [cider-ci.server.client.routes :as routes]
     [cider-ci.server.client.state :as state]
     [cider-ci.server.client.utils :refer [humanize-datetime humanize-datetime-component]]
-    [cider-ci.server.executors.ui.shared :refer [reload-executors]]
+    [cider-ci.server.executors-old.ui.shared :refer [reload-executors]]
     [cider-ci.utils.core :refer [keyword str presence]]
     [reagent.core :as reagent]
     ))

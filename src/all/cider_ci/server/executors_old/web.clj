@@ -1,15 +1,15 @@
-(ns cider-ci.server.executors.web
+(ns cider-ci.server.executors-old.web
   (:refer-clojure :exclude [str keyword update])
   (:require [cider-ci.utils.core :refer [keyword str presence]])
   (:require
-    [cider-ci.server.executors.state :as state]
-    [cider-ci.server.executors.shared :refer [allowed-keys]]
+    [cider-ci.server.executors-old.state :as state]
+    [cider-ci.server.executors-old.shared :refer [allowed-keys]]
 
 
     [cider-ci.auth.authorize :as authorize]
     [cider-ci.utils.rdbms :as rdbms :refer [get-ds]]
 
-    [cider-ci.server.executors.token :as token]
+    [cider-ci.server.executors-old.token :as token]
     [compojure.core :as cpj]
     [clojure.java.jdbc :as jdbc]
 

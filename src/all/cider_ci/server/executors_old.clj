@@ -1,10 +1,10 @@
-(ns cider-ci.server.executors
+(ns cider-ci.server.executors-old
   (:refer-clojure :exclude [str keyword])
   (:require [cider-ci.utils.core :refer [keyword str presence]])
   (:require
-    [cider-ci.server.executors.state :as state]
-    [cider-ci.server.executors.web :as web]
-    [cider-ci.server.executors.token :as token]
+    [cider-ci.server.executors-old.state :as state]
+    [cider-ci.server.executors-old.web :as web]
+    [cider-ci.server.executors-old.token :as token]
 
     [clj-time.core :as time]
 

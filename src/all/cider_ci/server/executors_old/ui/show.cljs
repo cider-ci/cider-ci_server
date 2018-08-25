@@ -2,7 +2,7 @@
 ; Licensed under the terms of the GNU Affero General Public License v3.
 ; See the "LICENSE.txt" file provided with this software.
 
-(ns cider-ci.server.executors.ui.show
+(ns cider-ci.server.executors-old.ui.show
   (:refer-clojure :exclude [str keyword])
   (:require-macros
     [reagent.ratom :as ratom :refer [reaction]]
@@ -12,7 +12,7 @@
     [cider-ci.server.client.connection.request :as request]
 
     [cider-ci.server.client.state :as state]
-    [cider-ci.server.executors.ui.shared :refer [reload-executors executor-not-found-component]]
+    [cider-ci.server.executors-old.ui.shared :refer [reload-executors executor-not-found-component]]
 
     [fipp.edn :refer [pprint]]
     [reagent.core :as reagent]

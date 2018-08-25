@@ -7,7 +7,7 @@
   (:require [cider-ci.utils.core :refer [keyword str presence]])
 
   (:require
-    [cider-ci.server.executors]
+    [cider-ci.server.executors-old]
 
     [clj-logging-config.log4j :as logging-config]
     [clojure.tools.logging :as logging]
@@ -26,7 +26,7 @@
     request
     (if-let [executor (->> (tokens request)
                            (filter identity)
-                           (map cider-ci.server.executors/find-executor-by-token)
+                           (map cider-ci.server.executors-old/find-executor-by-token)
                            (some identity))]
       (assoc request :authenticated-entity
              (assoc executor

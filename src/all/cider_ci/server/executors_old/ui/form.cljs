@@ -1,4 +1,4 @@
-(ns cider-ci.server.executors.ui.form
+(ns cider-ci.server.executors-old.ui.form
   (:refer-clojure :exclude [str keyword])
   (:require-macros
     [reagent.ratom :as ratom :refer [reaction]]
