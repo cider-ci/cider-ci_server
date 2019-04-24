@@ -10,8 +10,8 @@
   {:CIDER_CI_HTTP_BASE_URL "http://localhost:8881/cider-ci"
    :CIDER_CI_SECRET (when (= cider-ci.env/env :dev) "secret")
    :CIDER_CI_DATABASE_URL (if (= cider-ci.env/env :dev) 
-                            "jdbc:postgresql://cider-ci:cider-ci@localhost:5432/cider-ci_v5?min-pool-size=1&max-pool-size=4"
-                            "jdbc:postgresql://cider-ci:cider-ci@localhost:5432/cider-ci_v5?max-pool-size=4&max-pool-size=32")})
+                            "jdbc:postgresql://cider-ci:cider-ci@localhost:5432/cider-ci?min-pool-size=1&max-pool-size=4"
+                            "jdbc:postgresql://cider-ci:cider-ci@localhost:5432/cider-ci?max-pool-size=4&max-pool-size=32")})
 
 (def SESSION-COOKIE-KEY :cider-ci_session)
 
