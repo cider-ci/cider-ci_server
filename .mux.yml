@@ -15,7 +15,7 @@ windows:
   5:
     name: database
     command: |
-      psql -d cider-ci_v5
+      psql -d cider-ci
   6:
     name: github-mock
     command: |

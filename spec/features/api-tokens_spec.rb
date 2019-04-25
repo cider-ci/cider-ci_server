@@ -1,4 +1,5 @@
 require 'spec_helper'
+require 'shared-contexts/create_an_api_token'
 require 'shared-contexts/admin'
 require 'pry'
 

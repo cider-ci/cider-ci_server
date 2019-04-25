@@ -129,8 +129,7 @@
              (up ds up-migrations))
            (finally (ds/close-ds ds))))))
 
-;(migrate "jdbc:postgresql://cider-ci:secret@localhost/cider-ci_v4" "430")
-;(migrate "jdbc:postgresql://thomas:thomas@localhost/cider-ci_v5" "0")
+;(migrate "jdbc:postgresql://thomas:thomas@localhost/cider-ci" "0")
 
 
 ;;; recreate ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

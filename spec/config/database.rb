@@ -14,7 +14,7 @@ def database
         + '/' + ( http_uri.path.presence.try(:gsub,/^\//,'') || ENV['PGDATABASE'].presence || 'cider-ci') \
         + '?pool=5'
     else
-      'postgresql://cider-ci:cider-ci@localhost:5432/cider-ci_v5?pool=5'
+      'postgresql://cider-ci:cider-ci@localhost:5432/cider-ci?pool=5'
     end
   )
 end
