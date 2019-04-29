@@ -11,7 +11,8 @@
     [logbug.debug :as debug]
     [logbug.thrown])
   (:import
-    [java.security KeyPairGenerator Security Signature]
+    [java.security KeyPairGenerator Security Signature SecureRandom]
+    [java.security.spec ECGenParameterSpec]
     [org.bouncycastle.jce.provider BouncyCastleProvider]
     [org.bouncycastle.util.io.pem PemWriter PemObject PemReader]
     [org.bouncycastle.openssl.jcajce JcaPEMWriter JcaPEMKeyConverter]
@@ -22,13 +23,14 @@
 ;;; generate key pair ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn generate-key-pair
+  "search for 'Supported ECDSA Curves BouncyCastle' for supported curves"
   ([]
-   (generate-key-pair 2048))
-  ([size]
+   (generate-key-pair "prime256v1"))
+  ([curve]
    (Security/addProvider (BouncyCastleProvider.))
    (.generateKeyPair
-     (doto (KeyPairGenerator/getInstance "RSA", "BC")
-       (.initialize size)))))
+     (doto (KeyPairGenerator/getInstance "ECDSA", "BC")
+       (.initialize (ECGenParameterSpec. curve) (SecureRandom. ))))))
 
 (defn private-key [k]
   (cond
@@ -70,7 +72,7 @@
                              (.getPublicKey object)))))
 
 
-;(-> (generate-key-pair 256) key-pair->pem-private)
+;(-> (generate-key-pair) key-pair->pem-private)
 
 
 ;;; signing ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -81,7 +83,7 @@
     (.getBytes x)))
 
 (defn- signature-instance []
-  (Signature/getInstance "SHA256withRSA", "BC"))
+  (Signature/getInstance "SHA256withECDSA", "BC"))
 
 (defn signature [k message]
   "Returns the Base64 encoded signature of the message msg (ByteArray, String)

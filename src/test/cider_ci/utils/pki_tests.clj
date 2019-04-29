@@ -10,13 +10,13 @@
 
 
 (deftest test-pem
-  (let [key-pair (generate-key-pair 728)
-        private-pem (->> ["-----BEGIN RSA PRIVATE KEY-----"
-                          "MIGsAgEAAiEA4Fo4aCHlPIiZP7zFiIT5EUFWrk7DN1ikYrKJ30RoQ20CAwEAAQIg"
-                          "Nane7CmPZ5dU8MX6idkkqeUlm3jTI8SoYu1psUu7RhECEQD8YWCsfBwD1+/rDYN/"
-                          "tEJbAhEA45Hv69qYju7yEGA5tkHr1wIRAOHBPVetAOZTP3ITuX//P6cCEQCJlwrA"
-                          "RwJGKSIh1IwQLfsxAhEAmlR+E9rjT6UrdjJCe+w2Yg=="
-                          "-----END RSA PRIVATE KEY-----"] (clojure.string/join "\n"))]
+  (let [key-pair (generate-key-pair)
+        private-pem (->>  ["-----BEGIN EC PRIVATE KEY-----"
+                          "MHcCAQEEIMNaFjIFASNBksTYxWdVFtOV8Nx2SNOevPGINSreyeisoAoGCCqGSM49"
+                          "AwEHoUQDQgAEZDVoS5AfM/jIFIybffkhMfJBinHZEHm/egs899Lj7UU3D4dLdDm9"
+                          "pap0C6HJAPiw14LOkJ4hPy/3kDtTM1YOEA=="
+                          "-----END EC PRIVATE KEY-----"]
+                         (clojure.string/join "\n"))]
     (testing "key-pair->pem-private"
       (is (instance? String (key-pair->pem-private key-pair))))
     (testing "round-trip key-pair->pem-private pem->key"
@@ -33,7 +33,7 @@
 
 
 (deftest test-signing
-  (let [key-pair (generate-key-pair 728)
+  (let [key-pair (generate-key-pair)
         hello-signature (signature key-pair "Hello World!")]
     (testing "signing round trip"
       (is (signature-valid? key-pair "Hello World!" hello-signature))
