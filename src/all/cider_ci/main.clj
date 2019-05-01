@@ -3,8 +3,8 @@
   (:require [cider-ci.utils.core :refer [keyword str]])
   (:gen-class)
   (:require
-    [cider-ci.server.main :as server-main]
-    [cider-ci.executor :as executor]
+    [cider-ci.server.main :as server]
+    [cider-ci.executor.main :as executor]
 
     [logbug.thrown]
 
@@ -50,7 +50,7 @@
       (:release-info options) (println "Cider-CI" (cider-ci.utils.self/version) "\n"
                                        (:description (cider-ci.utils.self/release)))
       :else (case (-> arguments first keyword)
-              :server (apply server-main/-main (rest arguments))
+              :server (apply server/-main (rest arguments))
               :executor (apply executor/-main (rest arguments))
               (println (usage summary {:options options}))))))
 
