@@ -13,6 +13,7 @@
     [cider-ci.utils.fs :as fs]
     [cider-ci.utils.self :as self]
     [cider-ci.constants :refer [WORKING-DIR]]
+    [cider-ci.utils.pki :as pki]
 
     [yaml.core :as yaml]
     [clojure.pprint :refer [pprint]]
@@ -29,6 +30,7 @@
     [java.io File]
     ))
 
+(def default-key-pair (memoize pki/generate-key-pair))
 
 (def default-traits-files
   (case (System/getProperty "os.name")
@@ -44,15 +46,17 @@
   ;  :service :executor,
     :accepted_repositories ["^.*$"]
 ;    :windows {:fsi_path "C:\\Program Files (x86)\\Microsoft SDKs\\F#\\4.0\\Framework\\v4.0\\Fsi.exe"},
-    :tmp_dir "tmp",
+    :tmp_dir (-> "/tmp" clj-fs/absolute clj-fs/normalized str),
 ;    :server_secret "secret",
     :trial_retention_duration "30 Minutes",
-    :name "DemoExecutor",
+    :name (hostname),
     :hostname (hostname),
 ;    :secret "secret",
     :repositories_dir nil;(-> "./tmp/executor_repositories" clj-fs/absolute clj-fs/normalized str),
     :working_dir (->  "./tmp/working_dir" clj-fs/absolute clj-fs/normalized str),
     :default_script_timeout "3 Minutes",
+    :public_key (-> (default-key-pair) pki/key-pair->pem-public)
+    :private_key (-> (default-key-pair) pki/key-pair->pem-private)
 ;    :http {:port 8883
 ;           :host "localhost"
 ;           :enabled (if (= env/env :dev) true false)}
@@ -96,8 +100,7 @@
 (defn generate-config-file-usage [options-summary & more]
   (->> ["Cider-CI Executor generate-config-file"
         ""
-        "Write the default configuration to a file. "
-        "Commonly used to retrieve an initial configuration for the executor."
+        "Write a initial configuration file. "
         ""
         "Options:"
         options-summary
@@ -110,14 +113,13 @@
        flatten (clojure.string/join \newline)))
 
 (def generate-config-file-file-header
-  [(str "# Cider-CI " (cider-ci.utils.self/version) " Default Executor Configuration")
+  [(str "# Cider-CI " (cider-ci.utils.self/version) " Initial Executor Configuration")
    "#"
-   "# Some of these defaults depend on the environment."
-   "# We recommend to create a configuration file based on this file"
-   "# but only including those keys/values which are intended to be "
-   "# overridden."
-   "# The default configuration will be merged with the configuration"
-   "# given in the config-file. See also 'deep-merge' in the documentation."
+   "# The derived internal configuration will be merged with the configuration"
+   "# values given this file. Key value pairs given here have will override "
+   "# automatically derieved values. See also 'deep-merge' in the documentation."
+   "# "
+   "# Remove all key/value pairs which should rather be derived automatically." 
    "#"])
 
 (def config-file-option
@@ -127,8 +129,9 @@
 
 (def cli-options
   [["-f" "--force" "Overwrite an existing config file"]
-   ["-h" "--help"
-    :default false]])
+   ["-h" "--help" :default false]
+   config-file-option
+   ])
 
 (defn generate-config-file [options]
   (when (nil? (:config-file options))
@@ -166,6 +169,7 @@
 
 
 
-;(-main "-c" "default-executor-config.yml" "-f")
+;(-main {} "-c" "./tmp/initial-executor-config.yml" "-f")
+;(-main {} "-h") 
 
 
