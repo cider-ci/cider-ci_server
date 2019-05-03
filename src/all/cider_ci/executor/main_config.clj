@@ -28,6 +28,7 @@
     )
   (:import
     [java.io File]
+    [java.net InetAddress UnknownHostException]
     ))
 
 (def default-key-pair (memoize pki/generate-key-pair))
@@ -37,40 +38,40 @@
     "Linux" ["/etc/cider-ci/traits.yml"]
     []))
 
-(defn hostname []
-  ( -> (commons-exec/sh ["hostname"])
-       deref :out clojure.string/trim))
+(def hostname 
+  (memoize (fn []
+             (try 
+               (-> (InetAddress/getLocalHost) .getHostName 
+                   (clojure.string/split #"\.") first)
+               (catch UnknownHostException _ nil)))))
+
+(def tmpdir
+  (System/getProperty "java.io.tmpdir"))
 
 (def default-config
-  (sorted-map
-  ;  :service :executor,
-    :accepted_repositories ["^.*$"]
-;    :windows {:fsi_path "C:\\Program Files (x86)\\Microsoft SDKs\\F#\\4.0\\Framework\\v4.0\\Fsi.exe"},
-    :tmp_dir (-> "/tmp" clj-fs/absolute clj-fs/normalized str),
-;    :server_secret "secret",
-    :trial_retention_duration "30 Minutes",
-    :name (hostname),
-    :hostname (hostname),
-;    :secret "secret",
-    :repositories_dir nil;(-> "./tmp/executor_repositories" clj-fs/absolute clj-fs/normalized str),
-    :working_dir (->  "./tmp/working_dir" clj-fs/absolute clj-fs/normalized str),
-    :default_script_timeout "3 Minutes",
-    :public_key (-> (default-key-pair) pki/key-pair->pem-public)
-    :private_key (-> (default-key-pair) pki/key-pair->pem-private)
-;    :http {:port 8883
-;           :host "localhost"
-;           :enabled (if (= env/env :dev) true false)}
-;    :nrepl {:port 7883,
-;            :bind "localhost",
-;            :enabled (if (= env/env :dev) true false)},
-    :reporter {:max-retries 10, :retry-factor-pause-duration "3 Seconds"},
-    :self_update false,
-    :sync_interval_pause_duration "1 Second",
-    :temporary_overload_factor 1.99,
-    :exec_user {:name nil, :password nil},
-;    :services {:dispatcher {:http {:context "/cider-ci", :sub_context "/dispatcher", :ssl false}}},
-    :traits_files default-traits-files
-    :max_load (.availableProcessors(Runtime/getRuntime))))
+  (memoize (fn []
+             (sorted-map
+               :accepted_repositories ["^.*$"]
+               :default_script_timeout "3 Minutes"
+               :exec_user {:name nil :password nil}
+               :hostname (hostname)
+               :max_load (.availableProcessors(Runtime/getRuntime))
+               :name (hostname)
+               :private_key (-> (default-key-pair) pki/key-pair->pem-private)
+               :public_key (-> (default-key-pair) pki/key-pair->pem-public)
+               :reporter {:max-retries 10 :retry-factor-pause-duration "3 Seconds"}
+               :repositories_dir (-> (str tmpdir File/separator (hostname) "_executor-repositories-dir")
+                                     clj-fs/absolute clj-fs/normalized str)
+               :self_update false
+               :server_base_url "http://localhost:8881"
+               :sync_interval_pause_duration "1 Second"
+               :temporary_overload_factor 1.99
+               :tmp_dir tmpdir
+               :traits_files default-traits-files
+               :trial_retention_duration "30 Minutes"
+               :working_dir (-> (str tmpdir File/separator (hostname) "_executor-working-dir")
+                                clj-fs/absolute clj-fs/normalized str)
+               ))))   
 
 
 (def options-config-mapping
@@ -78,7 +79,6 @@
    :nrepl-url [:nrepl-url]
    :repository-cache-dir [:repositories_dir]
    :server-base-url [:server-base-url]
-   :token [:basic_auth :password]
    :working-dir [:working_dir] })
 
 
@@ -89,7 +89,7 @@
                           {} options)]
     (logging/debug :run-initialize-config/overrides overrides)
     (config/initialize
-      {:defaults default-config
+      {:defaults (default-config)
        :filenames (if-let [path (:config-file options)]
                     [(-> path clj-fs/absolute clj-fs/normalized str)]
                     [])
@@ -141,7 +141,7 @@
                (.exists file)) (throw (ex-info "Config file exist!" options)))
     (spit file
           (->> [generate-config-file-file-header
-                (yaml/generate-string default-config)]
+                (yaml/generate-string (default-config))]
                flatten (clojure.string/join \newline)))))
 
 
