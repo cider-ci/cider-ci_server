@@ -2,7 +2,8 @@ scripts:
 
   service-run:
     body: |
-      set -eux
+      #!/usr/bin/env bash
+      set -euo pipefail
       export CLASSPATH="resources_dev:target/cider-ci.jar"
       java -jar target/cider-ci.jar server run
     start_when:
@@ -19,7 +20,7 @@ scripts:
       STATUS_URL: http://localhost:{{SERVER_HTTP_PORT}}/cider-ci/client/status
     body: |
       #!/usr/bin/env bash
-      set -eux
+      set -euo pipefail
       until curl --silent --fail \
         --user test-check-is-running:service-secret \
         -H 'Accept: application/json' \
@@ -46,7 +47,7 @@ scripts:
       SHUTDOWN_URL: http://localhost:{{SERVER_HTTP_PORT}}/cider-ci/shutdown
     body: |
       #!/usr/bin/env bash
-      set -eux
+      set -euo pipefail
       curl -I -X POST --silent \
         --user shutdown:service-secret \
         -H 'Accept: application/json' \

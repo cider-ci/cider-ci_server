@@ -3,8 +3,7 @@ task_defaults:
     submodules:
       include_match: ^.*$
   traits:
-    Leiningen 2: yes
-    JDK 8: yes
+    - asdf
   scripts:
     test:
       body: |

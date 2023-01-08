@@ -1,5 +1,6 @@
 jobs:
-  tests:
+
+  unit-tests:
     name: Run tests
     run_when:
       any branch has been updated:
@@ -11,63 +12,45 @@ jobs:
           submodules:
             include_match: ^.*$
         traits:
-          - JDK 8
-          - Leiningen 2
-        body: lein test $CIDER_CI_TASK_FILE
+          - asdf
+        body: |
+          #!/usr/bin/env bash
+          set -euo pipefail
+          ./bin/lein deps
+          ./bin/lein test $CIDER_CI_TASK_FILE
       generate_tasks:
         include_match: src/test/.*.clj
-  specs:
-    name: Run specs
+
+  uberjar:
+    name: build uberjar
     run_when:
-      any branch matches:
+      any branch has been updated:
         type: branch
         include_match: ^.*$
     context:
-      generate_tasks:
-        include_match: spec/.*_spec.rb
-      #tasks:
-      # spec/features/github-authentication_spec.rb:
-      #   environment_variables:
-      #     CIDER_CI_TASK_FILE: spec/features/github-authentication_spec.rb
       task_defaults:
-        include:
-          - cider-ci/task-components/database.yml
-          - cider-ci/task-components/ruby-bundle.yml
-          - cider-ci/task-components/build-uberjar.yml
-          - cider-ci/task-components/configure.yml
-          - cider-ci/task-components/ports.yml
-          - cider-ci/task-components/service.yml
-          - cider-ci/task-components/github-mock.yml
-        environment_variables:
-          DATABASE_NAME: cider-ci_server_test_{{CIDER_CI_TRIAL_ID}}
-          DATABASE_DIR: database
-          RUBY_ENGINE: ruby
-          RUBY_VERSION: 2.3.3
-          RUBY: '{{RUBY_ENGINE}}-{{RUBY_VERSION}}'
-          RAILS_ENV: test
-        traits: {}
-        max_trials: 5
-        eager_trials: 2
         git_options:
           submodules:
             include_match: ^.*$
-        trial_attachments:
-          screenshots:
-            include_match: 'tmp\/.+\.png$'
-            content_type: image/png
-          logs:
-            include_match: '\.log$'
-            content_type: text/plain
-        scripts:
-          test:
-            body: |
-              #!/usr/bin/env bash
-              set -eux
-              export PATH=~/.rubies/$RUBY/bin:$PATH
-              mkdir -p log
-              xvfb-run -a -e log/xvfb.log bundle exec rspec $CIDER_CI_TASK_FILE
-          delete-database:
-            start_when:
-              'test is in terminal state':
-                script_key: test
-                states: [aborted, defective, passed, failed, skipped]
+        traits:
+          - asdf
+      tasks:
+        uberjar:
+          scripts:
+            uberjar:
+              body: |
+                #!/usr/bin/env bash
+                set -euo pipefail
+                ./bin/lein deps
+                ./bin/uberjar
+
+  specs:
+    name: Run specs
+    depends_on: &SPEC_DEPENDENTS
+      uberjar passed:
+        type: job
+        job_key: uberjar
+        states: [passed]
+    run_when: *SPEC_DEPENDENTS
+    include: cider-ci/jobs/specs.yml
+

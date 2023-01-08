@@ -1,11 +1,11 @@
 traits:
-  PostgreSQL 9.5: true
+  PostgreSQL: true
 scripts:
 
   create-database:
     body: |
       #!/usr/bin/env bash
-      set -eux
+      set -euo pipefail
       createdb $DATABASE_NAME
 
   migrate-database:
@@ -16,13 +16,13 @@ scripts:
         script_key: build-uberjar
     body: |
       #!/usr/bin/env bash
-      set -eux
+      set -euo pipefail
       java -jar target/cider-ci.jar server migrate -d "jdbc:postgresql://${PGUSER}:${PGPASSWORD}@localhost:${PGPORT}/${DATABASE_NAME}"
 
   delete-database:
     body: |
       #!/usr/bin/env bash
-      set -eux
+      set -euo pipefail
       dropdb $DATABASE_NAME
     ignore_state: true
     start_when:

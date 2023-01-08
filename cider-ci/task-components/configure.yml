@@ -10,8 +10,11 @@ trial_attachments:
 
 scripts:
   configure:
+    start_when:
+      'bundled':
+        script_key: ruby-setup
     body: |
-      #!/usr/bin/ruby
+      #!/usr/bin/env ruby
       require 'yaml'
 
       ### CIDER-CI Service Configuration ######################################

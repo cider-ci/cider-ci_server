@@ -1,5 +1,4 @@
 require 'capybara/rspec'
-require 'capybara/poltergeist'
 require 'selenium-webdriver'
 require 'json_roa/client'
 
@@ -45,13 +44,8 @@ RSpec.configure do |config|
   Capybara.current_driver = :selenium
   set_capybara_values
 
-  if ENV['FIREFOX_ESR_PATH'].present?
-    Selenium::WebDriver::Firefox.path = ENV['FIREFOX_ESR_PATH']
-  end
-
-  Capybara.register_driver :poltergeist do |app|
-    Capybara::Poltergeist::Driver.new(app, js_errors: false)
-  end
+  firefox_bin_path = Pathname.new(`asdf where firefox`.strip).join('bin/firefox').expand_path.to_s
+  Selenium::WebDriver::Firefox.path = firefox_bin_path
 
   config.before :all do
     set_capybara_values

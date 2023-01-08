@@ -3,7 +3,7 @@ scripts:
   run_github-api-mock:
     start_when:
       'bundled':
-        script_key: bundle-rspec-ruby
+        script_key: ruby-setup
       # the following is not a hard dependency, this ist just not fall
       # into a timeout when building the uberjar taks very long
       the uberjar is ready:
@@ -11,8 +11,7 @@ scripts:
     timeout: 5 Minutes
     body: |
       #!/usr/bin/env bash
-      set -eux
-      export PATH=~/.rubies/$RUBY/bin:$PATH
+      set -euo pipefail
       bundle exec ruby github_api_mock.rb -p ${GITHUB_API_MOCK_PORT}
 
   github-api-mock_is-serving:
@@ -23,7 +22,7 @@ scripts:
         states: [executing]
     body: |
       #!/usr/bin/env bash
-      set -ux
+      set -euo pipefail
       until curl --silent --fail -I "http://localhost:${GITHUB_API_MOCK_PORT}/status" ; do
         sleep 1;
       done
@@ -37,7 +36,8 @@ scripts:
   shutdown_github-api-mock:
     timeout: 3 Seconds
     body: |
-      set -eux
+      #!/usr/bin/env bash
+      set -euo pipefail
       kill -INT $(lsof -t -wni tcp:${GITHUB_API_MOCK_PORT})
       sleep 1
     start_when:

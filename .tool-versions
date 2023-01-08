@@ -1,0 +1,6 @@
+clojure 1.10.3.1093
+firefox 78.15.0esr
+geckodriver 0.30.0
+java zulu-11.60.19
+lein 2.9.9
+ruby 3.1.3

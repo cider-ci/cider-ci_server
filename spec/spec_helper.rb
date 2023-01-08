@@ -45,12 +45,6 @@ RSpec.configure do |config|
       rescue
         nil
       end
-    when :poltergeist
-      begin
-        page.driver.render(path, full: true)
-      rescue
-        nil
-      end
     else
       logger = Logger.new(STDOUT)
       logger.warn 'Taking screenshots is not implemented for ' \

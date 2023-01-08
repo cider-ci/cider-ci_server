@@ -10,8 +10,8 @@ scripts:
       if [ -f "${LEIN_UBERJAR_FILE}" ];then
         echo " ${LEIN_UBERJAR_FILE} exists"
       else
-        lein sass once
-        lein uberjar
+        # lein sass once
+        ./bin/uberjar
         mv "target/cider-ci.jar" "${LEIN_UBERJAR_FILE}"
       fi
       mkdir -p target

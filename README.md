@@ -16,3 +16,11 @@ See the "LICENSE.txt" file provided with this software.
 
     lein run -- server migrate -d "jdbc:postgresql://thomas:thomas@localhost:/cider-ci_v4"
 
+
+
+## Dev
+
+```
+lein deps :tree
+lein clean && lein cljsbuild once
+```

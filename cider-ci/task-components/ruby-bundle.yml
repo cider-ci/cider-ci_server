@@ -1,29 +1,19 @@
 traits:
-  ruby-install: true
-  Bash: true
+  - asdf
+  - Bash
 
 scripts:
 
-  bundle-rspec-ruby:
-    exclusive_executor_resource: ruby-install_{{$RUBY}}
+  ruby-setup:
+    exclusive_executor_resource: asdf-ruby
     timeout: 20 Minutes
     body: |
       #!/usr/bin/env bash
-      set -eux
-      export PATH=~/.rubies/$RUBY/bin:$PATH
-
-      if [ ! -d ~/.rubies/$RUBY ]; then
-        ruby-install --no-install-deps $RUBY_ENGINE $RUBY_VERSION
-      fi
-
-      if [ ! -f ~/.rubies/$RUBY/bin/bundle ]; then
-        gem install bundler
-      fi
-
-      bundle install
+      set -euo pipefail
+      ./bin/env/ruby-setup
 
   test:
     start_when:
       gems are bundled:
-        script_key: bundle-rspec-ruby
+        script_key: ruby-setup
         states: [passed]

@@ -13,7 +13,6 @@
     [cider-ci.server.trees.attachments.web]
     [cider-ci.server.builder.web]
     [cider-ci.server.client.web]
-    [cider-ci.server.client.web]
     [cider-ci.server.commits.web]
     [cider-ci.server.create-initial-admin.web :as create-initial-admin]
     [cider-ci.server.dispatcher.web]
@@ -25,7 +24,6 @@
     [cider-ci.server.storage.web]
     [cider-ci.server.trees]
     [cider-ci.server.users.web]
-    [cider-ci.server.web]
 
     [cider-ci.utils.http-resources-cache-buster :refer [wrap-resource]]
     [cider-ci.utils.routing :as routing]

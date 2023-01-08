@@ -9,6 +9,14 @@
 
   :dependencies
   [
+   ;[com.sun.xml.bind/jaxb-impl "2.3.0"]
+   [jakarta.xml.bind/jakarta.xml.bind-api "2.3.2"]
+
+   [org.flatland/ordered "1.15.10"]
+   [org.clojure/core.rrb-vector "0.1.2"]
+
+   ;[org.clojure/core.async "1.6.673"]
+   ;[org.clojure/core.async "0.4.474"]
 
    [aleph "0.4.3"]
    [camel-snake-kebab "0.4.0"]
@@ -16,7 +24,7 @@
    [cider-ci/open-session "1.3.0"]
    [clj-http "3.6.1"]
    [clj-time "0.14.0"]
-   [cljs-http "0.1.43"]
+   [cljs-http "0.1.43" :exclusions [org.clojure/tools.reader]]
    [cljsjs/bootstrap "3.3.6-1"]
    [cljsjs/jquery "2.2.4-0"]
    [cljsjs/moment "2.17.1-1"]
@@ -27,14 +35,14 @@
    [com.github.mfornos/humanize-slim "1.2.2"]
    [com.lucasbradstreet/cljs-uuid-utils "1.0.2"]
    [com.mchange/c3p0 "0.9.5.2"]
-   [com.taoensso/sente "1.11.0"]
+   [com.taoensso/sente "1.11.0" :exclusions [org.clojure/tools.reader]]
    [compojure "1.6.0"]
    [drtom/clj-uuid "0.1.7"]
-   [drtom/honeysql "2.0.0-ALPHA+1"]
+   [drtom/honeysql "2.0.0"]
    [environ "1.1.0"]
    [fipp "0.6.9"]
    [hiccup "1.0.5"]
-   [hickory "0.7.1"]
+   [hickory "0.7.1" :exclusions [org.clojure/tools.reader]]
    [io.forward/yaml "1.0.6"]
    [joda-time "2.9.9"]
    [log4j/log4j "1.2.17" :exclusions [javax.mail/mail javax.jms/jms com.sun.jdmk/jmxtools com.sun.jmx/jmxri]]
@@ -46,7 +54,9 @@
    [org.clojars.hozumi/clj-commons-exec "1.2.0"]
    [org.clojure/algo.generic "0.1.2"]
    [org.clojure/clojure "1.8.0"]
-   [org.clojure/clojurescript "1.9.854" :scope "provided"]  ; see guava below; also check `lein tree` and sync
+   [org.clojure/clojurescript "1.9.854" :scope "provided" ]  ; see guava below; also check `lein tree` and sync
+   ;[org.clojure/clojurescript "1.9.946"]
+   ;[org.clojure/clojurescript "1.11.60"]
    [org.clojure/core.incubator "0.1.4"]
    [org.clojure/core.memoize "0.5.9"]
    [org.clojure/data.json "0.2.6"]
@@ -56,7 +66,7 @@
    [org.slf4j/slf4j-log4j12 "1.7.25"]
    [pg-types "2.3.0"]
    [prismatic/schema "1.1.6"]
-   [reagent "0.7.0"]
+   [reagent "0.7.0" :exclusions [org.clojure/tools.reader]]
    [reagent-utils "0.2.1"]
    [ring "1.6.2"]
    [ring-middleware-accept "2.0.3"]
@@ -72,7 +82,7 @@
    ; can be removed after changes have been submitted and accepted;
    ;[venantius/accountant "0.2.0" :exclusions [org.clojure/tools.reader]]
 
-   [viz-cljc "0.1.2"]
+   [viz-cljc "0.1.2" :exclusions [org.clojure/tools.reader]]
    [yogthos/config "0.8"]
 
    ; loom depdencies, for source are included via submodule,
@@ -82,22 +92,24 @@
    [org.clojure/data.priority-map "0.0.7"]
    ;[tailrecursion/cljs-priority-map "1.2.0"]
 
+   ;[pandect "1.0.2"]
+
    ; explicit transient deps to force conflict resolution
    [com.google.guava/guava "23.0"]
-   [org.clojure/tools.nrepl "0.2.13"]
-
+   ;[org.clojure/tools.nrepl "0.2.13"]
    ]
 
 
-  :resource-paths ["../config" "./config" "./resources"]
+  :resource-paths [;"../config"
+                   "./config"
+                   "./resources"]
 
   :source-paths ["src/all" "vendor/loom/src" "vendor/accountant/src" "vendor/cljs-priority-map/src/cljs"]
   :test-paths ["src/test"]
 
   :plugins [[lein-environ "1.0.2"]
-            [lein-cljsbuild "1.1.1"]
-            [lein-asset-minifier "0.2.7"
-             :exclusions [org.clojure/clojure]]]
+            [lein-cljsbuild "1.1.8"]
+            [lein-asset-minifier "0.4.6" :exclusions [org.clojure/clojure]]]
 
   :cljsbuild {:builds
               {:min {:source-paths ["src/all" "src/prod"]
@@ -119,9 +131,8 @@
                  :optimizations :none
                  :pretty-print  true}}}}
 
-  :minify-assets {:assets
-                  {"resources/public/css/site.min.css"
-                   "resources/public/css/site.css"}}
+  :minify-assets [[:css {:source "resources/public/css/site.css"
+                         :target "resources/public/css/site.min.css"}]]
 
   :sass {:src "resources/public/css"
          :dst "resources/public/css"}
@@ -136,12 +147,14 @@
              {:dependencies [[ring/ring-mock "0.3.1"]
                              [ring/ring-devel "1.6.2"]
                              [prone "1.1.4"]
-                             [figwheel-sidecar "0.5.12"]
+                             [figwheel-sidecar "0.5.12" :exclusions [org.clojure/tools.reader]]
                              [org.clojure/tools.nrepl "0.2.13"]
                              [com.cemerick/piggieback "0.2.2"]
                              [pjstadig/humane-test-output "0.8.2"]]
-              :plugins [[lein-figwheel "0.5.12"]
-                        [lein-sassy "1.0.7"]]
+              :plugins [
+                        ;[lein-asset-minifier "0.4.6"]
+                        [lein-figwheel "0.5.20"]
+                        [lein-sassy "1.0.8"]]
               :source-paths ["src/all" "src/dev" "vendor/accountant/src"]
               :resource-paths ["target/cljsbuild"]
               :injections [(require 'pjstadig.humane-test-output)
