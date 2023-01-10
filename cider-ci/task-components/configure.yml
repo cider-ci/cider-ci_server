@@ -13,24 +13,5 @@ scripts:
     start_when:
       'bundled':
         script_key: ruby-setup
-    body: |
-      #!/usr/bin/env ruby
-      require 'yaml'
-
-      ### CIDER-CI Service Configuration ######################################
-
-      config = YAML.load_file 'resources_dev/config_defaults.yml'
-
-      # database
-      config['database']['user']= ENV['PGUSER']
-      config['database']['password']= ENV['PGPASSWORD']
-      config['database']['subname']= "//localhost:#{ENV['PGPORT']}/#{ENV['DATABASE_NAME']}"
-
-      # storage
-      config['services']['server']['http']['port']= Integer(ENV['SERVER_HTTP_PORT'])
-      config['services']['server']['http']['host']= 'localhost'
-      config['services']['server']['nrepl']['enabled']= false
-
-      # write config
-      File.open('config/config.yml','w') { |file| file.write config.to_yaml }
+    body: cider-ci/bin/server-test-env-setup.rb
 

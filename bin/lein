@@ -4,3 +4,5 @@ set -euo pipefail
 ./bin/env/clojure-setup
 ./bin/env/lein-setup
 lein "$@"
+
+

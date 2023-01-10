@@ -1,4 +1,116 @@
 ---
-repository_service_advanced_api_edit_fields: true
+job_retention_duration: 100 Years
+task_retention_duration: 100 Years
+trial_retention_duration: 100 Years
+trial_dispatch_timeout: 30 Minutes
+dispatch_storm_delay_default_duration: 1 Second
+max_concurrent_fetch_and_updates: 3
+database:
+  adapter: postgresql
+  classname: org.postgresl.Driver
+  subname: "//localhost:5432/cider_ci_v4"
+  subprotocol: postgresql
+  user: tom
+  password: tom
+  max_pool_size: 3
+github_authtoken:
+hostname: localhost
+secret: master-secret
+basic_auth:
+  password: service-secret
 session:
-  max_lifetime: 7 days
+  secret: session-secret
+  max_lifetime: 7 Days
+git_proxy_enabled: false
+messaging:
+  connection:
+    vhost: cider-ci
+    host: localhost
+    username: cider-ci
+    password: secret
+server_base_url: http://localhost:8888
+status_limits:
+  memory:
+    max_usage: 0.95
+    min_free: 10485760
+services:
+  documentation:
+    http:
+      host: localhost
+      port: 8887
+      context: "/cider-ci"
+      sub_context: "/documentation"
+      ssl: false
+  server:
+    http:
+      host: localhost
+      port: 8881
+      ssl: false
+    nrepl:
+      port: 7881
+      bind: 127.0.0.1
+      enabled: false
+    database:
+      max_pool_size: 5
+    repositories:
+      path: "./tmp/repositories"
+    stores:
+    - url_path_prefix: "/trial-attachments"
+      file_path: "./tmp/storage/trial-attachments"
+      db_table: trial_attachments
+    - url_path_prefix: "/tree-attachments"
+      file_path: "./tmp/storage/tree-attachments"
+      db_table: tree_attachments
+  ui:
+    http:
+      host: localhost
+      port: 8880
+      context: "/cider-ci"
+      sub_context: "/ui"
+      ssl: false
+constants:
+  STATES:
+    JOB:
+    - passed
+    - executing
+    - pending
+    - aborting
+    - aborted
+    - defective
+    - failed
+    TASK:
+    - aborted
+    - aborting
+    - defective
+    - executing
+    - failed
+    - passed
+    - pending
+    TRIAL:
+    - aborted
+    - aborting
+    - defective
+    - dispatching
+    - executing
+    - failed
+    - passed
+    - pending
+    SCRIPT:
+    - aborted
+    - defective
+    - executing
+    - failed
+    - passed
+    - pending
+    - skipped
+    - waiting
+    FINISHED:
+    - aborted
+    - defective
+    - failed
+    - passed
+    - skipped
+    IN_PROGRESS:
+    - aborting
+    - dispatching
+    - executing

@@ -31,12 +31,12 @@ feature 'Initial admin', type: :feature do
     ### we have been redirected to the sign-in-page
 
     wait_until(5) do
-      first('.sign-in-page h1').try(:has_content?, 'Sign in')
+      first('.page').try(:has_content?, 'Sign in')
     end
 
     ### sign in
 
-    within '.sign-in-page' do |_el|
+    within(find('.page', text: "Sign in")) do |_el|
       find('input#login').set 'admin'
       find('input#password').set 'secret'
       click_on 'Sign me in'
@@ -45,11 +45,13 @@ feature 'Initial admin', type: :feature do
     ### we are redirected to the front page and we are signed in
 
     wait_until(3) do
-      current_path == '/cider-ci/ui2/'
+      current_path == '/cider-ci/'
     end
+
     wait_until 10 do
       first('.navbar .user').try(:has_content?, 'admin')
     end
+
   end
 
   context 'An admin already exists' do

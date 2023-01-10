@@ -1,0 +1,6 @@
+export PGPORT=${PGPORT:-5432}
+export PGUSER=${PGUSER:-${USER}}
+export PGPASSWORD=${PGPASSWORD:-${PGUSER}}
+export DATABASE_NAME=${DATABASE_NAME:-'cider_ci_v4'}
+export PGDATABASE=${DATABASE_NAME}
+export DATABASE_URL="jdbc:postgresql://${PGUSER}:${PGPASSWORD}@localhost:${PGPORT}/${PGDATABASE}"

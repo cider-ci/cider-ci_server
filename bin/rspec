@@ -11,5 +11,7 @@ cd $PROJECT_DIR
 rm -rf ~/.asdf/installs/ruby/$(asdf current ruby | awk '{print $2; }')/bin/gecko*
 asdf reshim
 
+source ./bin/database.sh
+
 bundle exec rspec "$@"
 # vi: ft=sh

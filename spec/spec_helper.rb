@@ -1,5 +1,6 @@
 require 'active_support/all'
 
+require 'config/browser'
 require 'config/database'
 require 'config/web'
 require 'faker'
@@ -23,32 +24,5 @@ RSpec.configure do |config|
   config.after :all do
     puts "SPEC_SEED #{@spec_seed} set env SPEC_SEED to force value"
   end
-
-  config.after(:each) do |example|
-    # cleanup
-    take_screenshot unless example.exception.nil?
-  end
-
-  def take_screenshot(screenshot_dir = nil, name = nil)
-    screenshot_dir ||= File.join(Dir.pwd, 'tmp')
-    begin
-      Dir.mkdir screenshot_dir
-    rescue
-      nil
-    end
-    name ||= "screenshot_#{Time.now.iso8601.tr(':', '-')}.png"
-    path = File.join(screenshot_dir, name)
-    case Capybara.current_driver
-    when :selenium, :selenium_chrome
-      begin
-        page.driver.browser.save_screenshot(path)
-      rescue
-        nil
-      end
-    else
-      logger = Logger.new(STDOUT)
-      logger.warn 'Taking screenshots is not implemented for ' \
-        "#{Capybara.current_driver}."
-    end
-  end
 end
+
