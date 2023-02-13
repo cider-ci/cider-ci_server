@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+set -euo pipefail
+PROJECT_DIR="$(cd -- "$(dirname "${BASH_SOURCE}")" ; cd .. > /dev/null 2>&1 && pwd -P)"
+cd $PROJECT_DIR
+./bin/env/java-setup
+./bin/env/clojure-setup
+./bin/env/lein-setup
+
+source bin/database.sh
+
+PGDATABASE_COPY="${PGDATABASE}_schema-copy"
+
+terminate_connections
+
+psql -d template1 <<HERE
+  DROP DATABASE IF EXISTS "${PGDATABASE_COPY}";
+  CREATE DATABASE "${PGDATABASE_COPY}" WITH TEMPLATE "${PGDATABASE}";
+HERE
+
+
+SCHEMA_FILE=$PROJECT_DIR/resources/schema.sql
+
+cat << HERE > $SCHEMA_FILE
+-- ----------------------------------------------------------------------------
+--  Schema --------------------------------------------------------------------
+-- ----------------------------------------------------------------------------
+HERE
+
+pg_dump --no-owner --no-privileges --schema-only "$@" "$PGDATABASE_COPY" \
+  >> $SCHEMA_FILE
+
+cat << HERE >> $SCHEMA_FILE
+-- ----------------------------------------------------------------------------
+--  Migrations ----------------------------------------------------------------
+-- ----------------------------------------------------------------------------
+HERE
+
+# hack to remove created_at data
+
+psql $PGDATABASE_COPY -c 'ALTER TABLE schema_migrations DROP COLUMN created_at'
+
+pg_dump --no-owner --no-privileges --column-inserts --data-only \
+  -t 'schema_migrations' "$@" "$PGDATABASE_COPY" \
+  >> $SCHEMA_FILE
+
+#vi: ft=sh
