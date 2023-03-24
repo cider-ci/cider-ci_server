@@ -156,7 +156,7 @@
                         [lein-figwheel "0.5.20"]
                         [lein-sassy "1.0.8"]]
               :source-paths ["src/all" "src/dev" "vendor/accountant/src"]
-              :resource-paths ["target/cljsbuild"]
+              :resource-paths ["resources_dev" "resources" "target/cljsbuild"]
               :injections [(require 'pjstadig.humane-test-output)
                            (pjstadig.humane-test-output/activate!)]
               :env {:dev true}}

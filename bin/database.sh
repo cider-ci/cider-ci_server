@@ -3,7 +3,7 @@ export PGUSER=${PGUSER:-${USER}}
 export PGPASSWORD=${PGPASSWORD:-${PGUSER}}
 export DATABASE_NAME=${DATABASE_NAME:-'cider-ci_v5'}
 export PGDATABASE=${DATABASE_NAME}
-export DBURL="jdbc:postgresql://${PGUSER}:${PGPASSWORD}@localhost:${PGPORT}/${PGDATABASE}"
+export DATABASE_URL="jdbc:postgresql://${PGUSER}:${PGPASSWORD}@localhost:${PGPORT}/${PGDATABASE}"
 
 
 function terminate_connections {

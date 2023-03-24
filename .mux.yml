@@ -1,8 +1,9 @@
+name: CI/ZHdK/ci/server
 windows:
   2:
     name: server
     command: |
-      lein do run -- server run
+      ./bin/server-run
   3:
     name: figwheel
     command: |

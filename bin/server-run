@@ -6,4 +6,6 @@ cd $PROJECT_DIR
 ./bin/env/clojure-setup
 ./bin/env/lein-setup
 source bin/database.sh
-lein run server run -d "${DATABASE_URL}" "$@"
+lein clean
+lein with-profile +dev run server run -d "${DATABASE_URL}" "$@"
+#lein run server run -d "${DATABASE_URL}" "$@"
