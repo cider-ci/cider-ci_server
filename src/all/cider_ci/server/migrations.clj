@@ -95,7 +95,7 @@
       (up ds up-migrations)
       )))
 
-;(migrate "jdbc:postgresql://cider-ci:secret@localhost/cider-ci_v4" "430")
+;(migrate "jdbc:postgresql://cider-ci:secret@localhost/cider-ci_v5" "430")
 ;(migrate "jdbc:postgresql://thomas:thomas@localhost/cider-ci_v5" "0")
 
 
@@ -159,7 +159,7 @@
 ;(main "-s" "-d" "jdbc:postgresql://thomas:thomas@localhost/cider-ci_v5")
 ;
 ; migrate
-;(main "-d" "jdbc:postgresql://thomas:thomas@localhost/cider-ci_v4")
+;(main "-d" "jdbc:postgresql://thomas:thomas@localhost/cider-ci_v5")
 ;
 ; rollback
 ;(main "-d" "jdbc:postgresql://thomas:thomas@localhost/cider-ci_v5" "-v" "0")

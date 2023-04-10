@@ -13,7 +13,7 @@ module Helpers
           "postgresql://#{db_user}:#{db_password}" \
           "@localhost:#{ENV['PGPORT']}/#{db_name}?pool=3"
         else
-          'postgresql://cider-ci:secret@localhost/cider-ci_v4?pool=3'
+          'postgresql://cider-ci:secret@localhost/cider-ci_v5?pool=3'
         end)
     end
   end

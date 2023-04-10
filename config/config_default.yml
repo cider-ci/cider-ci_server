@@ -11,7 +11,7 @@ max_concurrent_fetch_and_updates: 3
 database:
   adapter: "postgresql"
   classname: "org.postgresl.Driver"
-  subname: "//localhost:5432/cider-ci_v4"
+  subname: "//localhost:5432/cider-ci_v5"
   subprotocol: "postgresql"
   user: cider-ci
   password: secret

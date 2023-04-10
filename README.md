@@ -14,7 +14,7 @@ See the "LICENSE.txt" file provided with this software.
 
 ### Database Migrations
 
-    lein run -- server migrate -d "jdbc:postgresql://thomas:thomas@localhost:/cider-ci_v4"
+    lein run -- server migrate -d "jdbc:postgresql://thomas:thomas@localhost:/cider-ci_v5"
 
 
 
