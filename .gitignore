@@ -1,7 +1,9 @@
+# resources/public/css/site.min.css
 *.class
 *.jar
 *.log
 .idea/
+/.cider-ci_private
 /.lein-*
 /.nrepl-port
 /.sass-cache
@@ -17,6 +19,5 @@ config/config.yml
 default-executor-config.yml
 pom.xml
 pom.xml.asc
-resources/public/css/site.min.css
 server.iml
 src/cider_ci/self.clj

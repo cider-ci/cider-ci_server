@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+PROJECT_DIR="$(cd -- "$(dirname "${BASH_SOURCE}")" ; cd .. > /dev/null 2>&1 && pwd -P)"
+cd $PROJECT_DIR
+
+JAR_PREFIX_NAME=cider-ci
+JAR_FULL_PATH=$JAR_PREFIX_NAME.jar
+
+function build {
+  ./bin/env/java-setup
+  ./bin/env/clojure-setup
+  ./bin/env/lein-setup
+  # for the time being the site.css prebuild is included
+  # lein sass once
+  lein uberjar
+  mv $PROJECT_DIR/target/cider-ci.jar $PROJECT_DIR/cider-ci.jar
+  lein clean
+}
+
+function setup_cache_dir {
+  TMPDIR="${TMPDIR:-/tmp}" # fallback to /tmp if TMPDIR is not set, as in Ubuntu e.g.
+  BUILDCACHE_TMPDIR="${BUILDCACHE_TMPDIR:-$TMPDIR}"
+  BUILDCACHE_TMPDIR=${BUILDCACHE_TMPDIR%/} # remove trailing slash
+  mkdir -p $BUILDCACHE_TMPDIR
+}
+
+
+setup_cache_dir
+rm -f $JAR_FULL_PATH
+
+
+if [[ -n $(git status -s) ]]; then
+    echo "WARNING uncommitted changes, (re)building from scratch, no linking"
+    git status -v
+    build
+else
+    echo "OK no uncommitted changes, building or using cache"
+    DIGEST=$(git log -1 HEAD --pretty=format:%T)
+    CACHED_JAR="${BUILDCACHE_TMPDIR}/${JAR_PREFIX_NAME}_${DIGEST}.jar"
+    if [[ -f $CACHED_JAR ]]; then
+        echo "Using cached jar: $CACHED_JAR"
+        touch $CACHED_JAR
+    else
+        echo "No cached jar ${CACHED_JAR} found, building"
+        build
+        mv $JAR_FULL_PATH $CACHED_JAR
+    fi
+    echo "Linking $CACHED_JAR to $JAR_FULL_PATH"
+    ln -sf $CACHED_JAR $JAR_FULL_PATH
+fi
+
+# Clean cached jars older than a week
+find $BUILDCACHE_TMPDIR -maxdepth 1 -name "${JAR_PREFIX_NAME}_*.jar" -type f -mtime +7 -delete
+
+
+
+
+
+
+
+# vim: set ft=sh

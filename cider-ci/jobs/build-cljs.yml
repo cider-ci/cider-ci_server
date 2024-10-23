@@ -1,0 +1,25 @@
+build-cljs:
+  name: Build ClojureScript
+  run_when:
+    any branch has been updated:
+      type: branch
+      include_match: ^.*$
+  context:
+    task_defaults:
+      git_options:
+        submodules:
+          include_match: ^.*$
+      traits:
+        - asdf
+    tasks:
+      build:
+
+        scripts:
+          build:
+            exclusive_executor_resource: ci-build-cljs
+            body: |
+              #!/usr/bin/env bash
+              set -euo pipefail
+              ./bin/build-cljs
+
+

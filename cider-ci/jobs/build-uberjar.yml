@@ -1,0 +1,18 @@
+build-uberjar:
+  name: Build Uberjar
+  run_when:
+    any branch has been updated:
+      type: branch
+      include_match: ^.*$
+  context:
+    task_defaults:
+      git_options:
+        submodules:
+          include_match: ^.*$
+      traits:
+        - asdf
+    tasks:
+      build:
+        include:
+           - cider-ci/task-components/build-uberjar.yml
+

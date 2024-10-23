@@ -1,0 +1,52 @@
+specs:
+  name: Run specs
+  run_when:
+    any branch matches:
+      type: branch
+      include_match: ^.*$
+  context:
+    generate_tasks:
+      include_match: spec/.*_spec.rb
+    #tasks:
+    # spec/features/github-authentication_spec.rb:
+    #   environment_variables:
+    #     CIDER_CI_TASK_FILE: spec/features/github-authentication_spec.rb
+    task_defaults:
+      include:
+        # - cider-ci/task-components/database.yml
+        # - cider-ci/task-components/ruby-bundle.yml
+        # - cider-ci/task-components/build-uberjar.yml
+        - cider-ci/task-components/configure.yml
+        - cider-ci/task-components/ports.yml
+        # - cider-ci/task-components/service.yml
+        # - cider-ci/task-components/github-mock.yml
+      environment_variables:
+        DATABASE_NAME: cider-ci_server_test_{{CIDER_CI_TRIAL_ID}}
+        DATABASE_DIR: database
+        RAILS_ENV: test
+        traits:
+      asdf: true
+      max_trials: 3
+      eager_trials: 1
+      git_options:
+        submodules:
+          include_match: ^.*$
+      trial_attachments:
+        screenshots:
+          include_match: 'tmp\/.+\.png$'
+          content_type: image/png
+        logs:
+          include_match: '\.log$'
+          content_type: text/plain
+      scripts:
+        test:
+          body: |
+            #!/usr/bin/env bash
+            set -euo pipefail
+            mkdir -p log
+            xvfb-run -a -e log/xvfb.log bundle exec rspec $CIDER_CI_TASK_FILE
+        delete-database:
+          start_when:
+            'test is in terminal state':
+              script_key: test
+              states: [aborted, defective, passed, failed, skipped]

@@ -1,3 +1,4 @@
+name: CIDER-CI/cider-ci/server
 windows:
   2:
     name: server
