@@ -1,0 +1,20 @@
+ci-server_uberjar-build:
+  name: Build Uberjar
+  run_when:
+    any branch has been updated:
+      type: branch
+      include_match: ^.*$
+  context:
+    task_defaults:
+      git_options:
+        submodules:
+          include_match: ^.*$
+      traits:
+        - asdf
+      environment_variables:
+        CIDER_CI_TEST_SERVER_DIR: "{{CIDER_CI_WORKING_DIR}}"
+    tasks:
+      build:
+        include:
+           - cider-ci/task-components/uberjar-build.yml
+

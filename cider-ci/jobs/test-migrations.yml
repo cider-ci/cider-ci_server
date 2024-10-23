@@ -1,0 +1,33 @@
+test-migrations:
+  name: Test Migrations
+  depends_on: &UBERJAR_DEPENDS
+    uberjar passed:
+      type: job
+      job_key: ci-server_uberjar-build
+      states: [passed]
+  run_when: *UBERJAR_DEPENDS
+  context:
+    task_defaults:
+      include:
+        - cider-ci/task-components/database.yml
+    tasks:
+      database_migrate:
+        scripts:
+          test:
+            start_when:
+              database is ready:
+                script_key: database_is_ready
+            body: |
+                #!/usr/bin/env bash
+                set -euo pipefail
+                cd $CIDER_CI_TEST_SERVER_DIR
+                RES=$(psql -tA -d $CIDER_CI_TEST_DATABASE -c "SELECT version FROM schema_migrations ORDER BY version DESC LIMIT 1")
+                echo "Last migration: $RES"
+                if [ "$RES" == "436" ]; then
+                  echo "Migration successful"
+                else
+                  echo "Migration failed"
+                  exit 1
+                fi
+
+

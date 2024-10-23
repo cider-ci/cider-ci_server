@@ -1,31 +1,71 @@
+include:
+  - cider-ci/task-components/uberjar-build.yml
+  - cider-ci/task-components/env.yml
+
+git_options:
+  submodules:
+    include_match: ^.*$
+
 traits:
-  PostgreSQL 9.5: true
+  - asdf
+
+
 scripts:
 
-  create-database:
-    body: |
-      #!/usr/bin/env bash
-      set -eux
-      createdb $DATABASE_NAME
 
-  migrate-database:
-    start_when:
-      the database has been created:
-        script_key: create-database
-      the uberjar is ready:
-        script_key: build-uberjar
+  database_create:
     body: |
       #!/usr/bin/env bash
-      set -eux
-      java -jar target/cider-ci.jar server migrate -d "jdbc:postgresql://${PGUSER}:${PGPASSWORD}@localhost:${PGPORT}/${DATABASE_NAME}"
+      set -euo pipefail
+      cd $CIDER_CI_TEST_SERVER_DIR
+      createdb $CIDER_CI_TEST_DATABASE
 
-  delete-database:
+  database_migrate:
+    start_when:
+      database created:
+        script_key: database_create
+      uberjar is build:
+        script_key: ci-server_uberjar-build
     body: |
       #!/usr/bin/env bash
-      set -eux
-      dropdb $DATABASE_NAME
-    ignore_state: true
+      set -euo pipefail
+      cd $CIDER_CI_TEST_SERVER_DIR
+      java -jar cider-ci.jar server migrate \
+        -d "jdbc:postgresql://$PGUSER:$PGPASSWORD@localhost:$PGPORT/$CIDER_CI_TEST_DATABASE"
+
+  database_is_ready:
     start_when:
-      'the database has been created':
-        script_key: create-database
-        states: [passed]
+      database_migrate:
+        script_key: database_migrate
+    body: |
+      #!/usr/bin/env bash
+      set -euo pipefail
+      cd $CIDER_CI_TEST_SERVER_DIR
+      echo "Just a dummy to signal that the database is ready"
+      exit 0
+
+  test:
+    start_when:
+      database is ready:
+        script_key: database_is_ready
+    body: |
+        #!/usr/bin/env bash
+        set -euo pipefail
+        cd $CIDER_CI_TEST_SERVER_DIR
+        echo "REPLACE ME"
+        exit 1
+
+  database_drop:
+    start_when:
+      database migrated:
+        script_key: database_migrate
+        states: [aborted, defective, passed, failed, skipped]
+      test:
+        script_key: test
+        states: [aborted, defective, passed, failed, skipped]
+    body: |
+      #!/usr/bin/env bash
+      set -euo pipefail
+      cd $CIDER_CI_TEST_SERVER_DIR
+      dropdb --if-exists $CIDER_CI_TEST_DATABASE
+

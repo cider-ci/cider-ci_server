@@ -1,0 +1,26 @@
+specs-preflight:
+  name: Run specs preflight
+  depends_on: &SPEC_PREFLIGHT_DEPENDS
+    upberjar passed:
+      type: job
+      job_key: ci-server_uberjar-build
+      states: [passed]
+    database migrations work:
+      type: job
+      job_key: test-migrations
+      states: [passed]
+  run_when: *SPEC_PREFLIGHT_DEPENDS
+  context:
+    task_defaults:
+      include:
+        - cider-ci/task-components/service.yml
+      environment_variables:
+        RAILS_ENV: test
+      scripts:
+        test:
+          body: |
+            #!/usr/bin/env bash
+            set -euo pipefail
+            exit 0
+    tasks:
+      test: {}

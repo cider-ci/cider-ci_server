@@ -1,7 +1,0 @@
-ports:
-  GITHUB_API_MOCK_PORT:
-    min: 8000
-    max: 8999
-  SERVER_HTTP_PORT:
-    min: 4100
-    max: 8799

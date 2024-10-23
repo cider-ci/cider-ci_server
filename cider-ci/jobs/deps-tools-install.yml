@@ -1,0 +1,19 @@
+deps-tools-install:
+  name: Install all Dependencies and Tools
+  run_when:
+    any branch has been updated:
+      type: branch
+      include_match: ^.*$
+  context:
+    task_defaults:
+      git_options:
+        submodules:
+          include_match: ^.*$
+      traits:
+        - asdf
+      environment_variables:
+        CIDER_CI_TEST_SERVER_DIR: "{{CIDER_CI_WORKING_DIR}}"
+    tasks:
+      deps-tools-install:
+        include:
+          - cider-ci/task-components/deps-tools-install.yml

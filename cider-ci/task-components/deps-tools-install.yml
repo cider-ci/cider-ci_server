@@ -1,0 +1,99 @@
+scripts:
+
+  ci-server_install-java:
+    exclusive_executor_resource: asdf-java
+    body: |
+      #!/usr/bin/env bash
+      set -euo pipefail
+      cd $CIDER_CI_TEST_SERVER_DIR
+      ./bin/env/java-setup
+
+  ci-server_install-clojure:
+    exclusive_executor_resource: asdf-clojure
+    start_when:
+      ci-server_installd java:
+        script_key: ci-server_install-java
+    body: |
+      #!/usr/bin/env bash
+      set -euo pipefail
+      ./bin/env/clojure-setup
+
+  ci-server_install-lein:
+    exclusive_executor_resource: asdf-lein
+    timeout: 5 minutes
+    start_when:
+      ci-server_installed  clojure:
+        script_key: ci-server_install-clojure
+    body: |
+      #!/usr/bin/env bash
+      set -euo pipefail
+      ./bin/env/lein-setup
+
+  ci-server_install-lein-deps:
+    exclusive_executor_resource: m2
+    start_when:
+      ci-server_installed lein:
+        script_key: ci-server_install-lein
+    timeout: 10 minutes
+    body: |
+      #!/usr/bin/env bash
+      set -euo pipefail
+      cd $CIDER_CI_TEST_SERVER_DIR
+      lein deps
+
+  ci-server_install-geckodriver:
+    exclusive_executor_resource: asdf-geckodriver
+    body: |
+      #!/usr/bin/env bash
+      set -euo pipefail
+      cd $CIDER_CI_TEST_SERVER_DIR
+      ./bin/env/geckodriver-setup
+
+  ci-server_install-firefox:
+    exclusive_executor_resource: asdf-firefox
+    timeout: 5 minutes
+    body: |
+      #!/usr/bin/env bash
+      set -euo pipefail
+      cd $CIDER_CI_TEST_SERVER_DIR
+      ./bin/env/firefox-setup
+
+  ci-server_install-ruby:
+    exclusive_executor_resource: asdf-ruby
+    timeout: 15 minutes
+    body: |
+      #!/usr/bin/env bash
+      set -euo pipefail
+      cd $CIDER_CI_TEST_SERVER_DIR
+      ./bin/env/ruby-setup
+
+  ci-server_install-ruby-gems:
+    exclusive_executor_resource: ruby-gems
+    timeout: 5 minutes
+    start_when:
+      ci-server_installed ruby:
+        script_key: ci-server_install-ruby
+    body: |
+      #!/usr/bin/env bash
+      set -euo pipefail
+      cd $CIDER_CI_TEST_SERVER_DIR
+      ruby -S bundle install
+
+      # check if the Gemfile.lock has changed
+      git diff -- Gemfile.lock
+
+  ci-server_install-all-deps-and-tools:
+    start_when:
+      ci-server_installed ruby:
+        script_key: ci-server_install-ruby-gems
+      ci-server_installed lein:
+        script_key: ci-server_install-lein-deps
+      ci-server_installed geckodriver:
+        script_key: ci-server_install-geckodriver
+      ci-server_installed firefox:
+        script_key: ci-server_install-firefox
+    body: |
+      #!/usr/bin/env bash
+      set -euo pipefail
+      cd $CIDER_CI_TEST_SERVER_DIR
+      exit 0

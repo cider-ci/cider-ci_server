@@ -1,0 +1,30 @@
+test-clj-unit:
+  name: Run cljs unit tests
+  run_when:
+    any branch has been updated:
+      type: branch
+      include_match: ^.*$
+  context:
+    task_defaults:
+      include:
+        - cider-ci/task-components/deps-tools-install.yml
+      git_options:
+        submodules:
+          include_match: ^.*$
+      traits:
+        - asdf
+      environment_variables:
+        CIDER_CI_TEST_SERVER_DIR: "{{CIDER_CI_WORKING_DIR}}"
+      scripts:
+        test:
+          start_when:
+            'deps and tools are installed':
+              script_key: ci-server_install-all-deps-and-tools
+          body: |
+            #!/usr/bin/env bash
+            set -euo pipefail
+            cd $CIDER_CI_TEST_SERVER_DIR
+            ./bin/lein test $CIDER_CI_TASK_FILE
+    generate_tasks:
+      include_match: src/test/.*.clj
+

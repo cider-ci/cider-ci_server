@@ -1,0 +1,13 @@
+include:
+  - cider-ci/task-components/deps-tools-install.yml
+scripts:
+  ci-server_uberjar-build:
+    exclusive_executor_resource: ci-server_uberjar
+    start_when:
+      'deps and tools are installed':
+        script_key: ci-server_install-all-deps-and-tools
+    body: |
+       #!/usr/bin/env bash
+       set -euo pipefail
+       cd $CIDER_CI_TEST_SERVER_DIR
+       ./bin/build-uberjar
