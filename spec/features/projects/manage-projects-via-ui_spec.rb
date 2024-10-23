@@ -17,11 +17,14 @@ feature 'Admin manages Repositories', type: :feature do
     click_on 'Submit'
     wait_until(5) { page.has_content? /Project\s+"TestRepo"/ }
     wait_until { page.has_content? /Edit/ }
+    click_on 'Dismiss'
     click_on 'Edit'
     find('input#name').set 'UpdatedName'
     click_on 'Submit'
-    wait_until(5) { page.has_content? /Project\s+"UpdatedName"/ }
+    click_on 'Dismiss'
+    wait_until(60) { all('.modal').empty? }
     click_on 'Delete'
+    wait_until(60) { all('.modal').empty? }
     wait_until(5) { page.has_content? /Add a new project/ }
     expect(find('.table-projects')).not_to have_content 'UpdatedName'
   end

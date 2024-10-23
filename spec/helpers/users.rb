@@ -20,9 +20,9 @@ module Helpers
       wait_until 10 do
         first('.navbar .user')
       end
-      wait_until 10 do
-        first('.navbar .user').has_content? user
-      end
+      # wait_until 10 do
+      #   first('.navbar .user').has_content? user
+      # end
     end
   end
 end

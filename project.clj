@@ -147,7 +147,7 @@
               :injections [(require 'pjstadig.humane-test-output)
                            (pjstadig.humane-test-output/activate!)]
               :env {:dev true}}
-             :uberjar {:hooks [minify-assets.plugin/hooks]
+             :uberjar {; :hooks [minify-assets.plugin/hooks]
                        :source-paths ["src/all" "src/prod"]
                        :prep-tasks ["compile" ["cljsbuild" "once" "min"]]
                        :resource-paths ["target/cljsbuild"]

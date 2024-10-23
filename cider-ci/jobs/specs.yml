@@ -1,0 +1,39 @@
+specs:
+  name: Run specs
+
+  depends_on: &SPEC_DEPENDS
+    specs preflight passed:
+      type: job
+      job_key: specs-preflight
+      states: [passed]
+  run_when: *SPEC_DEPENDS
+
+  context:
+
+    generate_tasks:
+      include_match: spec/.*_spec.rb
+
+    task_defaults:
+      include:
+        - cider-ci/task-components/service.yml
+      environment_variables:
+        RAILS_ENV: test
+        CIDER_CI_TEST_SERVER_DIR: "{{CIDER_CI_WORKING_DIR}}"
+      git_options:
+        submodules:
+          include_match: ^.*$
+      trial_attachments:
+        screenshots:
+          include_match: 'tmp\/.+\.png$'
+          content_type: image/png
+        logs:
+          include_match: '\.log$'
+          content_type: text/plain
+      scripts:
+        test:
+          body: |
+            #!/usr/bin/env bash
+            set -euo pipefail
+            cd $CIDER_CI_TEST_SERVER_DIR
+            mkdir -p log
+            xvfb-run -a -e log/xvfb.log bundle exec rspec $CIDER_CI_TASK_FILE

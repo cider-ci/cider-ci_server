@@ -1,59 +1,80 @@
+include:
+  - cider-ci/task-components/configure.yml
+  - cider-ci/task-components/uberjar-build.yml
+  - cider-ci/task-components/database.yml
+
 scripts:
 
-  service-run:
-    body: |
-      set -eux
-      export CLASSPATH="resources_dev:target/cider-ci.jar"
-      java -jar target/cider-ci.jar server run
+  ci-server_ready-to-run:
     start_when:
-      database has been migrated:
-        script_key: migrate-database
+      database is ready:
+        script_key: database_is_ready
       service is configured:
-        script_key: configure
+        script_key: ci-server_configure
       jar has been built:
-        script_key: build-uberjar
+        script_key: ci-server_uberjar-build
+    body: exit 0
 
-  service-is-running:
-    timeout: 15 seconds
-    environment_variables:
-      STATUS_URL: http://localhost:{{SERVER_HTTP_PORT}}/cider-ci/client/status
+  ci-server_run:
+    start_when:
+      service is ready to run:
+        script_key: ci-server_ready-to-run
     body: |
       #!/usr/bin/env bash
-      set -eux
-      until curl --silent --fail \
-        --user test-check-is-running:service-secret \
-        -H 'Accept: application/json' \
-        -I "${STATUS_URL}";  do
-        sleep 1;
-      done
-    start_when:
-      service is executing:
-        script_key: service-run
-        states: [executing]
+      set -euo pipefail
+      cd $CIDER_CI_TEST_SERVER_DIR
+      java -jar cider-ci.jar server run
+
+
+  ci-server_is-running:
+      timeout: 15 seconds
+      environment_variables:
+        STATUS_URL: http://localhost:{{CIDER_CI_TEST_SERVER_HTTP_PORT}}/cider-ci/client/status
+      body: |
+        #!/usr/bin/env bash
+        set -euo pipefail
+        cd $CIDER_CI_TEST_SERVER_DIR
+        until curl --silent --fail \
+          --user test-check-is-running:service-secret \
+          -H 'Accept: application/json' \
+          -I "${STATUS_URL}";  do
+          sleep 1;
+        done
+      start_when:
+        service is executing:
+          script_key: ci-server_run
+          states: [executing]
+
 
   test:
     start_when:
       service is running:
-        script_key: service-is-running
+        script_key: ci-server_is-running
 
-  service-shutdown:
+
+  ci-server_shutdown:
     timeout: 3 Seconds
     start_when:
       'test is in terminal state':
         script_key: test
         states: [aborted, defective, passed, failed, skipped]
     environment_variables:
-      SHUTDOWN_URL: http://localhost:{{SERVER_HTTP_PORT}}/cider-ci/shutdown
+      SHUTDOWN_URL: http://localhost:{{CIDER_CI_TEST_SERVER_HTTP_PORT}}/cider-ci/shutdown
     body: |
       #!/usr/bin/env bash
-      set -eux
+      set -euo pipefail
+      cd $CIDER_CI_TEST_SERVER_DIR
       curl -I -X POST --silent \
         --user shutdown:service-secret \
         -H 'Accept: application/json' \
         "${SHUTDOWN_URL}"
 
-  delete-database:
+
+  database_drop:
     start_when:
-      service run is termain:
-        script_key: service-run
+      server run is terminal:
+        script_key: ci-server_shutdown
         states: [aborted, defective, passed, failed, skipped]
+
+
+

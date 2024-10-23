@@ -28,6 +28,9 @@
     [logbug.catcher :as catcher]
     ))
 
+
+; on the current server 436 is actually running
+
 (def migrations
   {"433" {:up cider-ci.server.migrations.433/up}
    "434" {:up cider-ci.server.migrations.434/up}
@@ -153,8 +156,6 @@
         :else (migrate ds version)))))
 
 ; help
-;(main "-h")
-;
 ; show
 ;(main "-s" "-d" "jdbc:postgresql://thomas:thomas@localhost/cider-ci_v5")
 ;

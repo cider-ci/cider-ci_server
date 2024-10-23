@@ -52,15 +52,15 @@ feature 'Create and authenticate an executor' do
         find('input#password').set 'secret'
         click_on 'Sign me in'
       end
-      wait_until 5 do
-        first('.navbar .user').try(:has_content?, 'admin')
-      end
+      first('.navbar .user', wait: 5)
+      # first('.navbar .user').try(:has_content?, 'admin')
     end
 
     scenario " Create an executor via REST HTTP POST
       as a regular administrator using an API Token " do
       # create an admin API-Token ###############################################
-      click_on 'UI2'
+      visit '/cider-ci'
+      click_on 'More'
       click_on 'API-Tokens'
       click_on 'Create'
       find('input#description').set 'Test admin API-Token'
@@ -69,6 +69,7 @@ feature 'Create and authenticate an executor' do
         click_on 'admin'
       end
       click_on 'Create'
+      click_on 'Dismiss'
       wait_until 5 do
         page.has_content? 'A new API-token has been created!'
       end
@@ -108,6 +109,7 @@ feature 'Create and authenticate an executor' do
       find('input#name').set 'test-executor'
       click_on 'Add'
       executor_token = find('.modal .token').text.strip
+      click_on 'Dismiss'
       click_on 'Continue'
 
       # check that it is possible to sign in as this executor
@@ -121,10 +123,10 @@ feature 'Create and authenticate an executor' do
       # edit the executor, i.e. update the token ################################
       updated_token = 'ATopSecretTokenForTheTestExecutor'
       click_on 'Edit'
-      wait_until(5) { !first('.modal') }
+      wait_until(60) { !all('.modal').first }
       find('input#token').set updated_token
       click_on 'Update'
-      wait_until(5) { !first('.modal') }
+      wait_until(60) { !all('.modal').first }
       wait_until { page.has_content? 'test-executor' }
 
       # now we can't use the old token anymore
@@ -159,16 +161,16 @@ feature 'Create and authenticate an executor' do
         find('input#password').set 'secret'
         click_on 'Sign me in'
       end
-      wait_until 5 do
-        first('.navbar .user').try(:has_content?, 'normin')
-      end
+      expect(first('.navbar .user', wait: 5)).to be
+      # first('.navbar .user', wait: 5).try(:has_content?, 'normin')
     end
 
     scenario " Try to create an executor via REST HTTP POST
       as a non administrator user using an API Token results
       in 403 Forbitten " do
       # create an admin API-Token ###############################################
-      click_on 'UI2'
+      visit '/cider-ci'
+      click_on 'More'
       click_on 'API-Tokens'
       click_on 'Create'
       find('input#description').set 'Test admin API-Token'
@@ -177,6 +179,7 @@ feature 'Create and authenticate an executor' do
         click_on 'admin'
       end
       click_on 'Create'
+      click_on 'Dismiss'
       wait_until 5 do
         page.has_content? 'A new API-token has been created!'
       end

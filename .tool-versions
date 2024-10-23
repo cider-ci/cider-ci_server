@@ -1,0 +1,9 @@
+# lein 2.11.2
+clojure 1.9.0.273
+firefox 128.0esr
+geckodriver 0.34.0
+java zulu-8.82.0.21
+lein 2.6.1
+nodejs 10.24.1
+python 2.7.18
+ruby 3.1.3

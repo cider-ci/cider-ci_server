@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -euo pipefail
+./bin/env/java-setup
+./bin/env/clojure-setup
+./bin/env/lein-setup
+
+lein cljsbuild once
+
+# vi: ft=sh
