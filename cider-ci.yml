@@ -2,4 +2,4 @@ jobs:
   include:
     - cider-ci/jobs/build-cljs.yml
     - cider-ci/jobs/build-uberjar.yml
-    # - cider-ci/jobs/tests.yml
+    - cider-ci/jobs/test-clj-unit.yml

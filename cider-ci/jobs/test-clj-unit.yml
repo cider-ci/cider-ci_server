@@ -1,5 +1,5 @@
-tests:
-  name: Run tests
+test-clj-unit:
+  name: Run cljs unit tests
   run_when:
     any branch has been updated:
       type: branch
@@ -10,9 +10,13 @@ tests:
         submodules:
           include_match: ^.*$
       traits:
-        - JDK 8
-        - Leiningen 2
-      body: lein test $CIDER_CI_TASK_FILE
+        - asdf
+      scripts:
+        test:
+          body: |
+            #!/usr/bin/env bash
+            set -euo pipefail
+            ./bin/lein test $CIDER_CI_TASK_FILE
     generate_tasks:
       include_match: src/test/.*.clj
 
