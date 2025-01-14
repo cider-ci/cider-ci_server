@@ -16,3 +16,9 @@ See the "LICENSE.txt" file provided with this software.
 
     lein run -- server migrate -d "jdbc:postgresql://cider-ci:cider-ci@localhost:5415/cider-ci"
 
+### Database Setup
+
+    CREATE ROLE "cider-ci" superuser LOGIN PASSWORD 'cider-ci'
+
+    CREATE DATABASE "cider-ci" OWNER "cider-ci";
+
