@@ -1,3 +1,7 @@
+git_options:
+  submodules:
+    include_match: ^.*$
+
 include:
   - cider-ci/task-components/deps-tools-install.yml
 scripts:

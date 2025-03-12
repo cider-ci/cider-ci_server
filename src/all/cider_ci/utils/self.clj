@@ -31,20 +31,18 @@
         slurp read-string :project-name)))
 
 (defn release []
-  (snatch
-    {:return-fn (fn [e]
-                  {:version_major 4
-                   :version_minor 0
-                   :version_patch 0
-                   :version_pre "TEST"
-                   :version_build nil
-                   :edition nil})}
-    (-> "releases.yml"
-        clojure.java.io/resource
-        slurp
-        yaml/parse-string
-        :releases
-        first )))
+  (or (some-> "releases.yml"
+               clojure.java.io/resource
+               slurp
+               yaml/parse-string
+               :releases
+               first )
+      {:version_major 5
+       :version_minor 0
+       :version_patch 0
+       :version_pre "TEST"
+       :version_build nil
+       :edition nil}))
 
 (defn version []
   (let [release (release)]

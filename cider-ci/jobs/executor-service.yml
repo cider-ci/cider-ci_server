@@ -1,0 +1,24 @@
+executor-service:
+  name: Run executor service
+  depends_on: &EXECUTOR_SERVICE_DEPENDS
+    upberjar passed:
+      type: job
+      job_key: ci-server_uberjar-build
+      states: [passed]
+  run_when: *EXECUTOR_SERVICE_DEPENDS
+  context:
+    task_defaults:
+      include:
+        - cider-ci/task-components/executor-service.yml
+      environment_variables:
+        RAILS_ENV: test
+        CIDER_CI_TEST_SERVER_DIR: "{{CIDER_CI_WORKING_DIR}}"
+      scripts:
+        test:
+          body: |
+            #!/usr/bin/env bash
+            set -euo pipefail
+            sleep 10
+            exit 0
+    tasks:
+      test: {}

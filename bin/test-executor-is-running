@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+timeout=10
+elapsed=0
+
+while [ ! -f tmp/executor/service.pid ]; do
+    sleep 1
+    elapsed=$((elapsed + 1))
+    if [ "$elapsed" -ge "$timeout" ]; then
+        echo "Timeout reached: tmp/executor/service.pid not found"
+        exit 1
+    fi
+done
+
+pid=$(cat tmp/executor/service.pid)
+
+if ! ps -p "$pid" > /dev/null; then
+    echo "Process with PID $pid is not running"
+    exit -1
+else
+    echo "Process with PID $pid is running"
+    exit 0
+fi
+
+# vim: ft=sh

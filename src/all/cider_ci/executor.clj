@@ -23,6 +23,10 @@
     [cider-ci.utils.nrepl :as nrepl]
     [cider-ci.utils.self :as self]
 
+    [clj-pid.core :as pid]
+    [signal.handler]
+    [clojure.java.io :as io]
+
     [yaml.core :as yaml]
     [clojure.pprint :refer [pprint]]
     [clojure.tools.cli :refer [parse-opts]]
@@ -118,6 +122,9 @@
     :default nil
     :validate [#(-> % presence empty? not)]
     ]
+   [nil "--pid-file PIDFILE"
+    :default "./tmp/executor/service.pid" ; "./tmp/executor/service.pid"
+    :parse-fn yaml/parse-string]
    ["-t" "--token TOKEN" "Token used to authenticate against the Cider-CI Server"]
    ["-r" "--repo-dir REPO-DIR" "Path to where repositories are stored"]
    ["-w" "--working-dir WORKING-DIR"]
@@ -143,6 +150,29 @@
            "-------------------------------------------------------------------"])]
        flatten (clojure.string/join \newline)))
 
+
+;;; shutdown with pid file
+
+(defn pid [options]
+  (logging/info "PID" (pid/current))
+  (when-let [pid-file (:pid-file options)]
+    (logging/info "PID-FILE" pid-file)
+    (io/make-parents pid-file) ; ensure dirs exist before creating file!
+    (pid/save pid-file)
+    (pid/delete-on-shutdown! pid-file)))
+
+(defn shutdown-init [options]
+  (pid options)
+  (logging/info "Registering SIGTERM handler for shutdown.")
+  (signal.handler/with-handler :term
+    (do (logging/info "Received SIGTERM, shutting down.")
+        (System/exit 0))))
+
+
+
+;;; run ;;;;;;;;;;;;;;;;;
+
+
 (defn run [options]
   (catcher/snatch
     {:level :fatal
@@ -167,6 +197,7 @@
       (log-env)
       (directories/initialize)
       (traits/initialize)
+      (shutdown-init options)
       (when (-> (get-config) :http :enabled)
         (http/initialize (-> (get-config) :http)))
       (nrepl/initialize (-> (get-config) :nrepl))

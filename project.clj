@@ -9,6 +9,10 @@
 
   :dependencies
   [
+   ; [org.flatland/ordered "1.15.12"]
+   [clj-pid "0.1.2"]
+   [spootnik/signal "0.2.5"]
+   ; [javax.xml.bind/jaxb-api "2.3.1"]
 
    [aleph "0.4.3"]
    [camel-snake-kebab "0.4.0"]

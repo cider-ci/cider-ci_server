@@ -1,0 +1,66 @@
+traits:
+  ci-ax101-06: True
+
+include:
+  - cider-ci/task-components/uberjar-build.yml
+
+scripts:
+
+  ci-executor_configure:
+    start_when:
+      jar has been built:
+        script_key: ci-server_uberjar-build
+    body: |
+      #!/usr/bin/env bash
+      set -euo pipefail
+      cd $CIDER_CI_TEST_SERVER_DIR
+      ./bin/test-executor-configure
+
+  ci-executor_ready-to-run:
+    start_when:
+      jar has been built:
+        script_key: ci-server_uberjar-build
+      configured:
+        script_key: ci-executor_configure
+    body: exit 0
+
+  ci-executor_run:
+    start_when:
+      service is ready to run:
+        script_key: ci-executor_ready-to-run
+    body: |
+      #!/usr/bin/env bash
+      set -euo pipefail
+      cd $CIDER_CI_TEST_SERVER_DIR
+      ./bin/java -jar cider-ci.jar executor --config-file tmp/executor/config.yml run
+
+
+  ci-executor_is-running:
+    start_when:
+      service is executing:
+        script_key: ci-executor_run
+        states: [executing]
+    timeout: 15 seconds
+    body: |
+      #!/usr/bin/env bash
+      set -euo pipefail
+      cd $CIDER_CI_TEST_SERVER_DIR
+      ./bin/test-executor-is-running
+
+  test:
+    start_when:
+      service is running:
+        script_key: ci-executor_is-running
+
+
+  ci-executor_shutdown:
+    timeout: 15 Seconds
+    start_when:
+      'test is in terminal state':
+        script_key: test
+        states: [aborted, defective, passed, failed, skipped]
+    body: |
+      #!/usr/bin/env bash
+      set -euo pipefail
+      cd $CIDER_CI_TEST_SERVER_DIR
+      ./bin/test-executor-shutdown

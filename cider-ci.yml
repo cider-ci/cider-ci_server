@@ -2,6 +2,7 @@ jobs:
   include:
     - cider-ci/jobs/build-cljs.yml
     - cider-ci/jobs/deps-tools-install.yml
+    - cider-ci/jobs/executor-service.yml
     - cider-ci/jobs/specs-preflight.yml
     - cider-ci/jobs/specs.yml
     - cider-ci/jobs/test-clj-unit.yml

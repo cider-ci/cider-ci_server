@@ -39,7 +39,7 @@ scripts:
       #!/usr/bin/env bash
       set -euo pipefail
       cd $CIDER_CI_TEST_SERVER_DIR
-      lein deps
+      ./bin/lein deps
 
   ci-server_install-geckodriver:
     exclusive_executor_resource: asdf-geckodriver

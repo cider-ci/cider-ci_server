@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+PROJECT_DIR="$(cd -- "$(dirname "${BASH_SOURCE}")" ; cd .. > /dev/null 2>&1 && pwd -P)"
+cd $PROJECT_DIR
+./bin/env/java-setup
+./bin/env/ruby-setup
+
+# clean-up the mess the ruby geckodriver gem might have created by placing it in ruby/bin/geckodriver
+rm -rf ~/.asdf/installs/ruby/$(asdf current ruby | awk '{print $2; }')/bin/gecko*
+asdf reshim
+
+set -x
+cd $PROJECT_DIR
+mkdir -p tmp/executor
+java -jar cider-ci.jar --config-file executor -c tmp/executor/config.yml write-default-config -f
+
+ruby -S ./bin/test-executor-configure.rb
+
+# vim: ft=sh
