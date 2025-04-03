@@ -48,7 +48,7 @@ scripts:
 
   test:
     start_when:
-      service is running:
+      ci-server is running:
         script_key: ci-server_is-running
 
 

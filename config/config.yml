@@ -1,4 +1,0 @@
----
-repository_service_advanced_api_edit_fields: true
-session:
-  max_lifetime: 7 days

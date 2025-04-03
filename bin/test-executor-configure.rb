@@ -14,7 +14,7 @@ else
   config['http']['enabled']= false
 end
 if rv_http_port = ENV['CIDER_CI_TEST_RV_HTTP_PORT'].presence
-  config['server_base_url']= ("http://localhost:" + ENV['REVERSE_PROXY_HTTP_PORT'])
+  config['server_base_url']= ("http://localhost:" + ENV['CIDER_CI_TEST_RV_HTTP_PORT'])
 end
 if nrepl_port = ENV['EXECUTOR_NREPL_PORT'].presence
   config['nrepl']['enabled']=true
